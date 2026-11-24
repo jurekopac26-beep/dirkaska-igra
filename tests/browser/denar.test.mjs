@@ -1,5 +1,5 @@
 // The test money in the address (js/denar.js; the user's wish of 9. 11. 2026, a tester's aid hidden in the Google Play build): index.html
-// ?denar with no career: a new one as the game makes it (on, the PICO TURBO) with 50.000.000, the game's career has it at once (Kariera ·
+// ?denar with no career: a new one as the game makes it (on, the LEV S) with 50.000.000, the game's career has it at once (Kariera ·
 // 50.000.000), the money before (none) kept in rra-denar-prej, the parameter gone from the address, a toast. garaza.html?denar=50000000
 // &car=cisterna on a career of 92.000: 50.000.000 in the garage and the career, 92.000 kept, the address ?car=cisterna (that vehicle on
 // the table); again with ?denar=abc: nothing changed, a red toast, the address ?car=cisterna. The garage on the mockup's Veteran and the
@@ -33,8 +33,8 @@ try {
   await page.waitForFunction(() => window.__game && __game.screen === 'title', null, { timeout: 180000 });
   const g = await page.evaluate(() => ({ money: __game.career && __game.career.money, on: __game.career && __game.career.on, btn: document.getElementById('btn-career').textContent.replace(/\s+/g, ' ') }));
   const a = await store();
-  T.check('index.html?denar with no career: a new one as the game makes it (on, the PICO TURBO, stock) with 50.000.000, the game has it at once (Kariera · 50.000.000)',
-    a.career && a.career.v === 1 && a.career.on === true && a.career.money === 50000000 && a.career.cars.join() === 'pico' && JSON.stringify(a.career.upg) === '{"pico":{"motor":0,"gume":0,"zavore":0,"aero":0}}'
+  T.check('index.html?denar with no career: a new one as the game makes it (on, the LEV S, stock) with 50.000.000, the game has it at once (Kariera · 50.000.000)',
+    a.career && a.career.v === 1 && a.career.on === true && a.career.money === 50000000 && a.career.cars.join() === 'levs' && JSON.stringify(a.career.upg) === '{"levs":{"motor":0,"gume":0,"zavore":0,"aero":0}}'
     && a.career.races === 0 && g.money === 50000000 && g.on === true && /50\.000\.000/.test(g.btn), JSON.stringify({ g, career: a.career }));
   T.check('the game: no money before (rra-denar-prej money null), the parameter gone from the address, the toast says it', a.prej && a.prej.money === null && a.search === '' && /50\.000\.000/.test(a.toast) && /nova kariera/.test(a.toast) && a.shown === a.toast && !a.bad, JSON.stringify(a));
 

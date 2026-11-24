@@ -103,7 +103,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // their parts; the tail lamps, the number plate, the wipers and the aerial parts of their own; the start number on the roof
     look: {
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, and the tyres in 64)
-      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin: the dashboard with its dials, the wheel, the buckets, the doors' cards: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
+      budget: { inner: 1700 }, budgetHi: { inner: 2050 },   // (its cabin: the dashboard with its dials, the wheel, the buckets, the doors' cards: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
       body: { len: 3.39, wid: 1.47, door: [0.79, -0.35], bumpY: [0.535, 0.535],
         //       x      w      yb     ybelt   wt     yt     cr     kind  tuck
         secs: [[-1.69, 0.695, 0.24, 0.515, 0.6, 0.53, 0.004, 'b', 0.1],       // the rear bumper's face (the cap)

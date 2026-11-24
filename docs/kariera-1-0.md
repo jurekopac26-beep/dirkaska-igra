@@ -47,7 +47,7 @@ Odločitev Mateja 22. 11.: »kariero hitreje, pred Realizem G«, »Atlas Career 
   - `careerLoad`, `careerNew` in `careerSave` (~173) shranijo kariero v `tdgp-career` prek `Shramba.keep`.
   - Polja: `{v: 1, on, money, cars, upg, earned, races, wins}`, poleg njih še `rival`, `rent` in `garage.cars` (deli, barva, stanje).
   - Kariero vklopiš in izklopiš s `careerToggle`. Izklopljena kariera pomeni prosto vožnjo z vsemi avti, brez nagrad.
-- **Začetek**: 10.000 🪙 in PICO TURBO (`CAREER.start`, `car0` v `js/core.js` ~9070; 1 🪙 = 1 EUR, odločitev 3. 11.).
+- **Začetek**: 10.000 🪙 in LEV S (`CAREER.start`, `car0` v `js/core.js` ~9070; 1 🪙 = 1 EUR, odločitev 3. 11.).
 - **Avti**:
   - 55 dejavnih avtov stane od 7.500 (MRAVLJA) do 1,4 mio. (ŠKORPIJON H), skupaj ~17,4 mio.
   - Cene so v `CAREER.car`. Deset novejših avtov ima ceno samo v `d.price`.

@@ -7,7 +7,7 @@
 //      car not owned, a car of another class
 //   4. a save of v 2 with a damaged path: cleaned (the places whole from 1, the goals true, the first wins strings once, the km over 0, the
 //      junk gone); v 1 in memory, the save on the disk as it was; the view: stage 2 open (kept), the cups won, the goal done, the km
-//   5. a class cup (Pokal razreda · Mali avti) started from the bridge in the pico: its championship saved; its first round (Ghoufi) driven
+//   5. a class cup (Pokal razreda · Mali avti) started from the bridge in the levs: its championship saved; its first round (Ghoufi) driven
 //      to the finish: the path is Kariera.poDirki's of the career before the race and this race (the class km past 100: that goal and its
 //      reward whatever the place; a win: the first win on the track too), the rewards paid as they are (the money and the earnings) and on
 //      the results screen, the race counted, the save v 1 (it was v 2) with the path, the championship with its round
@@ -38,11 +38,11 @@ try {
     razredi: v.razredi.map(r => r.id + ':' + r.stanje + ':' + r.best).join(), mali: (cupIn(v, 'r-mali') || {}).cilji });
 
   // 1. no career
-  const v1 = await page.evaluate(() => window.__game.kariera()), s1 = await start('s1-cesta-1', 'pico');
+  const v1 = await page.evaluate(() => window.__game.kariera()), s1 = await start('s1-cesta-1', 'levs');
   T.check('no career: no view of the path (null), no cup started (no championship)', v1 === null && s1.ok === false && !s1.champ, JSON.stringify({ v1, s1 }));
 
   // 2. a career of before 1.0
-  const old = { v: 1, on: true, money: 5000, earned: 0, races: 0, wins: 0, cars: ['pico', 'kaze'], upg: { pico: U(0, 0, 0, 0), kaze: U(0, 0, 0, 0) } };
+  const old = { v: 1, on: true, money: 5000, earned: 0, races: 0, wins: 0, cars: ['levs', 'sokol'], upg: { levs: U(0, 0, 0, 0), sokol: U(0, 0, 0, 0) } };
   await reload(old);
   const a = await page.evaluate(() => { const g = window.__game; return { v: g.career.v, pot: g.career.pot, disk: localStorage.getItem('tdgp-career'), view: g.kariera() }; });
   T.check('a career of before 1.0 (v 1, no path): the path added in stage 1, nothing won; still v 1 in memory, the save on the disk as it was',
@@ -55,14 +55,14 @@ try {
     && cupIn(va, 'r-mali').stanje === 'odprt' && cupIn(va, 'r-dirkalni').stanje === 'zaklenjen' && cupIn(va, 'r-sportni').stanje === 'zaklenjen' && cupIn(va, 'r-super').stanje === 'zaklenjen' && va.money === 5000 && va.prve === 0, views(va));
 
   // 3. the refusals
-  const r1 = await start('ni-pokala', 'pico'), r2 = await start('r-super', 'pico'), r3 = await start('s1-cesta-1', 'strega'), r4 = await start('r-mali', 'kaze');
+  const r1 = await start('ni-pokala', 'levs'), r2 = await start('r-super', 'levs'), r3 = await start('s1-cesta-1', 'panter'), r4 = await start('r-mali', 'sokol');
   T.check('the bridge refuses an unknown cup (no toast, no championship)', r1.ok === false && r1.toast === '' && !r1.champ, JSON.stringify(r1));
   T.check('… a locked cup (Superavti: no supercar owned), with its toast', r2.ok === false && r2.toast === 'Ta dogodek je še zaklenjen.' && !r2.champ, JSON.stringify(r2));
   T.check('… a car not owned (the strega), with its toast', r3.ok === false && /^Ta avto še ni tvoj/.test(r3.toast) && !r3.champ, JSON.stringify(r3));
   T.check('… a car of another class (the kaze, a sports car, in the Mali avti cup), with its toast', r4.ok === false && r4.toast === 'Za ta pokal izberi avto njegovega razreda.' && !r4.champ, JSON.stringify(r4));
 
   // 4. a save of v 2 with a damaged path (the class km 0.1 short of its goal: the race of 5 passes it)
-  const dmg = { v: 2, on: true, money: 1000, earned: 2000, races: 3, wins: 1, cars: ['pico'], upg: { pico: U(0, 0, 0, 0) },
+  const dmg = { v: 2, on: true, money: 1000, earned: 2000, races: 3, wins: 1, cars: ['levs'], upg: { levs: U(0, 0, 0, 0) },
     pot: { stopnja: 2, pokali: { 's1-krog': 2, 's1-cesta-1': 0, 'r-mali': 2.7, 's2-krog-1': -1 }, cilji: { 'mali-zmaga': 1, 'mali-medalja': 0 }, prve: ['hiva', 'hiva', 7, null], km: { mali: 99.9, sportni: -5, super: 'x' }, smeti: 1 } };
   await reload(dmg);
   const b = await page.evaluate(() => { const g = window.__game; return { v: g.career.v, pot: g.career.pot, disk: localStorage.getItem('tdgp-career'), view: g.kariera() }; });
@@ -77,12 +77,12 @@ try {
 
   // 5. the class cup from the bridge: its first round driven to the finish
   const go = await page.evaluate(() => {
-    const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
+    const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'levs');
     const before = JSON.parse(JSON.stringify(g.career)), ok = g.karieraStart('r-mali');
     return { ok, before, champ: JSON.parse(localStorage.getItem('tdgp-champ') || 'null') };
   });
-  T.check('the class cup Mali avti started from the bridge in the pico: its championship saved (its difficulty, the car, 19 rivals, no round yet)',
-    go.ok === true && !!go.champ && go.champ.id === 'r-mali' && go.champ.diff === 1 && go.champ.car === 'pico' && go.champ.n === 19 && go.champ.rounds.length === 0, JSON.stringify(go.champ));
+  T.check('the class cup Mali avti started from the bridge in the levs: its championship saved (its difficulty, the car, 19 rivals, no round yet)',
+    go.ok === true && !!go.champ && go.champ.id === 'r-mali' && go.champ.diff === 1 && go.champ.car === 'levs' && go.champ.n === 19 && go.champ.rounds.length === 0, JSON.stringify(go.champ));
   await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.track.def.id === 'ghoufi' && g.race.champ); }, null, { timeout: 90000 });
   await driveToResults(page);
   const r = await page.evaluate((before) => {
@@ -95,7 +95,7 @@ try {
   }, go.before);
   const ids = r.exp.nagrade.map(n => n.id), sum = r.exp.nagrade.reduce((s, n) => s + n.amount, 0), won = r.ev.pos === 1, km = ((cupIn(r.view, 'r-mali') || {}).cilji || []).find(x => x.id === 'mali-km') || {};
   T.check('round 1 (Ghoufi) driven to the finish: the path is Kariera.poDirki\'s of the career before the race and this race (the Mali avti km past 100: that goal done, in the view too; a win: the first on the track; the class win done before: not again)',
-    canon(r.pot) === canon(r.exp.career.pot) && r.ev.track === 'ghoufi' && r.ev.car === 'pico' && r.ev.cat === 'mali' && r.ev.km > 0.1 && r.pot.km.mali >= 100 && r.pot.cilji['mali-km'] === true && km.done === true && km.progress === 100
+    canon(r.pot) === canon(r.exp.career.pot) && r.ev.track === 'ghoufi' && r.ev.car === 'levs' && r.ev.cat === 'mali' && r.ev.km > 0.1 && r.pot.km.mali >= 100 && r.pot.cilji['mali-km'] === true && km.done === true && km.progress === 100
     && r.pot.prve.includes('ghoufi') === won && ids.includes('cilj:mali-km') && ids.includes('prva:ghoufi') === won && !ids.includes('cilj:mali-zmaga'), JSON.stringify({ ev: r.ev, pot: r.pot, exp: r.exp }));
   T.check('its rewards paid as they are (the money and the earnings alike, over the race\'s own prize), each on the results screen; the race counted (a win only for the first place)',
     r.money === r.earned && r.money >= sum && sum >= 20000 && r.exp.nagrade.every(n => r.sub.includes(n.name + ': +')) && r.sub.includes('Mali avti · 100 km: +') && r.races === 1 && r.wins === (won ? 1 : 0),
@@ -105,7 +105,7 @@ try {
     JSON.stringify({ v: r.v, disk: r.disk, champ: r.champ && { id: r.champ.id, rounds: r.champ.rounds.map(x => x.track) } }));
 
   // 6. another cup while that one runs
-  const r6 = await start('s1-cesta-1', 'pico');
+  const r6 = await start('s1-cesta-1', 'levs');
   T.check('another cup (Pokal cest · Začetnik) while the class cup runs: refused with its toast, the championship kept',
     r6.ok === false && /^Najprej končaj ali opusti prvenstvo/.test(r6.toast) && !!r6.champ && JSON.parse(r6.champ).id === 'r-mali' && JSON.parse(r6.champ).rounds.length === 1, JSON.stringify(r6));
 

@@ -13,13 +13,13 @@ const srv = await serve();
 const browser = await launch();
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const there = (page) => page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
-const CAREER = JSON.stringify({ v: 1, on: true, money: 10000, cars: ['pico'], upg: {}, earned: 0, races: 0, wins: 0 });
+const CAREER = JSON.stringify({ v: 1, on: true, money: 10000, cars: ['levs'], upg: {}, earned: 0, races: 0, wins: 0 });
 const on = (more) => `window.__zabava = true; ${more || ''}`;
 
 try {
-  // 1. the team's goals in the career: Bathurst in the PICO TURBO, the card before the lights
+  // 1. the team's goals in the career: Bathurst in the LEV S, the card before the lights
   {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=bathurst&avto=pico', {}, { width: 412, height: 892 }, { menu: true, init: on(`localStorage.setItem('tdgp-career', ${JSON.stringify(CAREER)});`) });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=bathurst&avto=levs', {}, { width: 412, height: 892 }, { menu: true, init: on(`localStorage.setItem('tdgp-career', ${JSON.stringify(CAREER)});`) });
     await there(page);
     await page.waitForSelector('#zb-card', { timeout: 60000 });
     await wait(2500);

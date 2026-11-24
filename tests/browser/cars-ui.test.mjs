@@ -83,7 +83,7 @@ const garOk = (L) => { const g = L.gar, land = L.vw > L.vh, inside = (a, b) => a
 try {
   // 1. the car screen at 844×390 (a phone on its side): the rows over the showroom, left of the panel
   {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', carV: 3, carId: 'kaze' }, { width: 844, height: 390 }, { init: { content: '(' + padInit + ')();(' + settleInit + ')();' } });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', carV: 3, carId: 'sokol' }, { width: 844, height: 390 }, { init: { content: '(' + padInit + ')();(' + settleInit + ')();' } });
     const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
     await act('to-car'); await settle(page, 'car');
     const L = await page.evaluate(layout);
@@ -91,11 +91,11 @@ try {
       Math.abs(L.cats.l - 12) <= 1 && Math.abs(L.cats.t - 8) <= 1 && L.cats.h === 34 && Math.abs(L.strip.b - (L.vh - 8)) <= 1 && L.strip.h === 44 && Math.abs(L.cats.r - (L.panel.l - 12)) <= 1 && Math.abs(L.strip.r - (L.panel.l - 12)) <= 1,
       JSON.stringify({ cats: L.cats, strip: L.strip, panel: L.panel }));
     T.check('844×390: nothing off the screen, the rows clear of the panel and the arrows; the panel as it was (its parts all in it, Nazaj / Naprej on the screen), the category under the name',
-      !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => !overlap(a, L.cats) && !overlap(a, L.strip)) && L.panelIds && L.next.b <= L.vh && L.next.r <= L.vw && L.back.l >= L.panel.l && /^Športni · 2\/9$/.test(L.cat),
+      !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => !overlap(a, L.cats) && !overlap(a, L.strip)) && L.panelIds && L.next.b <= L.vh && L.next.r <= L.vw && L.back.l >= L.panel.l && /^Športni · 2\/7$/.test(L.cat),
       JSON.stringify({ overflow: L.overflow, arrows: L.arrows, next: L.next, cat: L.cat }));
     T.check('844×390: the car is the garage\'s button (over its place, left of the panel, between the categories and the strip), its hint under it "Tapni avto za garažo"', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, txt: L.hintTxt, on: L.garOn }));
     T.check('844×390: 10 category chips, the car\'s chosen and in view; its category\'s cars in the strip (cheapest first), the chosen one in view; no chip with an arrow\'s data-act',
-      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,vortex,ris,merjasec,panter,sakal,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
+      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,sokol,ris,merjasec,panter,sakal,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
       JSON.stringify({ nCats: L.nCats, catSel: L.catSel, catIn: L.catIn, strip: L.stripIds, carIn: L.carIn, acts: L.acts }));
 
     // 2. switching by touch: a category (its first car, later the one last looked at there), a car of the strip
@@ -134,8 +134,8 @@ try {
     T.check('the display order: by category (Core.CATS), the cheapest first, then by id; the arrows visit every car in it and come round again, the other way back',
       ord.want.length === ord.n && ord.n >= 42 && ord.game.join() === ord.want.join() && ord.seen.join() === ord.want.join() && ord.wrap === ord.want[0] && ord.back.join() === ord.want.slice().reverse().join(),
       JSON.stringify({ n: ord.want.length, game: ord.game.slice(0, 8), seen: ord.seen.slice(0, 8), wrap: ord.wrap }));
-    T.check('the retired model at index 5 never listed: not in the display order, never reached by the arrows either way',
-      ord.retired.join() === 'p206' && ord.retired.every(id => !ord.game.includes(id) && !ord.seen.includes(id) && !ord.back.includes(id)) && ord.game.includes('levs'), JSON.stringify(ord.retired));
+    T.check('the retired models (index 5 and the four first road cars) never listed: not in the display order, never reached by the arrows either way',
+      ord.retired.join() === 'kaze,vortex,pico,strega,p206' && ord.retired.every(id => !ord.game.includes(id) && !ord.seen.includes(id) && !ord.back.includes(id)) && ord.game.includes('levs'), JSON.stringify(ord.retired));
 
     // 5. the online picker in the same order (a room made without the network: Net stood in for, one friend in it): the arrows, every
     //    vehicle in turn round the whole order, X / Y on the pad the category before / after; the friend told each time (the host sends
@@ -148,20 +148,20 @@ try {
     });
     const told = () => page.evaluate(() => window.__sent.filter(m => m.t === 'roster' || m.t === 'me').map(m => m.t === 'me' ? m.car : (m.list.find(p => p.id === 'h') || {}).car));
     const net = await page.evaluate(() => {
-      const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); window.__sent.length = 0; const ids = [];
+      const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'levs'); window.__sent.length = 0; const ids = [];
       for (let k = 0; k < 6; k++) { g.onAction('net-car-next'); ids.push(Core.MODELS[g.S.car].id); }
       g.onAction('net-car-prev'); const prev = Core.MODELS[g.S.car].id, shown = document.getElementById('on-mycar').textContent;
       const all = []; for (let k = 0; k < g.carOrder.length; k++) { g.onAction('net-car-next'); all.push(Core.MODELS[g.S.car].id); }   // (round the whole order once)
       return { ids, prev, shown, n: g.carOrder.length, every: all.slice().sort().join() === g.carOrder.slice().sort().join(), round: Core.MODELS[g.S.car].id === prev };
     });
     const netSent = await told();
-    await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); window.__sent.length = 0; });
+    await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'levs'); window.__sent.length = 0; });
     const onCat = () => page.evaluate(() => ({ id: Core.MODELS[window.__game.S.car].id, cat: Core.MODELS[window.__game.S.car].cat, shown: document.getElementById('on-mycar').textContent, name: Core.MODELS[window.__game.S.car].name }));
     await press(3); const ny = await onCat(); await press(2); const nx = await onCat(); const padSent = await told();
     await page.evaluate(() => { const g = window.__game, K = window.__netKeep; g.onAction('net-leave'); Object.assign(Net, { available: K.available, host: K.host, send: K.send, sendTo: K.sendTo, close: K.close }); Object.defineProperty(Net, 'ids', K.ids); });
-    const netWant = await page.evaluate((src) => { const want = (0, eval)('(' + src + ')')(), i = want.indexOf('pico'); return [1, 2, 3, 4, 5, 6].map(k => want[(i + k) % want.length]); }, expectOrder.toString());
+    const netWant = await page.evaluate((src) => { const want = (0, eval)('(' + src + ')')(), i = want.indexOf('levs'); return [1, 2, 3, 4, 5, 6].map(k => want[(i + k) % want.length]); }, expectOrder.toString());
     const netPrev = await page.evaluate((id) => Core.MODELS.find(m => m.id === id).name, netWant[4]);
-    T.check('the online picker: the same order (from the PICO TURBO: the next six of the display order, then one back), every vehicle in turn round the whole order, the friend told each time',
+    T.check('the online picker: the same order (from the LEV S: the next six of the display order, then one back), every vehicle in turn round the whole order, the friend told each time',
       net.ids.join() === netWant.join() && net.prev === netWant[4] && net.shown === netPrev && net.every && net.round && net.n >= 42 && netSent.slice(0, 7).join() === net.ids.concat([netWant[4]]).join() && netSent.length === 7 + net.n,
       JSON.stringify({ net, netWant, sent: netSent.slice(0, 8) }));
     T.check('the online picker on the pad: Y the next category\'s car (Mali avti → Športni), X back (Mali avti); the friend told',
@@ -172,8 +172,8 @@ try {
       for (let k = 0; k < 3; k++) { g.onAction('champ-car-next'); ids.push(id()); } g.onAction('champ-car-prev'); ids.push(id());
       return { ids, shown: document.getElementById('ch-mycar').textContent }; });
     await press(3); const chY = await page.evaluate(() => ({ id: Core.MODELS[window.__game.S.car].id, shown: document.getElementById('ch-mycar').textContent }));
-    T.check('the championship\'s picker: the same order (from the OSA R, the dearest small car: LISICA → KAZE RS → SOKOL, back to KAZE RS); Y on the pad: the next category\'s car (STREGA MR)',
-      chp.ids.join() === 'lisica,kaze,sokol,kaze' && chp.shown === 'KAZE RS' && chY.id === 'strega' && chY.shown === 'STREGA MR', JSON.stringify({ chp, chY }));
+    T.check('the championship\'s picker: the same order (from the OSA R, the dearest small car: LISICA → SOKOL R → RIS G, back to SOKOL R); Y on the pad: the next category\'s car (MODRAS V10)',
+      chp.ids.join() === 'lisica,sokol,ris,sokol' && chp.shown === 'SOKOL R' && chY.id === 'modras' && chY.shown === 'MODRAS V10', JSON.stringify({ chp, chY }));
     T.check('no page errors (844×390)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
@@ -207,7 +207,7 @@ try {
       const chips = [...document.querySelectorAll('#car-strip .car-chip')].map(e => e.textContent);
       const price = (id) => { g.S.car = Core.MODELS.findIndex(m => m.id === id); g.career.cars.push(id); g.career.upg[id] = { motor: 0, gume: 0, zavore: 0, aero: 0 }; g.onAction('to-upg');
         const t = [...document.querySelectorAll('[data-upg="motor"] button')].map(b => b.textContent); g.onAction('upg-done'); return t; };
-      return { kids, chips, pico: price('pico'), titan: price('titan'), mravlja: price('mravlja'), skorpijon: price('skorpijon') };
+      return { kids, chips, pico: price('levs'), titan: price('titan'), mravlja: price('mravlja'), skorpijon: price('skorpijon') };
     });
     const wantKids = await page.evaluate((src) => { const want = (0, eval)('(' + src + ')')(), out = [];
       for (const c of Core.CATS) { const L = want.filter(id => Core.MODELS.find(m => m.id === id).cat === c.id); if (!L.length) continue; out.push('#' + c.name); for (const id of L) out.push(c.id + ':' + Core.MODELS.find(m => m.id === id).name); }
@@ -218,7 +218,7 @@ try {
       JSON.stringify(car.kids.slice(0, 8)));
     T.check('the career\'s strip: a price on the cars to buy (TIGER GT 550.000 🪙), a tick on the one in the garage',
       car.chips.some(t => /^TIGER GTFR550\.000/.test(t)) && car.chips.every(t => /🪙|✓/.test(t)), JSON.stringify(car.chips));
-    T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 coins, all three levels 23.000 coins), the MRAVLJA (5.000 coins) no cheaper than it (×1), the TITAN ×2 (8.000 coins; its real price over 100.000), ŠKORPIJON H ×2 (8.000 coins; all three levels 46.000 coins)',
+    T.check('the career\'s upgrade prices by class: the LEV S as before (4.000 coins, all three levels 23.000 coins), the MRAVLJA (5.000 coins) no cheaper than it (×1), the TITAN ×2 (8.000 coins; its real price over 100.000), ŠKORPIJON H ×2 (8.000 coins; all three levels 46.000 coins)',
       /4\.000/.test(car.pico[1]) && /23\.000/.test(car.pico[3]) && /8\.000/.test(car.titan[1]) && /4\.000/.test(car.mravlja[1]) && /23\.000/.test(car.mravlja[3]) && /8\.000/.test(car.skorpijon[1]) && /46\.000/.test(car.skorpijon[3]),
       JSON.stringify({ pico: car.pico, titan: car.titan, mravlja: car.mravlja, skorpijon: car.skorpijon }));
     T.check('no page errors (390×844)', !errors.length, errors.slice(0, 5).join(' | '));
@@ -242,8 +242,8 @@ try {
     const m6 = await load(JSON.stringify({ carV: 3, carId: 'titan', car: 0, sound: 0, comm: 0 }));
     const m7 = await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 4, sound: 0, comm: 0 }));
     const m8 = await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 0, sound: 0, comm: 0 }));
-    T.check('loading after an older build changed the car: {carId "titan", car 0} (the TITAN saved as the rally car\'s 4, then KAZE RS picked there) → KAZE RS; {carId "kaze", car 4} → the rally car; {carId "kaze", car 0} → KAZE RS',
-      m6.car === 'kaze' && m7.car === 'rally' && m8.car === 'kaze', JSON.stringify({ m6: m6.car, m7: m7.car, m8: m8.car }));
+    T.check('loading after an older build changed the car: {carId "titan", car 0} (the TITAN saved as the rally car\'s 4, then the retired KAZE RS picked there) → its heir, the SOKOL R; {carId "kaze", car 4} → the rally car; {carId "kaze", car 0} → the SOKOL R',
+      m6.car === 'sokol' && m7.car === 'rally' && m8.car === 'sokol', JSON.stringify({ m6: m6.car, m7: m7.car, m8: m8.car }));
     // the retired model at index 5 (an older build's car): by its id, by its index alone (carV 3, carV 2), picked by an older build since
     // (carId "kaze", car 5): the LEV S, saved as "levs"; its free upgrades the LEV S's (the better level of each part with the LEV S's own)
     const r1 = await load(JSON.stringify({ carV: 3, carId: 'p206', car: 5, sound: 0, comm: 0 }));
@@ -263,14 +263,14 @@ try {
       sv.car === 'predsednik' && sv.stored.carId === 'predsednik' && sv.stored.car <= 10 && sv.stored.car === sv.rally && sv.stored.carV === 3 && m5 === 'predsednik', JSON.stringify({ sv, m5 }));
     // (a big vehicle with a fill: its own cars and the fill's, Core.aiModel)
     const demo = await page.evaluate(() => { const g = window.__game, M = Core.MODELS.find(m => m.id === g.demoModel), F = M && M.field ? M.field.concat(M.fill || []) : null;
-      return { id: g.demoModel, cat: M && M.cat, field: F, cars: g.demo.cars.map(c => c.m.id), ok: !!M && g.demo.cars.every(c => (M.oneMake ? [M.id] : F || ['kaze', 'vortex', 'pico', 'strega']).includes(c.m.id)) }; });
+      return { id: g.demoModel, cat: M && M.cat, field: F, cars: g.demo.cars.map(c => c.m.id), ok: !!M && g.demo.cars.every(c => (M.oneMake ? [M.id] : F || ['sokol', 'ris', 'levs', 'panter']).includes(c.m.id)) }; });
     T.check('the title demo: one category\'s vehicle picked, the AI in its field (a big vehicle\'s: its own cars and its fill\'s)', demo.ok && !!demo.cat, JSON.stringify(demo));
     // a record and a lap ghost of the retired model (stored by an older build): the LEV S's (its name on the boards, the ghost drawn as it)
     await page.evaluate(() => {
       localStorage.setItem('tdgp-records', JSON.stringify({ tracks: { 'pikes@cs': { bestTime: 250.5, board: [{ name: 'Ana', car: 'STARO IME', carId: 'p206', time: 250.5, splits: [], date: 1700000000000, upg: {} }] } } }));
       localStorage.setItem('tdgp-ghost-jezero@cs', JSON.stringify({ v: 1, dt: 0.1, n: 3, t: 61.5, car: 'p206', color: 0xd81f2a, stripe: true, lap: 1, q0: [0, 0, 0], d: btoa(String.fromCharCode(...new Uint8Array(3 * 7 * 2))) }));
     });
-    await load(JSON.stringify({ carV: 3, carId: 'kaze', car: 0, sound: 0, comm: 0, quali: 0, track: 'pikes', mode: 'tt' }));   // (Pikes Peak's time trial: its board)
+    await load(JSON.stringify({ carV: 3, carId: 'sokol', car: 0, sound: 0, comm: 0, quali: 0, track: 'pikes', mode: 'tt' }));   // (Pikes Peak's time trial: its board)
     const bd = await page.evaluate(async () => { window.__game.onAction('to-board'); await window.__settled('board');
       return { rows: [...document.querySelectorAll('#board-body tbody tr')].map(tr => tr.textContent).filter(t => /Ana/.test(t)), old: /STARO IME/.test(document.getElementById('board-body').textContent) }; });
     await startTrack(page, 'jezero');
@@ -305,11 +305,11 @@ try {
     // Izberi avto: the car screen (its button "Izberi", Nazaj back to the championship), the PICO TURBO picked, back
     await act('champ-car'); await settle(page, 'car');
     const cs = await page.evaluate(() => ({ screen: window.__game.screen, next: document.getElementById('car-next').dataset.act + ':' + document.getElementById('car-next').textContent, back: document.getElementById('car-back').dataset.act }));
-    await page.evaluate(() => { document.querySelector('#car-cats [data-cat="mali"]').click(); document.querySelector('#car-strip [data-car="' + Core.MODELS.findIndex(m => m.id === 'pico') + '"]').click(); }); await settle(page, 'car');
+    await page.evaluate(() => { document.querySelector('#car-cats [data-cat="mali"]').click(); document.querySelector('#car-strip [data-car="' + Core.MODELS.findIndex(m => m.id === 'levs') + '"]').click(); }); await settle(page, 'car');
     await page.evaluate(() => document.getElementById('car-next').click()); await settle(page, 'champ');
     const s2 = await st();
-    T.check('"Izberi avto": the car screen with "Izberi" (Nazaj back too), then the championship again with the PICO TURBO; its rivals still the TITAN\'s field (the standings: its TITANs and fill cars, "tekmeci: različni avti")',
-      cs.screen === 'car' && cs.next === 'car-champ:Izberi' && cs.back === 'car-champ' && s2.mycar === 'PICO TURBO' && s2.rows.filter(c => c === 'TITAN').length === fm.own && s2.rows.includes('PICO TURBO') && ofField(s2.rows.filter(c => c !== 'PICO TURBO')) && /tekmeci: različni avti/.test(s2.diff) && await page.evaluate(() => window.__game.screen) === 'champ',
+    T.check('"Izberi avto": the car screen with "Izberi" (Nazaj back too), then the championship again with the LEV S; its rivals still the TITAN\'s field (the standings: its TITANs and fill cars, "tekmeci: različni avti")',
+      cs.screen === 'car' && cs.next === 'car-champ:Izberi' && cs.back === 'car-champ' && s2.mycar === 'LEV S' && s2.rows.filter(c => c === 'TITAN').length === fm.own && s2.rows.includes('LEV S') && ofField(s2.rows.filter(c => c !== 'LEV S')) && /tekmeci: različni avti/.test(s2.diff) && await page.evaluate(() => window.__game.screen) === 'champ',
       JSON.stringify({ cs, s2: { rows: s2.rows, mycar: s2.mycar, diff: s2.diff } }));
     // round 2 with qualifying: sized and driven by the championship's TITAN field, the race too
     await page.evaluate(() => { window.__game.S.quali = 1; });
@@ -330,19 +330,19 @@ try {
     const qr = await page.evaluate(() => [...document.querySelectorAll('#res-table tbody tr')].map(r => r.children[2].textContent));
     await act('quali-go'); await page.waitForFunction(() => { const r = window.__game.race; return !!(r && r.champ && !r.quali); }, null, { timeout: 90000 });
     const r2 = await rivals();
-    T.check('round 2 in the PICO TURBO: qualifying with the TITAN\'s full field (sized and driven by the championship\'s car), the race after it the same field',
-      q0 === 19 && qr.length === 20 && qr.filter(c => c === 'TITAN').length === fm.own && qr.includes('PICO TURBO') && ofField(qr.filter(c => c !== 'PICO TURBO')) && r2.n === 20 && r2.cars.split(',').sort().join() === fm.ids && r2.me === 'pico', JSON.stringify({ q0, qr, r2 }));
+    T.check('round 2 in the LEV S: qualifying with the TITAN\'s full field (sized and driven by the championship\'s car), the race after it the same field',
+      q0 === 19 && qr.length === 20 && qr.filter(c => c === 'TITAN').length === fm.own && qr.includes('LEV S') && ofField(qr.filter(c => c !== 'LEV S')) && r2.n === 20 && r2.cars.split(',').sort().join() === fm.ids && r2.me === 'levs', JSON.stringify({ q0, qr, r2 }));
     // a championship started in the FORMULA ORKAN (a one-make class, no field of its own; kept after round 1) and the next round in the
     // PICO TURBO: still its nineteen formulas (the standings, "tekmeci: 19× FORMULA ORKAN", the race)
     await page.evaluate(() => localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'domaci', diff: 1, car: 'formula', n: 19, rounds: [{ track: 'jezero', order: Core.champKeys(19), rain: 0 }] })));
     await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
-    await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); }); await act('to-champ'); await settle(page, 'champ');
+    await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'levs'); }); await act('to-champ'); await settle(page, 'champ');
     const s3 = await st();
     await act('champ-go');
     await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'gora'); }, null, { timeout: 90000 });
     const r3 = await rivals();
-    T.check('a championship started in the FORMULA ORKAN, round 2 in the PICO TURBO: its rivals still formulas (the standings: nineteen, "tekmeci: 19× FORMULA ORKAN"; the race: nineteen)',
-      s3.mycar === 'PICO TURBO' && /tekmeci: 19× FORMULA ORKAN/.test(s3.diff) && s3.rows.filter(c => c === 'FORMULA ORKAN').length === 19 && r3.n === 20 && r3.cars === 'formula' && r3.me === 'pico',
+    T.check('a championship started in the FORMULA ORKAN, round 2 in the LEV S: its rivals still formulas (the standings: nineteen, "tekmeci: 19× FORMULA ORKAN"; the race: nineteen)',
+      s3.mycar === 'LEV S' && /tekmeci: 19× FORMULA ORKAN/.test(s3.diff) && s3.rows.filter(c => c === 'FORMULA ORKAN').length === 19 && r3.n === 20 && r3.cars === 'formula' && r3.me === 'levs',
       JSON.stringify({ s3: { rows: s3.rows, mycar: s3.mycar, diff: s3.diff }, r3 }));
     T.check('no page errors (championship)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
@@ -389,10 +389,10 @@ try {
     const k3s = await said();
     T.check('the player\'s wheel by its name ("rear left wheel"), never "on three wheels": the car stops, retires and the game is over',
       k3s.includes('wheelLost:rear left wheel') && !k3s.includes('threeWheels') && k3.over && k3.out && k3.kmh === 0, JSON.stringify({ k3s, k3 }));
-    // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the KAZE RS: no parts that come
+    // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the VIHAR V8: no parts that come
     // off, so no wheel rule (a vehicle with them, the KOZOROG too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its
     // wheels and the game is over, KONEC IGRE, wheels.test.mjs)
-    await page.evaluate((v) => { window.__game.S.car = 0; window.__game.S.rivals = v; }, riv0); await startTrack(page, 'jezero');
+    await page.evaluate((v) => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'muscle'); window.__game.S.rivals = v; }, riv0); await startTrack(page, 'jezero');
     const st0 = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(9, true); return g.stats; });
     const w = await page.evaluate(async () => {
       const g = window.__game, r = g.race, P = r.player; window.__said.length = 0;
@@ -401,8 +401,8 @@ try {
       return { car: P.m.id, show: el.classList.contains('show') && getComputedStyle(el).display !== 'none', title: document.getElementById('h-wreck-t').textContent, btn: !b.classList.contains('off') && b.textContent,
         rule: !!(P.wreck && P.wreck.rule), said: window.__said.map(s => s.k) };
     });
-    T.check('destroyed (the KAZE RS, no wheel rule): "VOZILO UNIČENO" under the minimap with "Odstopi"; the wreck and the fire said',
-      w.car === 'kaze' && !w.rule && w.show && w.title === 'VOZILO UNIČENO' && w.btn === 'Odstopi' && w.said.includes('wreck') && w.said.includes('fireMe'), JSON.stringify(w));
+    T.check('destroyed (the VIHAR V8, no wheel rule): "VOZILO UNIČENO" under the minimap with "Odstopi"; the wreck and the fire said',
+      w.car === 'muscle' && !w.rule && w.show && w.title === 'VOZILO UNIČENO' && w.btn === 'Odstopi' && w.said.includes('wreck') && w.said.includes('fireMe'), JSON.stringify(w));
     const p0 = await page.evaluate(() => { window.__game.pause(); const b = document.getElementById('pause-retire'); const v = !b.classList.contains('off'); window.__game.resume(); return v; });
     // the pause over it (a phone 667×375 on its side: the banner's Odstopi sat right under the pause's "Ponovi dirko", which took the tap):
     // no banner seen through the pause; back in the race it is there again

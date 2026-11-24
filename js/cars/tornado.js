@@ -115,6 +115,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const XF = K.arches[0].x - K.arches[0].half, XR = K.arches[1].x + K.arches[1].half;   // (the front arch's rear end, the rear arch's front end)
         // ---- the shell: the paint, the roof in the stripe colour; the glass (the windscreen, the side windows from the A-pillar to the
         //      C-pillar, the rear glass); the sills black between the arches (the skirts), the arches' ledges black ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch ? B : at.x > XR && at.x < XF ? CF : K.shade(P, 0.6);
           if (kind === 'gf') return e >= 2 && e <= 6 ? G : P;

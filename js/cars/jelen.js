@@ -139,6 +139,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], CH = K.chrome, SILL = K.shade(P, 0.6), AMB = K.rgb(0xff9a1e), LC = [0.74, 0.77, 0.82];
         // ---- the shell: the paint; the windscreen and the side glass (forward to the A-pillar, back into the sail: the quarter window), the
         //      fastback's glass; the sills a darker shade, black in the arches ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (at.end) return P;
           if (e === 0 || e === 8) return at.arch ? B : SILL;

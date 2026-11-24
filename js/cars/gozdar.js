@@ -126,6 +126,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the shell: the bed open on top (segment 0), the back wall (1), the roof (2: black on top, a two-tone trophy-truck roof under the
         //      start number), the windscreen (3), the cowl's step (4), the hood and the fenders (5), the nose (6). Glass: the windscreen, the
         //      door's window (forward of the B-pillar at -0.33) ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return B;                                                 // (the black lower edge, the arches' lips)
           if (k === 0 && e >= 3 && e <= 5) return null;                                     // (the bed: no top)

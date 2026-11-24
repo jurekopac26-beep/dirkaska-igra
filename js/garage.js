@@ -28,8 +28,8 @@
   const CTAB = [['Klasične', [0, 1, 4, 2]], ['Žive', [3, 5, 6, 7]], ['Kovinske', [8, 9, 15, 11]], ['Sveže', [10, 12, 13, 14]]],
     CDESC = ['dirkalna klasika', 'svetla, čista', 'globoka in mirna', 'vidna od daleč', 'globok sijaj', 'stara dirkalna', 'topla in živa', 'drzna izbira',
       'hladen kovinski sijaj', 'umirjena, sodobna', 'kot jasno nebo', 'žlahtna rdečina', 'morska svežina', 'igriva in drzna', 'kislo zelena', 'topla kovina'];
-  const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
-  const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
+  const COLOR0 = { levs: 2, sokol: 0, muscle: 6, panter: 3, ris: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
+  const FREE = ['levs', 'sokol', 'muscle'];   // (the free game's cars; the rest come with the full game)
   // service: w = 1 - the row's state; f = (the car's worth / 68.000)^0.8 (the wash ^0.3); the wash (20 + 280 w) f, the body (150 +
   // 15.000 w^1.6) f, the engine and its oil (180 + 9.000 w^1.8) f; under 1.000 to 10, over it to 50 (coins); a full service 15 % off;
   // under 2 % wear it is free (nacrti/cene/ekonomija.json)
@@ -94,15 +94,15 @@
     for (const el in EL) if (el !== 'barva') EL[el].c.forEach((c, t) => c[1].forEach((o, j) => { s += price(el, t, j); }));
     return Math.ceil(s / 100000) * 100000; }
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
-    const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, rent: null, lang: S0lang(), sound: true, guide: 0, flag: '' };
-    for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
-    S.cars.pico.cond = { clean: 0.35, body: 0.6, engine: 0.42 };
+    const S = { v: 2, mode, money: 11500, car: CAR0, cars: {}, rent: null, lang: S0lang(), sound: true, guide: 0, flag: '' };
+    for (const id of ORDER) S.cars[id] = carNew(id, id === CAR0);
+    S.cars[CAR0].cond = { clean: 0.35, body: 0.6, engine: 0.42 };
     if (mode === 'vet') {
-      S.money = vetMoney(); S.vm = VET_V; S.car = 'kaze';
+      S.money = vetMoney(); S.vm = VET_V; S.car = 'sokol';
       const set = (id, P, c) => { const k = S.cars[id]; k.own = true; for (const el in P) { const o = findOpt(el, P[el]); if (o) k.parts[el] = o; } if (c) k.cond = c; };
-      set('pico', { turbo: 'Turbo', cip: 'Chip', gume: 'Track Semi-slick', zavore: 'Sport pads', krilo: 'Arch' }, { clean: 0.9, body: 0.85, engine: 0.8 });
-      set('kaze', { turbo: 'Turbo kit', cip: 'Stage 3 map', auspuh: 'Titanium', gume: 'Track Slick', zavore: 'Racing discs', aero: 'Sport', krilo: 'GT wing' }, { clean: 0.55, body: 0.72, engine: 0.66 });
-      set('muscle', { auspuh: 'Dual', gume: 'Premium Summer' }); set('strega', { aero: 'Street', gume: 'Street Semi-slick' }); set('vortex', {}); set('rally', { gume: 'Rally Gravel', zavore: 'Slotted discs' }, { clean: 0.2, body: 0.5, engine: 0.7 }); set('ev', { cip: 'Stage 1 map' });
+      set(CAR0, { turbo: 'Turbo', cip: 'Chip', gume: 'Track Semi-slick', zavore: 'Sport pads', krilo: 'Arch' }, { clean: 0.9, body: 0.85, engine: 0.8 });
+      set('sokol', { turbo: 'Turbo kit', cip: 'Stage 3 map', auspuh: 'Titanium', gume: 'Track Slick', zavore: 'Racing discs', aero: 'Sport', krilo: 'GT wing' }, { clean: 0.55, body: 0.72, engine: 0.66 });
+      set('muscle', { auspuh: 'Dual', gume: 'Premium Summer' }); set('panter', { aero: 'Street', gume: 'Street Semi-slick' }); set('ris', {}); set('rally', { gume: 'Rally Gravel', zavore: 'Slotted discs' }, { clean: 0.2, body: 0.5, engine: 0.7 }); set('ev', { cip: 'Stage 1 map' });
     }
     return S;
   }
@@ -125,7 +125,8 @@
     for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; carFrom(o, c); }
     d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; pageOwn(d, s);
     if (d.mode === 'vet' && s.vm !== VET_V) d.money = Math.max(d.money, vetMoney());   // (a veteran saved before 9. 11. 2026: the new test money)
-    if (!d.cars.pico.own) d.cars.pico.own = true;
+    for (const id in s.cars) { const h = heirId(id), c = s.cars[id]; if (h !== id && d.cars[h] && c && c.own) d.cars[h].own = true; }   // (a retired car owned: its heir is)
+    if (!d.cars[CAR0].own) d.cars[CAR0].own = true;
     d.rent = rentFrom(s.rent, d); for (const id of ORDER) haveFitted(d.cars[id]);
     return d;
   }

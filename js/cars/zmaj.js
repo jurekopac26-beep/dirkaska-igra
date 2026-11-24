@@ -137,6 +137,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;   // (between the arches: the sills)
         const vent = (x) => (x > 0.62 && x < 0.7) || (x > -0.56 && x < -0.5);                  // (the flares' tapers by the doors: an outlet, an intake)
         // ---- the shell: the paint; the windscreen, the side glass, the rear glass; dark sills, black arch ledges; the flares' inner ends black ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch ? B : at.x > XA && at.x < XB ? D : DS;
           if ((e === 1 || e === 7) && vent(at.x)) return B;

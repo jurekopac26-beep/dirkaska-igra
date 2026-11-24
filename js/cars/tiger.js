@@ -115,6 +115,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, D = K.dark, G = K.GLASS, RED = K.rgb(0xd0141a);
         // ---- the shell: the paint, the glass (windscreen, side windows, the fastback's glass), the tuck all round black (the skirts, the arches' ledges) ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return B;
           if (kind === 'gf') return (e === 2 || e === 6) && at.x > -0.2 ? P : e >= 2 && e <= 6 ? G : P;   // (the side glass up to the mirror sails)

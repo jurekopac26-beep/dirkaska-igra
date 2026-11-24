@@ -72,10 +72,10 @@ try {
   // one of the ten cars without parts that come off: its own tyres, no wheel rule (its wheels never come off)
   {
     const { ctx, page } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, damage: 2 }, undefined, { seed: 77 });
-    await page.evaluate(() => { window.__game.S.car = 0; });
+    await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'muscle'); });
     await startTrack(page, 'spa');
     const r = await page.evaluate(() => { const P = window.__game.race.player; return { id: P.m.id, rule: !!(P.wreck && P.wreck.rule), kt: !!P.kt }; });
-    T.check('one of the ten cars without parts that come off (KAZE RS): its own tyres (Car.kt), no wheel rule', r.id === 'kaze' && !r.rule && r.kt, JSON.stringify(r));
+    T.check('one of the ten cars without parts that come off (VIHAR V8): its own tyres (Car.kt), no wheel rule', r.id === 'muscle' && !r.rule && r.kt, JSON.stringify(r));
     await ctx.close();
   }
 } finally {

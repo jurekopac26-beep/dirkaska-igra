@@ -117,6 +117,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.face(n[0] * nr[0] + n[1] * nr[1] + n[2] * nr[2] < 0 ? pts.slice().reverse() : pts, col, o); };
         // ---- the shell: the paint, the glass (the windscreen, the side windows to the C-pillar, the rear glass); the sills black between the
         //      arches (the skirts), the arches' ledges black, the vent behind each front wheel black ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch ? B : at.x > -0.98 && at.x < 0.92 ? CF : D;
           if (at.x > XA && at.x < 0.9 && (e === 1 || e === 7)) return B;

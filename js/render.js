@@ -900,7 +900,7 @@ const Render = (function () {
      BREAKING APART (stage B2: render only, from the core's state, the same every time; kitParts)
        loose   a part whose zone has taken 60 % of what knocks it off (c.dz[z] >= 0.6 th) turns once about its hinge, its shell and its
                lining together (enough to see from the chase camera): a bonnet (hood) pops 18 degrees, a boot lid or a tailgate (trunk,
-               tailgate) opens 30, a cover 20, a hardtop and a deflector 14, a door hangs 28 ajar, a fender or a quarter stands 12 out (a
+               tailgate) opens 30, a cover 20, a hardtop and a deflector 14, a door hangs 28 ajar, a fender stands 12 out, a quarter stays shut (a
                side extra 12), a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, an extra at an end of the car tips 10
                off it (one on top tilts as a wing); what lies on it (its lamps, its start number) and the parts mounted on it (their
                entry's on, js/core.js: a number plate, a wiper on a tailgate) turn with it. The hinge:
@@ -994,6 +994,7 @@ const Render = (function () {
                                call: car.deli.platisca is the wheels' look
        K.topY(x, z)            the main loft's top at (x, z) (look units; after the main loft): what lies on the roof, a wing's feet
        K.regions(preset | list | fn(std))   the regions from here on (returns them, look units)
+       K.hoodWhole()                        the bonnet one whole panel, the full width: the shoulders beside it too (from here on)
        -- the loft --
        K.secs(rows)            rows [x, w, yb, ybelt, wt, yt, cr, kind, tk?] -> sections. x: from the tail (first) to the nose (last); w: the
                                side's half width; yb: the bottom's height; ybelt: the belt (the side's top: where the glass starts); wt: the
@@ -1124,7 +1125,7 @@ const Render = (function () {
   const KIT_EYES = ['closed', 'open', 'formula', 'kart'];
   const kitTagged = (kt, kk) => { const b = kt === 's' ? KIT_S0 : KIT_P0, c = [b[0] * kk, b[1] * kk, b[2] * kk]; c.kt = kt; c.kk = kk; return c; };
   const kitBig = (M) => M.cat === 'tovornjaki' || M.len >= 5.5 || M.wid >= 2.4;   // (the budgets of the trucks, the limousine, the monster truck)
-  const kitBudget = (M) => kitBig(M) ? { outer: 2400, inner: 1200 } : { outer: 1400, inner: 800 };
+  const kitBudget = (M) => kitBig(M) ? { outer: 2400, inner: 1500 } : { outer: 1400, inner: 1100 };   // (the inner block: 300 for the parts under the bonnet, the garage's slots filled as they leave the factory: js/deli/skriti.js DELI.stock)
   class KitFail extends Error {}
   const kitFail = (msg) => { throw new KitFail(msg); };
   const kitIsGlass = (c) => c === GLASS || c === KIT_GL2 || (!!c && !c.kt && [GLASS, KIT_GL2].some(G => Math.abs(c[0] - G[0]) < 1e-6 && Math.abs(c[1] - G[1]) < 1e-6 && Math.abs(c[2] - G[2]) < 1e-6));
@@ -1156,9 +1157,9 @@ const Render = (function () {
   // the PartGB router: GB-compatible (tri, triO, quadO, triN, triON, quadON, quadUp; World.box, World.cyl & co. draw into it). Each triangle
   // goes to the bucket of the current target (kx.target: the block, the part, the sub-range, the flags), its corners from look units to metres
   class KitGB {
-    constructor(kx) { this.kx = kx; }
-    tri(a, b, c, ca, cb, cc) { this.kx.emit(a, b, c, ca, cb || ca, cc || ca, null); }
-    triN(a, b, c, na, nb, nc, ca, cb, cc) { this.kx.emit(a, b, c, ca, cb || ca, cc || ca, [na, nb, nc]); }
+    constructor(kx) { this.kx = kx; this.n = 0; }   // (n: the triangles so far)
+    tri(a, b, c, ca, cb, cc) { this.n++; this.kx.emit(a, b, c, ca, cb || ca, cc || ca, null); }
+    triN(a, b, c, na, nb, nc, ca, cb, cc) { this.n++; this.kx.emit(a, b, c, ca, cb || ca, cc || ca, [na, nb, nc]); }
   }
   for (const k of ['triO', 'quadO', 'triON', 'quadON', 'quadUp']) KitGB.prototype[k] = GB.prototype[k];
 
@@ -1792,7 +1793,7 @@ const Render = (function () {
     K.mainDecal = () => { if (!kx.mainS) kitFail('mainDecal: before the main loft'); return kx.mainD || (kx.mainD = kitDecal(kx, kx.mainS, kx.mainR)); };   // (the main loft's decals, as its own L.decal: the garage's stripes and decals, js/deli/barve.js)
     K.deli = (id, stock, around) => { const n = kx.deli && kx.deli[id], m = M.def && M.def.mounts && M.def.mounts[id]; let ok = false;
       if (n && m && typeof DELI !== 'undefined') kx.scope('dl', id, () => { ok = DELI.build(K, id, n, m, M); });   // (its triangles tagged: Render.deliMesh)
-      if (!ok) stock();
+      if (!ok) { const v0 = g.n; stock(); if (m && g.n === v0 && typeof DELI !== 'undefined' && DELI.stock) DELI.stock(K, id, m, M); }   // (the vehicle's own stock part, or the common one in the option's place: js/deli/skriti.js)
       if (around) kx.scope('dl', ok ? id + '+' : kx.dl || '', () => around(ok ? n : 0));   // (the car's own housing round it, drawn after the option fitted (0: stock); with an option, part of it: id + '+')
       return ok ? n : 0; };
     K.hinge = (part, a, b) => { kx.partOk(part); if (![a, b].every(p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite))) kitFail('hinge: two points [x, y, z]'); kx.hinges[part] = [[a[0] * sx, a[1], a[2] * sz], [b[0] * sx, b[1], b[2] * sz]]; };
@@ -1802,6 +1803,10 @@ const Render = (function () {
       else kx.regions = kitRegionsIn(kx, r);
       return kitRegionsOut(kx, kx.regions);
     };
+    // the bonnet one whole panel: the shoulders beside the lid (the nose's 'window' band, the fenders' by the standard list) go with the hood,
+    // over the hood's own length, whatever the regions are now (the look's own kept: the new region goes in just before the fenders)
+    K.hoodWhole = () => { const R = kx.regions, h = R.find(r => r.part === 'hood'), i = R.findIndex(r => r.part === 'fenderL' || r.part === 'fenderR');
+      if (h && i >= 0) kx.regions = R.slice(0, i).concat([{ part: 'hood', x: h.x.slice(), bands: ['window'], top: true }], R.slice(i)); };
     // sections and the loft
     K.secs = (table) => { kitRowsOk(table, 'secs'); return table.map(kitRow); };
     K.loft = (secs, col, o) => { const S = secs && secs.length && Array.isArray(secs[0]) ? K.secs(secs) : secs;
@@ -1947,6 +1952,7 @@ const Render = (function () {
       kx.prim(x, y + h / 2, z, () => { World.box(g, x, y, z, l, h * 0.72, w, 0, col); World.box(g, x, y + h * 0.72, z, l * 0.86, h * 0.16, w * 0.62, 0, o.cover || [0.6, 0.12, 0.1]);
         tubeX(g, x + l * 0.3, x - l * 0.2, y + h * 0.95, z + w * 0.18, h * 0.18, 8, [0.12, 0.12, 0.13], [0.3, 0.3, 0.32]); }, Object.assign({ part: kx.ex ? null : 'body' }, o, { inner }));
       kx.engineAt = [x, y + h];
+      if (!(M.def && M.def.mounts && M.def.mounts.filter_zraka) && !o.bare && typeof DELI !== 'undefined' && DELI.stockBay) DELI.stockBay(K, x, y, z, l, w, h, M);   // (no mounts: the stock filter, battery and control box beside the block)
     };
     K.cage = (bars, r, col, o) => {   // a roll cage (or a buggy's frame): bars [[a, b], ...] of radius r
       o = o || {}; if (!Array.isArray(bars) || !bars.length) kitFail('cage: a list of bars [[a, b] ...]');
@@ -2047,7 +2053,7 @@ const Render = (function () {
     for (let i = 0; i < outerN; i++) if (Cl[i * 3] === KIT_LINE[0] && Cl[i * 3 + 1] === KIT_LINE[1] && Cl[i * 3 + 2] === KIT_LINE[2]) ain[i] = 128;
     geo.setAttribute('aIn', new THREE.BufferAttribute(ain, 1, true));
     geo.computeBoundingSphere(); geo.computeBoundingBox(); geo.setDrawRange(0, outerN);
-    const B = Object.assign(kx.hi ? { outer: 2400, inner: 1200 } : kitBudget(kx.M), kx.look && kx.look[kx.hi ? 'budgetHi' : 'budget'] || {}), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };   // (Visoki: the big vehicles' budget; look.budget / budgetHi: a vehicle's own)
+    const B = Object.assign(kx.hi ? { outer: 2400, inner: 1500 } : kitBudget(kx.M), kx.look && kx.look[kx.hi ? 'budgetHi' : 'budget'] || {}), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };   // (Visoki: the big vehicles' budget; look.budget / budgetHi: a vehicle's own)
     // the lining's twins: each inner vertex's outer vertex (the shell's point it is inset from; -1: none: the cabin, the floor, the engine)
     const twin = new Int32Array(total - outerN).fill(-1), kM = (x, y, z) => Math.round(x * 1e5) + ',' + Math.round(y * 1e5) + ',' + Math.round(z * 1e5);
     if (kx.twins.size && total > outerN) { const idx = new Map(); for (let i = 0; i < outerN; i++) { const k = kM(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!idx.has(k)) idx.set(k, i); }
@@ -7160,7 +7166,7 @@ const Render = (function () {
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
       if (!v.xOn && !v.rep && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
-        xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
+        xEngine(v, c); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear quarter never opens: the user's, 24. 11. 2026)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
@@ -7341,7 +7347,7 @@ const Render = (function () {
      Render only, from the core's state (c.dz, c.cd, c.lost, c.lightOut, c.winOut, c.wreck.wl / fix), the same each time it is drawn:
      - loose: a part whose zone has taken 60 % of what knocks it off (dz >= 0.6 th) turns once about its hinge (K.part opts.hinge,
        K.hinge; else one from its range's box: KIT_LOOSE): a bonnet pops 18 degrees open, a boot lid or a tailgate 30, a door hangs 28 ajar,
-       a fender or a quarter stands 12 out, a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, a deflector tilts 14 up;
+       a fender stands 12 out (a quarter never opens: kitLoosen), a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, a deflector tilts 14 up;
        the inner block shows from then on (the gap it opens is not a hole into nothing)
      - lost (c.lost): its live ranges (dented, scraped, loose, frosted) are copied into a geometry of its own (car space: v.loose[name],
        waiting for the core's piece of that car and part: syncDebris), then collapsed to one point inside the car (v.kit.deadV: dents and the
@@ -7355,8 +7361,8 @@ const Render = (function () {
        (emitFx); the marshals' refit (c.wreck.fix changes) puts them back (kitRefit); a pit repair undoes it all bit by bit (repairStep),
        then builds the car afresh
      Its random numbers: the renderer's own (rRnd). */
-  const KIT_LOOSE = { hood: ['lid', 18], trunk: ['lid', 30], tailgate: ['lid', 30], cover: ['lid', 20], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 28], doorR: ['door', 28],
-    fenderL: ['side', 12], fenderR: ['side', 12], quarterL: ['side', 12], quarterR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
+  const KIT_LOOSE = { hood: ['lid', 55], trunk: ['lid', 70], tailgate: ['lid', 70], cover: ['lid', 55], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 62], doorR: ['door', 62],   // (a loose bonnet, boot lid, door: wide open, as on the showroom's stills of the open car, carShot's o.open)
+    fenderL: ['side', 12], fenderR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
   const KIT_WHEEL = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
   function kitParts(v, c, x, y, z, h) {
     const K = v.kit, U = v.body.geometry.userData, PT = Core.partsOf(c.m), W = c.wreck;
@@ -7432,6 +7438,7 @@ const Render = (function () {
   }
   // the loose stage: part `name` turned once about its hinge (both its ranges, the points and their normals); what lies on it turns with it
   function kitLoosen(v, c, name, deg) {
+    if (/^quarter/.test(name)) return;   // (the rear quarter, the panel behind the doors by the rear wheel, never opens, however wrecked the car: the user's, 24. 11. 2026; the bonnet, the boot and the doors do)
     const K = v.kit, geo = v.body.geometry, R = geo.userData.ranges[name], pa = geo.attributes.position.array, na = geo.attributes.normal.array, M = c.m;
     K.ajar[name] = 1; K.ver++; if (!R || R.o[1] <= R.o[0]) return;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, z0 = 1e9, z1 = -1e9; const cen = [0, 0, 0], N = [0, 0, 0], no = R.o[1] - R.o[0];
@@ -7465,7 +7472,7 @@ const Render = (function () {
     const pref = (kind === 'lid' ? [Nn, [0, 1, 0]] : kind === 'door' || kind === 'side' ? [out, Nn] : kind === 'bumper' || kind === 'drop' ? [end, down] : [down, out, Nn]).filter(Boolean);
     let sg = 1; for (const Q of pref) { const d = m[0] * Q[0] + m[1] * Q[1] + m[2] * Q[2]; if (Math.abs(d) > 0.2 * ml) { sg = Math.sign(d); break; } }
     // how far: the table's angle; a bumper's free end 16 cm, a wing's 12 cm (a short one at most 30 / 17 degrees)
-    let th = (deg != null ? deg : XC.body && kind === 'door' ? 62 : T[1]) * Math.PI / 180;   // (Razbijanje · nov način: a loose door swung wide open; deg: the Kolibri's table, a spoiler hanging)
+    let th = (deg != null ? deg : T[1]) * Math.PI / 180;   // (deg: the Kolibri's table, a spoiler hanging, carShot's o.open)
     if (kind === 'bumper' || kind === 'wing') th = Math.asin(Math.min(kind === 'wing' ? 0.3 : 0.5, (kind === 'wing' ? 0.12 : 0.16) / Math.max(0.05, rm)));
     else if (XC.body && kind === 'drop' && deg == null) th = Math.min(th, Math.asin(Math.min(0.5, 0.12 / Math.max(0.05, rm))));   // (Razbijanje · nov način: a long part at an end (a roof rack) drops its free end 12 cm at most, never through the roof)
     th *= sg;
@@ -8666,27 +8673,6 @@ const Render = (function () {
         torn++; } }
     }
     if (torn) { v.body.geometry.attributes.position.needsUpdate = true; K.xTorn = true; K.ver++; }
-  }
-  // a rear door (the new mode): the quarter's panel from the front door's rear edge to the rear wheel's arch, above the sill, turned out
-  // about its front edge 40 degrees, once (with that side's door open); the lining shows behind it
-  function xRearDoor(v, c, sd, x, y, z, h) {
-    const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return; (K.xRD || (K.xRD = [0, 0]))[si] = 1;
-    const qn = sd < 0 ? 'quarterL' : 'quarterR', g = v.body.geometry, U = g.userData, R = U.ranges[qn], D = U.ranges[sd < 0 ? 'doorL' : 'doorR'];
-    if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0]) return;
-    const pa = g.attributes.position.array, na = g.attributes.normal.array, rest = (v.xc && v.xc.rest) || pa, M = c.m;
-    let hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]);
-    const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.3)) return;
-    const sel = [], dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let hz = 0;
-    for (const Q of [R.o, R.i]) { if (!Q) continue; for (let t = Q[0] / 3; t < Q[1] / 3; t++) { const o = t * 9; if (dv[t * 3]) continue;
-      const cx = (rest[o] + rest[o + 3] + rest[o + 6]) / 3, cy = (rest[o + 1] + rest[o + 4] + rest[o + 7]) / 3, cz = (rest[o + 2] + rest[o + 5] + rest[o + 8]) / 3;
-      if (cx > hx || cx < x1 || cy < ySill || cz * sd <= 0) continue; sel.push(t); hz = Math.max(hz, Math.abs(cz)); } }
-    if (!sel.length) return;
-    if (XC.glass && v.glassTris) { if (v.xt) { xtGlass(v, c, sd < 0 ? 'QL' : 'QR', 1, x, y, z, h, null); xtFlush(v); }   // (a table car's: its rear window 100 %, drawn now, before it turns)
-      else for (const P of xPanes(v)) if (!P.broken && P.side === sd && P.cx < hx && P.cx > x1 - 0.3) xBreakPane(v, P, c, x, y, z, h, null); }   // (its window breaks as it opens: turned with it after, it could not be broken any more)
-    const phi = sd * 40 * Math.PI / 180, cs = Math.cos(phi), sn = Math.sin(phi), Z = hz * sd;
-    for (const t of sel) for (let q = 0; q < 3; q++) { const i = t * 3 + q, dx = pa[i * 3] - hx, dz = pa[i * 3 + 2] - Z, nx = na[i * 3], nz = na[i * 3 + 2];
-      pa[i * 3] = hx + dx * cs + dz * sn; pa[i * 3 + 2] = Z - dx * sn + dz * cs; na[i * 3] = nx * cs + nz * sn; na[i * 3 + 2] = -nx * sn + nz * cs; dv[i] = 1; }
-    g.attributes.position.needsUpdate = true; g.attributes.normal.needsUpdate = true; K.xOpen = true; K.ver++;
   }
   // a car rolling over (the core's c.rl: Core.xRollStart): turned about its long axis round its middle, its full turns eased in and out (the
   // core lifts it in its arc); its contact shadow hidden; where its roof meets the road, dust and sparks
@@ -10983,6 +10969,14 @@ const Render = (function () {
     if (o.cut && M.kit) { const E = kitEntry(M, false, o.deli), g2 = kitRecolour(E.geo.clone(), o.color != null ? o.color : 0xc0392b, true, o.num || 7), U = g2.userData, pa = g2.attributes.position.array;
       for (const n of o.cut) { const R = U.ranges[n]; if (!R) continue; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++) { pa[i * 3] = pa[a * 3]; pa[i * 3 + 1] = pa[a * 3 + 1]; pa[i * 3 + 2] = pa[a * 3 + 2]; } }
       g2.setDrawRange(0, U.N); geo0 = car.body.geometry; car.body.geometry = g2; }
+    if (o.open && M.kit && car.kit) {   // o.open: { part: degrees } (true: every door, the bonnet, the boot wide open) on the whole car: a still of how its parts open; the show car built again after
+      const g2 = car.body.geometry.clone(); g2.userData = car.body.geometry.userData; car.body.geometry = g2;   // (a copy of its own: the showroom's kept body stays whole; ranges, lamps: read only)
+      if (car.tail && car.tail.geometry) { const t2 = car.tail.geometry.clone(); t2.userData = car.tail.geometry.userData; car.tail.geometry = t2; }
+      const U = g2.userData, fk = { m: M, cd: [0, 0, 0, 0], dz: [] }, O = o.open === true ? {} : o.open; g2.setDrawRange(0, U.N);   // (the whole buffer: the lining, the cabin, the engine bay)
+      if (o.open === true) for (const n in U.ranges) if (/^(hood|trunk|tailgate|cover|door)/.test(n)) O[n] = KIT_LOOSE[n] ? KIT_LOOSE[n][1] : /^door/.test(n) ? 62 : 70;   // (the race's loose angles; a further door, a boot's second leaf: as its kind)
+      if (!car.glassTris) car.glassTris = [0, 0, 0, 0]; if (!car.winBroken) car.winBroken = [0, 0, 0, 0];
+      for (const n in O) if (U.ranges[n] && !car.kit.ajar[n]) kitLoosen(car, fk, n, O[n]);
+      car.opened = true; }
     let gh = null;   // o.ghost: [id, n] the garage's part alone, whole and solid, on the car drawn see-through (a hidden part under the bonnet, in a wheel arch)
     if (o.ghost && M.kit) { const part = deliMesh(M, o.ghost[0], o.ghost[1], o.color != null ? o.color : 0xc0392b); gh = { part, mats: [] };
       car.grp.traverse(m => { if (!m.isMesh || !m.material || m === car.blob) return; gh.mats.push([m, m.material]); const c = m.material.clone(); c.transparent = true; c.opacity = 0.16; c.depthWrite = false; m.material = c; });
@@ -11026,6 +11020,7 @@ const Render = (function () {
     if (solo) { car.rigG.visible = true; car.cx = cx0; }
     showCam.fov = fov0; showCam.up.copy(up0); showCam.updateProjectionMatrix(); showFloor.visible = true; showTurn(showAngle);
     if (geo0) { car.body.geometry.dispose(); car.body.geometry = geo0; }
+    if (car.opened) { const A = showArgs, g2 = car.body.geometry, t2 = car.tail && car.tail.geometry; setShowCar(A[0], A[1], A[2], A[3]); g2.dispose(); if (t2) t2.dispose(); }
     if (gh) { for (const [m, mat] of gh.mats) { m.material.dispose(); m.material = mat; } if (gh.part) { car.bodyG.remove(gh.part); gh.part.traverse(m => { if (m.geometry) m.geometry.dispose(); }); } }
     resize();
     return out;

@@ -23,10 +23,10 @@
     rows: [{ k: 'organ', label: 'ORGAN', bar: true }, { k: 'esc', label: 'SPREMSTVO', bar: true, col: '#4a8cff' }, { k: 'hosp', label: 'BOLNIŠNICA' }],
     // alone with the escort ahead on the open road, in the traffic (cars and trucks), dry, at night
     opts: () => ({ tt: false, numAI: 1, playerGrid: 2, traffic: true, tfCars: [0.62, 0.2, 0, 0, 0.18], playerColor: 0xc8202a }),
-    // the rival of the duel becomes the escort: a patrol car (VORTEX, white) in its place, with its lights and siren
+    // the rival of the duel becomes the escort: a patrol car (the service sedan, white) in its place, with its lights and siren
     made(race) {
       const k = race.cars.findIndex(c => !c.isPlayer); if (k < 0) return;
-      const o = race.cars[k], M = Core.MODELS.find(m => m.id === 'vortex');
+      const o = race.cars[k], M = Core.SLUZBENI;   // (the plain service sedan)
       const c = new Core.Car(M, { id: o.id, name: 'POLICIJA', color: 0xf2f4f6, skill: 1.05, assist: Core.CSK.aiAssist, phys: race.opts.phys });
       c.place(o.x, o.z, o.h); c.y = c.py = o.y; c.roadY = o.roadY; c.q = o.q; c.sPrev = o.sPrev; c.dist = o.dist; c.grid = o.grid; c.num = 0; c.dmgMode = 0; c.locked = o.locked; c.laneBias = 0;
       c.police = true; c.pol = { mode: 'chase', kind: 'car', t: 0 }; c.skCap = ESC_PACE; c.rubber = 1;

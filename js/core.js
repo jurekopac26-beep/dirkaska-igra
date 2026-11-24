@@ -1966,6 +1966,14 @@ const Core = (function () {
   }
   // vehicle categories (CATS, in display order: car screen, garage, championship, online; within one: career price, then id). The 11
   // vehicles above get theirs here; every registered vehicle (js/cars/<id>.js, see registerVehicles) names its own
+  // The four first road cars (KAZE RS, VORTEX 4WD, PICO TURBO, STREGA MR: the user's, 21. 11.) are retired the same way: in no menu, garage or
+  // picker; a stored one loads as its heir (the registered vehicle nearest to it in drive, size and price), which is also what the renderer
+  // draws and what every list names. The rivals of a vehicle without a field of its own (aiModel) drive the heirs themselves. SLUZBENI: the plain service sedan (the police's car, the safety car), a
+  // copy of the retired sedan that is not retired (its own look, its physics by its id as always)
+  const SLUZBENI = Object.assign({}, MODELS[1], { name: 'SLUŽBENI AVTO' });
+  for (const [id, heir, name] of [['kaze', 'sokol', 'SOKOL R'], ['vortex', 'ris', 'RIS G'], ['pico', 'levs', 'LEV S'], ['strega', 'panter', 'PANTER 6']]) {
+    const M = MODELS.find(m => m.id === id); M.retired = true; M.heir = heir; M.name = name; M.desc = 'Upokojen model: nadomešča ga ' + name;
+  }
   const CATS = [
     { id: 'mali', name: 'Mali avti' }, { id: 'sportni', name: 'Športni' }, { id: 'super', name: 'Superšportni' }, { id: 'klasika', name: 'Klasika' },
     { id: 'reli', name: 'Reli' }, { id: 'teren', name: 'Terenski' }, { id: 'dirkalni', name: 'Dirkalni' }, { id: 'tovornjaki', name: 'Tovornjaki' },
@@ -6027,9 +6035,9 @@ const Core = (function () {
   // road behind them; a car over a log is jolted and slowed (a patrol car's tyres burst). Everything by the game's difficulty: POL_DIFF.
   const POL_UPG = { motor: 3, gume: 2, zavore: 2, aero: 1 };
   // the police's motorbike (a Car narrow and light, drawn on two wheels) and van (long and heavy; it only ever stands across the road)
-  const POL_MOTO = Object.assign({}, MODELS[3], { id: 'polmoto', name: 'POLICIJA', drive: 'MR', mass: 340, a: 0.7, b: 0.74, hcg: 0.6, kI: 0.78, kw: 110, redline: 10500, idle: 1300,
+  const POL_MOTO = Object.assign({}, MODELS[3], { retired: false, heir: null, id: 'polmoto', name: 'POLICIJA', drive: 'MR', mass: 340, a: 0.7, b: 0.74, hcg: 0.6, kI: 0.78, kw: 110, redline: 10500, idle: 1300,
     gears: [2.9, 2.1, 1.66, 1.38, 1.18, 1.04], final: 3.6, rw: 0.3, gripF: 1.12, gripR: 1.16, cDrag: 0.32, down: 0.08, brake: 12.5, steerMax: 0.66, driftLoss: 0.3, len: 2.2, wid: 0.8, body: 'moto', stats: null });
-  const POL_VAN = Object.assign({}, MODELS[1], { id: 'polvan', name: 'POLICIJA', drive: 'FF', mass: 2600, a: 1.55, b: 1.75, hcg: 0.8, kI: 1.4, kw: 120, len: 5.3, wid: 2.0, body: 'van', stats: null });
+  const POL_VAN = Object.assign({}, SLUZBENI, { id: 'polvan', name: 'POLICIJA', drive: 'FF', mass: 2600, a: 1.55, b: 1.75, hcg: 0.8, kI: 1.4, kw: 120, len: 5.3, wid: 2.0, body: 'van', stats: null });
   for (const M of [POL_MOTO, POL_VAN]) M.Tmax = M.kw * 1000 / (M.redline * TAU / 60 * tqShape(1.0));
   ARC.polmoto = { amax: 1.9, kv: 2.4, bscale: 0.8, rmin: 3.2 }; ARC.polvan = { amax: 1.5, kv: 1.8, bscale: 0.8, rmin: 6 };
   CSP.polmoto = { bx: 0.1, coast: -0.08, thr: -0.02, liftP: 0, pwr: 0.02, out: 0.9, turn: 1.2, w: 1.12 };
@@ -6109,7 +6117,7 @@ const Core = (function () {
     // 'civil' (the unmarked car); off `delay` s after the start; kind 'car' (a VORTEX), 'moto', 'van' or 'uc' (the unmarked car, dark)
     _car(s, d, rot, mode, delay, kind) {
       const T = this.T, race = this.race, i = T.idx(s), o = race.opts, K = kind || 'car', moto = K === 'moto', van = K === 'van';
-      const M = moto ? POL_MOTO : van ? POL_VAN : MODELS.find(m => m.id === 'vortex');
+      const M = moto ? POL_MOTO : van ? POL_VAN : SLUZBENI;
       const c = new Car(M, { id: 100 + (++this.nid), name: 'POLICIJA', color: K === 'uc' ? 0x22262d : 0xf2f4f6, skill: moto ? 1.08 : 1.05, assist: CSK.aiAssist, phys: o.phys, upg: van ? null : POL_UPG });
       c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i] + rot); if (T.hasElev) { c.y = c.py = T.hy[i]; c.roadY = c.y; }
       c.police = true; c.pol = { mode, kind: K, t: 0, delay: delay || 0, spike: null, unit: van ? 0 : ++this.unit, side: this.R() < 0.5 ? -1 : 1, v0: 0, hitP: -1 };
@@ -6831,8 +6839,8 @@ const Core = (function () {
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them).
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
   // one with a glb player-only skin and no render look of its own for the AI's cars (def.look);
-  // a field left empty: none), driver k in field[k % n]; without a vehicle or a field, the four road cars in turn (MODELS[(k * 3 + 1) % 4],
-  // the same objects as always). A big vehicle (pm.fieldN) in a race of more rivals than that (n, the race's AI count) with a fill
+  // a field left empty: none), driver k in field[k % n]; without a vehicle or a field, the heirs of the four first road cars in turn
+  // (rivalOf(heirOf(MODELS[(k * 3 + 1) % 4])): SOKOL R, OSA R in the RIS G's place, LEV S, PANTER 6). A big vehicle (pm.fieldN) in a race of more rivals than that (n, the race's AI count) with a fill
   // (pm.fill: ids of quicker-drawn cars of about its pace, the same rule as the field's): its own fieldN spread evenly through the n
   // (driver k one of them when k x fieldN mod n < fieldN: the first, and every n / fieldN after it), the others the fill's cars in turn
   const aiBody = (M) => !M.glb || !!(M.def && M.def.look);
@@ -6842,8 +6850,11 @@ const Core = (function () {
     return L.length ? L : null;
   }
   const fieldOf = (pm) => pm ? modelsOf(pm.field) : null;
+  // (among the four the RIS G is not a rival: the OSA R drives in its place: the user's, 24. 11. 2026; the player's own heir of the
+  // VORTEX stays the RIS G, heirOf)
+  const rivalOf = (M) => M && M.id === 'ris' ? (MODELS.find(m => m.id === 'osa' && !m.retired) || M) : M;
   function aiModel(k, pm, n) {
-    const F = fieldOf(pm); if (!F) return MODELS[(k * 3 + 1) % 4];
+    const F = fieldOf(pm); if (!F) return rivalOf(heirOf(MODELS[(k * 3 + 1) % 4]));
     const L = modelsOf(pm.fill), h = pm.fieldN; if (!L || !h || !(n > h)) return F[k % F.length];
     const j = Math.floor(k * h / n);   // (its own cars before driver k)
     return (k * h) % n < h ? F[j % F.length] : L[(k - j - 1) % L.length];
@@ -8340,7 +8351,7 @@ const Core = (function () {
       const at = R && (R.pit ? !!(lead.inPit || lead.pitG) : (((R.H - lead.q.s) % T.len) + T.len) % T.len < 60);   // (the leader at the queue's head: else, the queue not formed in time, ahead of it as any time)
       if (at) s0 = R.pit ? T.startS + T.pitJ().b + 15 : R.H + 25;
       else for (let k = 0; k < 13; k++, s0 += 20) { const i = T.idx(s0); let clear = true; for (const c of this.cars) { const dx = c.x - T.px[i], dz = c.z - T.pz[i]; if (dx * dx + dz * dz < 30 * 30) { clear = false; break; } } if (clear) break; }
-      const i = T.idx(s0), off = T.rl[i], X = new Car(MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, skill: 1, assist: CSK.aiAssist, phys: this.opts.phys, laneBias: 0 });
+      const i = T.idx(s0), off = T.rl[i], X = new Car(SLUZBENI, { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, skill: 1, assist: CSK.aiAssist, phys: this.opts.phys, laneBias: 0 });
       X.sc = true; X.num = 0; X.grid = 0; X.rubber = 1; X.dmgMode = 0; X.locked = false;
       X.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) X.y = X.py = T.hy[i];
       X.q = T.query(X.x, X.z, i, X.q); X.sPrev = X.q.s;
@@ -9127,7 +9138,7 @@ const Core = (function () {
      parts are free)
      --------------------------------------------------------------------- */
   const CAREER = {
-    start: 10000, car0: 'pico',
+    start: 10000, car0: 'levs',
     car: { pico: 48000, p206: 36000, kaze: 62000, muscle: 68000, strega: 95000, vortex: 78000, truck: 350000, rally: 400000, ev: 160000, formula: 650000, lm: 600000,
       miska: 35000, kolibri: 12000, raketa: 22000, levs: 36000, levk: 40000, lisica: 18000, sokol: 65000, panter: 125000, jelen: 280000, modras: 260000, perun: 500000,
       skorpijon: 1400000, jastreb: 130000, gad: 190000, blisk: 450000, lev: 800000, zmaj: 1200000, hrosc: 28000, medved: 190000, gozdar: 300000, pescenjak: 500000,
@@ -9347,7 +9358,7 @@ const Core = (function () {
 
   return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, dressOnly, lookWire, lookRead, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, SLUZBENI, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };
 })();
 

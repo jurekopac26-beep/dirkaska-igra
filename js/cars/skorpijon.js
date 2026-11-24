@@ -130,6 +130,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the shell: carbon under it all round (the sills, under the nose and the tail), the arches' ledges black; the shoulders (the window
         //      band) painted, the canopy over them: the windscreen wrapping round, the side glass in the door, the carbon roof and C-pillars, the
         //      rear glass; the intakes' mouths black ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           const x = at.x;
           if (e === 0 || e === 8) return at.arch ? B : CF;

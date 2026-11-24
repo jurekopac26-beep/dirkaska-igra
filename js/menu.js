@@ -129,7 +129,7 @@
   // the track the game stands on; a hidden one only behind NEUPORABNO (else the first real track: a new player's, js/game.js firstTrackId)
   const gameTrack = () => { const c = trackById(G.baseId(G.S.track)); return c && (!hidden(c) || nuOn) ? c : TR.find(t => !hidden(t) && inMode(t)) || TR.find(t => !hidden(t)) || TR[0]; };   // (the mode's first real one)
   const carImg = (m, ci) => 'assets/cars/img/' + m.id + '-' + ci + '.webp';
-  const HAS_CAR_IMG = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'formula'];
+  const HAS_CAR_IMG = ['rally', 'formula'];
   const shownId = (t) => t.id === 'pikes' && G.S.pkRoad === 'pikesg' ? 'pikesg' : t.id;
   const trackImg = (t, wet) => 'assets/tracks/' + shownId(t) + (wet ? '-rain' : '') + '.webp';
   const dio = (t) => '<div class="dio"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms">' +

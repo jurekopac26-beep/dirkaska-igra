@@ -114,7 +114,7 @@ check('the racing cars and trucks on circuits', ['dirkalni', 'tovornjaki'].every
 
 /* ---- the save: v1 to v2 (kariera-6) ---- */
 {
-  const v1 = { v: 1, on: true, money: 123450, cars: ['pico', 'rally'], upg: { pico: { engine: 2 } }, earned: 400000, races: 30, wins: 12, rival: 'x', rent: null, garage: { cars: ['pico'] } };
+  const v1 = { v: 1, on: true, money: 123450, cars: ['levs', 'rally'], upg: { levs: { engine: 2 } }, earned: 400000, races: 30, wins: 12, rival: 'x', rent: null, garage: { cars: ['levs'] } };
   const copy = JSON.parse(JSON.stringify(v1)), v2 = K.migrate(v1);
   check('v1 to v2: every old field kept', v2.v === 2 && ['on', 'money', 'cars', 'upg', 'earned', 'races', 'wins', 'rival', 'rent', 'garage'].every(k => JSON.stringify(v2[k]) === JSON.stringify(v1[k])));
   check('v1 to v2: the path starts in stage 1', v2.pot && v2.pot.stopnja === 1 && !Object.keys(v2.pot.pokali).length && Array.isArray(v2.pot.prve));
@@ -154,7 +154,7 @@ check('the racing cars and trucks on circuits', ['dirkalni', 'tovornjaki'].every
   check('a duel lost: no star, nothing paid, the event not won', !duel.nagrade.length && duel.zvezdice.zdaj === 0
     && K.stanje(duel.career.pot, P.vse.find(x => x.id === d1.id), P).stanje !== 'osvojen');
   check('the career passed in is not changed', c.pot.stopnja === 1 && !Object.keys(c.pot.pokali).length);
-  const ev = { track: 'kildare', pos: 1, car: 'pico', cat: 'mali', km: 12 };
+  const ev = { track: 'kildare', pos: 1, car: 'levs', cat: 'mali', km: 12 };
   let d = K.poDirki(K.novo(), ev, P);
   check('the first win on a track: once, and the class win goal', d.nagrade.some(x => x.id === 'prva:kildare' && x.amount === K.NAGRADE.prva[1]) && d.nagrade.some(x => x.id === 'cilj:mali-zmaga'));
   const d2 = K.poDirki(d.career, ev, P);

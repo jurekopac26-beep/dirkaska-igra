@@ -81,7 +81,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // doors (inside their shut lines, the sill to the belt; the flush handle, over the door's skin; the glass from the B-pillar, its front
       // edge straight up to the A-pillar's black: a corner of fixed glass before it; its frame along the roof's edge), the brakes, the nuts
       ogledala: { x: 0.95, y: 1.02, z: 0.955, w: 0.08, h: 0.085, d: 0.15, fwd: 0, up: 0.02 },
-      vrata: { x: [-0.336, 0.886], y: [0.32, 0.955], handle: [-0.2, 0.86, 0.896, 0.2, 0.032], win: [[-0.33, 0.07], [0.86, 0.07], [0.4, 0.86], [-0.33, 0.9]], frame: [-0.34, -0.31, 0.86, 0.97] },
+      vrata: { x: [-0.166, 0.886], y: [0.32, 0.955], handle: [-0.03, 0.86, 0.896, 0.2, 0.032], win: [[-0.16, 0.07], [0.86, 0.07], [0.4, 0.86], [-0.16, 0.9]], frame: [-0.17, -0.14, 0.86, 0.97] },
       zavore: { s: 1 },
       matice: { k: 4, r: 0.2 },
 
@@ -115,7 +115,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [-1.72, 0.885, 0.22, 0.98, 0.62, 1.27, 0.09, 'r', 0.1],        // the roof's back edge (the spoiler over it): the roof falls into it
           [-1.56, 0.89, 0.21, 0.977, 0.65, 1.35, 0.11, 'r', 0.1],
           [-1.465, 0.89, 0.21, 0.975, 0.7, 1.385, 0.1, 'r', 0.1],        // the glass roof's back end (the rear arch's cut there too)
-          [-0.34, 0.89, 0.21, 0.965, 0.71, 1.415, 0.085, 'r', 0.1],      // the doors' rear edge, the B-pillar
+          [-0.17, 0.89, 0.21, 0.965, 0.71, 1.415, 0.085, 'r', 0.1],      // the doors' rear edge, the B-pillar
           [0.2, 0.885, 0.21, 0.958, 0.71, 1.408, 0.083, 'r', 0.1],       // the glass roof's front end
           [0.4, 0.885, 0.21, 0.955, 0.7, 1.395, 0.08, 'gf', 0.1],        // the windscreen's top
           [1.075, 0.89, 0.21, 0.94, 0.8, 0.97, 0.045, 'b', 0.1],         // its base (the cowl, over the front wheel), the bonnet's back edge
@@ -124,7 +124,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [1.94, 0.78, 0.28, 0.765, 0.69, 0.8, 0.025, 'b', 0.115],
           [1.98, 0.69, 0.3, 0.725, 0.6, 0.745, 0.015, 'b', 0.12]],       // the nose: the fascia's face
         eye: { x: -0.12, y: 1.27 },
-        door: [0.89, -0.34], bumpF: 0.28, bumpR: 0.25, bumpY: [0.745, 0.55],
+        door: [0.89, -0.17], bumpF: 0.28, bumpR: 0.25, bumpY: [0.745, 0.55],
       },
       wheels: { style: 'std', spokes: 0, w: 0.205, rimK: 0.7, rim: [0.74, 0.75, 0.78], cap: [0.12, 0.78, 0.95], gap: 0.06 },
       regions: (std) => std.map(r => r.part === 'trunk' ? Object.assign({}, r, { bands: ['edge', 'crown'] }) : r),   // (the tailgate: its glass and its lower panel; the rear pillars stay on the body)
@@ -146,7 +146,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the A- and B-pillars black (the glass a dark band under the roof's cap): the A-pillar along the windscreen's edge (two pieces: about
         // 6 cm deep down to the mirror's black sail), the B-pillar at the doors' rear edge; the C-pillar's slanted front edge; the shut lines
         D.band([[0.4, 0.857], [0.7, 0.757], [0.7, 1], [0.4, 1]], B, null, 0.008); D.band([[0.7, 0.757], [0.89, 0.55], [0.89, 1], [0.7, 1]], B, null, 0.008);
-        D.band([[-0.43, 0], [-0.345, 0], [-0.345, 1], [-0.43, 1]], B, null, 0.008);
+        D.band([[-0.26, 0], [-0.175, 0], [-0.175, 1], [-0.26, 1]], B, null, 0.008);
         D.band([[XC, 0], [XC + 0.13, 1], [XC, 1]], P, null, 0.008);
         D.side([[-1.96, 0.79], [1.95, 0.79], [1.95, 0.8], [-1.96, 0.8]], K.shade(P, 0.72), null, 0.004);   // (the shoulder's crease, nose to tail)
         D.side([[0.874, 0.33], [0.886, 0.33], [0.886, 0.97], [0.874, 0.97]], B, null, 0.004);

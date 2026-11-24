@@ -81,6 +81,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, D = K.dark, G = K.GLASS, RED = K.rgb(0xd0141a), MESH = [0.05, 0.05, 0.055];
         // ---- the shell: the paint, the glass (windscreen, side windows, the small rear window), the tuck all round black (the skirts) ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return B;
           if (kind === 'gf') return e >= 2 && e <= 6 ? G : P;

@@ -3,7 +3,7 @@
 // car as new: the bodywork's points down to none off, the lost panels back one by one (some still off half-way), the panes' cracks off
 // early, the soot off with the bodywork, the lamps, a kit car's wheels with the crew's tyre men; the same view all through (nothing built
 // afresh), no more meshes drawn than the wreck or the car as new have; then Race.repairCar builds it afresh, whole. RAKETA (a kit vehicle)
-// and KAZE RS (one of the 11); Core.repairU 0 outside a repair.
+// and VIHAR V8 (one of the 11); Core.repairU 0 outside a repair.
 //   node tests/browser/repair.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -11,7 +11,7 @@ const T = checker('repair');
 const srv = await serve();
 const browser = await launch();
 const US = [0, 0.1, 0.3, 0.5, 0.65, 0.8, 0.95];
-// (the steps' rows go out as text, each made into text as soon as it is made: once on GitHub (4. 11. 2026, KAZE RS) the rows of u 0, 0.1,
+// (the steps' rows go out as text, each made into text as soon as it is made: once on GitHub (4. 11. 2026, VIHAR V8) the rows of u 0, 0.1,
 // 0.65 and 0.8 came back with the last row's fractional numbers (u 0.95, d, char, scr) and their own whole ones (the panels, the cracks,
 // the meshes of their u): the objects changed after they were made, by nothing in the test or the game (nothing else holds them), so
 // below the page's code (the browser's engine or the transfer of the result))
@@ -19,7 +19,7 @@ try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2 }, undefined, { seed: 777 });
   const ru = await page.evaluate(() => [Core.repairU({ pitState: 'stop', pitT: 1, pitDur: 2 }), Core.repairU({ pitState: 'repair', pitT: 1, pitDur: 2 }), Core.repairU({ pitState: 'repair', pitT: 3, pitDur: 2 }), Core.repairU({ pitState: 'done', pitT: 2, pitDur: 2 })]);
   T.check('Core.repairU: 0 outside a repair, pitT / pitDur (at most 1) in it', ru[0] === 0 && ru[1] === 0.5 && ru[2] === 1 && ru[3] === 0, JSON.stringify(ru));
-  for (const id of ['raketa', 'kaze']) {
+  for (const id of ['raketa', 'muscle']) {
     const S0 = await page.evaluate((id) => { const g = window.__game, s = g.S.car; g.S.car = Core.MODELS.findIndex(m => m.id === id); return s; }, id);
     await startTrack(page, 'gozd');
     const r = await page.evaluate((US) => {
@@ -48,7 +48,7 @@ try {
       return { kit, wreck, steps: steps.map(q => JSON.parse(q)), after };
     }, US);
     await page.evaluate((s) => { window.__game.S.car = s; }, S0);
-    const S = r.steps, at = (u) => S.find(q => q.u === u), name = id === 'raketa' ? 'RAKETA' : 'KAZE RS';
+    const S = r.steps, at = (u) => S.find(q => q.u === u), name = id === 'raketa' ? 'RAKETA' : 'VIHAR V8';
     console.log(`${name}: wreck ${JSON.stringify(r.wreck)}`);
     for (const q of S) console.log(`  u ${q.u}: ${JSON.stringify(q)}`);
     console.log(`  after: ${JSON.stringify(r.after)}`);

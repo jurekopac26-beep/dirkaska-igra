@@ -368,7 +368,7 @@ const darilaOk = (g) => { const want = []; for (let s = g.igral ? 2 : g.o0 + 1; 
   check('a path of no shape ([], "x", 5, null, true) or with parts of no shape: a new path', shapes.every(x => x === J(K.novaPot())), J(shapes));
   const vs = [{ v: '1' }, { v: '2' }, { v: 1.5 }, { v: null }, { v: true }, { v: -1 }, { money: 5 }].map(c => K.migrate(c));
   check('a save of another version (v "1", "2", 1.5, null, true, -1, none): null', vs.every(x => x === null), J(vs));
-  const once = K.migrate({ v: 2, on: true, money: 7, cars: ['pico'], pot: { stopnja: 2, pokali: { 's1-krog': 1 }, cilji: { 'mali-zmaga': true }, prve: ['kildare'], km: { mali: 12.5 } } });
+  const once = K.migrate({ v: 2, on: true, money: 7, cars: ['levs'], pot: { stopnja: 2, pokali: { 's1-krog': 1 }, cilji: { 'mali-zmaga': true }, prve: ['kildare'], km: { mali: 12.5 } } });
   check('a save through JSON and back, migrated again: the same', J(K.migrate(JSON.parse(J(once)))) === J(once) && J(K.migrate(K.migrate(once))) === J(once));
   const evil = K.migrate(JSON.parse('{"v":2,"pot":{"stopnja":2,"pokali":{"__proto__":{"polluted":1},"constructor":2,"s1-krog":1},"cilji":{"__proto__":{"polluted":1}},"km":{"__proto__":5},"prve":["__proto__"]}}'));
   check('»__proto__« and »constructor« in a saved path: nothing outside the save changed, the rest kept', ({}).polluted === undefined && evil.pot.pokali['s1-krog'] === 1 && K.view(evil, P, []).stopnja === 2);

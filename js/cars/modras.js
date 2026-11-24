@@ -136,6 +136,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.face(n[0] * nrm[0] + n[1] * nrm[1] + n[2] * nrm[2] < 0 ? pts.slice().reverse() : pts, col, o); };
         // ---- the shell: the paint; the tucks black (the sills, the bumpers' lips, the arches' ledges); the windscreen, the side windows and the
         //      rear window glass; the deck: the glass cover's slopes, its clear middle (the bay's dark under the glass), the black vent ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return B;
           if (kind === 'gf') return e === 1 || e === 7 ? P : G;

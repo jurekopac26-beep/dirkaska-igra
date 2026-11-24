@@ -1,8 +1,8 @@
 // The compound's band on the tyres (render.js tyreBand), in a race with compounds: Bathurst (tyres and compounds on, as on every track
 // with pits), the slicks for the start Mehke (Gume), for the stop Trde (Gume v boksih). Red soft, yellow medium, white hard
 // (Core.TYRE_CMP), blue the rain tyres. Damage off (no knock moves or scrapes a band's vertices on the way).
-//  - KAZE RS (one of the 11: its front wheels are meshes of their own, the rear ones are in the body) against the four road cars: every
-//    car's band in its own compound's colour, a ring of 12 segments on the outer wall of each rear wheel (144 vertices in the body, out
+//  - VIHAR V8 (one of the cars built whole: its front wheels are meshes of their own, the rear ones are in the body) against its field
+//    of kit cars: every car's band in its own compound's colour (a kit car's ring on its wheels); on the VIHAR a ring of 12 segments on the outer wall of each rear wheel (144 vertices in the body, out
 //    beside it) and on both walls of each front wheel's mesh (144 vertices), nothing else of the car in that colour there; no mesh more
 //    than without it (no draw call more)
 //  - the pit crew: the new set's band in the compound asked for (white), the old set's in the car's own (red); a wet line: the new set
@@ -40,7 +40,7 @@ const side = async (page, name) => {   // (and a close look at the player's left
 };
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', zoom: 1.1, cmp: 'S', pitCmp: 'H', radio: 0, damage: 0 }, { width: 640, height: 360 });
-  await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'kaze'); });
+  await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'muscle'); });
   await startTrack(page, 'bathurst');
   await page.evaluate(() => {
     const g = window.__game; g.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none';
@@ -66,12 +66,12 @@ try {
   const a = await page.evaluate(() => {
     const g = window.__game, R = g.race, P = R.player, tb = window.__tb; Render.frame(0, 1, P, 'chase', { noFx: true });
     const cars = R.cars.map(c => { const col = Core.TYRE_CMP[c.ty && c.ty.c] ? Core.TYRE_CMP[c.ty.c].col : null, s = col != null ? tb.stock(c, col) : null;
-      return { id: c.m.id, body: c.m.body, me: c.isPlayer, k: c.ty && c.ty.k, c: c.ty && c.ty.c, ok: !!s && s.band === col && s.body === 144 && s.wheels.length === 2 && s.wheels.every(n => n === 144), s }; });
+      return { id: c.m.id, body: c.m.body, me: c.isPlayer, k: c.ty && c.ty.k, c: c.ty && c.ty.c, kit: c.m.body !== 'muscle', ok: !!s && s.band === col && s.wheels.length === 2 && (c.m.body !== 'muscle' ? s.wheels.every(n => n > 0) : s.body === 144 && s.wheels.every(n => n === 144)), s }; });
     return { cars, cmp: [...new Set(R.cars.map(c => c.ty && c.ty.c))], wst: !!R.wst, pitCmp: P.pitCmp };
   });
   const bad = a.cars.filter(c => !c.ok);
   T.check('a race with compounds: every car on slicks of one (the player on Mehke), the slicks for the stop Trde', a.wst && a.cars.every(c => c.k === 'dry' && ['S', 'M', 'H'].includes(c.c)) && a.cars.find(c => c.me).c === 'S' && a.pitCmp === 'H', JSON.stringify({ cmp: a.cmp, pitCmp: a.pitCmp, me: a.cars.find(c => c.me) && a.cars.find(c => c.me).c }));
-  T.check('KAZE RS against the road cars: every car\'s band in its compound\'s colour, 12 segments on each rear wheel\'s outer wall (in the body) and on both walls of each front wheel', !bad.length && a.cars.every(c => ['coupe', 'sedan', 'hatch', 'wedge'].includes(c.body)),
+  T.check('VIHAR V8 against its field (kit cars): every car\'s band in its compound\'s colour; the VIHAR\'s 12 segments on each rear wheel\'s outer wall (in the body) and on both walls of each front wheel, a kit car\'s ring on its wheels', !bad.length && a.cars.find(c => c.me).body === 'muscle' && a.cars.some(c => c.kit),
     `${a.cars.length} cars, compounds ${a.cmp.join('')}` + (bad.length ? ' — ' + JSON.stringify(bad.slice(0, 3)) : ''));
   // ---- the crew: the new set white (Trde for the stop), the old one red; a wet line: the new set blue ----
   const cr = await page.evaluate(([H, S]) => {
@@ -145,7 +145,7 @@ try {
     !!kw && kw.keep === true && kw.ty === 'H' && kp.c === 'H' && kp.rep === 2 && kw.frontH.length === 2 && kw.frontH.every(n => n === 144) && kw.frontS.every(n => n === 0) && kw.bodyS === 0, JSON.stringify({ kw, c: kp.c, rep: kp.rep }));
   // ---- a car without tyres (no compounds): no band, the ring's 144 vertices fewer in its body and in each front wheel, the same meshes ----
   const n = await page.evaluate(() => {
-    const g = window.__game, R = g.race, tb = window.__tb, A = R.cars.find(c => !c.isPlayer && !c.inPit), col = Core.TYRE_CMP[A.ty.c].col, s0 = tb.stock(A, col);
+    const g = window.__game, R = g.race, tb = window.__tb, A = R.player, col = Core.TYRE_CMP[A.ty.c].col, s0 = tb.stock(A, col);
     A.ty = null; A.repairN = (A.repairN || 0) + 1; Render.frame(0, 1, R.player, 'chase', { noFx: true });
     const s1 = tb.stock(A, col), v = Render.viewOf(A);
     return { s0, s1, none: v.band === null, n: s0.n - s1.n, nw: s0.nw.map((q, i) => q - s1.nw[i]) };

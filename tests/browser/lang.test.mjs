@@ -1,7 +1,7 @@
 // The game in English (Nastavitve: Jezik · Language): every screen and the HUD show no Slovenian (no č, š, ž outside the names of
 // drivers and places, no Slovenian words), with the expected English on each (the title, the cars, the upgrades, the tracks, the
 // settings, the leaderboard, the championship, the career, a friend's race); a race on autopilot to the results; a vehicle of the fleet
-// (the MIŠKA): its category and description on the car screen; a car destroyed in a race (the KAZE RS: the banner, Retire, the pause,
+// (the MIŠKA): its category and description on the car screen; a car destroyed in a race (the VIHAR V8: the banner, Retire, the pause,
 // the results with Retired); then the switch in the settings back to Slovenian: the page and the title in Slovenian at once, and English
 // again.
 //   node tests/browser/lang.test.mjs
@@ -81,7 +81,7 @@ try {
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)
   const sr = await slovene();
-  T.check('career in English, the money as 10,000 🪙 (coins, no €); the garage under the categories (Small cars … Specials), the prices as 6,000 🪙', /^In the career you earn money/.test(r5.info) && /You start with 10,000\u00a0🪙 and the PICO TURBO\./.test(r5.info) && r5.money === '10,000\u00a0🪙' && r5.toggle === 'Start career' &&
+  T.check('career in English, the money as 10,000 🪙 (coins, no €); the garage under the categories (Small cars … Specials), the prices as 6,000 🪙', /^In the career you earn money/.test(r5.info) && /You start with 10,000\u00a0🪙 and the LEV S\./.test(r5.info) && r5.money === '10,000\u00a0🪙' && r5.toggle === 'Start career' &&
     r5.garage === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && /^\d+,\d{3}\u00a0🪙$/.test(r5.price || '') && !sr.length, JSON.stringify({ r5, sr }));
   await act('to-title'); await page.waitForTimeout(150); await act('to-online'); await page.waitForTimeout(250);
   const o5 = await page.evaluate(() => document.querySelector('#s-online').innerText);
@@ -114,17 +114,17 @@ try {
   T.check('results in English: Victory! / On the podium! / Finish, "Race time ... You started 22nd. (New achievements: ...)", Driver / Car / Time / Best lap', /^(Victory!|On the podium!|Finish)$/.test(r6.title) && /^\d+(st|nd|rd|th)$/.test(r6.pos) &&
     /^Race time \d+:\d\d\.\d{3}, best lap \d+:\d\d\.\d{3}.*\. You started 22nd\.( New achievements: [A-Z][\w ,]+\.)?$/.test(r6.sub) && /Driver/.test(r6.head) && /Best lap/.test(r6.head) && !sR.length, JSON.stringify({ r6, sR }));
 
-  // 6b. a vehicle of the fleet: the MIŠKA (Small cars, its engine at the back) on the car screen; then the KAZE RS in a race destroyed
+  // 6b. a vehicle of the fleet: the MIŠKA (Small cars, its engine at the back) on the car screen; then the VIHAR V8 in a race destroyed
   //     (wreckCar): VEHICLE DESTROYED with Retire on the HUD, the pause with View the car and Retire, the first tap asks (Really retire?
-  //     and the toast), the second retires: the results with Retired; nowhere a Slovenian word. (The KAZE RS: no parts that come off, so
+  //     and the toast), the second retires: the results with Retired; nowhere a Slovenian word. (The VIHAR V8: no parts that come off, so
   //     no wheel rule; a vehicle with them, the MIŠKA too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its wheels
   //     and the game is over, GAME OVER, wheels.test.mjs)
   await act('to-title'); await page.waitForTimeout(200);
   await page.evaluate(() => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'miska'); g.onAction('to-car'); }); await page.waitForTimeout(300);
   const f6 = await page.evaluate(() => ({ cat: document.getElementById('car-cat').textContent, desc: document.getElementById('car-desc').textContent, strip: [...document.querySelectorAll('#car-strip .car-chip b')].map(b => b.textContent).join('/') }));
   const sF = await slovene();
-  T.check('a vehicle of the fleet in English: "Small cars · 4/8", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 4/8' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
-  await page.evaluate(() => { window.__game.S.car = 0; });   // (the KAZE RS, as the title below expects too)
+  T.check('a vehicle of the fleet in English: "Small cars · 4/7", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 4/7' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
+  await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'muscle'); });   // (the VIHAR V8, as the title below expects too)
   await startTrack(page, 'jezero');
   const w6 = await page.evaluate(async () => { const g = window.__game, P = g.race.player, raf = () => new Promise(q => requestAnimationFrame(q));
     g.pause(); g.sim(5, true); Core.wreckCar(P); g.sim(1, true); g.resume(); for (let i = 0; i < 6; i++) await raf();
@@ -141,7 +141,7 @@ try {
     return { ask, screen: window.__game.screen, title: document.getElementById('res-title').textContent, sub: document.getElementById('res-sub').textContent, row: me ? [...me.children].map(td => td.textContent) : null, view: document.getElementById('res-view').textContent }; });
   const sR6 = await slovene();
   T.check('destroyed in English: VEHICLE DESTROYED with Retire on the HUD; the pause: View the car, Retire; the first tap: Really retire? (Tap again …); the results: Retired, "Retired on the 1st lap", Retired in the table, View the car',
-    w6.car === 'kaze' && w6.show && w6.title === 'VEHICLE DESTROYED' && w6.btn === 'Retire' && !sW.length && p6b.view === 'View the car' && p6b.retire === 'Retire' && p6b.on && !sPb.length &&
+    w6.car === 'muscle' && w6.show && w6.title === 'VEHICLE DESTROYED' && w6.btn === 'Retire' && !sW.length && p6b.view === 'View the car' && p6b.retire === 'Retire' && p6b.on && !sPb.length &&
     tap.ask.btn === 'Really retire?' && /^Tap again if you really want to retire/.test(tap.ask.toast) && tap.screen === 'results' && tap.title === 'Retired' && /^Retired on the 1st lap/.test(tap.sub) && tap.row && tap.row[3] === 'Retired' && tap.view === 'View the car' && !sR6.length,
     JSON.stringify({ w6, sW, p6b, sPb, tap, sR6 }));
 

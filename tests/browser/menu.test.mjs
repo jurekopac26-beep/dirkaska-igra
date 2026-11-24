@@ -1704,9 +1704,9 @@ try {
     await click(page, 'career');
     const off = await ev(page, 'return { strip: !!root.querySelector(".k-strip"), cards: root.querySelectorAll(".t-sub.four .mode").length, view: window.__game.kariera() };');
     T.check('the career off: the Career panel without the path\'s strip, its four cards', !off.strip && off.cards === 4 && off.view === null, JSON.stringify(off));
-    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['pico'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: { 's1-krog': 2 }, cilji: {}, prve: [], km: { mali: 37 } } })));
+    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['levs'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: { 's1-krog': 2 }, cilji: {}, prve: [], km: { mali: 37 } } })));
     await page.reload(); await ready(page);
-    await page.evaluate(() => { __game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); });
+    await page.evaluate(() => { __game.S.car = Core.MODELS.findIndex(m => m.id === 'levs'); });
     await click(page, 'career');
     const v = await page.evaluate(() => __game.kariera());
     const st = await ev(page, 'const k = root.querySelector(".k-strip"); return k && { txt: k.querySelector("b").textContent, w: k.querySelector(".bar b").style.width, cards: root.querySelectorAll(".t-sub.four .mode").length };');
@@ -1746,12 +1746,12 @@ try {
   {
     const { ctx, page, errors } = await open({}, { width: 360, height: 640 });
     await ready(page);
-    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['pico'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: {}, cilji: {}, prve: [], km: {} } })));
+    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['levs'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: {}, cilji: {}, prve: [], km: {} } })));
     // (the game's bridge is not on window: caught as the game hands it to Menu.init)
     await page.addInitScript(() => { let M; Object.defineProperty(window, 'Menu', { configurable: true, get: () => M, set(v) { const i = v.init; v.init = (b) => { window.__bridge = b; return i(b); }; M = v; } }); });
     await page.reload(); await ready(page);
     await page.evaluate(() => {
-      __game.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
+      __game.S.car = Core.MODELS.findIndex(m => m.id === 'levs');
       const B = window.__bridge, k0 = B.kariera;
       let iz = null;
       B.kariera = () => { const v = k0(); return v && Object.assign(v, { atlas: { stopnje: [], zvezdice: 7, max: 132 } }); };

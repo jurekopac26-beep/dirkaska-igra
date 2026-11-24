@@ -124,6 +124,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const SH = K.shade(P, 0.55), SP = [0.95, 0.72, 0.1];
         // ---- the body: the paint, the glass (the windscreen, the side windows, a small rear window), dark under its lower edge; the firewall
         //      behind the rear seat (the loft's tail: under the engine lid) dark; the rear wheel's arch (the front wheels stand clear of it) ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind) => {
           if (e === 0 || e === 8) return SH;
           if (e === 2 || e === 6) return kind === 'r' || kind === 'gf' ? G : P;

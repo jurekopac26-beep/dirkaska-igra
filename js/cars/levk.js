@@ -139,6 +139,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const RED = [0.45, 0.03, 0.04], LENS = [0.66, 0.05, 0.06], AMBER = [0.85, 0.42, 0.06], DRED = [0.5, 0.03, 0.04], BRIGHT = [0.78, 0.79, 0.82], SEAT = [0.5, 0.47, 0.43];
         // ---- the shell: the paint; the cockpit's top open; the scuttle's top dark (the dashboard under the windscreen); the sills a shade
         //      darker, the arches dark ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (at.end) return P;
           if (e === 0 || e === 8) return at.arch ? B : K.shade(P, 0.62);
