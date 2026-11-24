@@ -517,6 +517,7 @@
         for (const [u, v] of [[0, 0], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2], [Lb / 2, Wb / 2], [-Lb / 2, Wb / 2]]) { const n = vrNear(x + c * u - s * v, z + s * u + c * v); if (n.i >= 0 && n.dd < 1.2) { ok = false; hit = hit || n; } }
         if (!hit) { ok = true; break; } }
       if (ok && vrDist(x, z) < 430 && !inSea(x, z)) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), L0: Lb, W0: Wb, ang, h: hb, kind }); }
+    if (typeof World !== 'undefined' && World.stavbe) World.stavbe.parceleVR(T, blds.map(b => [b.x, b.z, b.L0, b.W0, b.ang]), API.caH);   // (Bâlea: the houses' plots levelled in the ground)
     // the car parks by the road (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
     for (let [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; let i = n.i; const s = i * T.ds; if (s < 30 || s > T.len - 20) continue;

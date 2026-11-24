@@ -7,8 +7,8 @@
      2  and the walls from the atlas: windows by floors, doors (with steps where the ground falls away from them), shutters; wide eaves
      3  and what stands by the road, only where the track's data has it (the options balc, yard, awn, solar; nothing is made up): balconies,
         the yard with its wall or hedge and gate, shrubs, a parked car, awnings, solar panels
-   A house stands where the map has it, level, with its floor at the highest ground under the footprint and a plain plinth down to the lowest
-   (put(): the rule of the ground); the ground itself is not changed.
+   A house stands where the map has it, level, on the ground: its plot is levelled in the terrain (parcele(): the ground under the footprint, eased
+   into the slope round it) and its floor is a step over it (put(): the rule of the ground); no pedestal stands under a house.
    One texture and one material for every house of a track (a mesh a scenery chunk); the wall's and the roof's colours are the vertex colours,
    so a house costs about as many vertices as a box with its band and stepped roof. Each strip of the atlas runs the whole width and repeats
    along u (RepeatWrapping), so a wall of any length is one quad a floor (or one for all its floors: the rows stack).
@@ -17,7 +17,7 @@
 (function () {
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
-  const API = World.api, { box, cone, ico, parkedCar, crH, clamp, rng } = API;
+  const API = World.api, { box, cone, ico, parkedCar, crH, clamp, rng, lerp, sstep } = API;
   const AW = 1024, AH = 2048, BAY = 128;
   // the strips' tops (px from the canvas's top); a bay is 128 px wide (~2.9 m of wall), a floor 128 px high
   const ST = { upA: 0, upB: 128, gr: 256, flUp: 384, flGr: 512, plain: 640, rail: 704, wall: 736, white: 764, roof: 768,
@@ -223,7 +223,7 @@
     const taken = (px, pz) => (o.onRoad && o.onRoad(px, pz)) || (o.plots && !o.plots.free(px, pz, o.id)) || (o.barrier && o.barrier(px, pz));
     const flight = (k) => { const d = WD[k], drop = y0 - o.gH(d.x + d.nx, d.z + d.nz);
       if (small || low) return drop > 0.35 || y0 - o.gH(d.x + d.nx * 0.15, d.z + d.nz * 0.15) < -0.12 ? -1 : 0;
-      if (drop <= 0.22) return 0; if (drop > 1.2) return -1;
+      if (drop < -0.3) return -1; if (drop <= 0.22) return 0; if (drop > 1.2) return -1;   // (no door into the bank: the ground stands over the floor there)
       for (let i = 1; i <= 7; i++) { const m = 0.9 + (i - 0.5) * 0.28, px = d.x + d.nx * m, pz = d.z + d.nz * m; if (taken(px, pz)) return -1; if (y0 - 0.02 - i * 0.19 - o.gH(px, pz) < 0.06) return i; }
       return -1; };
     let face = -1, noDoor = o.doorWall === false, nSt = 0; if (o.rd) { let bd = 0.3; WL.forEach((w, k) => { if (WA[k]) return; const d = WD[k].nx * o.rd[0] + WD[k].nz * o.rd[1]; if (d > bd) { bd = d; face = k; } }); }
@@ -240,9 +240,9 @@
     /* ---- the walls ---- */
     // the wall's finish (0 the plaster, 1 and 2 the style's own: their strips of the atlas) and the roof's strip (the style's first or second roof)
     const FS = flats || !(o.fin > 0) ? null : o.fin === 2 ? [ST.f2up, ST.f2gr, ST.f2pl] : [ST.f1up, ST.f1gr, ST.f1pl], PL = FS ? FS[2] : ST.plain, vR = (m) => vR0(m, o.roofK ? ST.roof2 : ST.roof);
-    // (on a slope the house's floor lies level at the ground's high side and a plinth carries it down to the low side: plaster's painted plinth
-    // runs on down, stone and brick stand on grey stone)
-    if (o.base > 0) box(g, x0, y0 - o.base - 0.3, z0, L + 0.12, o.base + 0.3, W + 0.12, ang, FS ? [0.56, 0.54, 0.5] : [wc[0] * 0.824, wc[1] * 0.8, wc[2] * 0.741], null, true);
+    // (the foot of the walls, from the floor down into the ground (o.base: a step over a level plot, at most 0.9 m where the plot could not be levelled, put()): plaster's painted plinth; stone, brick and timber
+    // run on down as the wall itself (below, with the walls: no pedestal of another stone under the house))
+    if (o.base > 0 && (!FS || lev < 2)) box(g, x0, y0 - o.base - 0.3, z0, L + (FS ? 0 : 0.12), o.base + 0.3, W + (FS ? 0 : 0.12), ang, FS ? wc : [wc[0] * 0.824, wc[1] * 0.8, wc[2] * 0.741], null, true);
     if (lev < 2) {   // as today: the wall's colour, a row of shutters round a house, rows of windows round a block of flats
       box(g, x0, y0 - 0.5, z0, L, hh + 0.5, W, ang, wc, null, true);
       if (flats) for (let f = 1; f <= fl; f++) box(g, x0, y0 + f * fh - 1.8, z0, L + 0.05, 0.9, W + 0.05, ang, mul(o.band, 0.75), null, true);
@@ -257,6 +257,7 @@
         // the plain wall at its true scale (the plain strip is ~1.4 m high: slices one over another, every other one upside down, so that their edges meet)
         const plain = (ya, yb) => { const n = Math.max(1, Math.ceil((yb - ya) / 1.36 - 0.25)), ue = 0.1 + len / 23, v0 = vAt(PL + 62);
           for (let i = 0; i < n; i++) { const a = ya + (yb - ya) * i / n, b = ya + (yb - ya) * (i + 1) / n, v1 = vAt(PL + 62 - Math.min(60, (b - a) * 44)); q(0, len, a, b, 0.1, ue, i % 2 ? v1 : v0, i % 2 ? v0 : v1); } };
+        if (FS && o.base > 0) plain(-o.base - 0.3, 0);   // (the wall's own stone, brick or timber down into the ground)
         if (WA[k]) { plain(b0, hh); return; }   // (against a neighbour: plain, what shows over a lower roof)
         let u0 = Math.floor(H(k) * 8);
         if (flats) {   // a block of flats: its two rows in one piece, the upper one again above them; a door in the middle of the wall on the road
@@ -512,7 +513,7 @@
     const C = new cfg.Chunks(cfg.size || 128, true), F = new cfg.Chunks(cfg.size || 128, true), SR = cfg.streets || null, BR = cfg.barriers || null;
     const pl = plots(cfg.rects || cfg.list || [], !!cfg.rects);
     const onRoad = (x, z) => { const n = cfg.near(x, z); return (n.i >= 0 && n.dd < 0.8) || (SR ? SR.on(x, z, 0.3) : false); };
-    const st = { level: lev, drzava: K.drzava, style, vertices: 0, byRoad: 0, houses: 0, wings: 0, far: 0, fin: [0, 0, 0], roofs: [0, 0], rise: 0, moved: 0, steps: 0, drop: 0 };   // (rise: the most the ground rises under one house; moved: small buildings set against a larger one; steps: houses with steps to the door, drop: their highest)
+    const st = { level: lev, drzava: K.drzava, style, vertices: 0, byRoad: 0, houses: 0, wings: 0, far: 0, fin: [0, 0, 0], roofs: [0, 0], rise: 0, base: 0, cut: 0, moved: 0, steps: 0, drop: 0 };   // (rise: the most the ground rises under one house; moved: small buildings set against a larger one; steps: houses with steps to the door, drop: their highest)
     const barrier = BR ? (x, z) => BR.on(x, z, 0.55) : null, rvb = vAt(ST.rail + 31.5), rvt = vAt(ST.rail + 0.5);
     // (a wall against a neighbour (1) stays so only while that neighbour stands: one the world left out, in the road's way, leaves the wall free)
     const party = (x, z, L, W, ang, at, id) => { const c = Math.cos(ang), s = Math.sin(ang); return at.map((v, k) => { if (v !== 1) return v; let n = 0;
@@ -555,11 +556,14 @@
               if (px < pz) { const sg = lx < 0 ? -1 : 1; lx = sg * (b[2] / 2 + hx); tx = -sg * cb; tz = -sg * sb; } else { const sg = lz < 0 ? -1 : 1; lz = sg * (b[3] / 2 + hz); tx = sg * sb; tz = -sg * cb; }
               fit.x = b[0] + lx * cb - lz * sb; fit.z = b[1] + lx * sb + lz * cb; fit.ang = fa;
               const cf = Math.cos(fa), sf = Math.sin(fa), ax = tx * cf + tz * sf, az = -tx * sf + tz * cf; wallTo = Math.abs(ax) > Math.abs(az) ? (ax < 0 ? 0 : 1) : (az < 0 ? 2 : 3); st.moved++; } } }
-        // the house's floor: level, just over the ground's high side under its footprint; a plinth (base) carries it down to the low side (a shed, a garage: its plain
-        // walls may stand up to 0.6 m in the ground on the high side, so that it does not stand on a high plinth)
+        // the house's floor: on the ground, as a house stands. The ground under a listed house is a level plot (parcele() below), so the floor is a step over it
+        // (0.15 m). Where the plot could not be made level (by the road's edge, on a rock wall) the floor stays at most 0.9 m over the low side and the high side
+        // stands up to 1.2 m in the bank; only past that the walls' own finish goes further down the low side (a house on a steep slope: its lower wall).
+        // A shed, a garage: at most 0.5 m over the low side, up to 0.6 m in the ground
         if (cfg.gH) { const fx = fit.x != null ? fit.x : o.x, fz = fit.z != null ? fit.z : o.z, fa = fit.ang != null ? fit.ang : o.ang, ca = Math.cos(fa), sa = Math.sin(fa), nx = Math.max(1, Math.ceil(o.L / 3)), nz = Math.max(1, Math.ceil(o.W / 3)); let lo = 1e9, hi = -1e9;
           for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) { const lx = (i / nx - 0.5) * o.L, lz = (j / nz - 0.5) * o.W, y = cfg.gH(fx + lx * ca - lz * sa, fz + lx * sa + lz * ca); if (y < lo) lo = y; if (y > hi) hi = y; }
-          fit.y0 = small ? Math.max(lo + 0.1, hi - 0.6) : hi + 0.15; fit.base = fit.y0 - lo; if (hi - lo > st.rise) st.rise = hi - lo; }
+          fit.y0 = small ? Math.min(Math.max(lo + 0.1, hi - 0.6), lo + 0.5) : Math.min(hi + 0.15, Math.max(lo + 0.9, hi - 1.2)); fit.base = fit.y0 - lo;
+          if (hi - lo > st.rise) st.rise = hi - lo; if (fit.base > st.base) st.base = fit.base; if (hi - fit.y0 > st.cut) st.cut = hi - fit.y0; }
         // the kit's look: the wall (colour and finish) and the roof (colour and kind); a finish or a roof the style's atlas has not is the plain one
         const u = o.u || [hs(0), hs(1), hs(2)], look = {};
         if (!o.wall) { const w = pick(K.walls, u[0]); look.wall = mul(w[1], 1 + (u[1] - 0.5) * 0.05); look.fin = w[2] && SY.fin && SY.fin[w[2] - 1] ? w[2] : 0; }
@@ -595,6 +599,60 @@
       },
       addTo(group, wrap) { const w = wrap || ((m) => m); C.addTo(group, w(mat(style)), true, true); F.addTo(group, w(matRail(style)), false, true); } };
   }
+
+  /* ---- the ground under the houses (docs/realizem/paket-s.md, »Hiša na terenu«): a house is not set on a pedestal over a slope; its plot is
+     levelled, as it is built: the ground under the footprint and a little round it (o.cell: the terrain grid's cell, the margin that makes the
+     grid's vertices under the walls level) lies at the footprint's mean height (the road's side weighs more: a house by the road stands at the
+     road's level) and eases into the slope beyond (the wider, the more had to be cut or filled: a bank, not a wall). Where plots meet, the nearer
+     one decides, and close neighbours share a terrace (their levels at most 0.3 m a metre of the gap apart: limit()), since the grid cannot make
+     a step between two walls; a plot moves at most TMAX from its own level for a neighbour's sake). The road, its verge and what stands at the barrier stay as they are (dd: metres beyond the road's barrier; nothing changes to o.guard, a cell's
+     diagonal: no triangle of the terrain's grid that reaches inside the barrier has a changed vertex, so the ground a car can stand on is the same
+     to the millimetre; everything from 6 m further, and never more than SLOPE a metre from there: an embankment, not a wall of earth by the road). settle(full): where the road's edge or the terrain's other rules held a plot back, its level becomes
+     the ground's that came of it (up to three times), so that the plot is level at the height the terrain allows.
+     o: list ([x, z, L, W, ang, ...]: the footprints), raw (x, z): the ground without plots, cell. Returns (x, z, h, dd) => the ground's height,
+     or null where there is nothing to level; .plots: [{ x, z, y, cut }] (for the tests). The world's terrain calls it for every vertex once. ---- */
+  function parcele(o) {
+    const list = o.list || [], raw = o.raw, ddOf = o.dd || (() => 999), cell = o.cell || 5, m = o.margin != null ? o.margin : cell, G0 = o.guard != null ? o.guard : 1.42 * cell, G1 = G0 + 6, HC = 32, TMAX = 2.5, SLOPE = 0.7, hash = new Map(), all = [];
+    if (!list.length || !raw) return null;
+    for (const b of list) { const L = b[2], W = b[3], ca = Math.cos(b[4]), sa = Math.sin(b[4]); if (!(L > 0 && W > 0)) continue;
+      const ys = [], ws = []; let sum = 0, sw = 0;   // (the ground by the road stays as it is: the plot's level leans to it there)
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const lx = i * L / 2, lz = j * W / 2, y = raw(b[0] + lx * ca - lz * sa, b[1] + lx * sa + lz * ca), w = 1 + 20 * (1 - sstep(G0, G1, ddOf())); ys.push(y); ws.push(w); sum += y * w; sw += w; }
+      all.push({ x: b[0], z: b[1], hl: L / 2, hw: W / 2, ca, sa, y: sum / sw, y0: sum / sw, ys, ws, sw, mass: L * W * sw / 9, m, cut: 0, bl: 0, r: 0 }); }
+    if (!all.length) return null;
+    // neighbours closer than the ground's grid can tell apart share a terrace: their levels at most 0.3 m apart per metre of the gap between them
+    const gap = (p, q) => { let g = 1e9; for (let t = 0; t < 2; t++) { const A = t ? q : p, B = t ? p : q;
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { if (!i && !j) continue; const lx = i * A.hl, lz = j * A.hw, dx = A.x + lx * A.ca - lz * A.sa - B.x, dz = A.z + lx * A.sa + lz * A.ca - B.z;
+        g = Math.min(g, Math.hypot(Math.max(Math.abs(dx * B.ca + dz * B.sa) - B.hl, 0), Math.max(Math.abs(-dx * B.sa + dz * B.ca) - B.hw, 0))); } } return g; };
+    const pairs = [], cellOf = new Map(), R = 2 * cell; let rmax = 0; for (const p of all) rmax = Math.max(rmax, Math.hypot(p.hl, p.hw));
+    const HP = Math.max(HC, 2 * rmax + R); all.forEach((p, k) => { const key = Math.floor(p.x / HP) + ',' + Math.floor(p.z / HP); let a = cellOf.get(key); if (!a) cellOf.set(key, a = []); a.push(k); });
+    all.forEach((p, k) => { const ci = Math.floor(p.x / HP), cj = Math.floor(p.z / HP); for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) for (const k2 of cellOf.get(i + ',' + j) || []) { if (k2 <= k) continue; const q = all[k2];
+      if (Math.hypot(p.x - q.x, p.z - q.z) > Math.hypot(p.hl, p.hw) + Math.hypot(q.hl, q.hw) + R) continue; const g = gap(p, q); if (g < R) pairs.push([p, q, 0.3 * g]); } });
+    const limit = () => { for (let it = 0; it < 24 && pairs.length; it++) { let worst = 0; for (const [p, q, lim] of pairs) { const d = q.y - p.y, e = Math.abs(d) - lim; if (e <= 0) continue; if (e > worst) worst = e;
+      const s = Math.sign(d) * e / (p.mass + q.mass); p.y = clamp(p.y + s * q.mass, p.y0 - TMAX, p.y0 + TMAX); q.y = clamp(q.y - s * p.mass, q.y0 - TMAX, q.y0 + TMAX); } if (worst < 0.02) break; } };
+    const index = () => { hash.clear(); for (const p of all) { let lo = 1e9, hi = -1e9; for (const y of p.ys) { if (y < lo) lo = y; if (y > hi) hi = y; }
+      p.cut = Math.max(hi - p.y, p.y - lo, 0); p.bl = clamp(2.2 * p.cut, 1.4 * cell, 26); p.r = Math.hypot(p.hl, p.hw) + m + p.bl;
+      for (let i = Math.floor((p.x - p.r) / HC); i <= Math.floor((p.x + p.r) / HC); i++) for (let j = Math.floor((p.z - p.r) / HC); j <= Math.floor((p.z + p.r) / HC); j++) { const k = i + ',' + j; let a = hash.get(k); if (!a) hash.set(k, a = []); a.push(p); } } };
+    limit(); index();
+    const f = (x, z, h, dd) => {
+      if (dd <= G0) return h; const a = hash.get(Math.floor(x / HC) + ',' + Math.floor(z / HC)); if (!a) return h;
+      let sq = 0, sy = 0, wm = 0;
+      for (let k = 0; k < a.length; k++) { const p = a[k], dx = x - p.x, dz = z - p.z; if (dx * dx + dz * dz > p.r * p.r) continue;
+        const d = Math.hypot(Math.max(Math.abs(dx * p.ca + dz * p.sa) - p.hl, 0), Math.max(Math.abs(-dx * p.sa + dz * p.ca) - p.hw, 0)); if (d >= p.m + p.bl) continue;
+        const w = 1 - sstep(p.m, p.m + p.bl, d), q = w / ((d + 0.3) * (d + 0.3) * (d + 0.3)); sq += q; sy += q * p.y; if (w > wm) wm = w; }
+      if (!(sq > 0)) return h; const md = SLOPE * (dd - G0); return clamp(lerp(h, sy / sq, wm * sstep(G0, G1, dd)), h - md, h + md); };
+    // where the world keeps its own ground (by the road, under a rock face's envelope, a car park), the plot settles on what it gets: full = the
+    // terrain function with the plots in it (twice: the level moves most of the way; a house by the road stands at the road's side, the slope cut behind it)
+    f.settle = (full) => { for (let it = 0; it < 3; it++) { const ny = all.map(p => { let s = 0, k = 0; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const lx = i * p.hl, lz = j * p.hw; s += p.ws[k++] * full(p.x + lx * p.ca - lz * p.sa, p.z + lx * p.sa + lz * p.ca); } return s / p.sw; });
+      let ch = 0; all.forEach((p, k) => { if (Math.abs(ny[k] - p.y) > 0.05) { p.y = p.y0 = ny[k]; ch++; } }); if (!ch) break; limit(); index(); } for (const p of all) { delete p.ys; delete p.ws; } };
+    f.plots = all; return f;
+  }
+
+  // the plots of a builder's track set into its terrain, before the first vertex is asked for: the mountain worlds (VR: caH, chH call VR.plots
+  // after their own level plots) and the corridor worlds (NR: nrH's pad; the plots first, the world's own level ground, the pit apron or the sea
+  // floor, after them). raw: the world's terrain function (caH, chH; the corridor's is nrH)
+  function parceleVR(T, list, raw) { const f = PROGE[T && T.def && T.def.id] ? parcele({ list, raw, dd: () => API.VR.pdd, cell: API.VRC }) : null; if (f) { API.VR.plots = f; f.settle(raw); } return f; }
+  function parceleNR(T, list) { const f = PROGE[T && T.def && T.def.id] ? parcele({ list, raw: API.nrH, dd: () => API.NRN.dd, cell: API.NRC }) : null; if (!f) return null;
+    const NR = API.NR, N = API.NRN, p0 = NR.pad; NR.pad = (x, z, h) => { h = f(x, z, h, N.dd); return p0 ? p0(x, z, h) : h; }; f.settle(API.nrH); return f; }
 
   /* ---- the ground round the houses (def.okolica; docs/realizem/paket-s.md, »Okolica hiš«): a house does not stand in the bare grass. From the
      map (osm): the car parks as mapped and the unpaved ways; where the map has nothing at a house (gen): a gravel yard by it, a short gravel
@@ -660,5 +718,5 @@
           : new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }), false, true); } };
   }
 
-  World.stavbe = { atlas, mat, matRail, house, plots, lines, setup, okolica, komplet, drzava, KOMPLETI, PROGE, STYLES, ST };
+  World.stavbe = { atlas, mat, matRail, house, plots, parcele, parceleVR, parceleNR, lines, setup, okolica, komplet, drzava, KOMPLETI, PROGE, STYLES, ST };
 })();

@@ -180,6 +180,7 @@
         if ((n.i >= 0 && n.dd < 1.5) || vrWater(px, pz).e > -2) return false; } return true; };
       if (clear()) blds.push({ x, z, L, W, ang, hgt });
     }
+    if (World.stavbe) World.stavbe.parceleVR(T, blds.map(b => [b.x, b.z, b.L, b.W, b.ang]), API.caH);   // (the houses' plots levelled in the ground)
     // the viewpoint (def.mirante): a level paved plaza on the cliff edge; the car park beside the road past the finish line
     const mir = def.mirante ? { x: def.mirante[0], z: def.mirante[1] } : null;
     if (mir) { const i = T.nearestIdx(mir.x, mir.z); mir.h = T.hy[i] + 0.1; mir.i = i; mir.pad = { x: mir.x, z: mir.z, r: 13, b: 10, h: mir.h }; P.pads.push(mir.pad); }

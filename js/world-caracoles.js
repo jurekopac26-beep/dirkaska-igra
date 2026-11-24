@@ -54,6 +54,7 @@
       else if (V.brS && V.brS[i]) h = lerp(hr, Math.min(f, V.sea - 2.2), sstep(1, 3, dd));   // (by the sea: under the bridge the sea floor right past the parapets,
       else h = lerp(hr, f, sstep(1, f < V.sea + 1 ? 7 : 42, dd)); } }                       //  beside a causeway a steep bank down into the water)
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
+    { const V = API.VR; V.pdd = i >= 0 ? dd : 999; if (V.plots) h = V.plots(x, z, h, V.pdd); }   // the houses' plots (World.stavbe.parcele)
     for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
       const dx = x - b.x, dz = z - b.z, al = Math.abs(dx * b.tx + dz * b.tz), lat = Math.abs(dx * b.nx + dz * b.nz);
@@ -273,6 +274,7 @@
       if (clear(L, W)) { const full = (Lf > L || Wf > W) && clear(Lf, Wf); blds.push({ x, z, L, W, L0: full ? Lf : L, W0: full ? Wf : W, ang, hgt, kind, name }); }   // (L0, W0: the whole footprint, where it too stays clear)
     }
     for (const b of blds) if (b.name) { b.pad = { x: b.x, z: b.z, r: Math.hypot(b.L, b.W) / 2 + 2, b: 14, h: caH(b.x, b.z) }; P.pads.push(b.pad); }
+    if (typeof World !== 'undefined' && World.stavbe) World.stavbe.parceleVR(T, blds.filter(b => !b.name).map(b => [b.x, b.z, b.L0, b.W0, b.ang]), caH);   // (the other houses' plots levelled in the ground)
     // the car parks: at the finish (beside the road past the line, on the side where the ground lies nearer the road's height) and by the start
     // (the trucks held at the closed road)
     const padBeside = (s, off, r) => { const i = T.idx(s), gd = (sd) => Math.abs(API.vrFar(T.px[i] + T.nx[i] * sd * (off + r), T.pz[i] + T.nz[i] * sd * (off + r)) - T.hy[i]), sd = gd(1) < gd(-1) ? 1 : -1, o = (sd > 0 ? T.br[i] : T.bl[i]) + r + 1;

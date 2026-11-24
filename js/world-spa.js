@@ -108,6 +108,7 @@
           const f = Math.min(sstep(a - 30, a - 10, d), sstep(b + 50, b + 30, d)) * (1 - sstep(30, 44, lat * sd));
           if (f > 0) return lerp(h, hn - 0.06, f); }
         return h; }; }
+    if (World.stavbe) World.stavbe.parceleNR(T, def.bld || []);   // (the buildings' plots levelled in the ground, under the pit's own level ground)
     // the forestry compartments (the nearest point of a jittered 84 m grid): 0 mature spruce, 1 young spruce, 2 felled (bracken and heather, a few
     // birches and saplings), 3 beech; the spruce planted in rows, their direction and spacing the compartment's own (hashed: no draws from R)
     const CS = 84, CPS = new Map();

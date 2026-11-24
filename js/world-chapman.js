@@ -39,6 +39,7 @@
       if (dd > 1.5 && f > hr) h = Math.max(h, Math.min(f, hr + 1.7 * (dd - 1.5)));   // (uphill: the road cut into the rock, a steep face behind it)
       else if (dd > 2 && f < hr) h = Math.min(h, Math.max(f, hr - 2.4 * (dd - 2))); }   // (downhill: the cliff under the road, falling steeply to the ground (the model blurs it to a gentle slope))
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the lay-bys, the start
+    { const V = API.VR; V.pdd = i >= 0 ? dd : 999; if (V.plots) h = V.plots(x, z, h, V.pdd); }   // the houses' plots (World.stavbe.parcele)
     if (i >= 0) h = Math.min(h, n.env);
     if (API.STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     return h;
@@ -206,6 +207,7 @@
       for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 2) || vrDem(px, pz) + base < 3) { ok = false; break; } }
       if (ok) blds.push({ x, z, L: Math.min(L, 40), W: Math.min(W, 24), ang, hgt, kind });
     }
+    if (World.stavbe) World.stavbe.parceleVR(T, blds.map(b => [b.x, b.z, b.L, b.W, b.ang]), chH);   // (the houses' plots levelled in the ground)
     // the view points' lay-bys (def.views [metres after the start line, side]): a level plot beside the road; the start's (the road closed behind it)
     const padBeside = (s, sd, r) => { const i = T.idx(s), o = (sd > 0 ? T.br[i] : T.bl[i]) + r - 1.5; return { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, r, b: 10, h: T.hy[i] - 0.2, sd, i }; };
     const views = (def.views || []).map(([d, sd]) => { const p = padBeside(sStart + d, sd, 9); P.pads.push(p); return p; });

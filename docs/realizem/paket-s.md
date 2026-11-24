@@ -283,4 +283,18 @@ Naloga koordinacije partyslo (24. 11. 2026): naslednja skupina stavb, ki še ni 
 
 **S kamere za avtom:** hiše so v kadru samo na Chapman's Peaku pri ~1690 in ~2880 m ter na Rio do Rastru pri ~3160–3190 m po startu; drugod so dlje od ~25 m od ceste in zunaj kadra (vidne so sence).
 
-**Odprto:** podstavki na strmem terenu (hiša pri 3190 m na Rio do Rastru stoji na ~5 m podstavku, ker tla pod tlorisom 18 × 15 m toliko padejo; tako je bilo tudi prej). Pravilo graditelja (»tla pri najvišji točki«) je skupno vsem progam; sprememba spada v svojo odločitev.
+### Hiša na terenu: brez sivega podstavka (24. 11. 2026, odločitev uporabnika)
+
+Uporabnik: »pri vseh progah odstrani siv podstavek pod hišo, naj bo tako kot v resnici.« Velja za vseh osem prog s skupnim graditeljem (Spa, Nürburg, Livorno, Montréal, Bâlea, Los Caracoles, Chapman's Peak, Rio do Rastro); nadomešča »pravilo tal« iz Predaje 3 in opombe »enaki podstavki kot prej« zgoraj.
+
+**Od kod podstavek:** staro pravilo v `put()` je tla hiše postavilo 0,15 m nad najvišjo točko terena pod tlorisom in do najnižje zgradilo siv kvader. Na pobočju (Rio do Rastro pri 3190 m: tloris 18 × 15 m, padec ~5 m) je bil to ~5 m visok siv blok.
+
+**Novo, dva dela:**
+1. **Parcela v terenu** (`World.stavbe.parcele`, `parceleVR` za mreže 5 m, `parceleNR` za mreže 8 m): teren pod vsakim tlorisom je poravnan, kot ga pri gradnji poravnajo v resnici. Višina parcele je povprečje 9 točk pod tlorisom z večjo težo točk ob cesti; rob ene celice mreže, nato prehod v pobočje (`2,2 × izkop`, najmanj 1,4 celice, največ 26 m). Sosednje hiše (razmik pod 2 celici) si delijo teraso (razlika največ 0,3 × razmik), a se zaradi soseda nobena ne premakne za več kot 2,5 m (`TMAX`).
+2. **Varovalo ceste:** do diagonale ene celice od ograje (`G0 = 1,42 × celica`) se teren ne spremeni, od tam naprej največ 0,7 m na meter (`SLOPE`): nasip ali usek, ne stena zemlje ob cesti. Proga, višine ceste in fizika vožnje so nespremenjene (teren je samo slika).
+3. **Pravilo graditelja** (`put()`): tla hiše so stopnico (0,15 m) nad ravno parcelo. Kjer parcele ni bilo mogoče poravnati (tik ob cesti, skalna stena), so tla največ 0,9 m nad nižjo stranjo in do 1,2 m v bregu; šele čez to se spodnja stena nadaljuje navzdol **v obdelavi fasade** (omet: temnejši podzidek), brez sivega kvadra. Lopa: največ 0,5 m nad nižjo stranjo, do 0,6 m v tleh. Vrat v breg ni (`flight()`).
+
+**Izmerjeno (hiše brez lop; padec terena pod tlorisom nad 1,5 m, prej → potem):** Rio do Rastro 35 → 3 od 49, Chapman's Peak 125 → 5 od 172, Spa 28 → 0, Nürburg 51 → 1, Livorno 148 → 18 od 700, Bâlea 9 → 1, Los Caracoles 48 → 0. Spodnja stena nad 1,5 m ostane pri 3 hišah na Chapman's Peaku (do 7,8 m za startom, zunaj kadra), 1 na Bâlei (4 m), 1 v Nürburgu (1,9 m) in 5 v Livornu (do 2,3 m): strma mesta tik ob cesti, stena je v barvi fasade. Teren znotraj ograj je enak (razlika 0,00 m do 2 m od ograje na vseh progah).
+
+**Test:** `tests/browser/stavbe.test.mjs` preverja novo pravilo na vsaki hiši vsakega kompleta (tla po pravilu, stene do nižje strani, brez podstavka).
+
