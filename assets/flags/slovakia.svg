@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Slovakia</title>
+  <!-- Ratio 2:3. Three equal horizontal bands white, blue, red (Constitution, art. 9; Law 63/1993), and on the hoist half the state arms,
+       half the flag high: a red shield with a white border, a white double cross on three blue hills. Simplified (the flag is a few pixels
+       wide in the menu). Colours: blue #0B4EA2, red #EE1C25. -->
+  <rect width="900" height="600" fill="#EE1C25"/>
+  <rect width="900" height="400" fill="#0B4EA2"/>
+  <rect width="900" height="200" fill="#FFFFFF"/>
+  <path d="M138 148H362V318C362 388 316 428 250 456C184 428 138 388 138 318Z" fill="#FFFFFF"/>
+  <path d="M150 160H350V318C350 380 310 414 250 442C190 414 150 380 150 318Z" fill="#EE1C25"/>
+  <path d="M240 186H260V226H302V246H260V276H316V296H260V360H240V296H184V276H240V246H198V226H240Z" fill="#FFFFFF"/>
+  <path d="M164 380C176 352 214 344 228 362C240 334 262 334 272 362C288 344 324 352 336 380C318 408 288 426 250 442C212 426 182 408 164 380Z" fill="#0B4EA2"/>
+</svg>
