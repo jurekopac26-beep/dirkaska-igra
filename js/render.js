@@ -9761,7 +9761,8 @@ const Render = (function () {
           const d = Math.hypot(px - last[0], pz - last[1]);
           if (d > (rut ? 0.8 : 0.45) && d < 4) {
             const a = rut ? MK_RUT : clamp(0.4 + intens * 0.4, 0.4, 0.86);
-            if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], yb);
+            if (onHard && curTrack && curTrack.ice && !c.inPit) skids.add(last[0], last[1], px, pz, 0.2, 0.97, 0.98, 1.0, a * 0.5, a * 0.55, last[2], yb);   // (ice, def.ice: no rubber on it, the tyres scratch it white)
+            else if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], yb);
             else if (surf === 6 || (rainy && surf === 5)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel, a puddle: dark, muddy)
             else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, 0.42, 0.27, 0.14, a * 0.85, a * 0.95, last[2], yb);
             else skids.add(last[0], last[1], px, pz, 0.22, 0.14, 0.2, 0.07, a * 0.75, a * 0.85, last[2], yb);
