@@ -182,18 +182,24 @@ def scenery():
         hh = hgt if hgt > 0 else 9.0 if l * w > 2000 else 7.5 if l * w > 500 else 5.5 if l * w > 100 else 3.2
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), hh]
     # the service roads round the circuit (OSM highway=service within 120 m, not the two in their tunnels under it): [n, x0, z0, x1, z1, ...];
-    # the dirt tracks (highway=track, compacted) as trk
-    svc = []; trk = []
+    # the dirt tracks (highway=track, compacted) as trk; their bridges and the service roads' (bridge=yes) again as brg: [n, x0, z0, ...]
+    svc = []; trk = []; brg = []
     for r in J['roads']:
         if r[3] == 2: continue
         q = mv(r[-1])
         if r[0] == 'service': svc += [len(q) // 2] + q
         elif r[0] == 'track': trk += [len(q) // 2] + q
+        if r[3] == 1 and r[0] in ('service', 'track'): brg += [len(q) // 2] + q
+    # the streams round the circuit (OSM waterway=stream within 160 m, their culverts under the roads too): [points, culvert (1 in its pipe,
+    # 0 open), x0, z0, x1, z1, ...]
+    str_ = []
+    for w in J['water']:
+        q = mv(w[3]); str_ += [len(q) // 2, int(w[2])] + q
     # the sea: its level (the finish line's zero: the sea at -H0) and the plane's extent (World: 9 km wide round the circuit's middle x, from z0
     # to the south; the coast south of the circuit at z 1.0-1.5 km, the bay to the west from z ~0.9 km; the land under it hides the plane)
     cx = float(P[:, 0].mean())
     SEA = dict(y=round(-H0, 2), x=round(cx, 1), z0=850)
-    return D, LC, dict(bld=bld, svc=svc, trk=trk, sea=SEA)
+    return D, LC, dict(bld=bld, svc=svc, trk=trk, brg=brg, str=str_, sea=SEA)
 
 # ---- the horizon (def.far for Riverside's rsFar): the highest ground in rings round the circuit (the hills of south Lombok, the headlands) ----
 FAR_R = [1500, 2000, 2700, 3500, 4500, 5600, 7000, 8500, 10000, 11500]   # the rings' outer distances (m from the circuit's middle; the far grid reaches ~12 km)
@@ -251,7 +257,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // the finish line, the sea's cells lowered under the water), land cover (lc, 16 m cells: 0 the grass and the bare earth, 1 the trees, 2 the
   // scrub, 3 the villages and the car parks: ESA WorldCover, the canopy height and OSM), and sk: the building beyond the pit lane (bld: [x,
   // z, length, width, angle (deg), height]: OSM), the service roads and the dirt tracks round the circuit (svc, trk: [points, x, z, ...]:
-  // OSM), the sea (sea: its level and the plane's middle x and north edge z0: Copernicus DEM's sea); the horizon (far: the
+  // OSM; brg: the bridges of both, bridge=yes), the streams (str: [points, culvert (1 in its pipe under a road, 0 open), x, z, ...]: OSM
+  // waterway=stream), the sea (sea: its level and the plane's middle x and north edge z0: Copernicus DEM's sea); the horizon (far: the
   // highest ground in rings round the circuit, Copernicus DEM, for Riverside's rsFar).
   // The names: plain descriptions only (no names of people, firms, races or the circuit).
   // Data: the OSM-derived data in this file under the ODbL 1.0; the heights: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and
@@ -297,7 +304,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     path = os.path.join(ROOT, 'js', 'tracks', 'lombok.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights (%.1f .. %.1f m above the finish line, %.1f m a.s.l.);' % (hk.min() - H0, hk.max() - H0, H0),
           'dem', D['nx'], 'x', D['nz'], 'lo %.1f step %.2f' % (D['lo'], D['step']), '; lc', LC['nx'], 'x', LC['nz'], len(LC['rle']), 'chars; buildings', len(SK['bld']) // 6,
-          '; service roads', sum(1 for _ in svc_iter(SK['svc'])), '; tracks', sum(1 for _ in svc_iter(SK['trk'])))
+          '; service roads', sum(1 for _ in svc_iter(SK['svc'])), '; tracks', sum(1 for _ in svc_iter(SK['trk'])), '; streams', len(J['water']), '; bridges', sum(1 for _ in svc_iter(SK['brg'])))
     g = np.abs(np.roll(H, -2) - np.roll(H, 2)) / (4 * STEP); print('  steepest grade %.1f %% at s %.0f' % (g.max() * 100, CUM[int(g.argmax())]))
     for k, v in (('dem', D), ('lc', LC), ('sk', SK), ('far', FAR)): print('  %-4s %5d KB' % (k, len(js(v).encode()) // 1024))
     info()

@@ -20,7 +20,7 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
-const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller', 'ujarras', 'isuna', 'koli', 'longyearbyen'];
+const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller', 'ujarras', 'isuna', 'koli', 'longyearbyen', 'krasnahorka'];
 const NAMED = { mulholland: ['Cornell School Road', 'Simes Lane', 'Seminole Drive', 'Lower Brewster Road'], bigsur: ['Coast Road'], uncompahgre: ['Engineer Pass Road'], chapman: ['Military Road'], vrsic: ['Borovška cesta', 'Koroška ulica'] };
 
 // every track with side roads is on the list (an open road), the others have none
@@ -56,7 +56,7 @@ for (const id of IDS) {
     const near = (s) => S.some(x => Math.abs(x.s0 - s) < 90 || Math.abs(x.sF - s) < 90);
     let gaps = 0, stray = 0; for (const G of T.gap) for (let i = 0; i < T.N; i++) if (G[i]) { gaps++; if (!near(i * T.ds)) stray++; }
     let diff = 0, pts = 0; const q = {}, q0 = {}, n1 = [0, 0], n0 = [0, 0];
-    for (let i = 3; i < T.N - 3; i += 7) { if (S.some(x => Math.abs(x.s0 - i * T.ds) < 260)) continue;
+    for (let i = 3; i < T.N - 3; i += T.N < 1000 ? 3 : 7) { if (S.some(x => Math.abs(x.s0 - i * T.ds) < 260)) continue;   // (every 3rd point on a short road: Krásna Hôrka's 0.6 km)
       for (const d of [-T.w - 6, -T.w - 2, -T.w + 0.5, 0, T.w - 0.5, T.w + 2, T.w + 6]) { const x = T.px[i] + T.nx[i] * d, z = T.pz[i] + T.nz[i] * d; T.query(x, z, i, q); T0.query(x, z, i, q0); pts++;
         if (q.k >= 0 || q.s !== q0.s || q.d !== q0.d || T.wall(q, 0.5, n1) !== T0.wall(q0, 0.5, n0) || T.surface(q) !== T0.surface(q0) || T.yAt(q) !== T0.yAt(q0)) diff++; } }
     check(`${id}: the barriers the same, open only across the mouths; away from the junctions the road exactly as without them`, same && gaps >= S.length * 2 && !stray && pts > (T.N * T.ds < 2000 ? 35 : 200) && !diff,   // (a short road: most of it within 260 m of a junction)

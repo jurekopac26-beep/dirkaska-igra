@@ -25,4 +25,17 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Približki**: most čez kanal je narisan kot nasip z zidovi in ograjami (brez stebrov in razpona nad vodo). Drevesa, palme, grmovje, skale in gledalci so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah. Hiše so generične.
 - **Pravno**: samo zemljepisna imena (Koror, Babeldaob, Palau); brez imen mostu, hotelov, trgovin, pristanišč in oseb.
 
+## Ob cesti
+
+Stranske ulice in dovozi, ki se priključijo na glavno cesto (`js/world-koror-obcestje.js`, potek in razred iz OpenStreetMap, slike prej in potem v `docs/slike/koror/`):
+
+- **Katere**: 11 poti med startom in ciljem, od roba asfalta v igri navzven, največ 70 m od ceste (120 m po poti). Stanovanjski 181309695 (105 m za startom) in 23035104 (1985 m); servisne 376149091 (60 m), 655297251 (780 m), 181309698 (795 m, nasproti prejšnje), 376149491 (2260 m), 376149492 (2525 m), 376149493 (2715 m), 376149495 (2940 m) in 655300152 (2995 m, njen konec je 2,5 m od 376149495, 31 m od ceste); dovoz 1564824059 (3150 m).
+- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`, ki bi poti naredil prevozne). Pot se konča, kjer se začne morje, voda iz OpenStreetMap ali hiša, ki jo igra riše; na njej ni palm, dreves, skal ali gledalcev.
+- **Ob ustju**: jeklena ograja na zunanji strani ovinka se čez ustje odpre (1,5 m od robov poti, brez ostanka, krajšega od 12 m), pri 376149491, 376149493 in 376149495. Trije beli smerniki, ki bi stali sredi ustja, so odstranjeni.
+- **Površina**: nobena od 11 poti v OpenStreetMap nima oznake `surface`; vseh 6 poti ob tej cesti, ki jo imajo (servisne), je neasfaltiranih. Narisane so kot makadam v teksturi in barvi makadamske bankine glavne ceste (želja uporabnika 2. 11. 2026, `docs/igra.md`, »Makadam«), kolesnice malo svetlejše; v dežju so temnejše kot bankina.
+- **Predpostavke** (OpenStreetMap tu nima širin): širina po razredu (stanovanjska 4,5 m, servisna 3,5 m, dovoz 3 m), ustje 2,5 m širše, ki se zoži v prvih 6 m za asfaltom; čez jarek ob cesti gre pot po nasipu (cev pod njim ni narisana). Cesta v igri je širša od prave, zato se pot začne na robu asfalta v igri. 655297251 se konča 15 m pred koncem v OpenStreetMap, kjer tla v igri ob zahodnem koncu mostu padejo v laguno.
+- **Ni narisano**: servisna pot 15 m za startom (181309703, zunaj pogleda kamere za avtom), servisna pot ob zahodnem koncu mostu, ki ne seže do ceste (181309697), servisna pot pri 1055 m (655299344: laguna v igri se tam začne približno 8 m za asfaltom, ostal bi le štrcelj), poti za ciljem; nobenih imen.
+- **Odprto vprašanje**: (a) vseh 11 poti kot makadam (`koror-1960m-po.webp`) ali (b) brez stanovanjskih ulic 181309695 in 23035104 (`koror-1960m-b-brez-stanovanjskih.webp`): oznako `unpaved` imajo ob tej cesti samo servisne poti, za stanovanjske ulice ni vira.
+- **Zmogljivost**: makadam je v mreži bankine glavne ceste, brežine ob robovih v kosih okolice: brez lastnih klicev risanja (1776 mrež kot prej). Na telefonu 145 klicev na sliko (največ 166, prej 142 in 164), 357 tisoč oglišč (največ 562 tisoč, prej 349 in 553 tisoč).
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py koror --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
