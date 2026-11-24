@@ -147,7 +147,7 @@ const RELATED = [
   [/^js\/tracks\/|^js\/geo\.js$|^tools\/menu-globe\.mjs$|^assets\/flags\/|^assets\/geo\/earth-s\.webp$/, ['menu-globe.test.js']],   // (the countries: the flags, the globe's outlines and places)
   [/^js\/tracks\/|^js\/menu-data\.js$|^tools\/menu-corner|^assets\/maps\/corner-/, ['menu-corner.test.js', 'browser/menu.test.mjs']],   // (the corner camera: its corners, videos and posters, MENU.corners)
   [/^js\/cars\//, ['kit.test.js', 'deli.test.js', 'fleet.test.js', 'browser/garage.test.mjs', 'browser/cars-ui.test.mjs']],   // (a vehicle must fit the garage's lane, under its door and lamps at 3.3 m, and stand in its place in the car screen's strip by its career price)
-  [/^js\/(core|render)\.js$/, ['barve-avtov.test.js']],   // (the cars' colours: none black or very dark; CLAUDE.md »Barve avtov«)
+  [/^js\/(core|render|game|garage|garage3d)\.js$/, ['barve-avtov.test.js']],   // (the cars' colours, the player's too: none black or very dark; CLAUDE.md »Barve avtov«)
   [/^js\/core\.js$/, ['cisterna.test.js', 'zrcalni.test.js']],   // (the semi-trailer: its joint, its AI, its grid, in a race of six rigs)
   [/^js\/core\.js$|^js\/cars\//, ['rezervna-kolesa.test.js']],   // (the spare wheels: off at 80 % of the damage, docs/deli.md »Rezervno kolo«)
   [/^js\/render\.js$|^js\/cars\/(kamen|pescenjak|medved|cisterna)\.js$/, ['browser/rezervna-kolesa.test.mjs']],   // (their rocking from 50 %, their pieces)
