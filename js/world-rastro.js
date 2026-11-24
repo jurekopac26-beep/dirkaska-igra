@@ -306,13 +306,16 @@
 
     /* ---- the buildings: kiosks and halls by the viewpoint, houses on the plateau (plastered walls with windows, tiled or metal roofs) ---- */
     let nBld = 0;
+    // (Realizem S: the houses are the builder's, js/world-stavbe.js, with Brazil's kit on the map's footprints; without it as before)
+    const HS = World.stavbe ? World.stavbe.setup({ Chunks, list: blds.map(b => [b.x, b.z, b.L, b.W, b.ang, b.hgt, 0]), T, near: vrNear, gH: caGround }) : null;
     {
       const RB = rng(3321), walls = [[0.95, 0.94, 0.9], [0.93, 0.88, 0.76], [0.9, 0.84, 0.7], [0.86, 0.72, 0.56]], roofs = [[0.6, 0.28, 0.18], [0.52, 0.24, 0.16], [0.42, 0.44, 0.46], [0.3, 0.32, 0.36]], woods = [[0.42, 0.28, 0.16], [0.5, 0.34, 0.2], [0.36, 0.24, 0.15]];
       for (const b of blds) {
         const c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = caGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
         const fl = b.hgt > 5 ? 2 : b.L * b.W > 220 ? 2 : 1;
-        vrHouse(scen.get(b.x, b.z), fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall: walls[Math.floor(RB() * walls.length)], wood: vary(woods[Math.floor(RB() * 3)], RB, 0.1), roof: vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1) });
+        if (HS) HS.put({ x: b.x, z: b.z, L: b.L, W: b.W, ang: b.ang, y0: hi, hh: b.hgt > 0 ? b.hgt : [3.6, 6.2][fl - 1], fl, type: b.L * b.W < 25 ? 'small' : 'house', id: blds.indexOf(b) });   // (a footprint under 25 m2 a small building; the height the map's where it has one)
+        else vrHouse(scen.get(b.x, b.z), fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall: walls[Math.floor(RB() * walls.length)], wood: vary(woods[Math.floor(RB() * 3)], RB, 0.1), roof: vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1) });
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
       }
     }
@@ -543,6 +546,7 @@
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup, (m) => ouCutMat(m, cut));   // (the builder's houses: one material, the façade atlas; they fade between the camera and the car, as the rest)
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: rrAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: rrAtlas2(def.curves || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
@@ -561,6 +565,7 @@
     }
     crowdFinish(CR, root, out);
     out.stats = { trees: nTrees, araucarias: nArauc, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats;
     return out;
   }
 

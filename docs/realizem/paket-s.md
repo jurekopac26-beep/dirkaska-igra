@@ -264,3 +264,23 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #714. Proga ima v `PROGE` rav
 - Hotel stoji na pravem obrisu iz OSM (`def.hotel`, 22 točk, ~3170 m², z ukrivljenim krilom): rumene stene z okni po nadstropjih, beli pasovi in venec, kamniti podstavek, ravna temna streha, napis brez imena proti jezeru. Brez obrisa ostane prejšnji kvader. Hotel je ~190 m od ceste.
 - `caH` (PR #694) ostane nespremenjen; Oktogon in železnica ostaneta svoja.
 - Obremenitev: 154 klicev in 269 tisoč oglišč, na najbolj obremenjenem mestu 190 / 393 (prej 154 / 190 klicev in 269 / 394 tisoč oglišč).
+
+## S5: Chapman's Peak in Rio do Rastro (veja `realizem/stavbe-2411`, nad #714; 24. 11. 2026)
+
+Naloga koordinacije partyslo (24. 11. 2026): naslednja skupina stavb, ki še ni nikjer narejena. Obe progi imata v `PROGE` raven 3 (`d2` 34, `d1` 64); kompleta Južne Afrike (slog `cape`) in Brazilije (slog `les`) sta že v graditelju. Novih podatkov ni: tlorisi so obstoječi iz OSM (`def.bld`), tla iz višinskega modela proge.
+
+**Chapman's Peak (`js/world-chapman.js`):**
+- 177 hiš in lop gradi skupni graditelj na tlorisih iz podatkov: beljene stene, strešniki in slama (118 dvokapnic, 59 štirikapnic). Lopa (`kind` 3) in tloris pod 25 m² sta mala stavba; nadstropja kot prej (višina nad 6,5 m ali tloris nad 260 m² = 2), višina iz podatkov, kjer je.
+- Izbor tlorisov ostane progin (skrajšani na 40 × 24 m; brez tistih z vogalom manj kot 2 m od ceste ali v morju), zato pri tlorisih 9–12 m od ceste (554 in 590 m po startu) hiše ni ne prej ne potem. Ovire (`CR.block`) so na istih mestih.
+- 6 hiš je v pasu ob cesti, 76 dlje od 64 m; 26 tisoč oglišč. `rise` do 17,7 m (hiše na strmem pobočju nad zalivom; enaki podstavki kot prej).
+- Obremenitev: 152 klicev in 399 tisoč oglišč, na najbolj obremenjenem mestu 196 / 447 (enako kot prej).
+
+**Rio do Rastro (`js/world-rastro.js`):**
+- 59 hiš gradi skupni graditelj: barvane deske in bel omet, opečni strešniki in siva pločevina (33 dvokapnic, 26 štirikapnic). Tloris pod 25 m² je mala stavba; nadstropja kot prej.
+- Izbor ostane progin (skrajšani na 40 × 22 m; brez vogalov manj kot 1,5 m od ceste in brez tistih na ribnikih).
+- 4 hiše so v pasu ob cesti, 30 dlje od 64 m; 8 tisoč oglišč. `rise` do 28 m: dva tlorisa 8 × 8 m stojita čez rob planote pri razgledišču (105 in 124 m od ceste, za ciljem); enak podstavek kot prej.
+- Obremenitev: 183 klicev in 398 tisoč oglišč, na najbolj obremenjenem mestu 226 / 532 (prej 227).
+
+**S kamere za avtom:** hiše so v kadru samo na Chapman's Peaku pri ~1690 in ~2880 m ter na Rio do Rastru pri ~3160–3190 m po startu; drugod so dlje od ~25 m od ceste in zunaj kadra (vidne so sence).
+
+**Odprto:** podstavki na strmem terenu (hiša pri 3190 m na Rio do Rastru stoji na ~5 m podstavku, ker tla pod tlorisom 18 × 15 m toliko padejo; tako je bilo tudi prej). Pravilo graditelja (»tla pri najvišji točki«) je skupno vsem progam; sprememba spada v svojo odločitev.

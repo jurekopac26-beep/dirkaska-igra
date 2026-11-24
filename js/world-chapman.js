@@ -378,12 +378,17 @@
 
     /* ---- the houses of Hout Bay: white and cream plastered walls, grey, slate and terracotta roofs ---- */
     let nBld = 0;
+    // (Realizem S: the houses are the builder's, js/world-stavbe.js, with South Africa's kit on the map's footprints; without it as before)
+    const HS = World.stavbe ? World.stavbe.setup({ Chunks, list: blds.map(b => [b.x, b.z, b.L, b.W, b.ang, b.hgt, b.kind]), T, near: vrNear, gH: chGround }) : null;
     {
       const RB = rng(3021), walls = [[0.96, 0.95, 0.92], [0.94, 0.9, 0.8], [0.9, 0.9, 0.88], [0.92, 0.86, 0.74], [0.97, 0.96, 0.94]], roofs = [[0.36, 0.38, 0.4], [0.62, 0.3, 0.2], [0.24, 0.26, 0.3], [0.52, 0.5, 0.48], [0.66, 0.36, 0.24]], woods = [[0.42, 0.3, 0.2], [0.56, 0.42, 0.28]];
       for (const b of blds) {
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = chGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
-        if (b.kind === 3) { const mc = vary([0.8, 0.78, 0.74], RB, 0.1); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.8, b.W, b.ang, mc, null, true); }
+        if (HS) {   // (the storeys as below; a shed, kind 3, and a footprint under 25 m2 a small building; the height the map's where it has one)
+          const sm = b.kind === 3 || b.L * b.W < 25, fl = sm ? 1 : b.hgt > 6.5 || b.L * b.W > 260 ? 2 : 1;
+          HS.put({ x: b.x, z: b.z, L: b.L, W: b.W, ang: b.ang, y0: hi, hh: b.hgt > 0 ? b.hgt : sm ? 2.8 : [3.6, 6.2][fl - 1], fl, type: sm ? 'small' : 'house', id: blds.indexOf(b) });
+        } else if (b.kind === 3) { const mc = vary([0.8, 0.78, 0.74], RB, 0.1); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.8, b.W, b.ang, mc, null, true); }
         else { const fl = b.hgt > 6.5 || b.L * b.W > 260 ? 2 : 1;
           vrHouse(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall: walls[Math.floor(RB() * walls.length)], wood: woods[Math.floor(RB() * 2)], roof: vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1) }); }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
@@ -713,11 +718,13 @@
     /* ---- finish the meshes (the gulls over the sea: the render's flock, def.sea) ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup, (m) => ouCutMat(m, cut));   // (the builder's houses: one material, the façade atlas; they fade between the camera and the car, as the rest)
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: chAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: chAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, baboons: nBab, kelp: nKelp, boats: nBoat, overhangs: nOver, sideRoads: out.stubStats.n };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats;
     return out;
   }
 
