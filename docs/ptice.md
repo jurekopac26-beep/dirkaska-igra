@@ -2,7 +2,7 @@
 
 Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7120588492). Veja `grafika/ptice-zivali-bt`.
 **Stanje 24. 11. zvečer:** točki 1 in 2 sta v kodi (PR #1060); tri stopnje podrobnosti so v kodi kot preizkus (privzeto sedanja ptica),
-vprašanje `ptice-podrobnost-1060` čaka na strani Odločitve; raziskava dopolnjena ([19]–[29]), vrste po državah še niso v kodi (glej »Predaja«).
+vprašanje `ptice-podrobnost-1060` čaka na strani Odločitve; raziskava dopolnjena ([19]–[36]), vrste po državah še niso v kodi (glej »Predaja«).
 
 ## Odločitev (povzetek)
 
@@ -62,7 +62,10 @@ Kar ni potrjeno, je označeno z »ni vira« in **ne gre v kodo**, dokler vira ni
 [27] audubon.org/magazine/these-masters-of-sky-can-fly-hours-or-days-while-barely-flapping ·
 [28] romania-insider.com/white-stork-census-romania-2025 · [29] visitqatar.com/en/things-to-do/get-inspired/wildlife/flamingo-migration-in-qatar
 
-Viri [19]–[29] so povzeti iz izpisov spletnega iskanja 24. 11. (strani niso bile prebrane v celoti); pred vnosom v kodo vsako številko preveri na strani.
+[30] fieldguides.com/triplists/jam18c.html; en.wikipedia.org/wiki/Blue_and_John_Crow_Mountains_National_Park · [31] svalbardmuseum.no/en/birds; lifeinnorway.net/winter-wildlife-of-svalbard · [32] datazone.birdlife.org/site/factsheet/mussulo-iba-angola; fieldguides.com/triplists/ang23.html
+[33] osme.org/trip-reports/kirgtrip1 · [34] koreascience.kr/article/JAKO202108148753837.page · [35] madacamp.com/Isalo; planetscott.com/site/863/isalo-national-park · [36] fieldguides.com/triplists/png25TRIPLIST.pdf
+
+Viri [19]–[36] so povzeti iz izpisov spletnega iskanja 24. 11. (strani niso bile prebrane v celoti); pred vnosom v kodo vsako številko preveri na strani.
 
 ## Države s pravimi progami: predlog vrste (še ni potrjeno, razen kjer piše)
 
@@ -81,12 +84,18 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 | Galah, ohlapna jata | Avstralija | potrjeno [23]; število manjka (Bathurst je dirkališče: ptice v petini časa) |
 | Andski kondor, jadranje posamič | Čile | potrjeno [26]; število manjka |
 | Bela štorklja, jadranje | Romunija | kraj potrjen [28]; število v jati manjka |
-| Veliki plamenec | Katar, Bahrajn | kraj potrjen [29]; formacija in število manjkata |
-| Velika burnica, jadranje | Fidži, Samoa, Palau | let potrjen [27]; otoki izrecno ne |
+| Veliki plamenec | Katar, Bahrajn, Angola (Luanda) | kraj potrjen [29]; Angola: jate ob polotoku Mussulo [32], nad mestno cesto ni vira; formacija in število manjkata |
+| Puranji jastreb, jadranje | Jamajka (Irishtown) | potrjeno: pogost po vsem otoku, po njem ime gorovja [30]; število manjka |
+| Brez ptic pozimi | Norveška (Longyearbyen) | potrjeno: polarna noč od novembra do konca januarja, čez zimo ostane od kopenskih ptic samo svalbardska belka (na tleh) [31]; predlog: pozimi ptic na nebu ni |
+| Indijska majna in hudournik | Uzbekistan (Hiva) | potrjeno kot zelo pogosti v mestu, poljska vrana prisotna [33]; eno samo poročilo iz leta 2000, opoldanska vročina: ptic malo |
+| Poljska vrana, gosta jata (zima) | Južna Koreja (Seul) | pozimi (november–marec) v državi, jate v mestu Suwon južno od Seula [34]; za Seul sam ni vira |
+| Šarasta vrana ali črni škarnik | Madagaskar (Isalo) | obe vrsti na seznamu parka [35]; rumenokljuni škarnik tam ni potrjen; formacija manjka |
+| Papuanski kljunorožec | Papua Nova Gvineja (Sogeri, Tapini) | potrjen v parku nad planoto Sogeri [36]; let v parih ali jatah ni potrjen; Tapini ni vira |
+| Velika burnica, jadranje | Fidži, Samoa, Palau | let potrjen [27]; otoki izrecno ne; Sveta Lucija (sorodna vrsta *Fregata magnificens*): zapisi samo z juga otoka, zahodna obala ni potrjena |
 | Rumenonogi galeb, ohlapna jata | Italija, Črna gora, Albanija, Španija, Portugalska (Madeira), Turčija | kraji potrjeni [14] [15]; število in formacija manjkata |
 | Azijski odprtokljuni štrk | Tajska (Buriram) | potrjeno [16]; število manjka |
 | Kravja čaplja | Filipini, Indonezija, Šrilanka, Malezija | potrjena Šrilanka [17]; formacija manjka |
-| Še brez raziskave | Jamajka, Sveta Lucija, Angola, Madagaskar, Zelenortski otoki, Alžirija, Uzbekistan, Južna Koreja, Kitajska, Norveška, Papua Nova Gvineja | vrsta še ni izbrana |
+| Še brez raziskave | Zelenortski otoki, Alžirija, Kitajska | vrsta še ni izbrana |
 
 ## Narejeno v kodi (24. 11.)
 
