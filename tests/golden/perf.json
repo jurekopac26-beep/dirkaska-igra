@@ -1,4 +1,10 @@
 {
+ "_wreck": {
+  "ev": {
+   "openDoors": 3
+  },
+  "why": "ev: an older model's doors are made when a knock opens them (js/render.js oldAjar: a painted panel, its shadow and the dark doorway, 3 draw calls a door), so its wreck with both open draws 38 calls where the plain rule gives 37 (the car whole 21 + 2 a piece x 6 + 4 crack decals). Allowed 3 more where its doors stand open, this model only (the user's answer of 24. 11. 2026, trki-ev-klici: +3 for the open doors); read by tests/browser/fleet.test.mjs."
+ },
  "jezero": {
   "calls": 174,
   "maxCalls": 217,

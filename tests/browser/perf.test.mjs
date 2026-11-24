@@ -127,5 +127,7 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
+// (the keys that are not a track's, _wreck: the fleet test's allowance for a wreck with its doors open, are kept as they are)
+if (update) { const keep = {}; for (const k in golden) if (k[0] === '_') keep[k] = golden[k];
+  fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : Object.assign(keep, out), null, 1) + '\n'); console.log('written ' + FILE); }
 else T.done();

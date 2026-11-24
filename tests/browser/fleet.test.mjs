@@ -431,8 +431,8 @@ try {
   //          camera (the chase camera's pose pinned) at least 35 % of the car's screen box (its body's box projected) looks different; its
   //          fire in sight (flame-coloured pixels the particles add round the car, against the same frame without them: its flames out of
   //          the body, not inside it) and its smoke (pixels there they darken);
-  //          the car and its pieces drawn with at most the whole car's draw calls + 2 a piece + 1 a crack decal; what its pieces cost (the
-  //          field under a wreck, section 5) ----
+  //          the car and its pieces drawn with at most the whole car's draw calls + 2 a piece + 1 a crack decal (ev, its two doors made as
+  //          they open: 3 more, tests/golden/perf.json _wreck); what its pieces cost (the field under a wreck, section 5) ----
   const R6 = [], t7 = Date.now(), seen = kits.concat(models.filter(m => !m.kit));
   await page.evaluate((on) => { window.__pics = on; Render.setDynScale(0.55); }, !!process.env.FLEET_PICS);   // (the frames between the pictures: a third of the pixels; Render.snapshot draws at full size)
   for (const m of seen) {
@@ -486,7 +486,8 @@ try {
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
       const wk = cost([v.grp, ...mine]), pcs = cost(mine);
       Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; }); P.tl = tl0;
-      return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, intact, wk, pcs, n: mine.length, cracks, pics: keep };
+      const doors = ['doorL', 'doorR'].filter(k => v.oAjar && v.oAjar[k]).length;   // (an older model's doors standing open: render.js oldAjar)
+      return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, intact, wk, pcs, n: mine.length, cracks, doors, pics: keep };
     }, m.id);
     if (r.pics) { const dir = path.join(REPO, 'test-results', 'fleet-wreck'); fs.mkdirSync(dir, { recursive: true });   // (FLEET_PICS=1: the pictures, to look at)
       for (const k in r.pics) fs.writeFileSync(path.join(dir, `${r.id}-${k}.png`), Buffer.from(r.pics[k].split(',')[1], 'base64')); delete r.pics; }
@@ -517,8 +518,10 @@ try {
   T.check('the wreck as a player sees it (844x390, the chase camera at zoom 1.2): at least 35 % of the car\'s screen box different from the car whole, its fire (flames out of the body) and smoke in sight',
     R6.length === seen.length && R6.every(seenOk),
     R6.filter(r => !seenOk(r)).concat(R6.slice().sort((a, b) => a.diff - b.diff)).slice(0, 6).map(r => `${r.id} ${(r.diff * 100).toFixed(0)} % of ${r.px} px, fire / smoke ${r.fireV} / ${r.smokeV} px${r.fire ? '' : ' NO FIRE'}${r.flames > 0 ? '' : ' no flames'}${r.smoke > 0 ? '' : ' no smoke'}`).join(', '));
-  T.check('the wreck\'s draw calls: the car and its pieces <= the car whole + 2 a piece + 1 a crack decal', R6.every(r => r.wk.calls <= r.intact.calls + 2 * r.n + r.cracks),
-    R6.filter(r => r.wk.calls > r.intact.calls + 2 * r.n + r.cracks).concat(R6).slice(0, 5).map(r => `${r.id} ${r.wk.calls} <= ${r.intact.calls} + 2 x ${r.n} + ${r.cracks}`).join(', '));
+  // (tests/golden/perf.json, _wreck: what a model is allowed on top where its doors stand open, with the reason; ev 3)
+  const WRK = PERF._wreck || {}, wOpen = (r) => r.doors && WRK[r.id] ? WRK[r.id].openDoors || 0 : 0, wMax = (r) => r.intact.calls + 2 * r.n + r.cracks + wOpen(r);
+  T.check('the wreck\'s draw calls: the car and its pieces <= the car whole + 2 a piece + 1 a crack decal (+ what tests/golden/perf.json, _wreck, allows a model whose doors stand open)', R6.every(r => r.wk.calls <= wMax(r)),
+    R6.filter(r => r.wk.calls > wMax(r)).concat(R6.filter(wOpen), R6).slice(0, 5).map(r => `${r.id} ${r.wk.calls} <= ${r.intact.calls} + 2 x ${r.n} + ${r.cracks}${wOpen(r) ? ` + ${wOpen(r)} (${r.doors} doors open)` : ''}`).join(', '));
 
   // ---- 4c. the run from the police (Vršič, Policija): a patrol car wrecked: its pieces on the road drawn (syncDebris finds the patrol cars'
   //          views), the car on fire, its light bar gone with its crushed roof (no blue flashes over a wreck); the patrol car gone: its view

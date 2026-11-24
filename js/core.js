@@ -7143,21 +7143,40 @@ const Core = (function () {
   // a retired car (Race.retire) on its way off the line: it steers for its side's run-off (its centre 1.6 m past where its inner edge
   // clears the asphalt, nearer where the barrier is), eases off to a crawl on the way (7 m/s: no hard stop on the racing line) and drives
   // on at that pace once slower (one that retired standing, or spun, too; facing the wrong way: to the run-off ahead of its nose); there
-  // (retiredOff) it stops and stands (wreck.stop). W.cr: seconds spent at a crawl short of it (the marshals take over, see Race._wreckStep)
+  // (retiredOff) it stops and stands (wreck.stop). W.cr: seconds spent at a crawl short of it (the marshals take over, see Race._wreckStep).
+  // A wrecked one (hard: destroyed, or two wheels gone, as every rival that retires is) brakes hard down to that crawl and where it may
+  // stand (0.8 from 19 m/s up, 0.3 at the least; a sound car keeps its gentle 0.12 to 0.3): its own parts no longer slow it (F3,
+  // docs/trki-realizem.md). Either brakes behind a slower car in its way (retireBlocked)
   function retireControl(c, race, dt) {
-    const T = race.track, q = c.q, W = c.wreck, v = Math.max(0, c.vl), hw = c.m.wid * 0.5;
+    const T = race.track, q = c.q, W = c.wreck, v = Math.max(0, c.vl), hw = c.m.wid * 0.5, hard = c.dmg >= 0.95 || W.nL >= 2;
     c.inHand = 0;
     if (retiredOff(T, c, 0.3)) {   // there: brake to a stop, then stand
-      if (v <= 0.8) { parkBrake(c); W.stop = true; W.cr = 0; } else { c.inThr = 0; c.inBrk = 0.5; c.inSteer = 0; }
+      if (v <= 0.8) { parkBrake(c); W.stop = true; W.cr = 0; } else { c.inThr = 0; c.inBrk = hard ? 0.8 : 0.5; c.inSteer = 0; }
       return;
     }
     const lim = (W.side > 0 ? q.br : q.bl) - hw - 0.4, out = W.side * Math.max(T.w * 0.4, Math.min(T.w + hw + 1.6, lim));
     const back = Math.cos(c.h) * q.tx + Math.sin(c.h) * q.tz < 0, la = 4 + v * 0.7, i = T.idx(q.s + (back ? -la : la));
     steerAt(c, T.px[i] + T.nx[i] * out, T.pz[i] + T.nz[i] * out);
-    if (v > 9) { c.inThr = 0; c.inBrk = clamp((v - 7) / 40, 0.12, 0.3); }
+    if (retireBlocked(c, race, v)) { if (v <= 0.8) parkBrake(c); else { c.inThr = 0; c.inBrk = 0.8; } }
+    else if (v > 9) { c.inThr = 0; c.inBrk = hard ? clamp((v - 7) / 15, 0.3, 0.8) : clamp((v - 7) / 40, 0.12, 0.3); }
     else if (v < 6) { c.inThr = clamp(0.3 + (7 - v) * 0.04, 0.3, 0.6); c.inBrk = 0; }
     else { c.inThr = 0.15; c.inBrk = 0; }
     if (v < 2.5) W.cr += dt;
+  }
+  // a slower car close ahead in a retired car's way (another wreck stopping or standing at the edge before it; its box as it lies across
+  // the path): the retired car brakes behind it, it does not run into it and push it on
+  function retireBlocked(c, race, v) {
+    const ch = Math.cos(c.h), sh = Math.sin(c.h);
+    for (const o of race.cars) {
+      if (o === c || o.inPit) continue;
+      const dx = o.x - c.x, dz = o.z - c.z, f = dx * ch + dz * sh;
+      if (f <= 0 || f > 150) continue;
+      const kc = Math.abs(Math.cos(o.h - c.h)), ks = Math.abs(Math.sin(o.h - c.h));
+      if (Math.abs(dz * ch - dx * sh) > (c.m.wid + o.m.wid * kc + o.m.len * ks) * 0.5 + 0.2) continue;
+      const cl = v - (o.vx * ch + o.vz * sh);
+      if (cl > 0 && f - (c.m.len + o.m.len * kc + o.m.wid * ks) * 0.5 < 0.8 + cl * cl / 12) return true;
+    }
+    return false;
   }
   // where a retired car may stand (tol: how far its inner edge must be past the asphalt's edge): off the asphalt, or as far out as the
   // barrier lets it where the run-off is a little narrower than the car (0.7 m of it on the asphalt at most: GOLJAT's 3.2 m in Monaco),
