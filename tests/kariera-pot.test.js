@@ -36,14 +36,19 @@ function pravilo(Q, tracks, cats) {
   // every real track in one cup exactly (the final aside); nothing else on the path; the ids unique
   const cnt = new Map();
   for (const c of Q.pokali) if (c.vrsta !== 'finale') for (const id of c.tracks) cnt.set(id, (cnt.get(id) || 0) + 1);
-  for (const d of T) if (cnt.get(d.id) !== 1) err.push(d.id + ' in ' + (cnt.get(d.id) || 0) + ' cups');
+  for (const d of T) if ((cnt.get(d.id) || 0) !== (d.ice ? 0 : 1)) err.push(d.id + ' in ' + (cnt.get(d.id) || 0) + ' cups');
+  // an ice track (def.ice; the decision kariera-envalira-791): in no cup, stage 3's single race (its first event)
+  for (const d of T.filter(d => d.ice)) {
+    const e = (Q.posamezne || []).filter(x => x.tracks.includes(d.id));
+    if (e.length !== 1 || e[0].stopnja !== 3 || e[0].kind !== 'dirka' || e[0].id !== 'e3-dirka-' + d.id) err.push(d.id + ': not stage 3\'s single race ' + e.map(x => x.id));
+  }
   for (const c of Q.vse) for (const id of c.tracks) if (!D.has(id)) err.push(c.id + ': ' + id + ' not a real track');
   if (new Set(Q.vse.map(c => c.id)).size !== Q.vse.length) err.push('ids not unique');
   // a group (a stage and a kind; the long tracks; the time trials): its tracks by length (km, then id), split evenly into parts of at
   // most NAJVEC (the longer parts first), the ids and names numbered (the first part plain, then II, III …), the stage's difficulty
   const grupe = [];
   for (let s = 1; s <= 3; s++) for (const v of ['krog', 'cesta']) {
-    grupe.push({ key: 's' + s + '-' + v, s, v, cups: Q.pokali.filter(c => c.stopnja === s && c.vrsta === v), want: T.filter(d => !leg(d.id) && K.vrsta(d) === v && K.stopnjaProge(d) === s),
+    grupe.push({ key: 's' + s + '-' + v, s, v, cups: Q.pokali.filter(c => c.stopnja === s && c.vrsta === v), want: T.filter(d => !leg(d.id) && !d.ice && K.vrsta(d) === v && K.stopnjaProge(d) === s),
       name: (k, m) => (v === 'krog' ? 'Pokal dirkališč' : 'Pokal cest') + (m > 1 ? rim(k) : '') + ' · ' + S[s - 1].name,
       en: (k, m) => (v === 'krog' ? 'Circuit Cup' : 'Road Cup') + (m > 1 ? rim(k) : '') + ' · ' + S[s - 1].en });
   }
@@ -68,7 +73,7 @@ function pravilo(Q, tracks, cats) {
     && lg[0].name === 'Legende' && lg[0].en.name === 'Legends') : lg.length) err.push('the Legends');
   // the final: FINALE_N circuits shorter than DOLGA (or all of them), each continent's longest first, the continents evenly (a continent
   // with fewer than one less than the most only when it has no more)
-  const fin = Q.pokali.filter(c => c.vrsta === 'finale'), kr = T.filter(d => K.vrsta(d) === 'krog' && L.get(d.id) < K.DOLGA);
+  const fin = Q.pokali.filter(c => c.vrsta === 'finale'), kr = T.filter(d => K.vrsta(d) === 'krog' && !d.ice && L.get(d.id) < K.DOLGA);   // (an ice track: none of the final's)
   if (kr.length ? !(fin.length === 1 && fin[0].id === 's4-finale' && fin[0].stopnja === 5 && fin[0].kind === 'finale' && fin[0].diff === 3 && fin[0].tracks.length === Math.min(K.FINALE_N, kr.length)
     && new Set(fin[0].tracks).size === fin[0].tracks.length && fin[0].tracks.every(id => kr.some(d => d.id === id))
     && fin[0].name === 'Finale · Veliko prvenstvo' && fin[0].en.name === 'Final · Grand Championship') : fin.length) err.push('the final');
@@ -286,7 +291,7 @@ const darilaOk = (g) => { const want = []; for (let s = g.igral ? 2 : g.o0 + 1; 
 {
   const dir = (track, o, car) => K.poDirki(car || K.novo({ on: true }), Object.assign({ track, pos: 1, cat: 'mali', km: 3 }, o), P);
   const prva = (r) => r.nagrade.filter(x => x.id.startsWith('prva:')), ids = (r) => r.nagrade.map(x => x.id).sort();
-  const own = (id) => P.pokali.find(c => c.vrsta !== 'finale' && c.tracks.includes(id)).stopnja;
+  const own = (id) => (P.pokali.find(c => c.vrsta !== 'finale' && c.tracks.includes(id)) || P.posamezne.find(e => e.tracks.includes(id))).stopnja;   // (an ice track: its single race's)
   const tt = cupIn(P, 's4-tt').tracks[0];
   const firsts = P.stopnje.map(st => cupIn(P, st.pokali[0]).tracks[0]).concat(['spa', cupIn(P, 's4-dolge').tracks[0], tt]);
   const badF = firsts.filter(id => { const r = prva(dir(id)); return r.length !== 1 || r[0].id !== 'prva:' + id || r[0].amount !== N.prva[own(id)] || r[0].name !== 'Prva zmaga na progi' || r[0].en !== 'First win on the track'; });
