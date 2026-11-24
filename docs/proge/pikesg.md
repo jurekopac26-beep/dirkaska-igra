@@ -7,3 +7,4 @@ Zgodovinski vzpon na Pikes Peak po makadamu, kot pred letom 2011, ko je bil več
 - **V meniju** proga nima svoje kartice: izbereš jo na kartici Pikes Peak z možnostjo *Road · Gravel*. Takrat ploščica *Single race* na naslovnici pokaže maketo makadama (`assets/tracks/pikesg.webp`, v dežju `pikesg-rain.webp`); kartica proge kaže zemljevid od zgoraj, skupen obema različicama.
 - **Načini** so isti kot na asfaltu (kronometer in dirka z 21 tekmeci), rekordi, duhovi in lestvice razredov pa so ločeni (svoj `id`).
 - Zemljevid od zgoraj, prelet in uvod so skupni z asfaltno različico.
+- **Vir poti in višin**: postavitev in višine (`points`, `elev` v `js/tracks/pikes.js`) sta ročno narisani, pomanjšana različica (~6,2 km, ~440 m vzpona) resnične ceste; ne uporabljata podatkov OpenStreetMap ne višinskega modela. Resnične številke (19,99 km, 156 ovinkov, start na 2862 m, vrh na 4301 m) so splošno znana zemljepisna dejstva.

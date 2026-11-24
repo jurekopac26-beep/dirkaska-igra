@@ -82,7 +82,9 @@ try {
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]);
     wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
   });
-  for (const id of await trackIds(page)) {
+  // (Jezero too, a test track trackIds leaves out: tests/browser/fleet.test.mjs reads its budget from here)
+  const ids = await trackIds(page); if (!ids.includes('jezero')) ids.unshift('jezero');
+  for (const id of ids) {
     if (only && !only.includes(id)) continue;
     await startTrack(page, id);
     const r = await page.evaluate(async () => {

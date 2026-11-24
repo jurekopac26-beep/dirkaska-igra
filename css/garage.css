@@ -273,3 +273,12 @@ svg { display: block; }
   .g-tl .pi, .g-tl .pi svg { width: 36px; height: 36px; }
   .g-mb .back, .g-mb .buy { height: 44px; }
 }
+/* V2 (docs/novosti-e.md): the stripes' colour and the car's number under the paint's cards */
+.g-cx { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.g-vr { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.g-vr > span { font: 800 11.5px/1.2 var(--f); color: #46546c; margin-right: 4px; }
+.g-sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #d6dde8; padding: 0; }
+.g-sw.sel { border-color: #36aef2; box-shadow: 0 0 0 2px #36aef2; }
+.g-sa { padding: 3px 10px; border-radius: 999px; background: #e3e8f0; color: #46546c; font: 800 11.5px/1.2 var(--f); border: 0; }
+.g-sa.sel { background: #36aef2; color: #fff; }
+.g-nm { min-width: 28px; text-align: center; font: 800 14px/1 var(--f); color: #142033; }
