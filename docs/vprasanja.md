@@ -132,7 +132,7 @@ Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na ra
 
 Račun croatiadata strani Odločitve še nima (točka 4 zgoraj), strani 1–3 pa sejam tega računa vrnejo »no access«. Samostojna seja zato vprašanje zapiše sem in na svojo stran s slikami, kjer se odgovor shrani v zbirko `vprasanja` (isti dokument in polja kot zgoraj); koordinacija ga prebere tam (`ArtifactData` `get`).
 
-### `e-stranske-sirina` (23. 11. 2026, PR #1025, odprto)
+### `e-stranske-sirina` (23. 11. 2026, PR #1025, odgovorjeno 24. 11. 2026)
 
 - Seja »Realizem E (#1025) nadaljevanje: izvoz prog, črte, oznake na križiščih, slike« (`session_01BFNqNJyR8tZ8UQU4zTTJCS`); stran s slikami in odgovorom: https://claude.ai/artifact/PjVSKCT2VRNAamEVgP3r6r (`vprasanja/e-stranske-sirina`; zasebna, dokler je lastnik ne deli).
 - Vprašanje: Gredo stranske ceste po pravih širinah tako na `main`? Zdaj: pas 3,25 m, merilo proge od 1,25×, meja 22 m za ustje, brez napisov STOP in puščic (zanje ni vira), Canaries brez cest 2604 in 3476 (hiše). Izbere se lahko več možnosti od 2 do 5.
@@ -143,3 +143,4 @@ Račun croatiadata strani Odločitve še nima (točka 4 zgoraj), strani 1–3 pa
   4. napisi STOP in puščice po splošnem vzorcu, brez vira; `livorno-ustje`
   5. rez ob hišah iz OSM namesto ročnih izpustov (nova naloga; Canaries 2604 in 3476 se vrneta skrajšani); `canaries-pred` in `canaries-po`
 - Podvprašanje B, širina sistema B (`def.sideRoads`: Chapman's Peak, Koli 334 m): 1 · ostane, kot je (priporočeno; `chapman-po`); 2 · tudi sistem B po pravih širinah (nova naloga; primer `hakone-po`).
+- **Odgovor** (24. 11. 2026, Matej prek koordinacije jure.kopac26): **1, 3, 4 in 5**, 2 ne; podvprašanje **B2**: osnova ostane (pas 3,25 m, merilo od 1,25×), meja 30 m, napisi STOP in puščice po splošnem vzorcu, rez ob hišah iz OSM (Canaries 2604 in 3476 se vrneta skrajšani), tudi sistem B po pravih širinah. Na strani dokument ostane »odprto« (odgovor je prišel prek koordinacije). Izvedba: `docs/realizem/paket-e.md` in predaja v opisu PR #1025.
