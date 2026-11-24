@@ -43,10 +43,10 @@
  },
  "caracoles": {
   "calls": 180,
-  "maxCalls": 230,
-  "kverts": 379,
-  "maxKverts": 555,
-  "jsMs": 1
+  "maxCalls": 231,
+  "kverts": 378,
+  "maxKverts": 559,
+  "jsMs": 1.04
  },
  "katu": {
   "calls": 168,
@@ -347,7 +347,7 @@
   "maxCalls": 142,
   "kverts": 354,
   "maxKverts": 376,
-  "jsMs": 0.71
+  "jsMs": 0.58
  },
  "portobelo": {
   "calls": 123,
@@ -455,11 +455,11 @@
   "jsMs": 0.94
  },
  "vaoala": {
-  "calls": 147,
-  "maxCalls": 154,
-  "kverts": 348,
+  "calls": 148,
+  "maxCalls": 156,
+  "kverts": 351,
   "maxKverts": 462,
-  "jsMs": 0.89
+  "jsMs": 0.97
  },
  "krasnahorka": {
   "calls": 113,
