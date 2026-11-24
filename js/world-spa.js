@@ -631,6 +631,7 @@
       }
     }
 
+    if (API.spaObc) API.spaObc({ scen, exclPush, excluded, ground: nrGround, near: nrNear, out });   // (js/world-spa-obcestje.js: OpenStreetMap's ways beside the circuit, the drinking fountains)
     /* ---- the woods: spruce planted in rows in their compartments (mature, young; a gap now and then), felled compartments with a few birches and
        saplings, beech stands; birches and young spruce along the edges of the woods and on the scrub, lone trees on the pastures and in the village.
        Farther than 70 m from the road every other spruce, cheaper and without shadows. The ground under the crowns turns to needles (G.cov) ---- */
