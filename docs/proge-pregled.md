@@ -14,8 +14,10 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Proga | `id` | Vrsta | Dolžina | °/km | Ravnine | Lasnice | Višina |
 |---|---|---|---|---|---|---|---|
 | Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
+| Envalira, Andora | `envalira` | krog | 0,7 km | 1240 | 16 % | 3 | ravno |
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
+| Mã Pí Lèng, Vietnam | `mapileng` | odprta cesta | 1,0 km | 963 | 24 % | 3 | +61 m |
 | Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
 | Sa Calobra, Španija | `sacalobra` | odprta cesta | 4,9 km | 946 | 35 % | 14 | −342 m |
 | Santo Antão, Zelenortski otoki | `santoantao` | odprta cesta | 5,0 km | 936 | 27 % | 6 | −336 m |
@@ -31,24 +33,21 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Kanaba, Uganda | `kanaba` | odprta cesta | 5,0 km | 618 | 30 % | 1 | −118 m |
+| Tapini, Papua Nova Gvineja | `tapini` | kronometer | 0,5 km | 618 | 30 % | 0 | −46 m |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
 | Gudauri, Gruzija | `gudauri` | odprta cesta | 4,8 km | 587 | 39 % | 5 | +260 m |
 | Kågeröd, Švedska | `kagerod` | krog | 2,1 km | 557 | 45 % | 2 | 13 m razpona |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
-| Hải Vân, Vietnam | `haivan` | odprta cesta | 2,0 km | 522 | 38 % | 1 | +91 m |
-| Mã Pí Lèng, Vietnam | `mapileng` | odprta cesta | 1,0 km | 963 | 24 % | 3 | +61 m |
 | Furka, Švica | `furka` | odprta cesta | 5,0 km | 519 | 45 % | 7 | +371 m |
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
-| Krásna Hôrka, Slovaška | `krasnahorka` | odprta cesta | 3,4 km | 471 | 49 % | 0 | −155 m |
 | Seul, Južna Koreja | `seoul` | odprta cesta | 2,5 km | 501 | 44 % | 0 | −77 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 493 | 57 % | 4 | +183 m |
 | Ujarrás, Kostarika | `ujarras` | odprta cesta | 0,7 km | 490 | 43 % | 0 | +41 m |
+| Krásna Hôrka, Slovaška | `krasnahorka` | odprta cesta | 3,4 km | 466 | 55 % | 3 | −155 m |
 | Quezaltepeque, Salvador | `quezaltepeque` | krog | 3,2 km | 455 | 51 % | 4 | 16 m razpona |
-| Sogeri, Papua Nova Gvineja | `sogeri` | odprta cesta | 2,0 km | 448 | 52 % | 1 | +117 m |
-| Tapini, Papua Nova Gvineja | `tapini` | kronometer | 0,5 km | 618 | 30 % | 0 | −46 m |
 | Cusco, Peru | `cusco` | odprta cesta | 0,9 km | 440 | 47 % | 1 | +61 m |
 | Savusavu, Fidži | `savusavu` | odprta cesta | 2,5 km | 431 | 50 % | 0 | +7 m |
 | Batangas, Filipini | `batangas` | krog | 3,6 km | 422 | 50 % | 2 | ravno |
@@ -84,6 +83,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Portobelo, Panama | `portobelo` | odprta cesta | 2,6 km | 195 | 71 % | 0 | +5 m |
 | Isuna, Butan | `isuna` | odprta cesta | 3,4 km | 185 | 65 % | 0 | +31 m |
 | Luanda, Angola | `luanda` | odprta cesta | 3,5 km | 119 | 85 % | 0 | +0 m |
+| Longyearbyen, Norveška | `longyearbyen` | odprta cesta | 4,3 km | 60 | 92 % | 0 | +112 m |
 | Isalo, Madagaskar | `isalo` | odprta cesta | 2,5 km | 44 | 96 % | 0 | −33 m |
 <!-- meritve:konec -->
 

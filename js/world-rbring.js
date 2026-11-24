@@ -631,6 +631,7 @@
       if (side === PSD && PD && pitOpen(i)) return -1;   // (and along the deceleration and acceleration lanes)
       if (PER) { if (side === PSD && PD) { const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 4; } return baleOn[side2(side)][i] || wallOn[side2(side)][i] ? 3 : 4; }
       if (side === PSD && PD) { const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; }
+      if (LK.allWall) return 1;   // (walls all round: Envalira's banks of ploughed snow, LK.wallLook)
       if (tyreOn[side2(side)][i]) return 2;
       const d = dS(i * ds); if (d > -420 && d < 280) return 1;
       return wallOn[side2(side)][i] ? 1 : 0;
