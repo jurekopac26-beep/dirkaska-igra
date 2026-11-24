@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Jamaica</title>
+  <!-- Ratio 1:2. A gold diagonal cross (saltire) divides the field into four triangles: green at the top and the bottom, black at the hoist
+       and the fly. The saltire 1/6 of the height wide. Colours: green #009B3A, gold #FED100, black #000000. -->
+  <rect x="0" y="0" width="1200" height="600" fill="#009B3A"/>
+  <path d="M0,0L600,300L0,600Z" fill="#000000"/>
+  <path d="M1200,0L600,300L1200,600Z" fill="#000000"/>
+  <path d="M0,0L1200,600M0,600L1200,0" stroke="#FED100" stroke-width="100"/>
+</svg>
