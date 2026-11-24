@@ -164,7 +164,7 @@
         const l = gl.row(lp, lp.map(() => wl));
         if (pl >= 0) { if (!SR) { if (!(GAP && GAP[i] & 1)) gl.link(pl, l, 0, 1); if (!(GAP && GAP[i] & 2)) gl.link(pl, l, 2, 3); } if (cl && pc) gl.link(pl, l, e0, e0 + 1); } pl = l; pc = cl;
       }
-      if (SR) for (const si of [0, 1]) for (const run of tek(si, 2, c0, Math.min(c0 + RC, N - 1))) { let p = -1; for (const f of run) { const l = gl.row(edgeL(f, si), [wx, wx]); if (p >= 0) gl.link(p, l, 0, 1); p = l; } }
+      if (SR) for (const si of [0, 1]) for (const run of tek(si, 2, c0, Math.min(c0 + RC, N - 1))) { let p = -1; for (const f of run) { if (GAP && GAP[f] & (si ? 2 : 1)) { p = -1; continue; } const l = gl.row(edgeL(f, si), [wx, wx]); if (p >= 0) gl.link(p, l, 0, 1); p = l; } }   // (open across the roadside's mouths too)
       for (const q of xk.get(c0 / RC) || []) layX(gl, q);
       addM(gr, aMat); addM(gl, lMat);
     }
