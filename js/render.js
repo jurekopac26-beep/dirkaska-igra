@@ -6403,9 +6403,9 @@ const Render = (function () {
      officer in a yellow vest by each parked one. The spike strips across the road. ---------------- */
   let road = null;
   // the traffic's paints: bright and light ones only, no black or dark ones (seen well on the tarmac ahead; the user, 12. 11. 2026)
-  const RD_CAR = [0xf4f4f2, 0xc9ccd0, 0x2f6fd0, 0xd02a1f, 0xe8b400, 0x3a9a4a, 0xe86a10, 0x9fc6e9, 0xd9c7a0, 0xb52a1f, 0x9aa0a6, 0x2aa5b0, 0xc84a8a, 0xe8e8e4, 0x6fa0e0, 0xf0d860];
+  const RD_CAR = [0xf4f4f2, 0xc9ccd0, 0x2f6fd0, 0xd02a1f, 0xe8b400, 0x57a86e, 0xe86a10, 0x9fc6e9, 0xd9c7a0, 0xb52a1f, 0x9aa0a6, 0x2aa5b0, 0xc84a8a, 0xe8e8e4, 0x6fa0e0, 0xf0d860];
   const RD_VAN = [0xf2f2f0, 0xf2f2f0, 0xdcdcd6, 0x2f5fa8, 0xc9ccd0, 0xd8b020, 0xc0281c];
-  const RD_TRUCK = [0xf2f2f0, 0xc0281c, 0x1f4f9a, 0xe0a020, 0xe86a10, 0x3a9a4a, 0xd8d8d4, 0xd8b020];   // (the trucks' cabs)
+  const RD_TRUCK = [0x6fa0e0, 0xc0281c, 0x2a62b8, 0xe0a020, 0xe86a10, 0x47a85c, 0x2aa5b0, 0xd8b020];   // (the trucks: the cab and the trailer's box; no white ones, a white box reads as an empty platform)
   const RD_BUS = [0x19a7a4, 0xf2f2ee, 0x19a7a4], RD_MOTO = [0xd8261c, 0xf2c200, 0x1b5fb8, 0xf2f2f2, 0xe86a10], RD_BIKE = [0xd8261c, 0x1b5fb8, 0x151515, 0xf2f2f2, 0x2aa05a, 0xe8b400];
   const RD_SHIRT = [0xc0392b, 0x2e6fb5, 0xf2f2ee, 0x3c7a3e, 0xe0a526, 0x5b3a82, 0x1f2a36, 0xd46a8f, 0x7a8b99, 0x9b2d20, 0x4aa3a0, 0xecd9b0], RD_TROU = [0x2b3a55, 0x1c1c20, 0x4a4f57, 0x6e5a42, 0x33415c, 0x8a7d66];
   const RD_HAIR = [0x2a1d14, 0x4a3222, 0x6b4a2e, 0xb8925a, 0x1a1a1a, 0x8c8c8c, 0xd9c29a], RD_PACK = [0xc0392b, 0x2e6fb5, 0xe0a526, 0x3c7a3e, 0x303438];
@@ -6531,13 +6531,14 @@ const Render = (function () {
     return g.geometry();
   }
   // a truck and its semi-trailer (16.5 x 2.55 m: Los Caracoles' traffic): the cab-over cab in its colour with the roof's deflector, the
-  // windscreen, the grille, the bumper, the big mirrors, the fuel tank, the chassis; the trailer's box (white-grey) with its skirts, the
-  // rear doors' seam, the lights; the tractor's three axles and the trailer's three
+  // windscreen, the grille, the bumper, the big mirrors, the fuel tank, the chassis; the trailer's box in the truck's colour (a simple box,
+  // seen well from the camera behind the car: not a white slab) with its dark frame, its skirts, the rear doors' seam, the lights; the
+  // tractor's three axles and the trailer's three
   const RD_CAB_S = rdSecs([[5.95, 1.2, 0.55, 1.55, 1.17, 2.95, 0.05, 'b'], [6.0, 1.25, 0.5, 1.6, 1.22, 3.0, 0.06, 'r'], [7.95, 1.25, 0.5, 1.6, 1.22, 3.0, 0.06, 'gf'],
     [8.15, 1.25, 0.45, 1.6, 1.22, 1.75, 0.03, 'b'], [8.25, 1.22, 0.42, 1.5, 1.18, 1.6, 0.02, 'b']]);
   const RD_DEF_S = rdSecs([[6.0, 1.05, 3.0, 3.06, 0.95, 3.72, 0.04, 'b'], [6.06, 1.1, 3.0, 3.06, 1.0, 3.78, 0.05, 'b'], [7.15, 1.12, 3.0, 3.06, 1.05, 3.12, 0.03, 'b'], [7.25, 1.1, 3.0, 3.05, 1.05, 3.07, 0.01, 'b']]);
   function rdTruckGeo() {
-    const g = new GB(), B = RD_MG, W = 2.55, hw = W / 2, K = [0.1, 0.1, 0.11], TR = [0.86, 0.86, 0.84], SL = [0.6, 0.62, 0.66];
+    const g = new GB(), B = RD_MG, W = 2.55, hw = W / 2, K = [0.1, 0.1, 0.11], FR = [0.2, 0.21, 0.23], SL = [0.6, 0.62, 0.66];
     rdShell(g, RD_CAB_S, { B, win: [[6.95, 7.9]], back: false, lf: 0.64, gr: [0.82, 1.42] }); rdShell(g, RD_DEF_S, { B, bare: true });
     World.box(g, 8.19, 0.28, 0, 0.1, 0.34, W - 0.05, 0, K);   // (the bumper)
     for (const sd of [-1, 1]) { rdRod(g, [7.9, 2.55, sd * 1.24], [8.1, 2.5, sd * 1.5], 0.05, K); World.box(g, 8.08, 1.85, sd * 1.5, 0.08, 0.7, 0.22, 0, K);
@@ -6548,7 +6549,10 @@ const Render = (function () {
       rdArch(g, 7.3, 0.52, 0.6, sd * (1.25 * 0.93 + 0.004), 0.5);
       for (const x of [7.3, 5.0, 3.85, -4.7, -5.95, -7.2]) rdWheel(g, x, 0.52, sd * (hw - 0.2), 0.52, 0.34); }
     World.box(g, 4.4, 0.62, 0, 3.3, 0.38, W - 0.7, 0, K);   // (the chassis under the coupling)
-    World.box(g, -1.1, 1.08, 0, 14.2, 2.9, W, 0, TR, [0.8, 0.8, 0.78]); World.box(g, -1.1, 0.86, 0, 14.2, 0.22, W - 0.1, 0, [0.22, 0.22, 0.24]);
+    World.box(g, -1.1, 1.08, 0, 14.2, 2.9, W, 0, B); World.box(g, -1.1, 0.86, 0, 14.2, 0.22, W - 0.1, 0, [0.22, 0.22, 0.24]);   // (the box in the truck's colour, its floor)
+    for (const sd of [-1, 1]) { World.box(g, -1.1, 3.9, sd * (hw - 0.05), 14.24, 0.12, 0.14, 0, FR);   // (the box's frame: the roof's rails, the corner posts)
+      for (const x of [-8.13, 5.93]) World.box(g, x, 1.08, sd * (hw - 0.05), 0.18, 2.84, 0.14, 0, FR); }
+    for (const x of [-8.13, -4.6, -1.1, 2.4, 5.93]) World.box(g, x, 3.9, 0, 0.18, 0.12, W - 0.2, 0, FR);   // (the roof's bows)
     g.quadO([-8.206, 1.15, -0.02], [-8.206, 1.15, 0.02], [-8.206, 3.9, 0.02], [-8.206, 3.9, -0.02], K, [-7, 2.5, 0]);
     World.box(g, -8.15, 0.42, 0, 0.12, 0.16, W - 0.3, 0, K);   // (the underrun bar)
     return g.geometry();
@@ -6572,7 +6576,7 @@ const Render = (function () {
     else if (kind === 'van') { bx(0, 0, 0, 4.4, 0.42, 1.92, K); bx(-0.35, 0.32, 0, 4.6, 1.73, 2.0, B); bx(2.25, 0.32, 0, 0.8, 0.8, 1.96, B); bx(1.94, 1.12, 0, 0.66, 0.85, 2.02, GLASS, B); }
     else if (kind === 'bus') { bx(0, 0, 0, 10.6, 0.5, 2.42, K); bx(0, 0.36, 0, 11.8, 2.8, 2.5, B); bx(0.21, 1.45, 0, 11.42, 1.35, 2.52, GLASS, B); }
     else if (kind === 'truck') { bx(0, 0, 0, 15.6, 0.66, 2.4, K); bx(7.05, 0.62, 0, 2.3, 2.3, 2.49, B); bx(6.75, 2.92, 0, 1.7, 0.6, 2.35, B); bx(7.6, 1.75, 0, 1.24, 0.95, 2.51, GLASS, B);
-      bx(-1.1, 0.86, 0, 14.2, 3.12, 2.55, [0.86, 0.86, 0.84], [0.8, 0.8, 0.78]); }
+      bx(-1.1, 0.86, 0, 14.2, 3.12, 2.55, B); }
     else { bx(0, 0, 0, 1.9, 0.62, 0.16, K); bx(0, 0.5, 0, 1.1, 0.35, 0.34, B); }
     return g.geometry();
   }
