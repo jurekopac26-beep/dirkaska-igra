@@ -53,7 +53,7 @@
   "maxCalls": 208,
   "kverts": 595,
   "maxKverts": 807,
-  "jsMs": 0.82
+  "jsMs": 1.01
  },
  "harju": {
   "calls": 193,
@@ -81,7 +81,7 @@
   "maxCalls": 225,
   "kverts": 653,
   "maxKverts": 781,
-  "jsMs": 1.12
+  "jsMs": 1.48
  },
  "rastro": {
   "calls": 216,
