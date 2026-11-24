@@ -1,6 +1,6 @@
 /* The weather over the whole track screen (docs/meni-izbira-proge.md, sklop 12; the user's choice of 8. 11. 2026 ~23.20, stran Odločitve
    meni-vreme-cel-meni: the rain and the snow over the whole menu; the mockup maketa-menija/izbira-proge/wxfx.js, its blizzard). Each
-   weather changes the picture (its light and colours, clouds, the sun's rays, a rainbow, lightning, drops on the lens; in the snow a snowy
+   weather changes the picture (its light and colours, clouds, a rainbow, lightning, drops on the lens; in the snow a snowy
    copy of it), the air over the whole screen (slanted rain, a blizzard in the wind), the yard's floor (wet, with ripples and the car's
    reflection, or snow), the road sign (drops and drips; snow stuck on it, frost, snow on its top), the car (darker in the rain; frosted
    windows, snow on its top, standing in snow) and the buttons (drops and splashes; snow on their tops). A tap on a weather: a ring on its
@@ -99,23 +99,6 @@ window.MenuVreme = (() => {
   }
 
   /* ---------------- the pictures drawn once ---------------- */
-  // the sun's rays and its flares (top right), at full strength (drawn fainter as the weather has less sun)
-  function sunPic(W, H) {
-    return pic('sun|' + W + '|' + H, () => {
-      const c = cv(W, H), g = c.getContext('2d'), sx = W * .9, sy = 60; g.globalCompositeOperation = 'screen';
-      for (let i = 0; i < 14; i++) {
-        const a = Math.PI * (.52 + i * .045), len = 520, sp = .012 + .01 * hash(i), gr = g.createRadialGradient(sx, sy, 10, sx, sy, len);
-        gr.addColorStop(0, 'rgba(255,220,150,.16)'); gr.addColorStop(1, 'rgba(255,200,120,0)');
-        g.fillStyle = gr; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + Math.cos(a - sp) * len, sy + Math.sin(a - sp) * len); g.lineTo(sx + Math.cos(a + sp) * len, sy + Math.sin(a + sp) * len); g.closePath(); g.fill();
-      }
-      for (const [f, r, col, a] of [[.35, 16, '255,190,110', .22], [.55, 7, '160,230,255', .28], [.8, 30, '255,150,90', .1], [1.05, 12, '200,255,200', .16]]) {
-        const x = sx + (W * .25 - sx) * f, y = sy + (H * .8 - sy) * f, gr = g.createRadialGradient(x, y, 0, x, y, r);
-        gr.addColorStop(0, 'rgba(' + col + ',' + a + ')'); gr.addColorStop(.7, 'rgba(' + col + ',' + a * .5 + ')'); gr.addColorStop(1, 'rgba(' + col + ',0)');
-        g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
-      }
-      return c;
-    });
-  }
   // the rainbow (changing weather: the sun comes out in the rain), low at the left
   function bowPic(W, H) {
     return pic('bow|' + W + '|' + H, () => {
@@ -524,7 +507,7 @@ window.MenuVreme = (() => {
 
   /* ---------------- each layer ---------------- */
   // the picture: its light and colours (the stage's --wxf, the videos' --wxv: css/menu.css), its wet and snowy copies, the clouds, a blue
-  // tint, the warm sun, the snow's light; on it the sun's rays, the rainbow, the haze and frost of the snow, the lightning, drops on the lens
+  // tint, the warm sun, the snow's light; on it the rainbow, the haze and frost of the snow, the lightning, drops on the lens
   function stageL(S) {
     const st = L.stage; if (!st || !L.ov) return;
     const { w, ws, F } = S, f = (k) => mix(w, k), sn = ws.snow, vid = L.video, g0 = mix(ws, 'g');
@@ -543,7 +526,7 @@ window.MenuVreme = (() => {
     const sig = [sun, bow, sn, F, lens].map((v) => Math.round(v * 200)).join(','), mv = lens > .01 || F > .002;
     paint(l, sig, mv, (g, W, H) => {
       const V = Math.min(H, L.vis || H);
-      if (sun > .005) { g.globalAlpha = Math.min(1, sun); g.drawImage(sunPic(Math.round(W), Math.round(V)), 0, 0, W, V); g.globalAlpha = 1; }
+      // (no sun's rays over the picture: the user, 12. 11. 2026; its warm light stays)
       if (bow > .01) { g.globalAlpha = Math.min(1, bow); g.drawImage(bowPic(Math.round(W), Math.round(V)), 0, 0, W, V); g.globalAlpha = 1; }
       if (sn > .01) {
         const hz = g.createLinearGradient(0, V * .45, 0, V); hz.addColorStop(0, 'rgba(226,235,248,0)'); hz.addColorStop(1, 'rgba(226,235,248,' + a3(SN.haze * sn) + ')');

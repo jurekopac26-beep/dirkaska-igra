@@ -254,7 +254,7 @@
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.8 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
+      const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.8 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
       const wht = [0.95, 0.95, 0.92], ylw = [0.95, 0.74, 0.14], gc = [0.6, 0.58, 0.53], deck = [0.62, 0.61, 0.58];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
@@ -538,6 +538,46 @@
       if (!g.empty) { const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.matrixAutoUpdate = false; root.add(m); }
     }
 
+    /* ---- by the road (def.obcestje: OpenStreetMap's, 23. 11. 2026): the footway along the ridge (pale stone, a step where the ground falls), the
+       viewpoint at its end (a paved terrace, a railing on the three far sides), the mast (a grey three-legged lattice, 15 m: OpenStreetMap gives
+       no height), the bus stop below the finish (a pole and a blank blue plate), the concrete heads of the culverts under the road; each
+       past the barrier, clear of the buildings, out of the forest ---- */
+    let nSide = 0;
+    { const S = def.obcestje || {}, RS = rng(5233), stone = [0.7, 0.68, 0.64], rail = [0.55, 0.57, 0.6], conc = [0.66, 0.65, 0.62], dark = [0.07, 0.07, 0.08], stl = [0.58, 0.6, 0.63];
+      const clear = (x, z, m) => { const n = vrNear(x, z); return !(n.i >= 0 && n.dd < m) && !excluded(x, z); };
+      const away = (x, z, m) => { for (let k = 0; k < 14; k++) { const n = vrNear(x, z); if (n.i < 0 || n.dd >= m) return excluded(x, z) ? null : [x, z, n.i];
+        const i = n.i, sd = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i] >= 0 ? 1 : -1; x += T.nx[i] * sd * 0.5; z += T.nz[i] * sd * 0.5; } return null; };
+      for (const L of S.path || []) { let on = 0;
+        for (let k = 0; k + 3 < L.length; k += 2) { const ax = L[k], az = L[k + 1], dx = L[k + 2] - ax, dz = L[k + 3] - az, Ls = Math.hypot(dx, dz), m = Math.max(1, Math.round(Ls / 3)), ro = Math.atan2(dz, dx);
+          for (let q = 0; q < m; q++) { const f0 = q / m, f1 = (q + 1) / m, x = ax + dx * (f0 + f1) / 2, z = az + dz * (f0 + f1) / 2; if (!clear(x, z, 0.8)) continue;
+            const ga = tmGround(ax + dx * f0, az + dz * f0), gb = tmGround(ax + dx * f1, az + dz * f1), top = Math.max(ga, gb) + 0.06, bot = Math.min(ga, gb) - 0.3;
+            box(scen.get(x, z), x, bot, z, Ls / m + 0.25, top - bot, 1.6, ro, vary(stone, RS, 0.06), null, true); exclPush(x, z, 1.8); on = 1; } }
+        nSide += on; }
+      for (const [x0, z0] of S.view || []) { const p = away(x0, z0, 3); if (!p) continue; const [x, z, i] = p, ro = Math.atan2(z - T.pz[i], x - T.px[i]), c = Math.cos(ro), s = Math.sin(ro), g = scen.get(x, z);
+        let lo = 1e9, hi = -1e9; for (const [u, v] of [[-3.5, -2.5], [3.5, -2.5], [3.5, 2.5], [-3.5, 2.5], [0, 0]]) { const h = tmGround(x + c * u - s * v, z + s * u + c * v); lo = Math.min(lo, h); hi = Math.max(hi, h); }
+        const y = hi + 0.12; box(g, x, lo - 0.6, z, 7, y - lo + 0.6, 5, ro, conc, stone, true);
+        for (const [u0, v0, u1, v1] of [[3.4, -2.4, 3.4, 2.4], [-3.4, -2.4, 3.4, -2.4], [-3.4, 2.4, 3.4, 2.4]]) { const Ls = Math.hypot(u1 - u0, v1 - v0), n = Math.round(Ls / 1.2);
+          for (let q = 0; q <= n; q++) { const u = lerp(u0, u1, q / n), v = lerp(v0, v1, q / n); box(g, x + c * u - s * v, y, z + s * u + c * v, 0.07, 1.05, 0.07, ro, rail); }
+          const um = (u0 + u1) / 2, vm = (v0 + v1) / 2; box(g, x + c * um - s * vm, y + 1.02, z + s * um + c * vm, u0 === u1 ? 0.08 : Ls, 0.07, u0 === u1 ? Ls : 0.08, ro, rail); }
+        exclPush(x, z, 5.5); nSide++; }
+      for (const [x0, z0] of S.mast || []) { const p = away(x0, z0, 2.5); if (!p) continue; const [x, z] = p, y = tmGround(x, z), g = scen.get(x, z), h = 15, leg = [];
+        box(g, x, y - 0.6, z, 3.2, 0.85, 3.2, 0, conc, null, true);
+        for (let a = 0; a < 3; a++) { const t = a * TAU / 3 + 0.4; leg.push([Math.cos(t), Math.sin(t)]); }
+        const at = (k, yy) => { const r = lerp(1.1, 0.3, (yy - y) / h); return [x + leg[k][0] * r, yy, z + leg[k][1] * r]; };
+        for (let k = 0; k < 3; k++) ouRod(g, at(k, y + 0.2), at(k, y + h), 0.07, stl, 4);
+        for (let q = 1; q <= 6; q++) { const yy = y + h * q / 6.4; for (let k = 0; k < 3; k++) ouRod(g, at(k, yy), at((k + 1) % 3, yy), 0.03, stl, 3); }
+        ouRod(g, [x, y + h, z], [x, y + h + 3, z], 0.05, stl, 4);
+        for (let k = 0; k < 2; k++) { const [ux, uz] = leg[k]; box(g, x + ux * 0.55, y + h - 2.6, z + uz * 0.55, 0.45, 1.5, 0.18, Math.atan2(uz, ux) + PI / 2, [0.88, 0.88, 0.86]); }
+        exclPush(x, z, 3); nSide++; }
+      for (const [x0, z0] of S.stop || []) { const p = away(x0, z0, 1); if (!p) continue; const [x, z, i] = p, y = tmGround(x, z), g = scen.get(x, z), ro = Math.atan2(T.tz[i], T.tx[i]);
+        ouRod(g, [x, y - 0.3, z], [x, y + 2.75, z], 0.04, rail, 5); box(g, x, y + 2.2, z, 0.6, 0.48, 0.04, ro, [0.12, 0.33, 0.66]);
+        exclPush(x, z, 1.5); nSide++; }
+      for (const C of S.culv || []) for (const e of [0, 1]) { const x = C[e * 2], z = C[e * 2 + 1], ox = C[2 - e * 2], oz = C[3 - e * 2]; if (!clear(x, z, 1)) continue;
+        const L = Math.hypot(x - ox, z - oz) || 1, ux = (x - ox) / L, uz = (z - oz) / L, ro = Math.atan2(uz, ux), y = tmGround(x, z), g = scen.get(x, z);
+        box(g, x, y - 0.7, z, 0.45, 1.75, 3.2, ro, conc); box(g, x + ux * 0.23, y - 0.25, z + uz * 0.23, 0.04, 0.8, 1.0, ro, dark);
+        exclPush(x, z, 2.5); nSide++; }
+    }
+
     /* ---- spectators: the start and the finish, the checkpoints, every fourth bend, a few groups along the road ---- */
     {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
@@ -623,7 +663,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: tmAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: tmAtlas2(def.curves || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), steps: nSteps, cabins: nCab, town: nTown, mist: out.mist };   // (read by the tests)
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), steps: nSteps, cabins: nCab, side: nSide, town: nTown, mist: out.mist };   // (read by the tests)
     return out;
   }
 
