@@ -212,8 +212,9 @@ RS_D, RS_STOP = 4.0, 25.0   # a side road with half its points or more this near
 
 RS_W = 2.5   # a roadside's way narrower than this (m) is a footway or a path: a side road beside it is not the roadside's
 RS_HDR = {'gudauri': 4, 'medeu': 4, 'ella': 3, 'luanda': 3, 'bikernieki': 2, 'pembrey': 2, 'sosnova': 2, 'isuna': 2, 'ujarras': 2,
-          'cusco': 1, 'killar': 1, 'zandvoort': 1}   # the numbers before a roadside way's points in its row (Eljem, Koror, Savusavu: its points
-                                                     # a list of their own, last; Porto Moniz's SIDE are sidewalks along the road: not ways)
+          'cusco': 1, 'killar': 1, 'zandvoort': 1, 'kagerod': 2}   # the numbers before a roadside way's points in its row (Eljem, Koror,
+                                                     # Savusavu: its points a list of their own, last; Rio Hondo's STREETS: points only; Porto
+                                                     # Moniz's SIDE are sidewalks along the road: not ways)
 
 def js_array(txt, name):
     """The JS array literal after the first match of the regex name (e.g. r'\\bconst WAYS = '), its comments out, as lists (None: none)."""
@@ -236,12 +237,13 @@ def roadside(id_):
     blk = ''.join(m.group(0) for m in re.finditer(r'// ---- obcestje.*?// ---- konec obcestja', t, re.S))   # Ella
     obj = ''.join(m.group(0) for m in re.finditer(r'^    obcestje: .*$', t, re.M))                          # Tianmen
     rows, wk, h = js_array(txt, r'\bconst WAYS = ') or js_array(blk, r'^\s*ways: ') or [], js_array(txt, r'\bconst WK = '), RS_HDR.get(id_)
+    rows = rows + [[r] for r in js_array(txt, r'\bconst STREETS = ') or []]                       # Rio Hondo: [x, z, ...], width not given
     ways = []
     for r in rows:
         if isinstance(r[-1], list): pts, w = r[-1], None                                         # [class, ..., [x, z, ...]]
         else:
             assert h is not None, 'the roadside ways of %s: the numbers before their points? (RS_HDR)' % id_
-            pts = r[h:]; w = (r[3] / 10 if h == 4 else r[2] / 10 if id_ == 'ella' else 2 * r[1] if id_ == 'pembrey' else
+            pts = r[h:]; w = (r[3] / 10 if h == 4 else r[2] / 10 if id_ == 'ella' else 2 * r[1] if id_ in ('pembrey', 'kagerod') else
                               (min(r[0][1::2]) if isinstance(r[0], list) else r[0]) if id_ == 'luanda' else 2 * wk[r[0]][0] if wk and h == 1 else None)
         if (w is None or w >= RS_W) and len(pts) >= 4: ways.append(np.asarray(pts, float).reshape(-1, 2))
     stops = [js_array(obj, r'\bstop: ') or [], js_array(txt, r'\bconst PLATFORM = ') or []]   # [[x, z], ...] (Tianmen); [x, z] (Gudauri's bus platform)
