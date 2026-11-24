@@ -135,5 +135,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.15 | #945 Pravila 22. 11. | dnevni PR pravil (`CLAUDE.md`, `docs/odlocitve.md`) | jure.kopac26 | osnutek |
 | 10.16 | #943 Krásna Hôrka, Slovaška | nova proga 3,4 km (veja `proga/spis`), testi zeleni; v sporu z `main`, ob združitvi spoji; proge zadnje (Matej, #382 7079559816) | partyslo | osnutek |
 | 10.13 | #704 | Krásna Hôrka, Slovaška (`krasnahorka`, ~0,64 km): kratka proga z znamenitostjo, dovozna cesta v klanec do gradu, grad po obrisu OSM cel kot pred požarom 2012 (odločitev uporabnika prek Mateja 15. 11. 2026); proga, zato na koncu, z naslednjim PR prog | jure.kopac26 | pripravljen, povezani testi lokalno zeleni (15. 11.); osnutek do vrste; predaja v opisu PR |
+| 10.17 | #1052 Hiše brez sivega podstavka | Realizem S5 na verigi S0–S3 (osnova #714): hiše osmih prog stojijo na poravnani parceli. Z #840 se dopolnjuje, skupna je samo Bâlea (kdor je drugi, znova posname njeno referenco) | partyslo | osnutek, povezani testi lokalno zeleni (24. 11.); čaka ok (vprašanje `hise-1052-chapman` na strani Odločitve) |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
