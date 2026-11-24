@@ -458,6 +458,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'livorno', { gH: nrGround, slope: API.nrSlope, lc: nrLC, near: nrNear, bad: (x, z) => { const sd = seaD(x, z); return sd > -2 || (sd > -16 && nrDem(x, z) < 2.0) || (BRC.length > 0 && deckH(x, z) != null); } });   // (the roadside ground for the chase camera: js/world-chase-bt18.js)
     out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
     return out;
   }

@@ -64,7 +64,7 @@ const Core = (function () {
   // along the side road, its width at most em m), the region around one beyond its limit that still counts as in it (rm m: what flies over
   // its edge comes back down onto it), the barrier's clearance from a mouth (gc m: it ends this far before the kerb return, as a guard rail's
   // end does; the traffic does not pull up there either)
-  const SNS = 6, SR = { ds: 2, r: [6.5, 4.5, 4.5], rN: 3.2, lt: 24, em: 12, rm: 4, gc: 2 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
+  const SNS = 6, SR = { ds: 2, r: [6.5, 4.5, 4.5], rN: 3.2, lt: 24, em: 12, rm: 4, gc: 2, po: 0.5 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
   // the run-off's surfaces (def.roSurf, Track._buildRunoff): the run-length code's digits; per class (0 asphalt, 1 light paving, 2 grass, 3 gravel or bare
   // earth) its channel in the atlas (R paving, G grass, B gravel, A asphalt) and the surface it drives as (Track.surface: paving as asphalt, gravel as makadam)
   const RO_A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', RO_DIG = new Uint8Array(128), RO_CH = [3, 0, 1, 2], RO_SF = [0, 0, 2, 5], _roQ = { a: -1, u: 0 };
@@ -757,6 +757,9 @@ const Core = (function () {
         const t = sp.t; if (t < 0 || t > S.Lend || Math.abs(sp.u) > this.stubHw(S, t, sp.u) + S.lim + (pick ? (pass > 1 ? SR.rm : 0) : (pass ? SR.rm : 0)) || (pick && (pass & 1) === 0 && t > S.L - 2) || (pick && !main && pass > 1)) continue;   // (def.stubPick: passes 0 and 2 not past the rail of one, 0 and 1 inside its limit, 2 and 3 within 4 m more (not deep in one, main false))
         const deep = t >= S.tF;
         if (main ? deep && Math.abs(out.d) <= (out.d > 0 ? out.br : out.bl) : !deep) continue;   // (another leg of the road beside it: the road's; near the junction the road's own search decides)
+        if (deep) { const pe = t - (S.L - 0.5), ps = Math.max(pe, S.hill && pe < 0 ? -1 : Math.abs(sp.u) - (this.stubHw(S, t, sp.u) + S.lim));   // (deep but more than SR.po m out of it, past its rail or its limit
+          const H = main && this.hill, si = out.d > 0 ? 1 : 0;   // across (but its own hill, soft, Core's wall): a car come there along the road's verge or hill, not down the side road; the road's when
+          if (ps > SR.po && (!main || (H && (H.on[si][out.a] || H.on[si][Math.min(this.N - 1, out.a + 1)])) || Math.abs(out.d) - (si ? out.br : out.bl) < ps)) continue; }   // on its hill there or its barrier is nearer (Core's wall pushes the short way back, not to the rail far behind))
         const j = sp.j, f = sp.f, Y = S.Y[j] + (S.Y[j + 1] - S.Y[j]) * f, Gs = S.G[j] + (S.G[j + 1] - S.G[j]) * f;
         out.k = k; out.kj = j; out.st = t; out.u = sp.u; out.kx = sp.kx; out.kz = sp.kz; out.deep = deep;
         if (deep) {   // pinned at the junction: along the road where its centre line got deep, beyond the barrier there by as much as it is deeper in
@@ -1622,7 +1625,8 @@ const Core = (function () {
         const on = ev.find(e => e.bend && !e.ring && e.s - 15 <= c && c <= e.e + 10), hm = { c, e: c + w, word };
         if (on) { if (!once || !on.t.includes('over')) { on.t.push('over', word); (on.hm = on.hm || []).push(hm); } } else ev.push({ s: c - w * 0.8, e: c + w, t: [word], bump: true, hm: [hm] });
       };
-      for (const b of def.bumps || []) { const h = b.h || 1; bump((this.open ? clamp(b.at, 0, 1) : ((b.at % 1) + 1) % 1) * this.len, b.w || 8, h >= 1.5 ? 'bigjump' : h >= 1 ? 'jump' : 'crest'); }
+      for (const b of def.bumps || []) { const h = b.h || 1; if (h < 0.4) continue;   // (ruts and dips under 40 cm, Tapini: felt, not called)
+        bump((this.open ? clamp(b.at, 0, 1) : ((b.at % 1) + 1) % 1) * this.len, b.w || 8, h >= 1.5 ? 'bigjump' : h >= 1 ? 'jump' : 'crest'); }
       if (this.hasElev && !(def.bumps && def.bumps.length)) {   // the road's own crests: the lift at a quick car's speed (up to 60 m/s, ~4 m/s^2 from the start)
         const v = this.speedProfile(CSK.aiLatA, CSK.aiBrakeA, 60, CSK.aiWmax, 0, 0.9), i0 = this.open ? this.idx(this.startS) : 0, i1 = this.open ? this.idx(this.finishS) : N - 1, cv = this.curv, hy = this.hy;
         if (this.open) for (let i = i0, u = 0; i <= i1; i++) { u = Math.min(v[i], Math.sqrt(u * u + 8 * ds)); v[i] = u; }
@@ -2257,6 +2261,42 @@ const Core = (function () {
     if (e.grip) { car.arc = Object.assign({}, car.arc, { amax: car.arc.amax * (1 + e.grip) }); car.upgGrip = (car.upgGrip || 1) * (1 + e.grip); }
     if (e.brake) car.brakeG *= 1 + e.brake;
     return e;
+  }
+  // a car's look without its effects (docs/novosti-e.md, Novost 1: the garage's parts and stripes in a championship, on a friend's car online
+  // and in a replay file): { deli: { element: option 1..16 }, stripe: false (stripes off), sc: the stripes' colour, hex (V2) }. lookWire(v) its
+  // short form for the wire and the .rrp file ({ d, s: 0, c } or null: nothing to show), lookRead(o) that form checked (unknown elements, options out of 1..16 and junk out;
+  // null: nothing, e.g. an older peer's or file's without one), dressOnly(car, v) puts it on a car: car.deli (the renderer draws it),
+  // dLower / dTint, stripe; the mass, power, grip, drag and brakes stay the model's (the physics as without parts)
+  const LOOK_ID = /^[a-z_]{2,24}$/;
+  function lookRead(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+    const d = {}, src = o.d && typeof o.d === 'object' && !Array.isArray(o.d) ? o.d : {}; let n = 0;
+    for (const k of Object.keys(src).slice(0, 64)) { const v = src[k]; if (LOOK_ID.test(k) && Number.isInteger(v) && v >= 1 && v <= 16 && n < 40) { d[k] = v; n++; } }
+    const D = typeof DELI !== 'undefined' ? DELI.clean(d, null) : d, v = {};
+    if (Object.keys(D).length) v.deli = D;
+    if (o.s === 0) v.stripe = false;
+    if (Number.isInteger(o.c) && o.c >= 0 && o.c <= 0xffffff) v.sc = o.c;
+    return Object.keys(v).length ? v : null;
+  }
+  function lookWire(v) {
+    if (!v || typeof v !== 'object') return null;
+    const D = v.deli && typeof v.deli === 'object' ? lookRead({ d: v.deli }) : null, w = {};
+    if (D && D.deli) w.d = D.deli;
+    if (v.stripe === false) w.s = 0;
+    if (Number.isInteger(v.sc) && v.sc >= 0 && v.sc <= 0xffffff) w.c = v.sc;
+    return Object.keys(w).length ? w : null;
+  }
+  function dressOnly(car, v) {
+    if (!v || typeof v !== 'object') return car;
+    if (v.stripe === false) car.stripe = false;
+    if (Number.isInteger(v.sc) && v.sc >= 0 && v.sc <= 0xffffff) car.stripeCol = v.sc;   // (the stripes' own colour: render.js kitRecolour)
+    const D = v.deli && typeof DELI !== 'undefined' ? DELI.clean(v.deli, null) : null;
+    if (!D || !Object.keys(D).length) return car;
+    let lower = 0, tint = 0;
+    for (const id in D) { const f = DELI.effect(id, D[id]); if (f) { lower += f.lower || 0; tint = Math.max(tint, f.tint || 0); } }
+    if (lower) car.dLower = lower;
+    if (tint) car.dTint = tint;
+    car.deli = D; return car;
   }
   // the garage's tyres (car.dTy, applyDeli): their grip on the surface under a wheel. Snow: a winter race (Race opts.winter) or a stage's
   // gravel packed with snow (trk.snowK); gravel: the loose ground (grass, gravel, makadam); else the road, dry to wet by the rain's water
@@ -7667,11 +7707,13 @@ const Core = (function () {
         let c;
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup, slide: opts.playerSlide, deli: opts.playerDeli });
+          if (opts.playerLook) dressOnly(c, opts.playerDeli ? { stripe: opts.playerLook.stripe, sc: opts.playerLook.sc } : opts.playerLook);   // (the garage's look without its effects: a championship's, online; with the parts fitted only the stripes)
           this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
           if (opts.playerPolice) patrolCar(c);   // (online, beg s prijatelji: I drive the patrol car)
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
+          if (RM.look) dressOnly(c, RM.look);   // (the friend's garage look, Core.lookRead: drawn only, the physics the model's)
           c.netOf = { id: RM.id || 'h', num: RM.num || 2 }; this.remotes.push(c);   // (in an object: the golden references digest only the plain fields)
           if (RM.police) patrolCar(c);   // (online, beg s prijatelji: the friend drives the patrol car)
         } else {
@@ -9191,18 +9233,23 @@ const Core = (function () {
     }
 
     // open road: checkpoints (split times), the finish at T.finishS; in the menu demo (noPlayer) cars that reach the top start again at the bottom.
-    // Crossing times are interpolated inside the step from the distance covered in it.
+    // Crossing times are interpolated inside the step from the distance covered in it. The lines (the checkpoints', the finish's) are crossed
+    // where the car is on the road (q.s, its gantry over the road at the same s), not by c.dist: the distance run is a metre or two off
+    // the road's for every car in its own way (its grid slot snapped to the road's 2 m samples; the lookup jumping a few metres round the
+    // inside of a sharp corner, more than a step's 3 m the distance may move: Killar's at 1.9 km), so by c.dist a car right behind
+    // another at the line could finish before it (the user's report of 15. 11. 2026 at 4.01, Killar: »v dirki pa se lepo vidi da sem zmagal«)
     _progressOpen(c, q, ds, dt) {
       const T = this.track;
       if (this.state === 'grid' || c.finished || c.parkQ || dnf(c)) return;
       const tAt = (target) => this.time - dt * (ds > 1e-9 ? clamp((c.dist - target) / ds, 0, 1) : 0);
+      const g = q.s - T.startS, tG = (target) => this.time - dt * (ds > 1e-9 ? clamp((g - target) / ds, 0, 1) : 0);   // (g: where the car is, metres from the start line)
       if (c.lap === 0 && c.dist >= 0) { c.lap = 1; if (c.dist - ds < 0) c.lapStart = tAt(0); }
-      // (the projected position must agree - within 30 m - so a lookup snapped to another leg of the road can not trigger anything)
-      while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp] && q.s >= T.cpS[c.cp] - 30) { c.splits.push(tAt(T.cpDist[c.cp])); c.cp++; c.cpEv++; }
-      const atFinish = c.cp >= T.cpS.length && c.dist >= T.raceLen && q.s >= T.finishS - 30 && !(this.pol && c === this.player && this.pol.goal);   // (the run from the police ends in the building at the top, not at the line)
+      // (the distance run must agree - within 30 m - so a lookup snapped to another leg of the road can not trigger anything)
+      while (c.cp < T.cpS.length && g >= T.cpDist[c.cp] && c.dist >= T.cpDist[c.cp] - 30) { c.splits.push(tG(T.cpDist[c.cp])); c.cp++; c.cpEv++; }
+      const atFinish = c.cp >= T.cpS.length && g >= T.raceLen && c.dist >= T.raceLen - 30 && !(this.pol && c === this.player && this.pol.goal);   // (the run from the police ends in the building at the top, not at the line)
       if (this.opts.noPlayer) { if (atFinish || q.s >= T.finishS + 5) this._queueRespawn(c); return; }
       if (atFinish) {
-        const ft = tAt(T.raceLen);
+        const ft = tG(T.raceLen);
         c.finished = true; c.finishTime = ft; c.lapTimes = [ft]; c.lap = this.laps + 1;
         this.finishOrder.push(c); c.finishPos = this.finishOrder.length;
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
@@ -9758,7 +9805,7 @@ const Core = (function () {
     return q;
   }
 
-  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, fxSrc, fxKOf, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, fxSrc, fxKOf, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, dressOnly, lookWire, lookRead, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, partOf, applyDamage, careerWear, detachPart, DEB, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };

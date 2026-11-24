@@ -10,13 +10,20 @@
 // over a tap on the camera button (the same picture), none of it on another car, there again at once back on the player's; Foto there: the crew at work round the car in the picture, the picture saved. ⏮: the crew at home at once (no tyre in anyone's
 // hands). "Končaj": the race's own pit state untouched (the replay's overlay gone, the car's view not rebuilt), no page errors.
 //   node tests/browser/pitreplay.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, checker } from './lib.mjs';
+
+// (each race repeatable: the test mode's seed (?proga=…&seme=, the quick entry). Started from the menu with its own dice and real time
+// stepping it till the test paused it, a race was a different one each run: on 11. 11. at Spa the player's stop took 189 s from the way
+// in to the hand-back (26 s with the seed) and the replay over the TV cameras gave no frame of it. docs/nestabilni-testi.md. PITREPLAY_SEME:
+// another race, to try the test on)
+const SEME = +process.env.PITREPLAY_SEME || 7;
+const QUICK = (id) => '/index.html?proga=' + id + '&t=1&seme=' + SEME;   // (the race 1 s after the start, paused there: quick.done)
 
 const T = checker('pit stop in the replay (bathurst)');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 640, height: 360 });
+  const { page, errors } = await openGame(browser, srv.base + QUICK('bathurst'), { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 640, height: 360 }, { seed: SEME });
   // the replay's frames counted and logged (each: the replay's time, its camera, the crew's mode, the film camera's weight, the jacks' lift,
   // the camera's distance from the player's car on the ground and its height over it (d, y), the camera and the car, the lens; with the crew at
   // work under the film camera: how many of the car's corners and of the crew at their places (the wheel guns, the new wheels, the jacks)
@@ -37,8 +44,8 @@ try {
       p: [cm.position.x, cm.position.y, cm.position.z], x: pc.x, z: pc.z, fov: cm.fov, asp: cm.aspect, fit,
       dir: (() => { const d = new THREE.Vector3(); cm.getWorldDirection(d); return [d.x, d.z]; })(), h: pc.h, ap: !!(pc.rpPit && pc.rpPit.pitAP && pc.rpPit.inPit) });   // (dir, h, ap: where the camera looks, the car's heading, the car in the lane on the autopilot: way in to the hand-back)
     return r; }; };
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
   await page.evaluate(INSTALL);
-  await startTrack(page, 'bathurst');
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   const frames = (n) => page.evaluate((n) => new Promise(res => { const f0 = window.__rf, chk = () => window.__rf - f0 >= n ? res(window.__rf - f0) : setTimeout(chk, 20); chk(); }), n);
 
@@ -212,8 +219,8 @@ try {
   // the same rule on other circuits with pits (a lane on the left, a shallow apron, a lane that bends): a stop in the race, the replay behind
   // the car and over the TV cameras, from the way in to the hand-back
   for (const id of ['spa', 'montreal', 'toronto']) {
-    const { page: pg, errors: er } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 640, height: 360 });
-    await pg.evaluate(INSTALL); await startTrack(pg, id);
+    const { page: pg, errors: er } = await openGame(browser, srv.base + QUICK(id), { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 640, height: 360 }, { seed: SEME });
+    await pg.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 }); await pg.evaluate(INSTALL);
     const lv = await pg.evaluate(LIVE);
     await pg.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
     const act2 = (a) => pg.evaluate((a) => window.__game.onAction(a), a);

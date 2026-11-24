@@ -464,9 +464,10 @@
     }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
+    const rob = World.ext.mombasaRob ? World.ext.mombasaRob({ scen, excluded, seaD, inFort, root, out }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
     return out;
   }
 

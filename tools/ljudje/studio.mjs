@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import { chromium } from 'playwright';
+import { chromium } from '../../tests/lib/playwright.mjs';
 const DIR = path.dirname(url.fileURLToPath(import.meta.url)), REPO = path.resolve(DIR, '..', '..'), OUTD = path.join(REPO, 'test-results', 'ljudje');
 const which = process.argv[2] || 'people';
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

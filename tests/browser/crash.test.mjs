@@ -589,7 +589,7 @@ try {
     }
     T.check(`roof field, ${name}: no page errors`, !rr.errors.length, rr.errors.slice(0, 3).join(' | '));
   }
-  // a black car (the player's colour 0x1a1a1f, a rival's too): its roof darker where it sank too, but never into the glass colours nor
+  // a black car (a rival's colour 0x1a1a1f, set on the player's Kolibri; the player's own index 4 is graphite since Novost 1, V3): its roof darker where it sank too, but never into the glass colours nor
   // through them (a colour within 0.05 of one the body's shader draws as glass, its sky and its glint over it: a dark cave-in turned to a
   // light, bluish patch), a facet glass to the shader in part already (a deep fold) as the paint gives it; at HEAD 1203d3f a fold's
   // colour 0.05..0.066 off KIT_GL2 was darkened into it unguarded (inGlass, glassA). Its black paint (the user's "warmer black": on main
@@ -604,7 +604,7 @@ try {
     const knock = () => { R.repairCar(P); frames(1);
       for (const h of A[0]) { if (h === 'top') { P.dents.push({ lx: 0.25 * P.m.len / 2, lz: -0.4 * P.m.wid / 2, amt: 0.1, top: 1 }); P.roofDmg = Math.min(1, P.roofDmg + 0.3); } else Core.applyDamage(P, h[0], h[1] * P.m.len / 2, h[2] * P.m.wid / 2); frames(5); }
       const v = Render.viewOf(P), dark = eval(A[3])(v, eval(A[1])(v, v.xc, Render.crashInfo().XC.paint), eval(A[2])(v, v.xc)); return { color: P.color, dark, pit: eval(A[4])(P, frames) }; };
-    const o = knock(); P.color = 0x2b1f1c; o.red = knock(); return o; }, [RSEQ, paintFn, asideFn, darkFn, pitFn]);
+    P.color = 0x1a1a1f; const o = knock(); P.color = 0x2b1f1c; o.red = knock(); return o; }, [RSEQ, paintFn, asideFn, darkFn, pitFn]);
   const BK = bk.r.dark, BR = bk.r.red.dark;
   T.check('roof field, a black car (the Kolibri, 0x1a1a1f): its black paint a warm way round the glass colours (on its way, 55 % q darker in luminance or stopped where it would come nearer them than 0.066, or than it was, a few with their facet where its colours across it would; never lighter), never into or through them as the shader sees them, a facet glass to the shader in part already as the paint gives it, no more than 0.1 % of the roof newly glass (its colours interpolated); any other colour as before; no NaN, no page errors',
     bk.r.color === 0x1a1a1f && BK.bk > 100 && BK.offWay < 1e-4 && BK.bkErr < 1e-4 && BK.bkStopBad === 0 && BK.bkPull <= 0.02 * BK.bk && BK.bkUp === 0 && BK.bkFar >= 0.066 - 1e-4 && (BK.bkNear === null || BK.bkNear >= -1e-4) && BK.edge === BK.guard && BK.asPaint > 0 && BK.errA < 1e-4 && BK.inGlass === 0 && BK.roofA > 0.5 && BK.glassA <= 0.001 * BK.roofA && BK.lighter === 0 && BK.err < 1e-4 && BK.hue < 2e-5 && BK.nan === 0 && !bk.errors.length, JSON.stringify(BK) + ' ' + bk.errors.slice(0, 2).join(' | '));

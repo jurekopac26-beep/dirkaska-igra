@@ -8,12 +8,17 @@
 // then none), none in normal racing without a stop; in English FIGHT FOR POSITION, +0.8 s. Its place: upright (360x640) at the left under
 // the stack, on its side (640x360) under the clock (where BOKSI is: hidden while it shows), with buttons, the wheel and tilting,
 // the other texts up: over nothing of the HUD or the controls, not over the car, in the screen, its letters at least 9 px.
-//   node tests/browser/pitfight.test.mjs            (SHOTS=<folder>: a picture of each place)
+//   node tests/browser/pitfight.test.mjs            (SHOTS=<folder>: a picture of each place; PITFIGHT_SEME=<n>: another race)
 import path from 'node:path';
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, checker } from './lib.mjs';
 
 const T = checker('BOJ ZA MESTO');
 const SHOTS = process.env.SHOTS || '';
+// (the race repeatable: the test mode's seed (?proga=rbring&t=1&seme=, the quick entry), the race's dice its own and its first second stepped
+// paused. Started from the menu with the page's dice and real time stepping it till the test paused it, a race was a different one each run:
+// the rival behind at the hand-back fell back (the gap growing, the fight over as "out"), or the slower rival ahead was never passed: docs/nestabilni-testi.md.
+// PITFIGHT_SEME: another race, to try the test on)
+const SEME = +process.env.PITFIGHT_SEME || 7;
 const srv = await serve();
 const browser = await launch();
 const OR = { port: { width: 360, height: 640 }, land: { width: 640, height: 360 } };
@@ -119,8 +124,10 @@ async function places(page, name) {
 }
 
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'rbring', damage: 0, radio: 0, fuel: 0, length: 'long', weather: 'dry', tod: 'day', tower: 1 }, OR.land, { touch: true, context: { reducedMotion: 'reduce' }, seed: 7 });
-  await startTrack(page, 'rbring');
+  const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=rbring&t=1&seme=' + SEME, { quality: 'low', shadows: 0, camera: 'chase', track: 'rbring', damage: 0, radio: 0, fuel: 0, length: 'long', weather: 'dry', tod: 'day', tower: 1 }, OR.land, { touch: true, context: { reducedMotion: 'reduce' }, seed: SEME });
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });   // (the quick entry's race, 1 s after the start, paused there)
+  const st0 = await page.evaluate(() => { const g = window.__game; g.pause(); return { phase: g.phase, t: +g.race.time.toFixed(2), repro: g.repro }; });
+  T.check('the race repeatable (the test mode, the seed), paused 1 s after the start', st0.phase === 'racing' && st0.t >= 1 && st0.t < 2 && !!st0.repro && st0.repro.on && st0.repro.seed === SEME, JSON.stringify(st0));
   await toRacing(page);
   await helpers(page);
 

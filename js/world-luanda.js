@@ -126,6 +126,7 @@
       if (sd > -22 && h < 3.0) { const t = sstep(-22, -6, sd) * sstep(3.0, 1.2, h); r = lerp(r, 1.1, t); g = lerp(g, 1.0, t); b = lerp(b, 0.82, t); }
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.86, t); g = lerp(g, 0.8, t); b = lerp(b, 0.72, t); }
       o[0] = r; o[1] = g; o[2] = b; return o; };
+    const OB = World.ext.luandaOb ? World.ext.luandaOb({ exclPush, seaD, inFort, root, tex, T }) : null;   // the side roads (js/world-luanda-obcestje.js): before the fill houses and the trees
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(luGroundTex()), vertexColors: true });
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
@@ -282,10 +283,12 @@
           if (crH(xx, zz, 40) > 0.55) continue;
           const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
           if (rd < 15 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
-          const Lb = 9 + crH(x, z, 43) * 7, Wb = 8 + crH(x, z, 44) * 6;
-          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z) || seaD(x, z) > -8 || inFort(x, z, 18)) continue;
+          const Lb0 = 9 + crH(x, z, 43) * 7, Wb0 = 8 + crH(x, z, 44) * 6;
+          if (rd < 0.6 * Math.hypot(Lb0, Wb0) + 9 || excluded(x, z) || seaD(x, z) > -8 || inFort(x, z, 18)) continue;
           const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
-          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang);
+          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang), fit = OB ? OB.fit(x, z, Lb0, Wb0, ang) : 1;   // (by a side road smaller, or none: js/world-luanda-obcestje.js)
+          if (!fit) continue;
+          const Lb = Lb0 * fit, Wb = Wb0 * fit;
           let lo = 1e9, hi = -1e9; for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]]) { const h = nrGround(x + ca * a - sa * b, z + sa * a + ca * b); lo = Math.min(lo, h); hi = Math.max(hi, h); }
           if (hi - lo > 4) continue;
           const fl = 2 + Math.floor(crH(x, z, 45) * 4);
@@ -311,6 +314,7 @@
         cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [FL[Math.floor(crH(d, side, 5) * FL.length)]], 1.2, 0.8);   // (waving: js/world-zastave.js)
       }
     }
+    if (OB) OB.open(CR);   // (the spectators off the side roads)
     let nFans = 0;
     {   // few spectators (fewFans): at the start, under the fortress, at the finish
       const runs = [[-100, 120, 2, 0.4], [dFin - 90, dFin + 20, 2, 0.35]];
@@ -451,9 +455,10 @@
     }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
+    const rob = World.ext.luandaRob ? World.ext.luandaRob({ scen, excluded, seaD, inFort, root, out }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
     return out;
   }
 
