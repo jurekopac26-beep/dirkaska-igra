@@ -9251,7 +9251,11 @@ const Core = (function () {
       if (atFinish) {
         const ft = tG(T.raceLen);
         c.finished = true; c.finishTime = ft; c.lapTimes = [ft]; c.lap = this.laps + 1;
-        this.finishOrder.push(c); c.finishPos = this.finishOrder.length;
+        // (in at its place by the time it crossed: of two across the line in one step - or a far car in its longer one, LOD - the one that
+        // crossed first is ahead, whichever the loop took first; nF: the cars across so far, by it the slot below, one for each as it comes)
+        const FO = this.finishOrder; let fj = FO.length; while (fj > 0 && FO[fj - 1].finishTime > ft) fj--;
+        FO.splice(fj, 0, c); for (let k = fj; k < FO.length; k++) FO[k].finishPos = k + 1;
+        const nF = FO.length;
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
         // a race up the road: past the line every car pulls up in a slot of its own at the side of the road (by its place, both sides
         // in turn, 9 m apart, from 70 m past the line), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD).
@@ -9262,7 +9266,7 @@ const Core = (function () {
         // from the top down (the winner in the farthest slot: nobody then drives past a parked car or across the inner row to the outer one)
         if (!this.timeTrial) { const X = this._gTl, room = T.len - 20 - T.finishS, nP = X ? Math.max(1, this._gridN - 1) : Math.max(12, this._gridN - 1), st = Math.min(9, (room - 38) / nP), a0 = X ? Math.min(70, room - nP * st) : st < 9 ? room - nP * st : nP > 12 ? Math.min(70, room - nP * st) : 70;   // (semi-trailers, _gTl: the slots for its own field, the last within the road)
           let L = 0, W = 0; if (X) { L = X.nose + X.tail; W = X.wid; } else if (nP > 12) for (const o of this.cars) { L = Math.max(L, o.m.len || 4.4); W = Math.max(W, o.m.wid || 1.9); }   // (the field's longest and widest car; a rig: its tractor's nose to its trailer's tail)
-          const two = (nP > 12 || !!X) && 2 * st < L + 0.8, k = two ? Math.max(0, nP - c.finishPos + 1) : c.finishPos - 1, sd = k % 2 ? -1 : 1;
+          const two = (nP > 12 || !!X) && 2 * st < L + 0.8, k = two ? Math.max(0, nP - nF + 1) : nF - 1, sd = k % 2 ? -1 : 1;
           const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), bar = sd > 0 ? T.br[pi] : T.bl[pi], xw = (w) => Math.max(0, w / 2 - 0.95);   // (xw: a car wider than 1.9 m that much further in, its outer side where a 1.9 m one's is)
           const out = (w) => T.def.barrier ? Math.min(T.wAt(pi) + 1.4 - xw(w), bar - 0.4 - w / 2) : Math.min(T.wAt(pi) + 1.4, bar - 1.3) - xw(w);   // (the outer row's slot of a car w wide; def.barrier: its side 0.4 m off the barrier)
           c.parkD = sd * (two ? ((k >> 1) % 2 ? out(c.m.wid || 1.9) : Math.min(T.wAt(pi) - 1.5, out(W) - W - 0.5)) : this.tf || T.def.barrier ? out(c.m.wid || 1.9) : T.wAt(pi) - 1.5); }   // (the open road, def.barrier's run-off: off the asphalt as far as the barrier lets it, clear of the traffic; the inner row clear of the outer one's widest)
