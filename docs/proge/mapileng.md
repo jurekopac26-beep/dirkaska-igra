@@ -2,7 +2,7 @@
 
 [← Vse proge](../../README.md#proge) · proga `mapileng` (`js/tracks/mapileng.js`)
 
-**Na odločanju** (`pending: true`, od 16. 11. 2026): iz Vietnama ostane ena od Mã Pí Lènga in Hải Vâna (#676); obe se dokončata, nato uporabnik izbere (tabla #382, komentar 6906260656; `docs/proge-po-drzavah.md`). V meniju je do izbire za gumbom NEUPORABNO, z oznako PENDING.
+**Izbrana** (22. 11. 2026): iz Vietnama ostane Mã Pí Lèng; Hải Vân je od takrat testna (#676, tabla #382; `docs/proge-po-drzavah.md`).
 
 Državna cesta QL4C med Đồng Vănom in Mèo Vạcom na kraški planoti Đồng Văn (provinca Hà Giang, skrajni sever Vietnama), v pravem merilu: kratek kos ceste tik pod prelazom Mã Pí Lèng, ki se s tremi serpentinami vzpne po pobočju nad kanjonom reke Nho Quế. Proga se začne na 1184 m (23,2504° S, 105,3895° V), gre skozi tri serpentine na greben pri spomeniku graditeljem ceste (1256 m, najvišja točka) in se malo spusti do cilja (1245 m): 0,99 km, 72 m vzpona in 11 m spusta. Pred startom je ~220 m ceste za štartno mrežo, za ciljem ~245 m za mesta avtov po dirki in razgledišče. Prva od petih kratkih prog zunaj Evrope (`docs/nove-proge-1-0.md`, Del 4: K1). Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija** (kot na Dadèsu):
 
@@ -18,6 +18,7 @@ Okolica (gradi jo skupni graditelj kratkih prog `buildKratke` v `js/world-kratke
 - **Kraška planota**: svetlo dopoldne v rahli meglici. Travnata pobočja, skozi katera povsod v zaplatah pogleda sivi apnenec, skupine sivih skalnih stolpičev in balvanov v travi, koruza v žepih prsti med skalami s suhozidi okoli njiv, grmičevje in redka drevesa (bori in listavci), kjer jih kaže zemljevid (raba tal iz ESA WorldCover 2021 in OpenStreetMap, barve po rabi tal in naklonu); na strmih pobočjih pasovi skale s travnatimi policami.
 - **Cesta**: ozek asfalt s črtkano belo sredinsko črto, ob robu pas makadama. Nizki betonski parapeti na robu, kjer teren pada, okoli serpentin v rdečih in belih blokih; podporni zidovi pod robom zgornjega kraka serpentin (kot na prelazih); smerni stebrički, table s puščicami v serpentinah.
 - **Greben**: spomenik graditeljem ceste (bel obelisk na stopničastem podstavku) z majhnim svetiščem ob njem, majhen muzej in kavarna s teraso ob cesti, informacijska tabla (lega iz OpenStreetMap; generični, brez imen in napisov); malo gledalcev pri spomeniku.
+- **Obcestje pred ciljem** (`js/world-mapileng-obcestje.js`, `def.lanes` v `js/tracks/mapileng.js`; OpenStreetMap, 23. 11. 2026): tlakovan trg za pešce ob muzeju okoli spomenika in svetišča (kamnite plošče na tleh), betonska stranska cesta proti vasi pod grebenom (širina 3,2 m, do 70 m za robom) in na njej zapornica (dva stebrička, rdeče-bela ročica). Skale in grmi se trgu in cesti umaknejo, zato so drugod po grebenu malo drugače razporejeni.
 - **Razgledišče**: terasa ob cesti ~205 m za ciljem s tablo ĐIỂM NGẮM CẢNH (»razgledišče«) in ljudmi.
 - **Obzorje**: onstran pasu ob cesti pravi teren ~12 km naokoli (Copernicus DEM, mreža 300 m): kraški vrhovi v meglici in globoki kanjon pod cesto.
 - **Dirka**: start z lučmi pod portalom XUẤT PHÁT, modri portali kontrolnih točk z višino v rumenem, cilj VỀ ĐÍCH s tablo MÃ PÍ LÈNG, transparent MÃ PÍ LÈNG · ĐỒNG VĂN · QL4C (samo zemljepisna imena in splošne besede), table krajev (Đồng Văn, Lũng Cú, Mèo Vạc, Mã Pí Lèng, QL4C), ĐƯỜNG ĐÈO NGUY HIỂM (»nevarna prelaška cesta«), ĐI CHẬM (»vozi počasi«); malo gledalcev (redarji in redke mirne skupine ob startu, cilju in spomeniku).
@@ -26,6 +27,6 @@ Okolica (gradi jo skupni graditelj kratkih prog `buildKratke` v `js/world-kratke
 - **Približki**: drevesa, koruza, grmičevje, skale in kamni so razporejeni po rabi tal in naklonu, ne po resničnih legah. Spomenik, svetišče, muzej in kavarna so generični (lega iz OpenStreetMap, oblika splošna); terasa razgledišča stoji ob cesti (v OpenStreetMap je točka na cesti sami).
 - **Pravno**: samo zemljepisna imena (Mã Pí Lèng, Đồng Văn, Mèo Vạc, Lũng Cú, QL4C) in splošne besede; spomenik in muzej sta brez imen in napisov.
 
-Obremenitev telefona (`tests/golden/perf.json`, nizka podrobnost): v povprečju 138 klicev risanja in 229 tisoč oglišč, največ 170 klicev in 273 tisoč oglišč.
+Obremenitev telefona (`tests/golden/perf.json`, nizka podrobnost): v povprečju 142 klicev risanja in 246 tisoč oglišč, največ 171 klicev in 282 tisoč oglišč.
 
 Podatke proge pripravita orodji `tools/proga-podatki.py` (nastavitve v `tools/mapileng/config.json`) in skupno orodje kratkih prog `tools/kratke/build.py` (`python3 -I tools/kratke/build.py mapileng --osm <surovi OSM>`: podatkovni blok in višine `MAPILENG_H` v `js/tracks/mapileng.js`, zanimivosti ob cesti v `tools/mapileng/extra.json`; `--png` načrt in profil). Vire glej v `README.md` pod »Zasluge«.
