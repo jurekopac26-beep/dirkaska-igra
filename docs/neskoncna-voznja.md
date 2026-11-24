@@ -158,7 +158,7 @@ Uporabnik 12. 11. 2026 ob 1.58 prek Mateja (tabla #382, komentarja 6811014558 in
 - **Trki**: tri življenja (srčki na zaslonu). Čelni trk (sunek nad 7 m/s, vozili si nasproti) takoj konec (`'crash'`). Trk v vozilo nad 3 m/s eno življenje, nad 12 m/s dve; ograja nad 4 m/s eno, nad 10 m/s dve; med dvema štetima trkoma 1 s (isti trk). Rahel dotik ne šteje; ograja nad 1,5 m/s prekine niz. Ob trku »TRK! ŠE 2 TRKA« oz. »TRK! ŠE 1 TRK« in »AVTO JE POŠKODOVAN«; brez življenj `'hits'`. Prevrnitev, padec in izgubljeno kolo so konec.
 - **Poškodbe**: v tem načinu vedno mehanske (`dmgMode` 2, `damage: 2` v možnostih), ne glede na nastavitev; drugod nespremenjeno. Fizika vožnje in vožnja prometa se ne spreminjata.
 - **Brez motorjev, ljudi in kolesarjev** (uporabnik 12. 11. 2026 ob ~3.30 prek Mateja 11: »zbriši motorje ljudi in kolesarje«): `_winPool` motorjem da delež 0 in ga sorazmerno razdeli drugim (tudi na cestah z lastno mešanico, `def.traffic.mix`), pešcev, kolesarjev in vrženih voznikov v tem načinu ni; ostanejo avti, kombi, avtobus in tovornjak. Drugi načini (promet, dvoboj, policija) nespremenjeni.
-- **Vozila** (uporabnik 12. 11.: vsako vozilo kot bo končano): avti, kombi, avtobus in tovornjak iz odsekov (`rdShell`) s stekli, lučmi, ogledali in kolesi v lokih (`js/render.js`).
+- **Vozila** (uporabnik 12. 11.: vsako vozilo kot bo končano): avti, kombi, avtobus in tovornjak iz odsekov (`rdShell`) s stekli, lučmi, ogledali in kolesi v lokih (`js/render.js`). Od 24. 11.: barve prometa samo svetle (`RD_CAR`, `RD_VAN`, `RD_TRUCK`, `RD_MOTO`: L\* vsaj 38 in najmočnejši kanal vsaj 160, merilo `tests/barve-avtov.test.js` iz #1033); zaboj prikolice tovornjaka v barvi kabine s temnim okvirjem (bel zaboj z belo streho je bil s kamere za avtom videti kot prazna ploščad), belih tovornjakov ni več; brez znamk, imen in napisov.
 - **Meni**: podnapis »Ever denser traffic. Overtakes add time.«, oznaka *THREE HITS AND OUT*; rezultati: Etape ali Krogi, Prehitevanja, razlog konca (Čelni trk, Preveč trkov, Avto je izgubil kolo).
 
 ### Pripombe uporabnika 12. 11. ~22.30 (predogled #666, prek Mateja)
@@ -169,6 +169,27 @@ Uporabnik 12. 11. 2026 ob 1.58 prek Mateja (tabla #382, komentarja 6811014558 in
 4. **Zvok**: vsako vozilo prometa ob mimovožnji šumi (`Sfx.passBy`: pas šuma, ki pade po višini, in nizek brenčeč ton z Dopplerjevim padcem; glasneje tesneje in hitreje, tovornjak in avtobus nižje; enkrat na vozilo, ko je vštric). Dodane sekunde zazvonijo (`Sfx.bonus`): 1 ton pod 1 s, 2 od 1 s, 3 od 2,5 s, 4 od 4 s; tesno višje (+4 poltone) in bogateje, zelo tesno še višje (+7) z iskrico; večji bonus malo višje. Nič sekund, nič zvonca.
 
 Fizika vožnje in vožnja prometa sta nespremenjeni.
+
+### Uskladitev z `main` in pregled (24. 11., #666)
+
+Predaja koordinacije croatiadata 24. 11. ob 20.40 (tabla #382, komentarja 7141502988 in 7141549029); veja `neskoncna/promet` je od 17. 11. pri croatiadata.
+
+- **Svež `main`** spojen (86311154). Spor v `js/core.js` (`_progressOpen`): črte po mestu na cesti z `main`, izjema za neskončno vožnjo (brez cilja) ostane.
+- **Pregled 15. 11.** (komentar 6899695700 na #666), točke 1–5 (df8a7a66): stik (`hit`) šteje samo za vozilo, ki ga je igralec zadel (`enH`), ne za vsa vozila ob njem (nov preizkus med dvema voziloma); »TRK! ŠE 2 TRKA« (dvojina) s prevodom; `Sfx.bonus()` samo med vožnjo; komentar v `js/neskoncna.js`; opisi v `tests/README.md` in `docs/igra.md` po sedanjih pravilih (štiri proge, tri življenja, ura 15 / 12 / 10 / 8 s).
+- **Obremenitev s prometom** (24. 11., 46574d91): nastavitve `perf.test.mjs`, 844 × 390, šest mest po 15 s na samovozu, štet vsak klic risanja; ista sličica s prometom in s skritim prometom. Povprečje (največ):
+
+| Proga, način | Vozil v 250 m | Klici risanja s prometom | brez | Oglišča s prometom | brez |
+|---|---|---|---|---|---|
+| Bathurst, neskončna ×4 | 6–21 | 121 (137) | 109 | 435 (496) tisoč | 412 tisoč |
+| Chapman's Peak, neskončna ×4 | 11–17 | 154 (179) | 142 | 566 (703) tisoč | 544 tisoč |
+| Caracoles, neskončna ×4 | 9–30 | 132 (143) | 120 | 287 (343) tisoč | 251 tisoč |
+| Bâlea, neskončna ×4 | 6–30 | 166 (210) | 156 | 428 (577) tisoč | 414 tisoč |
+| Chapman's Peak, dvoboj v prometu (`nacin=promet`) | 3–7 | 148 (168) | 137 | 508 (553) tisoč | 492 tisoč |
+
+  Promet doda ~10–15 klicev risanja in ~15–40 tisoč oglišč na sličico. Vse je daleč pod mejo (~300 klicev, ~900 tisoč oglišč), zato poenostavitev ni potrebna. Okvir zaboja doda ~260 oglišč na narisan tovornjak in nobenega klica. Številke veljajo za stanje 46574d91; meritev 6. 11. (zgoraj) je iz takratnega stanja kode. Mejo na Bathurstu pri ×4 preverja tudi `tests/browser/neskoncna.test.mjs`.
+- **Barve in #1033**: paleta prometa ustreza merilu #1033 (najnižje: avti L\* 40,5 in kanal 166, kombiji 40,6 in 168, tovornjaki 42,3 in 168, motorji 41,0 in 184). #1033 in #666 spreminjata iste štiri vrstice `js/render.js`; kdor pride na `main` drugi, razreši spor. Paleta prometa je iz te teme (odločitev 12. 11.), `tests/barve-avtov.test.js` mora ostati zelen.
+- **Trki #608** (`trki/realizem`): `_hitVeh` je v tej veji nespremenjen (od `main` se loči samo v komentarju). #608 mu doda eno vrstico, ki trk preda novemu `_hitVehR`; oba vrneta sunek ob stiku (m/s) in štejeta `win.hit`, zato pragovi `EN.carHit`, `carHard` in `headOn` ohranijo pomen. Poskusna spojitev `trki/realizem` v to vejo je brez sporov. Kdor pride na `main` drugi, znova požene `tests/neskoncna.test.js` in `tests/browser/neskoncna.test.mjs`.
+- **Slike in odločitev**: stran Odločitve croatiadata, kartici `pr666-vozila` (šest vozil zdaj in potem; druga možnost: zaboj ostane bel) in `pr666-predogled` (vožnja s prometom zdaj in potem, koraki za preizkus predogleda). Klik se zapiše v zbirko `odgovori`, vprašanji sta v `vprasanja`. Na `main` šele po uporabnikovem »ok« na predogledu, nato po vrsti (`docs/vrsta.md`).
 
 ## Stanje
 
@@ -181,3 +202,4 @@ Fizika vožnje in vožnja prometa sta nespremenjeni.
 - 12. 11. 2026: igranje za odprte ceste narejeno v osnutku #666 (zgoraj); testi `tests/neskoncna.test.js` (52). Sledi grafika prometnih vozil v istem PR.
 - 12. 11. 2026 ponoči: nova vozila (slike uporabniku ob 3.20 in 3.42) in brez motorjev, ljudi in kolesarjev v #666.
 - 12. 11. 2026 ob ~23h: pripombe uporabnika s predogleda (zgoraj): točke in promet pod zemljevidom, ura 15 s, bonus usiha, zvok mimovožnje in zvonec za sekunde; testi `tests/neskoncna.test.js` (52). Čaka na uporabnikov »ok«.
+- 24. 11. 2026 zvečer: svež `main` spojen, popravki iz pregleda 15. 11., svetle barve prometa in tovornjak z barvnim zabojem, obremenitev s prometom izmerjena (zgoraj: največ 210 klicev risanja in 703 tisoč oglišč); povezani testi po spojitvi lokalno zeleni (63 od 63, 86311154), `tests/neskoncna.test.js` (53); izid kroga na končnem stanju kode (46574d91) je v opisu PR #666. Kartici `pr666-vozila` in `pr666-predogled` na strani Odločitve; osnutek z oznako `predogled`, čaka na uporabnikov »ok«.
