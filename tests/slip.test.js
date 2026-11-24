@@ -113,5 +113,29 @@ const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : String(x));
   check('a race at Suzuka: the flap opens down the straight for cars close behind another', opened.size >= 2, `${opened.size} cars opened it: ${[...opened].join(', ')}`);
 }
 
+// 6. only flat out (opts.slip 2; the user, 24. 11. 2026, table #382, comment 7122047800): the wake works only with the throttle all the
+// way down and off the brake, for every car by its own throttle; lifted or braking in the wake: the tow dies away over a second as out
+// of it, back on the throttle it builds up again. opts.slip true or 1: as before, whatever the pedals
+{
+  const T = track('rbring'), s0 = T.startS + 400;
+  const mk = (slip) => { Math.random = seeded(3); const r = new C.Race(T, { numAI: 1, playerGrid: 2, laps: 2, phys: 'cs', seed: 3, slip }); r.start(); while (r.state !== 'racing') r.step(DT); return r; };
+  const put = (c, s, d, v) => { const i = T.idx(s); c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); c.vx = Math.cos(T.hd[i]) * v; c.vz = Math.sin(T.hd[i]) * v; c.q = T.query(c.x, c.z, i, c.q); };
+  const at = (r, c, thr, brk) => { const A = r.cars.find(o => o !== c); put(A, s0, 0, 42); put(c, s0 - 8, 0, 42); c.inThr = thr; c.inBrk = brk; r._tow(); return c.tow; };
+  const r2 = mk(2), r1 = mk(1), P = r2.player, A = r2.cars.find(c => !c.isPlayer);
+  const full = at(r2, P, 1, 0), lift = at(r2, P, 0, 0), part = at(r2, P, 0.6, 0), brake = at(r2, P, 0, 1), both = at(r2, P, 1, 0.5);
+  const aiFull = at(r2, A, 1, 0), aiLift = at(r2, A, 0.5, 0), on = [at(r1, r1.player, 1, 0), at(r1, r1.player, 0, 0), at(r1, r1.player, 0, 1)];
+  check('only flat out: a strong tow with the throttle all the way down; lifted, on part throttle, braking, on both pedals: none; a rival the same, by its own throttle',
+    !!r2.slip && r2.slip.full && full > 0.6 && lift === 0 && part === 0 && brake === 0 && both === 0 && aiFull > 0.6 && aiLift === 0,
+    `flat out ${f2(full)}, lifted ${f2(lift)}, 60 % ${f2(part)}, braking ${f2(brake)}, both ${f2(both)}; a rival flat out ${f2(aiFull)}, on half throttle ${f2(aiLift)}`);
+  check('on (opts.slip 1 or true): the tow whatever the pedals, as before', !r1.slip.full && on.every(x => Math.abs(x - full) < 1e-9), on.map(f2).join(', '));
+  put(A, s0, 0, 42); put(P, s0 - 8, 0, 42); P.inThr = 1; P.inBrk = 0; P.tow = 0;
+  const N = Math.round(2 / DT), q = Math.round(0.25 / DT); let up = 0, dn = 0, back = 0;
+  for (let k = 0; k < N; k++) r2._tow(DT); up = P.tow / full;
+  P.inThr = 0; for (let k = 0; k < q; k++) r2._tow(DT); dn = P.tow / full;
+  P.inThr = 1; for (let k = 0; k < q; k++) r2._tow(DT); back = P.tow / full;
+  check('only flat out: the tow built up over a second, a lift takes it away step by step (most of it still there after 0.25 s), back on the throttle it builds again',
+    up > 0.8 && dn > 0.5 * up && dn < 0.9 * up && back > dn && back < up, `of the full wake: ${f2(up)} after 2 s, ${f2(dn)} 0.25 s into a lift, ${f2(back)} 0.25 s back on the throttle`);
+}
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

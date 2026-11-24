@@ -40,6 +40,14 @@ try {
     return { slip: R.slip, cars: R.cars.length, tow: R.cars.filter(c => 'tow' in c).length, stored: JSON.parse(localStorage.getItem('tdgp-settings')).slip }; });
   T.check('Nastavitve: Zavetrje on by default; off: a race with rivals without it (race.slip null, no car with a tow), the choice kept',
     def !== 0 && off.slip === null && off.cars > 1 && off.tow === 0 && off.stored === 0, JSON.stringify(Object.assign({ def }, off)));
+  // Nastavitve: Zavetrje »Samo s polnim plinom« (the third choice; the user, 24. 11. 2026, table #382, comment 7122047800): the race has
+  // the slipstream, only flat out (race.slip.full), the choice kept
+  await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="slip"] button[data-v="2"]').click(); g.onAction('settings-done'); });
+  await startTrack(page, 'rbring');
+  const fo = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(3, true); g.resume(); const R = g.race, b = [...document.querySelectorAll('[data-set="slip"] button')];
+    return { slip: !!R.slip, full: !!(R.slip && R.slip.full), cars: R.cars.length, stored: JSON.parse(localStorage.getItem('tdgp-settings')).slip, n: b.length, sel: b.filter(x => x.classList.contains('sel') || x.classList.contains('on') || x.classList.contains('active')).map(x => x.dataset.v).join() }; });
+  T.check('Nastavitve: Zavetrje with three choices; »Samo s polnim plinom«: a race with the slipstream only flat out (race.slip.full), the choice kept',
+    fo.slip && fo.full && fo.cars > 1 && fo.stored === 2 && fo.n === 3, JSON.stringify(fo));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {
   T.check('the test ran through', false, String(e && e.message || e).split('\n')[0]);

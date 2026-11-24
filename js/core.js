@@ -7330,7 +7330,7 @@ const Core = (function () {
       if (opts.strat && opts.tyres && opts.compounds && track.def.pit && !track.open && !this.timeTrial && this.laps >= 2) this._stratOn();
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       // the slipstream (opts.slip, a race with rivals): less air drag in the wake of a car ahead (c.tow, see _tow; the field only with it on)
-      this.slip = opts.slip && total > 1 && !this.timeTrial ? { n: 0 } : null;
+      this.slip = opts.slip && total > 1 && !this.timeTrial ? { n: 0, full: opts.slip === 2 } : null;   // (opts.slip 2: only flat out, see _tow)
       if (this.slip) for (const c of this.cars) c.tow = 0;
       // the marbles (opts.tyres, a real circuit: not one kept for testing only, def.test; see _marbles): d, the rubber laid since the road was
       // last washed (car-metres), lv, how thick the band is (0..1; the renderer's too)
@@ -8706,11 +8706,11 @@ const Core = (function () {
       // (a big field: the cars that can give a tow sorted by q.s, each car looks only 3-TOW_RNG m ahead of it, over the line on a circuit)
       let W = null;
       if (cars.length > BIG_FIELD && racing) { W = this._bpO().tw; W.length = 0; for (const o of cars) if (!o.inPit && o.x !== 1e5 && !(o.speed < 10)) W.push(o); W.sort((a, b) => a.q.s - b.q.s); }
-      const ST = this._lod && this._lod.on ? this._lod.st : null, SD = ST ? this._lod.dt : null;
+      const ST = this._lod && this._lod.on ? this._lod.st : null, SD = ST ? this._lod.dt : null, full = !!(this.slip && this.slip.full);   // (full: the wake only with the throttle all the way down and off the brake, each car by its own; off it the tow dies away as out of the wake)
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci]; if (ST && !ST[ci]) continue;   // (LOD: a far car between its steps, its tow as it was)
         let f = 0;
-        if (racing && !c.net && !c.inPit && !c.air && c.speed > 15) for (let k = 0, k0 = W ? distFromS(W, c.q.s + 2.5) : 0, nk = W ? W.length : cars.length; k < nk; k++) {
+        if (racing && !c.net && !c.inPit && !c.air && c.speed > 15 && (!full || (c.inThr >= 0.99 && !(c.inBrk > 0.05)))) for (let k = 0, k0 = W ? distFromS(W, c.q.s + 2.5) : 0, nk = W ? W.length : cars.length; k < nk; k++) {
           let o;
           if (W) { const j = k0 + k; if (j >= nk && T.open) break; o = W[j < nk ? j : j - nk]; if ((j < nk ? 0 : L) + o.q.s - c.q.s > TOW_RNG + 0.5) break; } else o = cars[k];
           if (o === c || o.inPit || o.x === 1e5 || o.speed < 10) continue;
