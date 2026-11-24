@@ -96,7 +96,7 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 - Ptice (`Birds`, `js/render.js`): `birds.rare = 5` na dirkališčih; čakanje je 5-kratno in še 4-kratni čas zadnjega preleta,
   torej so v zraku petino časa kot drugje.
 - Test `tests/browser/zivali.test.mjs`: Nürburg, Bathurst in Spa brez živali; Katu-Jaryk, Caracoles, Medvode kot prej.
-- **Odprto vprašanje:** zamrznjena dirkališča Crystal Palace, London, Marrakech so nespremenjena (pravilo o zamrznjenih progah).
+- **Odločeno 24. 11. (uporabnik, prek koordinacije biketraveler): »Pusti zamrznjene«.** Crystal Palace, London, Marrakech ostanejo nespremenjena.
   Zvoki živali ob progi (`js/sfx-okolje.js`, golobi `zivali.city`) so nespremenjeni.
 
 ## Podrobnost ptic: preizkus in vprašanje (24. 11. zvečer)
@@ -116,5 +116,6 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
    škorec (Združeno kraljestvo, Italija; gosta jata). Številke v jati so potrjene le za žerjava in škorca.
 3. Vrsta po državi: polje v datoteki proge (npr. `ptice: { vrsta, n: [min, max], formacija, let }`), samo za potrjene vrstice; sicer sedanja ptica.
    Formacije: klin, vrsta, ohlapna jata, gosta jata, posamič ali par (jadranje v krogu). `Birds` uporablja `Math.random` (ne semena dirke).
-4. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena do odločitve uporabnika.
+4. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena (odločeno 24. 11.).
+   `npm run test:related` se 24. 11. v 30 min ni končal (brez izida); zelena test živali in `stamp --check`.
 5. Vire, ki gredo v kodo, z licenco dopiši v `README.md`, »Zasluge«.
