@@ -148,7 +148,7 @@ Račun croatiadata strani Odločitve še nima (točka 4 zgoraj), strani 1–3 pa
 ### `e-obcestje` (24. 11. 2026, PR #1025)
 
 - Seja »Realizem E (#1025): izvedba odločitve e-stranske-sirina« (`session_01BFNqNJTHevvNwbHod8Hwkb`); stran s slikami in odgovorom: https://claude.ai/artifact/PjVSKCT2VRNAamEVgP3r6r (`vprasanja/e-obcestje`).
-- Vprašanje: Obcestje po OSM z main (`js/world-<id>-obcestje.js`, Ella, Tianmen) na progah Cusco, El Jem, Ella, Gudauri, Koror, Luanda, Medeu, Pembrey, Savusavu, Tianmen in Zandvoort že riše stranske ceste in postaje. Tam izvoz tega paketa svojih cest ne zapiše (97 vrstic manj), da ni nič narisano dvakrat. Naj ceste tega paketa (prave širine, bele črte, STOP in puščice) zamenjajo ceste obcestja?
+- Vprašanje: Obcestje po OSM z main (`js/world-<id>-obcestje.js`, Ella, Tianmen) na progah Cusco, El Jem, Ella, Gudauri, Kågeröd (od #1040), Koror, Luanda, Medeu, Pembrey, Savusavu, Tianmen in Zandvoort že riše stranske ceste in postaje. Tam izvoz tega paketa svojih cest ne zapiše (110 vrstic manj), da ni nič narisano dvakrat. Naj ceste tega paketa (prave širine, bele črte, STOP in puščice) zamenjajo ceste obcestja?
 - Možnosti (slike na strani, kamera za avtom, ležeče):
   1. ne, obcestje z main ostane, kot je (priporočeno; brez novega dela); slika `gudauri-obcestje` (Gudauri 580 m desno: ulica obcestja za ograjo, brez odprtine in črt)
   2. da, ceste tega paketa zamenjajo ceste obcestja (nova naloga na teh progah; obcestje obdrži ostalo opremo); ceste bi bile kot na sliki `e24-livorno-286-po` (odprta ograja, bele črte, STOP)
