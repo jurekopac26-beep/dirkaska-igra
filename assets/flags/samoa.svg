@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+<title>Samoa</title>
+<!-- Ratio 1:2. A red field, a blue canton (the upper quarter at the hoist) and in it the Southern Cross: four large white
+     five-pointed stars and a small one. Colours: red #CE1126, blue #002B7F, white #FFFFFF. -->
+<rect width="1200" height="600" fill="#CE1126"/>
+<rect width="600" height="300" fill="#002B7F"/>
+<polygon fill="#FFFFFF" points="300.0,20.0 309.0,47.6 338.0,47.6 314.5,64.7 323.5,92.4 300.0,75.3 276.5,92.4 285.5,64.7 262.0,47.6 291.0,47.6"/>
+<polygon fill="#FFFFFF" points="200.0,110.0 209.0,137.6 238.0,137.6 214.5,154.7 223.5,182.4 200.0,165.3 176.5,182.4 185.5,154.7 162.0,137.6 191.0,137.6"/>
+<polygon fill="#FFFFFF" points="375.0,99.0 383.1,123.9 409.2,123.9 388.1,139.2 396.2,164.1 375.0,148.8 353.8,164.1 361.9,139.2 340.8,123.9 366.9,123.9"/>
+<polygon fill="#FFFFFF" points="300.0,210.0 310.1,241.1 342.8,241.1 316.3,260.3 326.5,291.4 300.0,272.2 273.5,291.4 283.7,260.3 257.2,241.1 289.9,241.1"/>
+<polygon fill="#FFFFFF" points="330.0,158.0 334.9,173.2 350.9,173.2 338.0,182.6 342.9,197.8 330.0,188.4 317.1,197.8 322.0,182.6 309.1,173.2 325.1,173.2"/>
+</svg>
