@@ -349,56 +349,6 @@
   "nan": false,
   "digest": "f41ae653769ba56e196a1f4f"
  },
- "harju/cs": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 89.96,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "c01508105d02b0902740996c"
- },
- "harju/cs/rain": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 107.19,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "dad95455ea46e319546c7611"
- },
- "harju/cs/formula": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 85.64,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "46cf818691cb218a781eff62"
- },
- "harju/cs/lm": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 86.64,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "bd6cef81c2449e9e93d5ee18"
- },
- "harju/cs/car": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 92.5,
-  "spins": 0,
-  "walls": 1,
-  "rescues": 0,
-  "nan": false,
-  "digest": "6006ac71154a2656f156ef8e"
- },
  "bathurst/cs": {
   "finished": 13,
   "cars": 13,
