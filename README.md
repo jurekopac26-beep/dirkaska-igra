@@ -86,7 +86,6 @@ Iz Avstralije ostane Bathurst (zgoraj; izbira uporabnika 9. 11. 2026 med Bathurs
 - [Krásna Hôrka, Slovaška](docs/proge/krasnahorka.md)
 - [Ujarrás, Kostarika](docs/proge/ujarras.md)
 - [Ghoufi, Alžirija](docs/proge/ghoufi.md)
-- [Longyearbyen, Norveška](docs/proge/longyearbyen.md)
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -100,6 +99,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Santa Monica Mountains, ZDA](docs/proge/mulholland.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Sogeri, Papua Nova Gvineja](docs/proge/sogeri.md) (od 22. 11. 2026 testna, prava proga je Tapini)
 - [Hải Vân, Vietnam](docs/proge/haivan.md) (od 22. 11. 2026 testna, prava proga je Mã Pí Lèng)
+- [Longyearbyen, Norveška](docs/proge/longyearbyen.md) (od 24. 11. 2026 testna; Norveška nima prave proge)
 - [Detroit, ZDA](docs/proge/detroit.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Moki Dugway, ZDA](docs/proge/moki.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Riverside, ZDA](docs/proge/riverside.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
