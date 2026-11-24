@@ -9,7 +9,7 @@
 //    winner's time; the run from the police to the building at the top shorter than the whole road
 // 4. merging: each time the best its owner ever sent; the same link twice changes nothing; an older packet after a newer one spoils
 //    nothing (the nickname of the newest); the player's own link; a hidden friend (and the player's yes); times faster than the bound
-//    dropped; at most 40 friends (the one heard from longest ago goes) and 600 times
+//    dropped; at most 40 friends (the one heard from longest ago goes) and 1000 times
 // 5. the size: every record of every track (both physics, the rain, every way to drive) in one link: at most 10 000 characters (8 000 until
 //    18. 11. 2026: 68 tracks and 592 times take ~9 100; MAX_LINK is 16 000)
 // 6. the nickname: printable, at most 16 characters; two players with one nickname: (2); the player's own times from the records
@@ -71,8 +71,15 @@ const repack = (o) => L.pack(J(o));
     check('a changed nickname: not taken', (await tryLink(t2)) === null);
     let cut = 0; for (const k of [1, 5, 20, Math.floor(l.z.length / 2)]) { L.use(B.s); if ((await L.readLink(l.z.slice(0, l.z.length - k), NOW)) === null) cut++; }
     check('a cut link: not taken', cut === 4, cut + ' of 4');
-    let flip = 0; for (let i = 0; i < 12; i++) { const at = 20 + Math.floor((l.z.length - 40) * i / 12), z = l.z.slice(0, at) + (l.z[at] === 'Q' ? 'R' : 'Q') + l.z.slice(at + 1); L.use(B.s); if ((await L.readLink(z, NOW)) === null) flip++; }
-    check('one character of the link changed (12 places): not taken', flip === 12, flip + ' of 12');
+    // (a changed character of the packed link that unpacks to the very same packets is no change: deflate can say one text two ways, about
+    // 1 change in 3 600 on a random key, 23. 11. 2026; such a place gives way to the next one. The same: a signature whose base64url
+    // differs only in its last character's unused bits)
+    const sameAs = (u) => { try { const x = JSON.parse(u); return J(Object.assign({}, x, { p: x.p.map(q => [q[0], Buffer.from(q[1], 'base64url').toString('hex')]) })); } catch (_) { return null; } };
+    const orig = sameAs(await L.unpack(l.z)), same = async (z) => { let u; try { u = await L.unpack(z); } catch (_) { return false; } return sameAs(u) === orig; };
+    let flip = 0, skip = 0; for (let i = 0; i < 12; i++) { let at = 20 + Math.floor((l.z.length - 40) * i / 12), z;
+      for (;; at++) { z = l.z.slice(0, at) + (l.z[at] === 'Q' ? 'R' : 'Q') + l.z.slice(at + 1); if (!(await same(z))) break; skip++; }
+      L.use(B.s); if ((await L.readLink(z, NOW)) === null) flip++; }
+    check('one character of the link changed (12 places, each a real change of what it unpacks to): not taken', flip === 12, flip + ' of 12' + (skip ? ', ' + skip + ' place(s) unpacking the same skipped' : ''));
     const X = await player('Lisica', { 'spa@cs': [134310, 309, null] }), t3 = JSON.parse(ch); t3.p[0][1] = X.pk[1];
     check('another player\'s signature: not taken', (await tryLink(t3)) === null);
     const t4 = JSON.parse(ch); const pk4 = JSON.parse(t4.p[0][0]); pk4.pub = JSON.parse(X.pk[0]).pub; t4.p[0][0] = J(pk4);
@@ -86,8 +93,8 @@ const repack = (o) => L.pack(J(o));
     const kinds = [['kind', 'challenge'], ['v', 2], ['app', 'other'], ['sent', Math.floor(NOW / 1000) + 2 * 86400], ['t', []]];
     let rej = 0; for (const [k, v] of kinds) if ((await L.readPacket(await signed(J(Object.assign({}, base, { [k]: v }))), NOW)) === null) rej++;
     check('signed right, but another kind, version, app, sent two days ahead, times not an object: not taken', rej === kinds.length, rej + ' of ' + kinds.length);
-    const t601 = {}; for (let k = 0; k < 601; k++) t601['t' + k + '@cs'] = [1000 + k, 0, null];
-    check('more than 600 times: not taken', (await L.readPacket(await signed(J(Object.assign({}, base, { t: t601 }))), NOW)) === null);
+    const t1001 = {}; for (let k = 0; k < 1001; k++) t1001['t' + k + '@cs'] = [1000 + k, 0, null];
+    check('more than 1000 times: not taken', (await L.readPacket(await signed(J(Object.assign({}, base, { t: t1001 }))), NOW)) === null);
     const odd = await L.readPacket(await signed(J(Object.assign({}, base, { t: { 'spa@cs': [134310, 309, null], 'BAD KEY': [1, 0, null], 'x@cs': [-5, 0, null], 'y@cs': [5.5, 0, null], 'z@cs': [5, 0, '<b>'] } }))), NOW);
     check('times of an unknown form are left out, the rest taken', !!odd && J(odd.t) === J({ 'spa@cs': [134310, 309, null] }), odd && J(odd.t));
     const wk = JSON.parse(ch); wk.kind = 'ghost';
@@ -164,12 +171,12 @@ const repack = (o) => L.pack(J(o));
     check('at most 40 friends: the 41st pushes out the one heard from longest ago', Object.keys(S.friends).length === 40 && !S.friends[fr[0].id] && !!S.friends[fr[40].id]);
     const R41 = L.merge(S, [ (await L.readLink((await L.link((await player('F41', {})).pk, [])).z, NOW)).packets[0] ], { now: NOW + 99000 });
     check('the one pushed out is named', R41.evicted.length === 1 && R41.evicted[0] === 'F1', J(R41.evicted));
-    // 600 times: a friend's merged times stay at most 600 (the newest kept)
-    const t1 = {}, t2 = {}; for (let k = 0; k < 400; k++) { t1['a' + k + '@cs'] = [1000 + k, 10, null]; t2['b' + k + '@cs'] = [1000 + k, 20, null]; }
+    // 1000 times: a friend's merged times stay at most 1000 (the newest kept)
+    const t1 = {}, t2 = {}; for (let k = 0; k < 600; k++) { t1['a' + k + '@cs'] = [1000 + k, 10, null]; t2['b' + k + '@cs'] = [1000 + k, 20, null]; }
     const K = store(); L.use(K); const p1 = await L.packet('Mnogo', t1, NOW - DAY), p2 = await L.packet('Mnogo', t2, NOW);
     const M2 = await player('Tina', {}); await open(M2, (await L.link(p1, [])).z); L.use(K); const om2 = await open(M2, (await L.link(p2, [])).z);
     const tk = Object.keys(om2.S.friends[Object.keys(om2.S.friends)[0]].t);
-    check('at most 600 times kept of a friend: the newest', tk.length === 600 && tk.filter(k => k[0] === 'b').length === 400, tk.length + ' times');
+    check('at most 1000 times kept of a friend: the newest', tk.length === 1000 && tk.filter(k => k[0] === 'b').length === 600, tk.length + ' times');
     // stored and read back the same; a store edited by hand keeps only what is of the right form
     L.use(B.s); const S1 = L.load(); L.save(S1); const S2 = L.load();
     check('the store read back as it was saved', J(S1) === J(S2));
