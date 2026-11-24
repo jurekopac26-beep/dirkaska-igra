@@ -5,7 +5,9 @@
    about 60 m of the road (the chase camera's band):
    - the old stone village on the canyon's wall below the road (s 290-560, about 20-67 % of the track, closest round the viewpoint at about 43 %):
      cubic houses of ochre stone stacked down the slope, flat roofs with a low lip, dark doorways and windows, some of them roofless ruins;
-   - the palms of the oasis on the canyon's floor (the orchard and the river of OpenStreetMap, ways 520836757 and 335697911);
+   - the river Oued Labiod on the canyon's floor (OSM way 335697911, width 60 m): a gravel bed and its water laid on the terrain (never digging it),
+     on the terrain's lowest line near the OSM line (the DEM smooths the canyon: the OSM line lies on its slope in the game);
+   - the palms of the oasis on the canyon's floor (the orchard of OpenStreetMap, way 520836757, and along the river's bed);
    - the viewpoint (OSM node 3135560243): a small paved terrace on the rim, a low stone parapet round its canyon side, two stone benches.
    No signs, inscriptions, statues or ornaments. The guardrails of the shared builder (S.rails) and the barrier line keep the cars on the road.
    ========================================================================= */
@@ -67,7 +69,76 @@
   }
 
   const inPoly = (x, z, P) => { let a = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > z) !== (P[j][1] > z) && x < (P[j][0] - P[i][0]) * (z - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) a = !a; return a; };
-  const segD = (x, z, L) => { let b = 1e9; for (let i = 0; i + 1 < L.length; i++) { const [ax, az] = L[i], [bx, bz] = L[i + 1], dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz))); b = Math.min(b, Math.hypot(ax + dx * t - x, az + dz * t - z)); } return b; };
+
+  /* THE RIVER (OSM way 335697911: waterway=river, width=60, the Oued Labiod), drawn on the game's terrain, never digging it. Copernicus GLO-30
+     smooths the steep canyon: near the road the OSM line lies on the slope, the terrain's floor 60-100 m off it. So the river follows the lowest line
+     of the terrain across the canyon near the OSM line (every 5 m the lowest ground within 120 m across, a small cost for the distance from the line;
+     a median, then smoothed over ~60 m), on the floor: the ground within 3.5 m of its lowest, at most the OSM width (60 m). On it a gravel bed and
+     the water, both laid on the terrain. ESA WorldCover 2021 (10 m) has no water on the canyon's floor (crops, grass and some bare ground along the
+     OSM line, the oasis): the water is narrower than its cells, so it is a stream (WATER_W) in a gravel bed (BED_W) about the floor's lowest line,
+     the orchard's palms beside it (an approximation: no source gives these widths). BED_W 0 and WATER_W 0: the water over the whole floor, the
+     OSM width (decision a/b, PR). */
+  const WATER_W = 8, BED_W = 20, BED_UP = 0.25, WATER_UP = 0.45, GRAVEL = [0.66, 0.62, 0.55], SHAL = [0.3, 0.38, 0.36], DEEP = [0.1, 0.2, 0.26];
+  let RL = null;   // this build's river (made in keepOut, before the trees; drawn in extra): rows { x, z, nx, nz, a, b } (the floor from a to b across)
+  function riverLayout() {
+    const A = World.api, gH = A.vrGround, P = [];
+    for (let i = 0; i + 1 < RIVER.length; i++) { const [ax, az] = RIVER[i], [bx, bz] = RIVER[i + 1], n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / 5));
+      for (let k = 0; k < n; k++) P.push([ax + (bx - ax) * k / n, az + (bz - az) * k / n]); }
+    P.push(RIVER[RIVER.length - 1]);
+    const nrm = (Q, k, r) => { const a = Q[Math.max(0, k - r)], b = Q[Math.min(Q.length - 1, k + r)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1; return [-tz / l, tx / l]; };
+    const avg = (V, r) => V.map((_, k) => { let s = 0, n = 0; for (let j = Math.max(0, k - r); j <= Math.min(V.length - 1, k + r); j++) { s += V[j]; n++; } return s / n; });
+    let O = P.map((p, k) => { const [nx, nz] = nrm(P, k, 3); let bo = 0, bc = 1e9;
+      for (let o = -120; o <= 120; o += 2.5) { const c = gH(p[0] + nx * o, p[1] + nz * o) + 0.06 * Math.abs(o); if (c < bc) { bc = c; bo = o; } } return bo; });
+    O = O.map((_, k) => { const w = O.slice(Math.max(0, k - 4), k + 5).sort((a, b) => a - b); return w[w.length >> 1]; });
+    for (let r = 0; r < 3; r++) O = avg(O, 6);
+    let C = P.map((p, k) => { const [nx, nz] = nrm(P, k, 3); return [p[0] + nx * O[k], p[1] + nz * O[k]]; });
+    for (let r = 0; r < 2; r++) { const X = avg(C.map(c => c[0]), 3), Z = avg(C.map(c => c[1]), 3); C = X.map((x, k) => [x, Z[k]]); }
+    const L = [C[0]]; let acc = 0;   // (the line again every 5 m)
+    for (let k = 1; k < C.length; k++) { const [ax, az] = C[k - 1], [bx, bz] = C[k], d = Math.hypot(bx - ax, bz - az);
+      for (let t = 5 - acc; t <= d; t += 5) L.push([ax + (bx - ax) * t / d, az + (bz - az) * t / d]); acc = (acc + d) % 5; }
+    const rows = L.map((p, k) => { const [nx, nz] = nrm(L, k, 2), g = (o) => gH(p[0] + nx * o, p[1] + nz * o); let lo = 1e9;
+      for (let o = -9; o <= 9; o += 3) lo = Math.min(lo, g(o));
+      let a = -3, b = 3; while (a > -30 && g(a - 3) < lo + 3.5) a -= 3; while (b < 30 && g(b + 3) < lo + 3.5) b += 3;
+      return { x: p[0], z: p[1], nx, nz, a, b }; });
+    const As = avg(avg(rows.map(r => r.a), 3), 3), Bs = avg(avg(rows.map(r => r.b), 3), 3);
+    const h = BED_W ? BED_W / 2 : 1e9;
+    rows.forEach((r, k) => { r.a = Math.min(Math.max(As[k], -h), -4); r.b = Math.max(Math.min(Bs[k], h), 4); });
+    return rows;
+  }
+  // how far (x, z) is out of the river's bed (negative: in it), from the nearest row
+  const bedOut = (x, z) => { let e = 1e9; for (const r of RL) { const m = (r.a + r.b) / 2, d = Math.hypot(x - r.x - r.nx * m, z - r.z - r.nz * m) - (r.b - r.a) / 2; if (d < e) e = d; } return e; };
+  function keepOut(push) {
+    RL = riverLayout();
+    for (let k = 0; k < RL.length; k += 2) { const r = RL[k], m = (r.a + r.b) / 2; push(r.x + r.nx * m, r.z + r.nz * m, (r.b - r.a) / 2 + 3); }
+  }
+  function river(ctx, tex) {
+    const { root, out, P } = ctx, A = World.api, gH = A.vrGround, n = RL.length, TL = A.VRC * A.VRT;
+    // only over the full terrain tiles (5 m cells: vrGround is exactly their surface; the coarse ring's 10 m cells would cover the ribbon)
+    const full = (x, z) => A.vrTileOn(Math.floor((x - P.G.x0) / TL), Math.floor((z - P.G.z0) / TL)) === 1;
+    const near = RL.map(r => [r.a - 5, r.b + 5].every(o => full(r.x + r.nx * o, r.z + r.nz * o)) && full(r.x + r.nx * (r.a + r.b) / 2, r.z + r.nz * (r.a + r.b) / 2));
+    const jit = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s) - 0.5; };
+    const strip = (g, cols, up, col, uvS) => {   // a ribbon over the rows: cols(r) the offsets across, col(r, j, x, z) the colour
+      const row = (r) => cols(r).map((o, j) => { const x = r.x + r.nx * o, z = r.z + r.nz * o; return { p: [x, gH(x, z) + up, z], c: col(r, j, x, z), u: [x / uvS, -z / uvS] }; });
+      let P0 = row(RL[0]);
+      for (let k = 1; k < n; k++) { const P1 = row(RL[k]);
+        if (near[k] && near[k - 1]) for (let j = 0; j + 1 < P0.length; j++) g.quadUp(P0[j].p, P0[j + 1].p, P1[j + 1].p, P1[j].p, [P0[j].c, P0[j + 1].c, P1[j + 1].c, P1[j].c], [P0[j].u, P0[j + 1].u, P1[j + 1].u, P1[j].u]);
+        P0 = P1; }
+    };
+    const NB = 10, add = (g, mat) => { if (g.empty) return 0; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); return 1; };
+    // the bed: gravel (BED_W about the lowest line, at most the floor), its outer 5 m blending into the terrain's own colour
+    const bed = new A.GB(true);
+    strip(bed, (r) => [r.a - 5].concat(Array.from({ length: NB + 1 }, (_, j) => r.a + (r.b - r.a) * j / NB), [r.b + 5]), BED_UP,
+      (r, j, x, z) => j === 0 || j === NB + 2 ? ctx.gColAt(x, z) : GRAVEL.map(v => v + jit(x, z) * 0.08), 10);
+    // the water: the whole bed (WATER_W 0) or WATER_W metres in its middle; shallow at its edges, deeper inside
+    const wat = new A.GB(true), wa = (r) => WATER_W ? Math.min(WATER_W, r.b - r.a - 2) : r.b - r.a - 2;
+    strip(wat, (r) => { const m = (r.a + r.b) / 2, h = wa(r) / 2; return Array.from({ length: NB + 1 }, (_, j) => m - h + 2 * h * j / NB); }, WATER_UP,
+      (r, j) => { const t = Math.min(1, Math.min(j, NB - j) / (WATER_W ? 3 : 2)); return [0, 1, 2].map(i => SHAL[i] + (DEEP[i] - SHAL[i]) * t); }, 14);
+    const off = (f) => ({ polygonOffset: true, polygonOffsetFactor: f, polygonOffsetUnits: f * 2 });
+    const nm = add(bed, new THREE.MeshLambertMaterial(Object.assign({ map: A.vrGritTex(), vertexColors: true }, off(-2))))
+      + add(wat, new THREE.MeshPhongMaterial(Object.assign({ map: tex.water, vertexColors: true, shininess: 50, specular: 0x24303a }, off(-4))));
+    if (!wat.empty) out.dyn.water = tex.water;
+    return nm;
+  }
 
   /* THE LANDMARK, one replaceable function (decision 15. 11. 2026, docs/odlocitve.md, PR #701: the main landmark will come from Blender as a .glb in
      assets/landmarks/): the old stone village on the canyon's wall. To swap it, replace this function's body with the model's placement; it returns the
@@ -94,18 +165,21 @@
     return placed;
   }
 
-  function extra(ctx) {
+  function extra(ctx, tex) {
     const { scen, R, exclPush } = ctx, A = World.api, T = A.T, gH = A.vrGround;
     // the road's height and distance near (x, z): the nearest of the track's samples
     const roadAt = (x, z) => { let bd = 1e9, bi = 0; for (let i = 0; i < T.N; i += 2) { const d = Math.hypot(T.px[i] - x, T.pz[i] - z); if (d < bd) { bd = d; bi = i; } } return [bd, T.hy[bi], bi]; };
 
     const placed = landmark(ctx, roadAt);
 
-    /* the palms of the oasis: on the canyon's floor (over 50 m under the road), in the orchard or along the river, within about 150 m of the road */
+    const nRiver = RL ? river(ctx, tex) : 0;
+
+    /* the palms of the oasis: on the canyon's floor (over 50 m under the road), in the orchard or along the river's bed (not in it), within about
+       150 m of the road */
     let np = 0;
     for (let k = 0; k < 2600 && np < 260; k++) {
       const x = -260 + R() * 520, z = -40 + R() * 520;
-      const inO = inPoly(x, z, ORCH), dr = segD(x, z, RIVER); if (!inO && dr > 22) continue;
+      const inO = inPoly(x, z, ORCH), dr = RL ? bedOut(x, z) : 1e9; if ((!inO && dr > 20) || dr < 2) continue;
       const [rd, ry] = roadAt(x, z); if (rd > 150 || rd < 30) continue;
       const y = gH(x, z); if (y > ry - 45) continue;
       palm(scen.get(x, z), x, y, z, 7 + R() * 7, R); np++;
@@ -122,7 +196,7 @@
       for (const u of [-2.8, 2.8]) { const c = Math.cos(rot), s = Math.sin(rot); box(g, VX + u * c - 1 * s, y, VZ + u * s + 1 * c, 1.8, 0.45, 0.5, rot, STONE2, STONE3, true); }
       exclPush(VX, VZ, 10);
     }
-    ctx.out.ghoufi = { houses: placed.length, palms: np };
+    ctx.out.ghoufi = { houses: placed.length, palms: np, river: RL ? RL.length : 0, riverMeshes: nRiver };
     if (World.ext.goreRob) World.ext.goreRob(ctx, 'ghoufi');   // (the roadside ground from the chase camera: js/world-chase-bt11.js)
   }
 
@@ -134,6 +208,7 @@
     skiers: 0, nets: false, snowbanks: false,
     animals: [],
     fans: 0.3,
-    extra,
+    keepOut,
+    extra: (ctx) => extra(ctx, tex),
   });
 })();

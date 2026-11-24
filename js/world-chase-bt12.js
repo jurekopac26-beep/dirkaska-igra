@@ -43,5 +43,5 @@
         else { tuft(S.g(x, z), x, y, z, 0.36 + h * 0.26, 0.55 + h * 0.45, vary(S.c.gr, R, 0.03), R, 5); S.st.trava++; } } },
     far: { ok: (c, sl, x, z, w) => (c === 0 || c === 2) && sl < 0.9 ? 0.5 * (1 - w) : 0, n: [2, 4],
       put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.45 + h * 0.3, 0.8 + h * 0.6, vary(S.c.gr2, R, 0.03), R, 5); S.st.trava++; } },
-    col: { gr: [0.3, 0.5, 0.17], gr2: [0.4, 0.55, 0.21], fern: [0.23, 0.45, 0.14], under: [0.21, 0.37, 0.15], lat: [0.5, 0.33, 0.24] } };
+    col: { gr: [0.28, 0.45, 0.17], gr2: [0.34, 0.47, 0.2],   /* (muted by the eighty-fifth group: no bright spikes) */ fern: [0.23, 0.45, 0.14], under: [0.21, 0.37, 0.15], lat: [0.5, 0.33, 0.24] } };
 })();

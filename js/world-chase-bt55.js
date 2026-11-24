@@ -61,7 +61,7 @@
         if (e1 - e0 > 0.9) for (let k = 0, n = (e1 - e0) > 6 ? 2 : 1; k < n; k++) {
           const r0 = R(), o = e0 + R() * (e1 - e0), [x, z] = at(i, sd, o, (R() - 0.5) * step);
           if (r0 > L.share) continue;
-          const Pp = L.verge(R, o, e0, e1, c); if (!Pp) continue;
+          const Pp = L.verge(R, o, e0, e1, c, x, z); if (!Pp) continue;
           const rr = Math.min(Pp.r, (e1 - e0) * 0.5, o - e0 + 0.4, e1 - o + 0.4);
           if (rr > 0.3 && own(x, z)) { soil(soft, g, x, z, rr, Pp.col, R, 0.04); st.zaplate++; }
         }
@@ -79,7 +79,7 @@
         if (q.i < 0 || gap(q.i, i, N) * ds > o + 10 || Math.abs(q.lat) < bar + 0.35 || q.lat * sd < 0 || badP(x, z)) continue;
         const y = gT(x, z); if (!(y > T.hy[i] - L.drop) || slope(x, z) > 1.0) continue;
         const c = lc ? lc(x, z) : 0; if (skip(c) || (L.wet && L.wet(x, z))) continue;
-        const Pp = L.far(R, o - bar, c, 1 + 0.6 * Math.min(1, (o - bar - L.from) / (L.to - L.from))); if (!Pp) continue;
+        const Pp = L.far(R, o - bar, c, 1 + 0.6 * Math.min(1, (o - bar - L.from) / (L.to - L.from)), x, z); if (!Pp) continue;
         soil(soft, gT, x, z, Pp.r, Pp.col, R, 0.06); st.pas++;
       }
       soft.done(); }
@@ -119,6 +119,7 @@
         : c === 2 ? (u < 0.45 ? P(R, RH.stub, k, 1.8, 1.6) : u < 0.75 ? P(R, RH.bare, k, 1.6, 1.4) : P(R, RH.crop, k, 1.6, 1.4))
         : u < 0.45 ? P(R, RH.straw, k, 1.6, 1.6) : u < 0.7 ? P(R, RH.dry, k, 1.6, 1.4) : u < 0.88 ? P(R, RH.bare, k, 1.4, 1.4) : P(R, RH.pale, k, 1.4, 1.4); } };
 
+  BT.edges55 = edges;   // (the sixty-eighth group's Quezaltepeque and Kildare reuse the two strips; L.verge and L.far also get the patch's x, z)
   const LK = API.rbLook || {};
   const add = (id, L, wet) => { if (LK[id] && chain) chain(LK[id], (ctx) => { try {
     const T = API.T, { nrGround, nrLC, nrNear } = API;

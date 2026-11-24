@@ -71,7 +71,7 @@
     pick: (R, d, s, x, z) => { const r = R(), tr = lc(x, z) === 1;
       if (tr) { if (r < 0.55) return { k: 'p', r: 1.0 + R() * 2.2, col: vary(mix3([0.44, 0.36, 0.23], [0.48, 0.38, 0.24], R()), R, 0.015) };   // (leaf litter)
         return { k: 'g', w: 0.8, h: 0.6, col: vary(mix3([0.28, 0.42, 0.2], [0.34, 0.46, 0.22], R()), R, 0.02) }; }   // (shrubs by the trees)
-      if (r < 0.88) return { k: 'p', r: 2.2 + R() * (d < 12 ? 2 : 4.5), col: R() < 0.5 ? vary(mix3([0.47, 0.62, 0.31], [0.5, 0.64, 0.33], R()), R, 0.012) : vary(mix3([0.32, 0.47, 0.2], [0.35, 0.5, 0.22], R()), R, 0.012) };   // (mown lighter, darker)
+      if (r < 0.88) return { k: 'p', r: 2.2 + R() * (d < 12 ? 2 : 4.5), col: R() < 0.5 ? vary(mix3([0.3, 0.53, 0.14], [0.32, 0.55, 0.15], R()), R, 0.01) : vary(mix3([0.22, 0.43, 0.1], [0.24, 0.45, 0.11], R()), R, 0.01) };   // (mown lighter, darker; toned to the lawn by js/world-chase-bt83.js)
       return { k: 't', w: 0.26, h: 0.28, col: vary(mix3([0.4, 0.56, 0.26], [0.47, 0.6, 0.3], R()), R, 0.02) }; } });   // (an unmown tuft)
 
   const LK = API.PL_LOOK;

@@ -36,7 +36,7 @@
     dn = dn || 0.72; df = df || 0.55;
     const T = API.T, { nrGround, nrNear, nrSlope } = API, st = { zaplate: 0, pas: 0, sopi: 0 };
     if (!T || !T.br || !nrGround || !nrNear || !ctx || !ctx.scen) return st;
-    const scen = ctx.scen, ex = ctx.excluded || (() => false), pd = T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0;
+    const scen = ctx.scen, flat = BT.farScen && ctx.root && ctx.matV && API.Chunks ? BT.farScen(ctx.root, ctx.matV) : scen, ex = ctx.excluded || (() => false), pd = T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0;
     const pit = (s, sd) => ps && sd === ps && (!!T.pitAt(s) || (T.pitLead ? T.pitLead(s) >= 0 : false));
     const good = (x, z, r) => { const q = nrNear(x, z); return q.i >= 0 && q.dd > r && ok(x, z) && !ex(x, z) && (!nrSlope || nrSlope(x, z) < 0.6); };
     const at = (i, sd, o, a) => { const d = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + o); return [T.px[i] + T.nx[i] * d + T.tx[i] * a, T.pz[i] + T.nz[i] * d + T.tz[i] * a]; };
@@ -47,7 +47,7 @@
         const o = 0.6 + Math.pow(r1, 1.25) * 15, [x, z] = at(i, sd, o, (r2 - 0.5) * 3.2), rr = 0.7 + R() * (0.6 + o * 0.06);
         if (!good(x, z, Math.min(o, 0.5 + rr * 0.6))) continue;
         const col = patch(x, z, o, R, false); if (!col) continue;
-        soil(scen, nrGround, x, z, rr, col, R, 0.04); st.zaplate++;
+        soil(flat, nrGround, x, z, rr, col, R, 0.04); st.zaplate++;
         if (extra) st.sopi += extra(scen, x, z, rr, R, good);
       }
     }
@@ -56,8 +56,9 @@
       const o = 16 + r1 * 44, [x, z] = at(i, sd, o, (r2 - 0.5) * 8), q = nrNear(x, z);
       if (q.i < 0 || Math.abs(q.i - i) * T.ds > o + 10 || !good(x, z, 10)) continue;   // (another leg nearer: its own band)
       const col = patch(x, z, o, R, true); if (!col) continue;
-      const k = 1 + 0.5 * (o - 16) / 44; soil(scen, nrGround, x, z, (1.6 + R() * 1.6) * k, col, R, 0.05); st.pas++;
+      const k = 1 + 0.5 * (o - 16) / 44; soil(flat, nrGround, x, z, (1.6 + R() * 1.6) * k, col, R, 0.05); st.pas++;
     }
+    if (flat !== scen) flat.done();   // (the patches in chunks of their own, no shadow, none past 140 m: BT.farScen, js/world-chase-bt37.js)
     return st;
   };
   const chain = (id, key, fn) => {

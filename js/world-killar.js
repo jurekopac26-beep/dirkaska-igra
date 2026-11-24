@@ -375,6 +375,7 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     stubExcl(exclPush);   // (nothing grows or stands on the side roads)
+    if (UNK && World.killarObcestje) World.killarObcestje.keepOut(exclPush, T);   // (the roads by the track from OSM, js/world-killar-obcestje.js: nothing grows or stands on them)
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const M of mines) exclPush(M.x, M.z, 11);
     exclPush(padF.x, padF.z, padF.r + 4); exclPush(padS.x, padS.z, padS.r + 4);
@@ -1209,6 +1210,7 @@
     }
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: unAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: unAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
+    if (UNK && World.killarObcestje) World.killarObcestje.extra({ root, T, ground: unGround, blds, pads: P.pads }, tex);   // (their meshes)
     crowdFinish(CR, root, out);
     let dropM = 0; if (T.dropAt) for (let i = 0; i < N; i++) dropM += (T.dropAt[0][i] | T.dropAt[1][i]) * T.ds;
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'killar', { gH: unGround, slope: unSlope });   // (the roadside ground for the chase camera: js/world-chase-bt13.js)
