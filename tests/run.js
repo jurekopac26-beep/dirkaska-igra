@@ -40,9 +40,10 @@ const SUITES = {
 // listed counts as DEF_SECS
 // (crash: 2650 from 22. 11. 2026, #480's 30 cars in its sections 10 and 11: GitHub run 44965596336 stopped it after 34 min in section 11, 10 of
 // its 18 roof fields done, ~50 s each; the rest added to it; 3455 from 24. 11. after main's new times, 2650 x 1343/1030)
+// (menu: 1374 on 24. 11. 2026, main's 1294 plus the row's police chase side, ~80 s; one slow PR machine stopped it at 30 min)
 const SECS = {
   'browser/memory.test.mjs': 3365, 'browser/perf.test.mjs': 2629, 'browser/memory2.test.mjs': 2577, 'browser/smoke2.test.mjs': 1544,
-  'browser/smoke.test.mjs': 1348, 'browser/crash.test.mjs': 3455, 'browser/menu.test.mjs': 1294, 'browser/gfx.test.mjs': 1030,
+  'browser/smoke.test.mjs': 1348, 'browser/crash.test.mjs': 3455, 'browser/menu.test.mjs': 1374, 'browser/gfx.test.mjs': 1030,
   'browser/garage.test.mjs': 1021, 'browser/world.test.mjs': 953, 'browser/world2.test.mjs': 937, 'browser/gfx2.test.mjs': 830,
   'browser/garages.test.mjs': 656, 'browser/pitstats.test.mjs': 530, 'browser/covers.test.mjs': 520, 'browser/crew.test.mjs': 506,
   'browser/pitcam.test.mjs': 490, 'browser/okolje.test.mjs': 481, 'browser/pitkit.test.mjs': 418, 'browser/hudcol.test.mjs': 358,
