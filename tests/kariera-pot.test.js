@@ -196,7 +196,7 @@ const darilaOk = (g) => { const want = []; for (let s = g.igral ? 2 : g.o0 + 1; 
   check('13 new short circuits: the rule holds, the circuit cup of stage 1 in ' + s1.length + ' parts (Pokal dirkališč · Začetnik, … II, III, IV; Circuit Cup IV · Rookie)',
     !e.length && s1.length >= 4 && s1[0].id === 's1-krog-1' && s1[0].name === 'Pokal dirkališč · Začetnik' && s1[1].name === 'Pokal dirkališč II · Začetnik' && s1[3].name === 'Pokal dirkališč IV · Začetnik' && s1[3].en.name === 'Circuit Cup IV · Rookie',
     e.slice(0, 3).join(' | ') || s1.map(c => c.name).join(', '));
-  const T2 = C.TRACKS.concat(kopije('caracoles', 7, 'nova-d'), kopije('harju', 3, 'nova-t')), P2 = K.pot(T2, C.CATS), e2 = pravilo(P2, T2, C.CATS);
+  const T2 = C.TRACKS.concat(kopije('caracoles', 7, 'nova-d'), kopije('katu', 3, 'nova-t')), P2 = K.pot(T2, C.CATS), e2 = pravilo(P2, T2, C.CATS);
   const dl = P2.pokali.filter(c => c.vrsta === 'dolge'), tt = P2.pokali.filter(c => c.vrsta === 'tt');
   check('7 new long tracks and 3 time trials: the rule holds, »Dolge proge«, »Dolge proge II« (once round), »Kronometri«, »Kronometri II« (Long tracks II, Time trials II)',
     !e2.length && dl.length >= 2 && dl[0].name === 'Dolge proge' && dl[1].name === 'Dolge proge II' && dl[1].en.name === 'Long tracks II' && dl.every(c => c.laps === 1)
