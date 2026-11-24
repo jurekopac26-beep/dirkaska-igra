@@ -1815,21 +1815,22 @@
   }
  },
  "krasnahorka": {
-  "meshes": 426,
-  "verts": 371949,
-  "instances": 3827,
+  "meshes": 448,
+  "verts": 423389,
+  "instances": 3786,
   "props": 154,
   "crowd": 12,
-  "world": "964654e4",
+  "world": "210f5094",
   "propsHash": "89028a26",
   "floor": "436e5379/7364",
   "groups": {
-   "-:MeshLambertMaterial": "428ae687",
+   "-:MeshLambertMaterial": "5e4f20ba",
    "-:MeshPhongMaterial": "f177a5c0",
    "-:MeshBasicMaterial": "53339fdc",
+   "roadside-ways:MeshLambertMaterial": "34eee857",
    "crowd:MeshLambertMaterial": "fb825c43",
-   "flags:MeshLambertMaterial": "303dbfda",
-   "ao:MeshBasicMaterial": "4ba83a39",
+   "flags:MeshLambertMaterial": "503fb119",
+   "ao:MeshBasicMaterial": "34ac7010",
    "tyremarks:MeshBasicMaterial": "394556b2",
    "roadwear:MeshLambertMaterial": "c1369259"
   }
