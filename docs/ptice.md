@@ -1,7 +1,8 @@
 # Ptice in živali: raziskava in načrt
 
 Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7120588492). Veja `grafika/ptice-zivali-bt`.
-**Stanje 24. 11.:** točki 1 in 2 sta v kodi (PR #1060); raziskava delna; podrobne ptice, vrste po državah in slike še čakajo (glej »Predaja«).
+**Stanje 24. 11. zvečer:** točki 1 in 2 sta v kodi (PR #1060); tri stopnje podrobnosti so v kodi kot preizkus (privzeto sedanja ptica),
+vprašanje `ptice-podrobnost-1060` čaka na strani Odločitve; raziskava dopolnjena ([19]–[29]), vrste po državah še niso v kodi (glej »Predaja«).
 
 ## Odločitev (povzetek)
 
@@ -28,14 +29,21 @@ Kar ni potrjeno, je označeno z »ni vira« in **ne gre v kodo**, dokler vira ni
 
 | Vrsta | Jata (število) | Formacija in let | Barve | Kraji po viru | Vir |
 |---|---|---|---|---|---|
-| Žerjav (*Grus grus*) | do 400; nad Eiflom verige po več sto | V (klin), izkušeni spredaj; mahanje | ni vira | Eifel (Nemčija), počivališča Švedska, Nemčija | [1] [2] [3] |
+| Žerjav (*Grus grus*) | do 400; nad Eiflom verige po več sto | V (klin), izkušeni spredaj; mahanje | ni vira | Eifel (Nemčija), počivališča Švedska, Nemčija; največ gnezdi v Rusiji, na Finskem in Švedskem; baltske države kot območje | [1] [2] [3] [19] |
 | Planinska kavka (*Pyrrhocorax graculus*) | »velike jate«, števila ni vira | ohlapna jata; hiter, akrobatski let, jadranje v vzgorniku ob stenah | črna, rumen kljun, rdeče noge | Alpe, Himalaja, Atlas v Maroku (nad 2880 m); Kavkaz ni vira | [4] [5] |
-| Škorec (*Sturnus vulgaris*) | povprečno 30 082 (meritev, večinoma Združeno kraljestvo); prenočišča 100 000 in več | gost tridimenzionalen oblak | ni vira | Združeno kraljestvo; Tunizija ni vira | [6] [7] |
-| Siva gos (*Anser anser*) | v letu ni vira (zbori do 25 000, šibek vir) | V (šibek vir) | ni vira | Danska (141 000, avgust 2022), Nizozemska (stalnica) | [8] [9] |
+| Škorec (*Sturnus vulgaris*) | povprečno 30 082 (meritev, večinoma Združeno kraljestvo); prenočišča 100 000 in več | gost tridimenzionalen oblak | ni vira | Združeno kraljestvo; Rim (oktober–februar, ocene 0,5–1,5 milijona, ne štetje); Tunizija ni vira | [6] [7] [20] |
+| Siva gos (*Anser anser*) | v letu ni vira (zbori do 25 000, šibek vir); družine ostanejo skupaj vse leto | V: gosi letijo ~1 m za sosedo in vstran, vodilne se menjajo (vir o goseh na splošno) | ni vira | Danska (141 000, avgust 2022), Nizozemska (stalnica) | [8] [9] [21] |
 | Črni jastreb (*Coragyps atratus*) | od nekaj do več sto; na selitvi nekaj do nekaj deset | jadranje v termiki; ravna krila, nekaj hitrih plitvih zamahov, nato drsenje | črn, bele lise ob konicah kril | od JV ZDA do srednjega Čila in Urugvaja; Argentina ni izrecno | [10] [11] [12] |
 | Črni škarnik (*Milvus migrans*) | skupna prenočišča; na selitvi velike jate, števila ni vira | jadranje in drsenje v termiki | viličast rep | Evropa, Azija, Afrika, Avstralija; Japonska; Altaj ni vira | [13] |
 | Rumenonogi galeb (*Larus michahellis*) | ni vira | ni vira | ni vira | Sredozemlje, vzhodni Jadran, Baleari, Madeira (*atlantis*), Istanbul | [14] [15] |
 | Azijski odprtokljuni štrk (*Anastomus oscitans*) | običajno v jatah; števila v letu ni vira | jadranje v termiki, vrat iztegnjen | ni vira | Tajska | [16] |
+| Kanadska gos (*Branta canadensis*) | ni vira (kot klina je odvisen od velikosti jate) | V (klin), vodilne se menjajo | ni vira | Severna Amerika (meritve z radarjem); Kanada, ZDA izrecno ni vira | [21] [22] |
+| Rožnati kakadu, galah (*Eolophus roseicapilla*) | »velike, hrupne jate«, števila ni vira | ohlapna jata; poskakujoč, akrobatski let | ni vira | Avstralija; Novi Južni Wales (opazovanja jat brez štetja) | [23] |
+| Rumenokljuni škarnik (*Milvus aegyptius*) | nomadske jate; prenočišče 1500–3500 (KwaZulu-Natal) | formacija ni vira | ni vira | južna Afrika (avgust–marec); Kenija, Tanzanija: domorodna vrsta, jate ni vira | [24] [25] |
+| Andski kondor (*Vultur gryphus*) | ni vira | jadranje; maha le ~1 % časa leta, ob stenah v termiki | ni vira | Andi, Čile | [26] |
+| Velika burnica (*Fregata minor*) | ni vira | jadranje v termiki pod kopastimi oblaki, redki, počasni in globoki zamahi | ni vira | Tihi in Indijski ocean; Fidži, Samoa, Palau izrecno ni vira | [27] |
+| Bela štorklja (*Ciconia ciconia*) | jate negnezdečih (Harghita), števila ni vira | jadranje v termiki | ni vira | Romunija (popis 2025: več kot 7500 parov) | [28] |
+| Veliki plamenec (*Phoenicopterus roseus*) | ni vira | ni vira | ni vira | Katar (november–april, obala); Bahrajn (vrh decembra, štetje 1991) | [29] |
 | Kravja čaplja (*Bubulcus coromandus*) | ohlapne jate do več sto; prelet na prenočišče 850–1000 (Hongkong) | formacija ni vira | ni vira | riževa polja; Šrilanka (zimski priliv) | [17] [18] |
 
 [1] nabu.de/tiere-und-pflanzen/voegel/artenschutz/kranich/kranichzug-aktuell.html ·
@@ -45,7 +53,16 @@ Kar ni potrjeno, je označeno z »ni vira« in **ne gre v kodo**, dokler vira ni
 [8] projects.au.dk/can/projects/greylag-geese-count · [9] beardsleyzoo.org/greylag-goose.html ·
 [10] allaboutbirds.org/guide/Black_Vulture · [11] hawkmountain.org/raptors/black-vulture · [12] inaturalist.org/guide_taxa/178464 ·
 [13] en.wikipedia.org/wiki/Black_kite · [14] en.wikipedia.org/wiki/Yellow-legged_gull · [15] link.springer.com/article/10.1007/s10336-013-1020-x ·
-[16] en.wikipedia.org/wiki/Asian_openbill · [17] en.wikipedia.org/wiki/Eastern_cattle_egret · [18] avifauna.hkbws.org.hk/species/0170/023000
+[16] en.wikipedia.org/wiki/Asian_openbill · [17] en.wikipedia.org/wiki/Eastern_cattle_egret · [18] avifauna.hkbws.org.hk/species/0170/023000 ·
+[19] savingcranes.org/wp-content/uploads/2024/10/crane_conservation_strategy_eurasian_crane.pdf ·
+[20] euronews.com/travel/2022/02/01/visit-rome-in-winter-for-a-chance-to-see-this-stunning-natural-wonder ·
+[21] wwt.org.uk/news-and-stories/blog/why-do-geese-fly-in-v-formation-the-science-behind-the-sky-s-most-iconic-shape ·
+[22] sora.unm.edu/sites/default/files/journals/auk/v093n03/p0554-p0559.pdf (Auk, 1976) · [23] birdlife.org.au/bird-profiles/galah ·
+[24] en.wikipedia.org/wiki/Yellow-billed_kite · [25] birdmap.africa/docs/sabap1/888.pdf · [26] pmc.ncbi.nlm.nih.gov/articles/PMC7395523 ·
+[27] audubon.org/magazine/these-masters-of-sky-can-fly-hours-or-days-while-barely-flapping ·
+[28] romania-insider.com/white-stork-census-romania-2025 · [29] visitqatar.com/en/things-to-do/get-inspired/wildlife/flamingo-migration-in-qatar
+
+Viri [19]–[29] so povzeti iz izpisov spletnega iskanja 24. 11. (strani niso bile prebrane v celoti); pred vnosom v kodo vsako številko preveri na strani.
 
 ## Države s pravimi progami: predlog vrste (še ni potrjeno, razen kjer piše)
 
@@ -53,16 +70,23 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 
 | Predlog vrste | Države (proge) | Stanje |
 |---|---|---|
-| Žerjav, klin | Nemčija (Nürburg) | potrjeno [1] [2]; Belgija, Švedska, Latvija, Finska: vir za kraj manjka |
+| Žerjav, klin | Nemčija (Nürburg) | potrjeno [1] [2]; Švedska in Finska: kraj potrjen [3]; Latvija le kot »baltske države« [19]; Belgija: vir manjka |
 | Planinska kavka, ohlapna jata | Švica (Furka), Francija (Izoard), Maroko (Dadès), Indija (Killar), Butan (Isuna) | območje potrjeno [4]; število manjka; Gruzija, Kazahstan, Albanija: ni vira |
-| Škorec, gosta jata | Anglija, Wales, Irska, Avstrija, Slovenija, Slovaška, Italija, Tunizija | potrjeno le Združeno kraljestvo [6] |
-| Siva gos, klin | Nizozemska, Danska, Češka | kraj potrjen za NL in DK [8]; formacija in število v letu manjkata |
+| Škorec, gosta jata | Anglija, Wales, Irska, Avstrija, Slovenija, Slovaška, Italija, Tunizija | potrjena Združeno kraljestvo [6] in Italija (Rim, zima) [20]; drugo manjka |
+| Siva gos, klin | Nizozemska, Danska, Češka | kraj potrjen za NL in DK [8]; klin potrjen za gosi na splošno [21]; število v letu manjka |
 | Črni jastreb, jadranje v skupini | Mehika, Salvador, Kostarika, Panama, Brazilija, Peru, Argentina | območje potrjeno [12]; Argentina manjka |
-| Črni škarnik, jadranje | Japonska, Rusija (Altaj), Vietnam, Uganda | potrjena Japonska [13] |
+| Črni škarnik, jadranje | Japonska, Rusija (Altaj), Vietnam | potrjena Japonska [13] |
+| Rumenokljuni škarnik, jadranje | Južna Afrika, Kenija, Tanzanija, Uganda | Južna Afrika potrjena (jate, avgust–marec) [24] [25]; Kenija, Tanzanija le prisotnost; Uganda ni vira |
+| Kanadska gos, klin | Kanada, ZDA | klin potrjen [22]; kraj in število manjkata (hww.ca iz okolja ni dosegljiv) |
+| Galah, ohlapna jata | Avstralija | potrjeno [23]; število manjka (Bathurst je dirkališče: ptice v petini časa) |
+| Andski kondor, jadranje posamič | Čile | potrjeno [26]; število manjka |
+| Bela štorklja, jadranje | Romunija | kraj potrjen [28]; število v jati manjka |
+| Veliki plamenec | Katar, Bahrajn | kraj potrjen [29]; formacija in število manjkata |
+| Velika burnica, jadranje | Fidži, Samoa, Palau | let potrjen [27]; otoki izrecno ne |
 | Rumenonogi galeb, ohlapna jata | Italija, Črna gora, Albanija, Španija, Portugalska (Madeira), Turčija | kraji potrjeni [14] [15]; število in formacija manjkata |
 | Azijski odprtokljuni štrk | Tajska (Buriram) | potrjeno [16]; število manjka |
 | Kravja čaplja | Filipini, Indonezija, Šrilanka, Malezija | potrjena Šrilanka [17]; formacija manjka |
-| Še brez raziskave | Avstralija, Kanada, ZDA, Čile, Jamajka, Sveta Lucija, Katar, Bahrajn, Kenija, Tanzanija, Angola, Madagaskar, Južna Afrika, Zelenortski otoki, Alžirija, Uzbekistan, Južna Koreja, Kitajska, Romunija, Norveška, Fidži, Samoa, Palau, Papua Nova Gvineja | vrsta še ni izbrana |
+| Še brez raziskave | Jamajka, Sveta Lucija, Angola, Madagaskar, Zelenortski otoki, Alžirija, Uzbekistan, Južna Koreja, Kitajska, Norveška, Papua Nova Gvineja | vrsta še ni izbrana |
 
 ## Narejeno v kodi (24. 11.)
 
@@ -75,20 +99,22 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 - **Odprto vprašanje:** zamrznjena dirkališča Crystal Palace, London, Marrakech so nespremenjena (pravilo o zamrznjenih progah).
   Zvoki živali ob progi (`js/sfx-okolje.js`, golobi `zivali.city`) so nespremenjeni.
 
+## Podrobnost ptic: preizkus in vprašanje (24. 11. zvečer)
+
+- `Birds.setDetail(d)` v `js/render.js`: 0 = sedanja ptica (3 trikotniki, privzeto, videz nespremenjen), 1 = A (8), 2 = B (14), 3 = C (22);
+  tabela `BIRD_TRIS`, oblika v `Birds._bird` (trup, glava, kljun, rep, krilo z nadlahtjo in dlanjo, odtenki po ogliščih). En klic risanja;
+  največ 16 × 66 = 1056 oglišč. Barve so samo odtenki osnovne barve; barve vrst šele po virih.
+- Vprašanje `ptice-podrobnost-1060` (stran Odločitve 1): 1 = A, 2 = B (priporočeno), 3 = C, 4 = pusti sedanjo. Slike so samo na strani.
+  Koordinacija biketraveler obveščena; branje odgovora nastavljeno za 23.20.
+- **Do »ok« privzeta stopnja ostane 0.** Po odgovoru: izbrano stopnjo nastavi kot privzeto, drugi dve odstrani, `npm run golden:update`.
+
 ## Predaja (naslednja seja)
 
-1. Raziskava: dopolniti tabeli (države »še brez raziskave«, številke jat, formacije); `en.wikipedia.org` iz okolja ni dosegljiv.
-2. Podrobne ptice v `Birds`: zdaj 9 oglišč na ptico, ena barva materiala. Predlog treh možnosti za slike:
-   A ~8 trikotnikov (trup, glava, krilo v 2 delih, rep), B ~14 (krilo v 3 delih, kljun, barve po ogliščih), C ~22 (še prsti peruti, vrat ali noge po vrsti).
-   Barve vrste zahtevajo atribut `color` in `vertexColors`; ostane en klic risanja. 16 ptic × 22 trikotnikov = ~1000 oglišč, daleč pod mejo.
+1. Preberi odgovor na `ptice-podrobnost-1060`; dokončaj samo izbrano stopnjo (glej zgoraj).
+2. Raziskava: manjkajo države »še brez raziskave« in številke jat v letu; `en.wikipedia.org` in `hww.ca` iz okolja nista dosegljiva.
+   Dovolj potrjeno za kodo (kraj + formacija + let): žerjav (Nemčija, Švedska, Finska; klin), črni jastreb (jadranje), andski kondor (Čile; jadranje),
+   škorec (Združeno kraljestvo, Italija; gosta jata). Številke v jati so potrjene le za žerjava in škorca.
 3. Vrsta po državi: polje v datoteki proge (npr. `ptice: { vrsta, n: [min, max], formacija, let }`), samo za potrjene vrstice; sicer sedanja ptica.
    Formacije: klin, vrsta, ohlapna jata, gosta jata, posamič ali par (jadranje v krogu). `Birds` uporablja `Math.random` (ne semena dirke).
-4. Slike zdaj in potem, 2–3 možnosti; vprašanje na stran Odločitve (`docs/vprasanja.md`); sporočilo koordinaciji.
-5. `npm run golden:update`, če se spremeni `tests/golden/perf.json` (dirkališča imajo manj mrež).
-
-## Naslednji koraki
-
-1. Dokončati raziskavo (manjkajoče države in številke); za to dovoliti `en.wikipedia.org` v omrežju okolja ali nadaljevati z iskanjem.
-2. Koda brez odvisnosti od raziskave: dirkališča brez živali; ptice na dirkališčih v petini časa (`wait` × 5).
-3. Modeli ptic v 2–3 stopnjah podrobnosti, slike, vprašanje na stran Odločitve.
-4. Vrsta po državi v datoteki proge (število, formacija, let), samo za potrjene vrstice.
+4. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena do odločitve uporabnika.
+5. Vire, ki gredo v kodo, z licenco dopiši v `README.md`, »Zasluge«.
