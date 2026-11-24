@@ -38,9 +38,10 @@ const SUITES = {
 // --shard deals the tests out by it (memory, memory2 and perf each in its own share), and a test's time limit grows with
 // it (LIMIT_OF). Update it from the summaries when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not
 // listed counts as DEF_SECS
+// (menu: 1374 on 24. 11. 2026, main's 1294 plus the row's police chase side, ~80 s; one slow PR machine stopped it at 30 min)
 const SECS = {
   'browser/memory.test.mjs': 3365, 'browser/perf.test.mjs': 2629, 'browser/memory2.test.mjs': 2577, 'browser/smoke2.test.mjs': 1544,
-  'browser/smoke.test.mjs': 1348, 'browser/crash.test.mjs': 1343, 'browser/menu.test.mjs': 1294, 'browser/gfx.test.mjs': 1030,
+  'browser/smoke.test.mjs': 1348, 'browser/crash.test.mjs': 1343, 'browser/menu.test.mjs': 1374, 'browser/gfx.test.mjs': 1030,
   'browser/garage.test.mjs': 1021, 'browser/world.test.mjs': 953, 'browser/world2.test.mjs': 937, 'browser/gfx2.test.mjs': 830,
   'browser/garages.test.mjs': 656, 'browser/pitstats.test.mjs': 530, 'browser/covers.test.mjs': 520, 'browser/crew.test.mjs': 506,
   'browser/pitcam.test.mjs': 490, 'browser/okolje.test.mjs': 481, 'browser/pitkit.test.mjs': 418, 'browser/hudcol.test.mjs': 358,
