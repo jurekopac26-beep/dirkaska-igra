@@ -121,7 +121,7 @@ Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na ra
 
 Račun croatiadata strani Odločitve še nima (točka 4 zgoraj), strani 1–3 pa sejam tega računa vrnejo »no access«. Samostojna seja zato vprašanje zapiše sem in na svojo stran s slikami, kjer se odgovor shrani v zbirko `vprasanja` (isti dokument in polja kot zgoraj); koordinacija ga prebere tam (`ArtifactData` `get`).
 
-### `e-stranske-sirina` (23. 11. 2026, PR #1025, odgovorjeno 24. 11. 2026)
+### `e-stranske-sirina` (23. 11. 2026, PR #1025, odgovorjeno in izvedeno 24. 11. 2026)
 
 - Seja »Realizem E (#1025) nadaljevanje: izvoz prog, črte, oznake na križiščih, slike« (`session_01BFNqNJyR8tZ8UQU4zTTJCS`); stran s slikami in odgovorom: https://claude.ai/artifact/PjVSKCT2VRNAamEVgP3r6r (`vprasanja/e-stranske-sirina`; zasebna, dokler je lastnik ne deli).
 - Vprašanje: Gredo stranske ceste po pravih širinah tako na `main`? Zdaj: pas 3,25 m, merilo proge od 1,25×, meja 22 m za ustje, brez napisov STOP in puščic (zanje ni vira), Canaries brez cest 2604 in 3476 (hiše). Izbere se lahko več možnosti od 2 do 5.
@@ -132,4 +132,15 @@ Račun croatiadata strani Odločitve še nima (točka 4 zgoraj), strani 1–3 pa
   4. napisi STOP in puščice po splošnem vzorcu, brez vira; `livorno-ustje`
   5. rez ob hišah iz OSM namesto ročnih izpustov (nova naloga; Canaries 2604 in 3476 se vrneta skrajšani); `canaries-pred` in `canaries-po`
 - Podvprašanje B, širina sistema B (`def.sideRoads`: Chapman's Peak, Koli 334 m): 1 · ostane, kot je (priporočeno; `chapman-po`); 2 · tudi sistem B po pravih širinah (nova naloga; primer `hakone-po`).
-- **Odgovor** (24. 11. 2026, Matej prek koordinacije jure.kopac26): **1, 3, 4 in 5**, 2 ne; podvprašanje **B2**: osnova ostane (pas 3,25 m, merilo od 1,25×), meja 30 m, napisi STOP in puščice po splošnem vzorcu, rez ob hišah iz OSM (Canaries 2604 in 3476 se vrneta skrajšani), tudi sistem B po pravih širinah. Na strani dokument ostane »odprto« (odgovor je prišel prek koordinacije). Izvedba: `docs/realizem/paket-e.md` in predaja v opisu PR #1025.
+- **Odgovor** (24. 11. 2026, Matej prek koordinacije jure.kopac26): **1, 3, 4 in 5**, 2 ne; podvprašanje **B2**: osnova ostane (pas 3,25 m, merilo od 1,25×), meja 30 m, napisi STOP in puščice po splošnem vzorcu, rez ob hišah iz OSM (Canaries 2604 in 3476 se vrneta skrajšani), tudi sistem B po pravih širinah. Na strani dokument ostane »odprto« (odgovor je prišel prek koordinacije). Izvedeno 24. 11. 2026 v PR #1025 (`docs/realizem/paket-e.md`).
+
+### `e-obcestje` (24. 11. 2026, PR #1025)
+
+- Seja »Realizem E (#1025): izvedba odločitve e-stranske-sirina« (`session_01BFNqNJTHevvNwbHod8Hwkb`); stran s slikami in odgovorom: https://claude.ai/artifact/PjVSKCT2VRNAamEVgP3r6r (`vprasanja/e-obcestje`).
+- Vprašanje: Obcestje po OSM z main (`js/world-<id>-obcestje.js`, Ella, Tianmen) na progah Cusco, El Jem, Ella, Gudauri, Koror, Luanda, Medeu, Pembrey, Savusavu, Tianmen in Zandvoort že riše stranske ceste in postaje. Tam izvoz tega paketa svojih cest ne zapiše (97 vrstic manj), da ni nič narisano dvakrat. Naj ceste tega paketa (prave širine, bele črte, STOP in puščice) zamenjajo ceste obcestja?
+- Možnosti (slike na strani, kamera za avtom, ležeče):
+  1. ne, obcestje z main ostane, kot je (priporočeno; brez novega dela); slika `gudauri-obcestje` (Gudauri 580 m desno: ulica obcestja za ograjo, brez odprtine in črt)
+  2. da, ceste tega paketa zamenjajo ceste obcestja (nova naloga na teh progah; obcestje obdrži ostalo opremo); ceste bi bile kot na sliki `e24-livorno-286-po` (odprta ograja, bele črte, STOP)
+- Podvprašanje B (Hakone): rez ob hišah (odločitev 5) gleda trak v narisani širini (merilo proge 1,69×), zato se ozke vaške ulice ustavijo že ob prvi hiši in odpadejo: **47** cest namesto 92.
+  - B1: ostane tako (priporočeno; hiše ostanejo vse); slika `e24-hakone-250-po`
+  - B2: rez gleda resnično širino ulice: **okoli 70** cest (Canaries 2793 levo se vrne), narisani trak pa seže do ~1,4 m v hiše ob ustju, ki jih igra potem odstrani; slika `e24-hakone-250-pred` (osnova `fd24575`, 92 cest)

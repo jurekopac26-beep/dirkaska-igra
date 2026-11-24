@@ -2457,7 +2457,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b619537f16bde2d12d0b9382"
+  "digest": "012e2dd1ac1600a2b434fe40"
  },
  "ujarras/cs/rain": {
   "finished": 13,
@@ -3597,6 +3597,6 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "767e1ef7d7a2ae35b94feed4"
+  "digest": "25c40365fbfc6a2cb72a1255"
  }
 }
