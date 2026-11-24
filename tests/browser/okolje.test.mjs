@@ -145,7 +145,9 @@ try {
   // (Ghoufi's canyon rim and Isalo's grass plateau: no water, a few trees, no village, low and not in GEO; zbirna Proge 2: no sound by the
   // road there yet, the tracks' own follow-up, PLACE and VAS in js/sfx-okolje.js)
   // (Longyearbyen, zbirna Proge 22. 11.: the same, its own follow-up)
-  const BARE = ['ghoufi', 'isalo', 'longyearbyen'];
+  // (Krásna Hôrka, #943: the land cover's trees by the road sparse (0.1 to 0.34 of a wood, under its 0.35), no water, no village (the road
+  // passes above Krásnohorské Podhradie, only the castle's buildings by it), the wind under its 0.3 (624 to 448 m): the same, its own follow-up)
+  const BARE = ['ghoufi', 'isalo', 'longyearbyen', 'krasnahorka'];
   T.check('every real track has a sound by the road', ids.length >= 20 && ids.every(id => Z[id].rows.length > 0 || BARE.includes(id)), ids.filter(id => !Z[id].rows.length && !BARE.includes(id)).join(', ') || ids.length + ' tracks');
   const frozen = await page.evaluate(() => Core.TRACKS.filter(d => d.test || SfxOkolje.NO.includes(d.id)).map(d => [d.id, SfxOkolje.eligible(d) || SfxOkolje.zones({}, { def: d }) !== null]));
   T.check('the test tracks (and the roads counted with them): no zones', frozen.length >= 12 && frozen.every(f => !f[1]), frozen.filter(f => f[1]).map(f => f[0]).join(', ') || frozen.length + ' tracks');
