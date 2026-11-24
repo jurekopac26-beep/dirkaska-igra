@@ -244,7 +244,7 @@ const Sfx = (function () {
   // (one under 1 s, up to four at 4 s and more), pitched higher and richer for a close pass (near: a fifth above with an octave's shimmer;
   // vnear: higher again, its overtones brighter and a sparkle of noise on top). None for no seconds.
   function bonus(add, k) {
-    if (!ctx || ctx.state !== 'running' || !Number.isFinite(add) || add <= 0) return;
+    if (!ctx || ctx.state !== 'running' || !running || !Number.isFinite(add) || add <= 0) return;
     const now = ctx.currentTime, n = add >= 4 ? 4 : add >= 2.5 ? 3 : add >= 1 ? 2 : 1, semi = k === 'vnear' ? 7 : k === 'near' ? 4 : 0;
     const base = 784 * Math.pow(2, semi / 12) * (1 + Math.min(add, 8) / 40), step = [1, 1.25, 1.5, 2], gap = 0.075, rich = k === 'vnear' ? 2 : k === 'near' ? 1 : 0;
     const out = ctx.createGain(); out.gain.value = 0.16; out.connect(master);

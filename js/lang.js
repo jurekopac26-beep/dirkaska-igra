@@ -1108,7 +1108,7 @@
     'TESNO!': 'CLOSE!', 'ZELO TESNO!': 'VERY CLOSE!', 'NIZ PREKINJEN': 'COMBO BROKEN', 'TRK! KONEC VOŽNJE': 'CRASH! THE RUN IS OVER',
     'ČELNI TRK! KONEC VOŽNJE': 'HEAD-ON CRASH! THE RUN IS OVER', 'ČAS JE POTEKEL!': 'OUT OF TIME!', 'ČAS SE IZTEKA!': 'TIME IS RUNNING OUT!',
     'Čelni trk.': 'A head-on crash.', 'Preveč trkov.': 'Too many crashes.', 'Dodan čas': 'Time added', 'Etape': 'Stages', 'Prehitevanja': 'Overtakes',
-    '+{0} s': '+{0} s', 'ETAPA {0}': 'STAGE {0}', 'TRK! ŠE 1 TRK': 'CRASH! 1 MORE LEFT', 'TRK! ŠE {0} TRKI': 'CRASH! {0} MORE LEFT', 'AVTO JE POŠKODOVAN': 'THE CAR IS DAMAGED',
+    '+{0} s': '+{0} s', 'ETAPA {0}': 'STAGE {0}', 'TRK! ŠE 1 TRK': 'CRASH! 1 MORE LEFT', 'TRK! ŠE 2 TRKA': 'CRASH! 2 MORE LEFT', 'TRK! ŠE {0} TRKI': 'CRASH! {0} MORE LEFT', 'AVTO JE POŠKODOVAN': 'THE CAR IS DAMAGED',
     'Avto se je prevrnil.': 'The car rolled over.',
     'Avto je zgrmel v prepad.': 'The car went over the edge.', 'Avto je izgubil kolo.': 'The car lost a wheel.',
     'Nov rekord!': 'New record!', 'Konec vožnje': 'Run over', '{0} točk · {1} km · {2}.': '{0} points · {1} km · {2}.',

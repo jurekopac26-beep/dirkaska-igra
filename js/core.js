@@ -5222,7 +5222,7 @@ const Core = (function () {
       for (const v of this.veh) if (!v.off && v.st === 1) for (const o of this.veh) if (o !== v && !o.off) this._bump(v, o);   // (a loose body against the others)
       this._groups(dt);
       this._people(dt);
-      for (const c of cl) { for (const v of this.veh) if (!v.off && !v.hid) { const imp = this._hitVeh(c, v); if (imp > 0 && W && c === race.player && imp > W.imp) { W.imp = imp; W.v = v; } } }   // (the endless drive: the hardest knock of the player since Endless last looked, and the vehicle)
+      for (const c of cl) { for (const v of this.veh) if (!v.off && !v.hid) { const imp = this._hitVeh(c, v); if (imp > 0 && W && c === race.player) { v.enH = true; if (imp > W.imp) { W.imp = imp; W.v = v; } } } }   // (the endless drive: the hardest knock of the player since Endless last looked, and the vehicle; enH: every vehicle knocked, Endless._passes)
       this._hitPeds();
     }
     // the moving vehicles of each way in order along the road, and the things standing in the way (wrecks, people on the road)
@@ -5481,7 +5481,7 @@ const Core = (function () {
       if (v.rider) { const k = this.ped.indexOf(v.rider); if (k >= 0) this.ped.splice(k, 1); v.rider = null; }
       v.lane = l || 0; v.lcW = 0; v.lcTo = -1; v.sb = 0;
       v.off = false; v.st = 0; v.wreck = 0; v.s = s; v.d = v.dT = this._lane(v); v.v = Math.min(v.v0, this._vpAt(v)) * 0.85; v.w = 0; v.t = 0; v.wait = 0; v.pass = null; v.stopS = -1; v.stopT = 0; v.lean = 0;
-      v.sv = 0; v.sdT = 0; v.yl = 0; v.ind = 0; v.nc = 0; v.horn = 0; v.acc = 0; v.gap = 1e9; v.brake = false; v.enM = null; v.enP = false; v.q.i = -1;
+      v.sv = 0; v.sdT = 0; v.yl = 0; v.ind = 0; v.nc = 0; v.horn = 0; v.acc = 0; v.gap = 1e9; v.brake = false; v.enM = null; v.enP = false; v.enH = false; v.q.i = -1;
       this._pose(v, 0);
     }
     // two vehicles touching (a loose one against another): pushed apart, an impulse between them; a driving one knocked hard enough comes loose
@@ -5997,22 +5997,24 @@ const Core = (function () {
       if (dn > W.dens + 1e-9) { W.dens = dn; this._event('dens'); }
       this.heat = Math.min(EN.heatMax, 1 + this.time / EN.heatT);
       if (this.combo > 0 && (this.comboT -= dt) <= 0) { this.combo = 0; this.comboT = 0; this._event('combo0'); }
-      this._passes(v, imp > 0);
+      this._passes(v);
     }
     // the passes: every vehicle coming up alongside (or towards the player), the least room between the two bodies while alongside (across
     // the road: the two places across it, the car's own half-width turned by its angle to the road), scored once it is behind (o.enM:
-    // { min, n alongside, v, dv, hit }); not one on its own line round (def.altDn: another roadway)
-    _passes(v, touch) {
+    // { min, n alongside, v, dv, hit }); not one on its own line round (def.altDn: another roadway). hit: the player knocked that very
+    // vehicle (o.enH, Traffic.step), not another one beside it at the time
+    _passes(v) {
       const P = this.P, T = this.T, q = P.q, i = q.i, ar = P.h - Math.atan2(T.tz[i], T.tx[i]), ps = this.tf._winPs();
       const hwP = Math.abs(Math.sin(ar)) * P.m.len / 2 + Math.abs(Math.cos(ar)) * P.m.wid / 2, va = P.vx * T.tx[i] + P.vz * T.tz[i];   // (va: its speed along the road)
       for (const o of this.tf.veh) {
+        const touch = o.enH; o.enH = false;
         if (o.off || o.hid || o.alt || o.st !== 0) { if (o.enM) o.enM = null; continue; }
         const r = o.s - ps, al = (o.len + P.m.len) / 2;
         let M = o.enM;
         if (!M) { if (r > al && r < al + 40) M = o.enM = { min: 1e9, n: 0, v: 0, dv: 0, hit: false }; else continue; }
+        if (touch) M.hit = true;
         if (Math.abs(r) < al + 0.5) {
           const g = Math.abs(o.d - q.d) - o.wid / 2 - hwP;
-          if (touch) M.hit = true;
           M.n++; if (g < M.min) { M.min = g; M.v = v; M.dv = va - o.v * o.dir; }
         } else if (r < -al) {
           o.enM = null;
@@ -6047,7 +6049,7 @@ const Core = (function () {
       if (T.hasElev) { P.y = P.py = T.hy[i1]; if (T.open) P.roadY = P.y; }
       P.q = T.query(x, z, i1, P.q); P.sPrev = P.q.s; P.dist = P.q.s - T.startS; this.dPrev = P.q.s; this.back = 0; P.cp = T.cpS.length;
       race.putBack(P);   // (the replay: a jump, no sweep between the two places)
-      this.stage++; this.tf._winFill(EN.reset, 0); for (const o of this.tf.veh) { o.enM = null; o.enP = false; }
+      this.stage++; this.tf._winFill(EN.reset, 0); for (const o of this.tf.veh) { o.enM = null; o.enP = false; o.enH = false; }
       this._event('stage');
     }
   }

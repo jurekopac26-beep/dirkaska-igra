@@ -25,7 +25,7 @@
   const feat = {
     id: 'endless', BOARD, boardOf, LV,
     st: null,
-    modes: (d) => { const E = EN(); return E && E.tracks.indexOf(d.id) >= 0 && !d.test ? ['endless'] : []; },   // (its circuits, Core.EN.tracks)
+    modes: (d) => { const E = EN(); return E && E.tracks.indexOf(d.id) >= 0 && !d.test ? ['endless'] : []; },   // (its roads, Core.EN.tracks: Bathurst's loop and the open roads with everyday traffic)
     mine: (ctx) => { const E = EN(); return ctx.md === 'endless' && !ctx.on && !(ctx.cr >= 0) && !ctx.mis && !ctx.school && !ctx.chal && !ctx.nv && !ctx.prvi && !!E && E.tracks.indexOf(ctx.track.def.id) >= 0; },
     // alone, the game's flying start (opts.flying), laps without end, no flags, no rivals' characters, no slipstream, no fuel, no tyre wear,
     // no failures, no team radio, no wheel rule (a wheel gone ends the drive anyway, Endless), the knocks' mechanical harm (damage 2)
@@ -105,7 +105,7 @@
       } else if (e.k === 'tap') pop(tr('NIZ PREKINJEN'), 'bad');
       else if (e.k === 'hit') {
         S.lv.innerHTML = hearts(e.gap); S.lv.className = ''; void S.lv.offsetWidth; S.lv.className = 'hit';
-        if (e.gap > 0) { pop(e.gap === 1 ? tr('TRK! ŠE 1 TRK') : tr('TRK! ŠE {0} TRKI', e.gap), 'bad'); if (G) G.showMsg(tr('AVTO JE POŠKODOVAN'), 'slow', 1.4); }
+        if (e.gap > 0) { pop(e.gap === 1 ? tr('TRK! ŠE 1 TRK') : e.gap === 2 ? tr('TRK! ŠE 2 TRKA') : tr('TRK! ŠE {0} TRKI', e.gap), 'bad'); if (G) G.showMsg(tr('AVTO JE POŠKODOVAN'), 'slow', 1.4); }   // (the dual: 2 trka; 3, 4 trki)
         if (sfx && sfx.beep) sfx.beep(260, 0.16, 0.14);
       }
       else if (e.k === 'stage') {

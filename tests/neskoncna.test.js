@@ -139,11 +139,15 @@ const ghost = (r, secs, each) => {
   const r = mk({ flying: 0 }), tf = r.tf, E = r.en, T = r.track, sd = tf.sd, s0 = straight(T, T.startS + 300); r.start();
   const P = putP(r, s0, sd * T.wS(s0) * 0.45, 120), hw = P.m.wid / 2;
   let o = null;
-  const pass = (gap, kmh, vo, k, again, touch) => {
+  // (touch: the player knocks that vehicle while alongside, as Traffic.step marks it, enH; other: another vehicle alongside at the same
+  // time on the player's other side, that far from it, untouched)
+  const pass = (gap, kmh, vo, k, again, touch, other) => {
     putP(r, s0, sd * T.wS(s0) * 0.45, kmh); const ps = T.startS + P.dist;
     if (!again) { for (const v of tf.veh) v.off = true; o = tf.veh.find(v => v.kind === (k || 0)); tf._winPlace(o, ps + 20, 1); }
     o.v = vo / 3.6; o.d = P.q.d - sd * (gap + o.wid / 2 + hw); const ev = E.ev;
-    for (let r0 = 20; r0 >= -20; r0 -= 0.25) { o.s = ps + r0; tf._pose(o, 0); E._passes(kmh / 3.6, !!touch && Math.abs(r0) < 1); }
+    let o2 = null; if (other != null) { o2 = tf.veh.find(v => v !== o && v.off && v.kind === 0); tf._winPlace(o2, ps + 20, 1); o2.v = vo / 3.6; o2.d = P.q.d + sd * (other + o2.wid / 2 + hw); }
+    for (let r0 = 20; r0 >= -20; r0 -= 0.25) { o.s = ps + r0; tf._pose(o, 0); if (o2) { o2.s = ps + r0; tf._pose(o2, 0); } if (touch && Math.abs(r0) < 1) o.enH = true; E._passes(kmh / 3.6); }
+    if (o2) o2.off = true;
     return E.log.filter(e => e.n > ev);
   };
   const sec = (gap, combo) => Math.round((EN.passT + EN.closeT[1] * Math.max(0, 1 - gap / EN.close) * (1 + EN.comboAdd * (combo - 1))) * 10) / 10;
@@ -160,6 +164,9 @@ const ghost = (r, secs, each) => {
     check('the same vehicle overtaken again (dropped back, past it once more): nothing', twice.length === 0, JSON.stringify(twice));
     const hit = pass(0.2, 120, 70, 0, false, true);
     check('a pass with a touch on the way: nothing', hit.length === 0, JSON.stringify(hit));
+    // (the review of 15. 11. 2026: a knock of one vehicle took the bonus of every vehicle alongside at the time)
+    const p0 = E.pass, two = pass(0.2, 120, 70, 0, false, true, 2.5);
+    check('between two, one of them knocked: the knocked one nothing, the other one its overtaking', two.length === 1 && two[0].k === 'pass' && E.pass === p0 + 1, JSON.stringify(two));
     for (let k = 0; k < 4; k++) pass(0.8, 120, 70);
     check(`the combo at most x${EN.comboMax}`, E.combo === EN.comboMax && E.log[E.log.length - 1].pts === 240 * EN.comboMax);
     const cap = EN.clock[1] * EN.clockMax; E.clock = cap - 1; const d = pass(0.4, 120, 70);
