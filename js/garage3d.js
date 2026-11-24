@@ -4319,8 +4319,11 @@ const Garage3D = (function () {
       else if (Math.abs(x - cx) <= Math.max(44, r.w) / 2 && Math.abs(y - cy) <= Math.max(44, r.h) / 2) { const e = Math.hypot(x - cx, y - cy); if (e < nd) { nd = e; near = it; } } }
     if (!best && near) { best = near; bd = screenBox(near).d; }
     const cv = cur; if (cv) { _rv2.set(x / W * 2 - 1, 1 - y / H * 2); _rc.setFromCamera(_rv2, camera); const hit = _rc.intersectObject(cv.v.grp, true).find(h => h.object.visible);
-      if (hit && hit.distance < bd - 0.3) { const p = hit.point, w = cv.wheels.find(w => cv.v.grp.localToWorld(_pk.set(w.x, w.y, w.z)).distanceTo(p) < w.r * 1.15); if (w) return { key: 'car:wheel', kind: 'car' };
-        const pt = hit.object === cv.v.body && hit.faceIndex != null ? partAt(cv, hit.faceIndex * 3) || partGuess(cv, p) : null; if (pt) return { key: pt[0], kind: 'car', part: pt[1] };
+      if (hit && hit.distance < bd - 0.3) { const p = hit.point, bq = bayHit(hit.object); if (bq) return { key: 'car:el', kind: 'car', el: bq, part: 'hood' };   // (a part in the open bay: its menu, the bonnet stays up)
+        const w = cv.wheels.find(w => cv.v.grp.localToWorld(_pk.set(w.x, w.y, w.z)).distanceTo(p) < w.r * 1.15);
+        if (w) { const q = cv.v.grp.worldToLocal(_pk.copy(p)); return Math.hypot(q.x - w.x, q.y - w.y) < w.r * 0.64 ? { key: 'car:el', kind: 'car', el: 'platisca' } : { key: 'car:wheel', kind: 'car' }; }   // (the rim's disc: the rims; its rubber: the tyres)
+        const pt = hit.object === cv.v.body && hit.faceIndex != null ? partAt(cv, hit.faceIndex * 3) || partGuess(cv, p) : null; if (pt) return pt[0] === 'car:el' ? { key: 'car:el', kind: 'car', el: pt[1] } : { key: pt[0], kind: 'car', part: pt[1] };
+        const ge = grpEl(cv, hit.object, p); if (ge) return { key: 'car:el', kind: 'car', el: ge };
         return { key: 'car:body', kind: 'car' }; } }
     return best ? { key: best.key, kind: best.kind, name: best.name, i: best.i, hex: best.hex, el: best.el } : null; }
   /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
@@ -6584,7 +6587,22 @@ const Garage3D = (function () {
   const OPEN_KEY = { hood: 'car:hood', doorL: 'car:door', doorR: 'car:door', trunk: 'car:trunk', tailgate: 'car:trunk' };
   function partAt(cv, vi) {
     const G = cv.v.body && cv.v.body.geometry, U = G && G.userData; if (!U || !U.kit || !U.ranges || G.index) return null;
-    for (const n in OPEN_KEY) { const R = U.ranges[n]; if (R && ((vi >= R.o[0] && vi < R.o[1]) || (R.i && vi >= R.i[0] && vi < R.i[1]))) return [OPEN_KEY[n], n]; }
+    const inR = (R) => R && ((vi >= R.o[0] && vi < R.o[1]) || (R.i && vi >= R.i[0] && vi < R.i[1]));
+    for (const n in OPEN_KEY) if (inR(U.ranges[n])) return [OPEN_KEY[n], n];
+    for (const n in U.ranges) { const e = rangeEl(n); if (e && inR(U.ranges[n])) return ['car:el', e]; }   // (a part the shop sells: its element)
+    return null;
+  }
+  // (A PART OF THE CAR THE SHOP SELLS, tapped on the car (the garage's menu of that element, as its part on the regal or in a drawer, garage.js
+  // onTap; razširitev garaza-klik-deli, 24. 11.): a kit's range by its name; the bumpers, sills, lip and diffuser the aero kit's)
+  const RANGE_EL = [[/^head[LR]?$/, 'zarometi'], [/^tail[LR]?$/, 'zadnje_luci'], [/^(spoiler|wing|ducktail)/, 'krilo'], [/^(pipe|exhaust)/, 'auspuh'],
+    [/^(bumper|splitter|lip|diffuser|sill|skirt)/, 'aero'], [/^mirror/, 'ogledala'], [/^grille/, 'maska']];
+  function rangeEl(n) { for (const [re, e] of RANGE_EL) if (re.test(n)) return e; return null; }
+  // (a mesh of the car's parts groups (garage3d partsFor) tapped: the aero group's wing (at the back) or lip (at the front), the motor's tips)
+  function grpEl(cv, o, P) {
+    const P2 = cv.parts || {}; let k = null; for (let q = o; q && q !== cv.v.grp; q = q.parent) for (const n in P2) if (P2[n] === q) k = n;
+    if (!k) return null; const G = cv.v.body.geometry; if (!G.boundingBox) G.computeBoundingBox(); const b = G.boundingBox, fx = (cv.v.body.worldToLocal(_pk.copy(P)).x - b.min.x) / Math.max(0.5, b.max.x - b.min.x);
+    if (k === 'aero') return fx < 0.5 ? 'krilo' : 'aero';
+    if (k === 'motor') return fx < 0.3 ? 'auspuh' : null;
     return null;
   }
   // (a car without a kit's panel there (no range of it: KOLIBRI, OSA, SOKOL): the part by where on its body the tap is (the body's frame, its front +x): the
@@ -6646,14 +6664,47 @@ const Garage3D = (function () {
     if (OPN.L && OPN.cv === cur && OPN.name === name) { OPN.to = 1; return true; }
     openShut();
     const L = cur ? hinged(cur, name) : null; if (!L) return false;
-    Object.assign(OPN, { cv: cur, name, L, k: 0, to: 1 }); return true;
+    Object.assign(OPN, { cv: cur, name, L, k: 0, to: 1 }); if (name === 'hood') bayBuild(cur, L); return true;
   }
-  function openShut() { if (OPN.L) { if (OPN.cv && OPN.cv.v && OPN.cv.v.body && OPN.cv.v.body.geometry === OPN.L.G) OPN.L.close(); shadowDirty = 2; } Object.assign(OPN, { cv: null, name: null, L: null, k: 0, to: 0 }); }
+  function openShut() { bayDrop(); if (OPN.L) { if (OPN.cv && OPN.cv.v && OPN.cv.v.body && OPN.cv.v.body.geometry === OPN.L.G) OPN.L.close(); shadowDirty = 2; } Object.assign(OPN, { cv: null, name: null, L: null, k: 0, to: 0 }); }
+  // THE OPEN BAY'S PARTS (razširitev garaza-klik-deli, 24. 11.): with the bonnet up its air filter, battery, chip, turbo and the two springs'
+  // tops (the struts by the front wheels) stand in the bay (bayObj's, a spring a coil on its mount), each tapped: its element's menu (pick);
+  // seen once the bonnet is half up, gone with it. Their places across the bay: t along it from the hinge to the free edge, z across (of its half width)
+  const BAY = { g: null, spots: [['turbo', 0.55, 0.15], ['filter_zraka', 0.74, -0.42], ['akumulator', 0.3, -0.6], ['cip', 0.28, 0.58], ['vzmeti', 0.66, 0.74], ['vzmeti', 0.66, -0.74]] };
+  function springObj() {
+    const w = new THREE.Group(), add = (g, m, y) => { const q = new THREE.Mesh(g, m); q.position.y = y; q.castShadow = true; w.add(q); return q; };
+    for (let i = 0; i < 5; i++) add(new THREE.TorusGeometry(0.058, 0.012, 6, 18).rotateX(Math.PI / 2), PM.red, -0.07 + i * 0.03);
+    add(new THREE.CylinderGeometry(0.07, 0.07, 0.016, 18), PM.black, 0.075); add(new THREE.CylinderGeometry(0.014, 0.014, 0.17, 8), PM.chrome, 0);
+    return { o: w, hs: new V3(0.07, 0.085, 0.07) };
+  }
+  function bayBuild(cv, L) {
+    bayDrop(); const b = cv.v.body, G = b.geometry, U = G.userData, pa = G.attributes.position.array; if (!L || !L.loc || !b.parent) return;
+    const top = (x, z) => { let y = -1e9; for (let i = U.outerN; i < U.outerN + U.engN; i++) if (Math.abs(pa[i * 3] - x) < 0.12 && Math.abs(pa[i * 3 + 2] - z) < 0.12 && pa[i * 3 + 1] > y && pa[i * 3 + 1] < L.ye - 0.05) y = pa[i * 3 + 1]; return y > -1e8 ? y : L.yb; };
+    const g = new THREE.Group(); g.matrixAutoUpdate = false; g.matrix.copy(L.Mb); g.matrixWorldNeedsUpdate = true;
+    for (const [el, t, zf] of BAY.spots) { const q = el === 'vzmeti' ? springObj() : bayObj(el), x = L.hx + (L.fx - L.hx) * t, z = el === 'turbo' ? zf : zf * L.z * 0.9;
+      q.o.position.set(x, Math.min(top(x, z), L.ye - 0.05 - 2 * q.hs.y) + q.hs.y, z); q.o.traverse(m => { if (m.isMesh) { m.userData.bayEl = el; m.visible = false; } }); g.add(q.o); }
+    b.parent.add(g); BAY.g = g;
+  }
+  function bayDrop() { if (!BAY.g) return; if (BAY.g.parent) BAY.g.parent.remove(BAY.g); disposeTree(BAY.g); BAY.g = null; }
+  function bayHit(o) { if (!BAY.g) return null; for (let q = o; q; q = q.parent) if (q.userData && q.userData.bayEl) return q.visible ? q.userData.bayEl : null; return null; }
+  // (the camera into the bay while the bonnet's menu or a bay part's is open (from before the car, a little to the near side, looking down
+  // into it; the point looked at below the bay so the bay stands above the menu at the screen's foot), home again when the menu shuts (garage.js closeMenu); a show's camera first: none then)
+  const CAMB = { on: false, tok: 0 };
+  function bayCam(on) {
+    if (!on) { if (!CAMB.on) return false; CAMB.on = false; const tok = ++CAMB.tok; if (!busy) spawn(camTo(HV, 0.8, null, () => tok !== CAMB.tok || busy)); return true; }
+    const cv = cur; if (CAMB.on || busy || !cv || OPN.cv !== cv || OPN.name !== 'hood' || !OPN.L || !OPN.L.bay) return false;
+    cv.v.bodyG.updateMatrixWorld(true); const P = OPN.L.bay(cv.v.bodyG.matrixWorld), gq = cv.v.grp.getWorldQuaternion(new THREE.Quaternion()), d = new V3(Math.sign(OPN.L.fx - OPN.L.hx) || 1, 0, 0).applyQuaternion(gq);
+    const yaw = Math.atan2(d.x, d.z) - Math.sign(d.x || 1) * 0.45, tok = ++CAMB.tok; CAMB.on = true; autoSpin = false; viewTok++;
+    const wide = innerWidth > innerHeight;   // (on a wide screen the menu stands at the side: the bay nearer, at the middle)
+    const sx = wide ? 0.85 : 0;   // (and to the left of the middle, clear of it: the point looked at moved to the camera's right)
+    spawn(camTo(view({ at: [P.x + Math.cos(yaw) * sx, P.y - (wide ? 0.1 : 0.45), P.z - Math.sin(yaw) * sx], yaw, pitch: 0.78, dist: wide ? 1.7 : 2.7, fov: 34 }), 0.8, null, () => tok !== CAMB.tok || busy)); return true;
+  }
   function openStep(dt) {
     if (!OPN.L) return; if (OPN.cv !== cur) { openShut(); return; }
     const k = OPN.k + Math.sign(OPN.to - OPN.k) * dt / 0.4; if (k === OPN.k) return;
     OPN.k = Math.max(0, Math.min(1, k)); const e = OPN.k * OPN.k * (3 - 2 * OPN.k), deg = OPN.name === 'hood' || OPN.name === 'trunk' || OPN.name === 'tailgate' ? 55 : 60;
     OPN.L.set(e * deg * Math.PI / 180); shadowDirty = 2;
+    if (BAY.g) { const on = OPN.k > 0.5; BAY.g.traverse(m => { if (m.isMesh) m.visible = on; }); }
     if (OPN.k <= 0 && OPN.to <= 0) openShut();
   }
   // (the turbo to carry into the bay: its snail (the compressor's, chrome) across the car, its inlet's black ring to the near side, its
@@ -8181,7 +8232,7 @@ const Garage3D = (function () {
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);
     // the things to tap; the cabinet's maquettes (cars: the three cars' specs, null none), its lamps (lit: the maquette 0..2, 3 none), its
     // locked maquettes, its tags' prices; the lift's plate)
-    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; SHIFT.zm = 1; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, openPart, get opened() { return OPN.L ? { name: OPN.name, k: OPN.k, to: OPN.to } : null; }, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, preview, get previewed() { return PV.color; }, get ghosted() { return GH.kind; },
+    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; SHIFT.zm = 1; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, openPart, bayCam, get bayOn() { return !!(BAY.g && OPN.k > 0.5); }, get bayCamOn() { return CAMB.on; }, get opened() { return OPN.L ? { name: OPN.name, k: OPN.k, to: OPN.to } : null; }, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, preview, get previewed() { return PV.color; }, get ghosted() { return GH.kind; },
     box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },
     get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex, el: it.el })); },
     // (a drawer of the cabinet out: its element's (DRW.els), the others in; null: all in)

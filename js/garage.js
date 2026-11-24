@@ -243,6 +243,7 @@
     hauba: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-5l6-2 6-7h12l8 6 6 2v6z" fill="#9aa2ae"/><path d="M33 22l5-12 3 1-5 12z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
     vrata: (t) => '<svg viewBox="0 0 44 44"><path d="M8 36V14l8-8h18v30z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><path d="M11 18l7-8h13v8z" fill="#8fc3ef"/><rect x="24" y="22" width="7" height="2.6" rx="1.3" fill="#e0e4ea"/></svg>',
     prtljaznik: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-6l6-2 6-7h12l8 6 6 2v7z" fill="#9aa2ae"/><path d="M9 23L4 12 1 13l5 11z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
+    ogledala: (t) => '<svg viewBox="0 0 44 44"><path d="M6 30l6-4h4v6h-6z" fill="#6b7380"/><path d="M14 12h20a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6H18a8 8 0 0 1-8-8v-6a4 4 0 0 1 4-4z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><path d="M16 15h17a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4H19a5 5 0 0 1-5-5v-5a2 2 0 0 1 2-2z" fill="#8fc3ef"/></svg>',   // (the mirrors: a housing in the tab's shade, its glass; garaza-klik-deli, 24. 11.)
     celjusti: (t, j, hex) => { const c = [['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', '#d8261d'], ['#e0362c', '#2f7fe0', '#e0b030', '#e0e4ea']][t][j] || CSS(hex || 0x3b78d8);
       return '<svg viewBox="0 0 44 44"><circle cx="22" cy="25" r="15" fill="#7b8594"/><circle cx="22" cy="25" r="5" fill="#4a5160"/><path d="M8 19.5a15 15 0 0 1 28 0l-6 2.6a8.6 8.6 0 0 0-16 0z" fill="' + c + '"/>' +
         (t === 2 && j === 3 ? '<path d="M22 10a15 15 0 0 1 14 9.5l-6 2.6A8.6 8.6 0 0 0 22 16.4z" fill="#1d1f24"/>' : '') + '</svg>'; },
@@ -364,7 +365,7 @@
     if (!b) { if (t) t.classList.remove('on'); return; }
     if (!t) { t = document.createElement('div'); t.id = 'g-tag'; t.className = 'g-tag'; $('g-stage').appendChild(t); }
     t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); const hw = t.offsetWidth / 2 + 4, W = $('g-stage').clientWidth; t.style.left = Math.round(Math.max(hw, Math.min(W - hw, b.x + b.w / 2))) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }   // (kept on the screen)
-  function closeMenu() { if (!menu) return; menu = null; colTag(null); G.openPart(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
+  function closeMenu() { if (!menu) return; menu = null; colTag(null); G.openPart(null); G.bayCam(false); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -526,6 +527,7 @@
     if (h.kind === 'service') m = { el: 'servis', key: h.key };
     else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
+    else if (h.key === 'car:el' && EL[h.el]) m = { el: h.el, key: null, car: true, part: h.part || null, panel: !!h.part };   // (a part on the car the shop sells: its menu; under the open bonnet the bay's (the bonnet stays up, its menu at the foot as the bonnet's); garaza-klik-deli, 24. 11.)
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
     else if (h.key === 'car:hood' || h.key === 'car:door' || h.key === 'car:trunk') m = { el: { 'car:hood': 'hauba', 'car:door': 'vrata', 'car:trunk': 'prtljaznik' }[h.key], key: null, car: true, part: h.part || null, panel: true };   // (the panel opens on its hinge, a car with a kit; garaza-klik-deli-izbira, 23. 11.)
     else if (h.key === 'car:body') m = { el: 'barva', key: null, car: true, sel: [0, 0] };   // (the paint: a tap on the car's body (plate barvni_krogi_B f, 15. 11.); the aero kits: AERO › in its menu)
@@ -534,6 +536,7 @@
     if (m.sel) m.tab = m.sel[0];
     G.markOff(); G.ghostOff(); menu = null; G.openPart(null); openMenu(m);
     if (menu && m.part) G.openPart(m.part);
+    G.bayCam(!!(menu && m.part === 'hood'));   // (into the bay with the bonnet up, home again otherwise)
   }
   function onAct(act) {
     G.sound(S.sound);
