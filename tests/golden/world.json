@@ -1701,12 +1701,12 @@
   }
  },
  "vaoala": {
-  "meshes": 1371,
-  "verts": 486730,
+  "meshes": 1373,
+  "verts": 493818,
   "instances": 33631,
   "props": 61,
   "crowd": 140,
-  "world": "981b47",
+  "world": "c127c2e2",
   "propsHash": "eb9d0e5a",
   "floor": "129d9b8e/4508",
   "groups": {
@@ -1715,7 +1715,9 @@
    "-:MeshBasicMaterial": "2075e6b0",
    "irFar:MeshLambertMaterial": "ae054a2e",
    "crowd:MeshLambertMaterial": "398263f1",
-   "ao:MeshBasicMaterial": "5c25fde7",
+   "roadside-hedges:MeshLambertMaterial": "d235cbea",
+   "roadside-rows:MeshLambertMaterial": "5ec5636",
+   "ao:MeshBasicMaterial": "83c9a1e8",
    "tyremarks:MeshBasicMaterial": "f878fee6",
    "roadwear:MeshLambertMaterial": "af9e14b8"
   }
