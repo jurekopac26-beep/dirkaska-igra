@@ -56,11 +56,11 @@
   "jsMs": 0.63
  },
  "harju": {
-  "calls": 193,
-  "maxCalls": 234,
-  "kverts": 564,
-  "maxKverts": 825,
-  "jsMs": 0.25
+  "calls": 190,
+  "maxCalls": 229,
+  "kverts": 541,
+  "maxKverts": 780,
+  "jsMs": 0.4
  },
  "bathurst": {
   "calls": 175,
@@ -135,9 +135,9 @@
  "izoard": {
   "calls": 190,
   "maxCalls": 232,
-  "kverts": 428,
+  "kverts": 425,
   "maxKverts": 543,
-  "jsMs": 1.2
+  "jsMs": 0.92
  },
  "pembrey": {
   "calls": 225,
@@ -317,9 +317,9 @@
  "ujarras": {
   "calls": 156,
   "maxCalls": 211,
-  "kverts": 310,
+  "kverts": 308,
   "maxKverts": 371,
-  "jsMs": 0.82
+  "jsMs": 0.62
  },
  "ghoufi": {
   "calls": 143,
@@ -329,11 +329,11 @@
   "jsMs": 0.66
  },
  "cusco": {
-  "calls": 149,
-  "maxCalls": 180,
-  "kverts": 368,
-  "maxKverts": 468,
-  "jsMs": 0.68
+  "calls": 148,
+  "maxCalls": 179,
+  "kverts": 367,
+  "maxKverts": 467,
+  "jsMs": 0.6
  },
  "mombasa": {
   "calls": 132,
@@ -357,11 +357,11 @@
   "jsMs": 0.57
  },
  "eljem": {
-  "calls": 118,
-  "maxCalls": 136,
+  "calls": 117,
+  "maxCalls": 135,
   "kverts": 347,
-  "maxKverts": 496,
-  "jsMs": 0.61
+  "maxKverts": 495,
+  "jsMs": 0.47
  },
  "isuna": {
   "calls": 155,
@@ -408,9 +408,9 @@
  "koli": {
   "calls": 181,
   "maxCalls": 290,
-  "kverts": 632,
+  "kverts": 631,
   "maxKverts": 748,
-  "jsMs": 0.79
+  "jsMs": 0.63
  },
  "kanaba": {
   "calls": 208,
