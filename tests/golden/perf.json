@@ -754,5 +754,12 @@
   "kverts": 488,
   "maxKverts": 592,
   "jsMs": 1.35
+ },
+ "krasnahorka": {
+  "calls": 113,
+  "maxCalls": 124,
+  "kverts": 200,
+  "maxKverts": 239,
+  "jsMs": 0.83
  }
 }
