@@ -6840,7 +6840,7 @@ const Core = (function () {
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
   // one with a glb player-only skin and no render look of its own for the AI's cars (def.look);
   // a field left empty: none), driver k in field[k % n]; without a vehicle or a field, the heirs of the four first road cars in turn
-  // (heirOf(MODELS[(k * 3 + 1) % 4]): SOKOL R, RIS G, LEV S, PANTER 6). A big vehicle (pm.fieldN) in a race of more rivals than that (n, the race's AI count) with a fill
+  // (rivalOf(heirOf(MODELS[(k * 3 + 1) % 4])): SOKOL R, OSA R in the RIS G's place, LEV S, PANTER 6). A big vehicle (pm.fieldN) in a race of more rivals than that (n, the race's AI count) with a fill
   // (pm.fill: ids of quicker-drawn cars of about its pace, the same rule as the field's): its own fieldN spread evenly through the n
   // (driver k one of them when k x fieldN mod n < fieldN: the first, and every n / fieldN after it), the others the fill's cars in turn
   const aiBody = (M) => !M.glb || !!(M.def && M.def.look);
@@ -6850,8 +6850,11 @@ const Core = (function () {
     return L.length ? L : null;
   }
   const fieldOf = (pm) => pm ? modelsOf(pm.field) : null;
+  // (among the four the RIS G is not a rival: the OSA R drives in its place: the user's, 24. 11. 2026; the player's own heir of the
+  // VORTEX stays the RIS G, heirOf)
+  const rivalOf = (M) => M && M.id === 'ris' ? (MODELS.find(m => m.id === 'osa' && !m.retired) || M) : M;
   function aiModel(k, pm, n) {
-    const F = fieldOf(pm); if (!F) return heirOf(MODELS[(k * 3 + 1) % 4]);
+    const F = fieldOf(pm); if (!F) return rivalOf(heirOf(MODELS[(k * 3 + 1) % 4]));
     const L = modelsOf(pm.fill), h = pm.fieldN; if (!L || !h || !(n > h)) return F[k % F.length];
     const j = Math.floor(k * h / n);   // (its own cars before driver k)
     return (k * h) % n < h ? F[j % F.length] : L[(k - j - 1) % L.length];
