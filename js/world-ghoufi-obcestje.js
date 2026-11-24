@@ -19,7 +19,22 @@
    Not drawn: way 1014038882 (highway=service, 137 m and more behind the grid, out of the chase camera's view); the second cliff
    (way 1130863922) and the cliffs, orchard, hostel and streets of the far bank (150 m and more past the end or across the canyon); the
    road itself (way 308263161) is the track.
-   The physics is untouched: nothing here stands within 30 m of the asphalt and nothing is added to the barriers or the collision lists.
+   Beside the road itself (the second pass, 24. 11. 2026): OSM has nothing mapped between the asphalt and 40 m from it but the viewpoint
+   (node 3135560243) - no fence, wall, path, sign or terrace - so nothing of that kind is invented. What stands there comes from the
+   heights (Copernicus DEM: where the ground is steep), the land cover (ESA WorldCover, through World.api.vrLC) and the public
+   descriptions of the place (the canyon of the Abiod river cut in soft, layered sandstone; rock ledges and platforms on its rim, the
+   "balconies"; abandoned stone houses and terraced gardens in cascades below the road; few fences):
+   - layered sandstone ledges where the DEM's slope is steep, on both sides beyond the barrier line: bands of rock along the contour,
+     light tops, faces stepped once, fallen blocks below them (assumed: every size and place, only the rock and its layering are
+     from the sources);
+   - flat rock pavement and pale gravel on the ground between the verge and the barrier line and beyond it (flat, nothing to hit);
+   - dry cushion shrubs and straw tussocks by the land cover (assumed: generic, no species - no source names the plants by the road);
+   - broken dry-stone walls on the canyon's side along the stretch of the village (assumed: their places and sizes; the sources tell of
+     stonework, terraced gardens and ruins, not where each wall stands);
+   - a trodden footpath from the road to OSM's viewpoint (assumed: OSM maps no path).
+   The physics is untouched: everything that stands up is at least 0.8 m beyond the barrier line (where a car cannot come), what lies
+   within it is flat on the ground, and nothing is added to the barriers or the collision lists. No tree or rock of the world moves
+   (nothing new is pushed to keepOut, the world's random sequence is as it was).
    ========================================================================= */
 (function () {
   'use strict';
@@ -80,7 +95,7 @@
 
   // ---- the meshes: gore.build calls this (ctx: its scenery chunks, root and the rest) after the track's own extra ----
   function extra(ctx) {
-    const st = CO.stats = { cliffM: 0, streamM: 0, masts: 0, spans: 0, parkM2: 0, wallM: 0, meshes: 0 };
+    const st = CO.stats = { cliffM: 0, streamM: 0, masts: 0, spans: 0, parkM2: 0, wallM: 0, meshes: 0, ledges: 0, ledgeM: 0, blocks: 0, plates: 0, gravel: 0, shrubs: 0, tufts: 0, wallRuinM: 0, pathM: 0 };
     if (!ctx || !ctx.scen || !ctx.root) return;
     const { scen, root, P } = ctx, gH = vrGround, TL = API.VRC * API.VRT;
     // the terrain under a point: 1 its full tiles (5 m cells, vrGround exactly their surface), 2 the coarse ring, 0 none
@@ -90,11 +105,152 @@
     const g = new API.GB(true);
     stream(g, gH, tile, gCol, st);
     park(g, scen, gH, tile, gCol, st);
+    roadside(g, ctx, gH, tile, gCol, st);
     if (!g.empty) {
       const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: API.vrGritTex(), vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
       m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); st.meshes++;
     }
     powerLine(scen, gH, tile, st);
+  }
+
+  /* ======== beside the road: ledges, pavement, shrubs, walls, the viewpoint's path (see the head of the file) ======== */
+  const SAND = [[0.74, 0.6, 0.42], [0.68, 0.53, 0.36], [0.6, 0.45, 0.31], [0.78, 0.66, 0.48], [0.66, 0.47, 0.33]];   // (the strata: ochre, tan, rust)
+  const SHRUB = [[0.43, 0.45, 0.27], [0.5, 0.48, 0.3], [0.37, 0.41, 0.26], [0.56, 0.52, 0.33]], STRAW = [[0.74, 0.65, 0.4], [0.68, 0.6, 0.37], [0.8, 0.72, 0.47]];
+  const PLATE = [0.73, 0.63, 0.48], GRAVEL = [0.7, 0.63, 0.52], PATH = [0.75, 0.67, 0.53], WALLC = [0.7, 0.57, 0.4], WALLT = [0.78, 0.66, 0.49];
+  function roadside(g, ctx, gH, tile, gCol, st) {
+    const T = API.T, { scen } = ctx, box = API.box, N = T.N;
+    if (!T || !T.px || !T.bl || !T.br) return;
+    const excl = (x, z) => (typeof ctx.excluded === 'function' && ctx.excluded(x, z)) || (ctx.pulls || []).some((p) => Math.hypot(x - p.x, z - p.z) < p.r + 1.5);
+    // the nearest point of the road: d from its centre line, m beyond the barrier line of that side (under 0: where a car can come)
+    const near = (x, z) => { let b = 1e18, bi = 0; for (let i = 0; i < N; i++) { const dx = x - T.px[i], dz = z - T.pz[i], d = dx * dx + dz * dz; if (d < b) { b = d; bi = i; } }
+      const d = Math.sqrt(b), sd = (x - T.px[bi]) * T.nx[bi] + (z - T.pz[bi]) * T.nz[bi]; return { d, m: d - (sd > 0 ? T.br[bi] : T.bl[bi]), i: bi }; };
+    const fall = (x, z) => { const gx = gH(x + 1.5, z) - gH(x - 1.5, z), gz = gH(x, z + 1.5) - gH(x, z - 1.5), l = Math.hypot(gx, gz); return l < 0.02 ? null : [-gx / l, -gz / l, l / 3]; };
+    const lc = (x, z) => (typeof API.vrLC === 'function' ? API.vrLC(x, z) : 0), shade = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    const VERGE = (T.hw || 3.4) + 3.4 + 0.7;   // (the verge strip's own mesh ends 6.8 m from the centre line: the ground's patches start past it)
+    // a flat patch on the ground: a 3 x 3 grid, its middle the colour, its rim the ground's own
+    const blot = (x, z, rx, rz, rot, col) => {
+      const c = Math.cos(rot), s = Math.sin(rot), V = [];
+      for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) { const px = x + a * rx * c - b * rz * s, pz = z + a * rx * s + b * rz * c; if (tile(px, pz) !== 1) return false;
+        V.push({ p: [px, gH(px, pz) + 0.05, pz], c: a || b ? gCol(px, pz) : col, u: [px / 10, -pz / 10] }); }
+      for (let b = 0; b < 2; b++) for (let a = 0; a < 2; a++) { const q = [V[b * 3 + a], V[b * 3 + a + 1], V[b * 3 + a + 4], V[b * 3 + a + 3]]; g.quadUp(q[0].p, q[1].p, q[2].p, q[3].p, q.map((v) => v.c), q.map((v) => v.u)); }
+      return true;
+    };
+    // a plate of bare rock flush with the ground: a four-cornered slab, its corners jittered
+    const plate = (x, z, r, rot, col, k) => {
+      const P4 = [];
+      for (let q = 0; q < 4; q++) { const a = rot + q * Math.PI / 2 + (hash(k, 31 + q) - 0.5) * 0.5, rr = r * (0.75 + 0.5 * hash(k, 41 + q)), px = x + Math.cos(a) * rr, pz = z + Math.sin(a) * rr; if (tile(px, pz) !== 1) return false;
+        P4.push({ p: [px, gH(px, pz) + 0.06, pz], u: [px / 6, -pz / 6] }); }
+      g.quadUp(P4[0].p, P4[1].p, P4[2].p, P4[3].p, [col, col, col, col], P4.map((v) => v.u)); return true;
+    };
+
+    /* the ledges: bands of layered rock along the contour where the DEM is steep (seeds per 6 m of the road and side, outwards from the
+       barrier line; the steeper the likelier). A band is traced both ways along the contour, 2.5 m a step, and built as the canyon's
+       rim is: a top flush with the ground uphill, a lip, a face stepped once (the strata), the foot in the ground below; blocks
+       broken off it lie under it. No two bands within ~4 m (a 3 m grid of taken cells) */
+    const taken = new Set(), cell = (x, z) => Math.floor(x / 3) + ':' + Math.floor(z / 3);
+    const free = (x, z, own) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const c = cell(x + a * 3, z + b * 3); if (taken.has(c) && !(own && own.has(c))) return false; } return true; };
+    for (let i = 2; i < N - 2; i += 3) for (const side of [-1, 1]) {
+      const bar = side > 0 ? T.br[i] : T.bl[i];
+      for (let q = 0, d = bar + 3 + 3 * hash(i, side + 5); d < bar + 38 && q < 7; q++, d += 4.5 + 3.5 * hash(i * 9 + q, side + 6)) {
+        const k = i * 16 + q + (side > 0 ? 8000 : 0), x0 = T.px[i] + T.nx[i] * side * d, z0 = T.pz[i] + T.nz[i] * side * d;
+        if (!tile(x0, z0)) continue;
+        const sl0 = API.vrSlope(x0, z0);
+        if (sl0 < 0.26 || hash(k, 2) > clamp((sl0 - 0.18) * 1.5, lc(x0, z0) === 4 ? 0.4 : 0.25, 0.9) || !free(x0, z0)) continue;
+        const D = 1.5 + 2.3 * hash(k, 4), h0 = gH(x0, z0), own = new Set(), pts = [];
+        const okAt = (x, z) => tile(x, z) && API.vrSlope(x, z) >= 0.2 && near(x, z).m >= 1 + D + 1.4 && !excl(x, z) && free(x, z, own);
+        const f0 = fall(x0, z0); if (!f0 || !okAt(x0, z0)) continue;
+        pts.push({ x: x0, z: z0, f: f0 }); own.add(cell(x0, z0));
+        for (const dir of [1, -1]) {
+          let x = x0, z = z0, f = f0;
+          for (let n = 0, nm = 2 + Math.floor(hash(k, 9 + dir) * 7); n < nm; n++) {
+            let nx = x - f[1] * dir * 2.5, nz = z + f[0] * dir * 2.5; const f1 = fall(nx, nz); if (!f1) break;
+            const e = clamp((gH(nx, nz) - h0) / Math.max(0.2, f1[2]), -1.2, 1.2); nx += f1[0] * e; nz += f1[1] * e;   // (back onto the contour)
+            if (!okAt(nx, nz)) break;
+            x = nx; z = nz; f = fall(x, z) || f1; own.add(cell(x, z));
+            if (dir > 0) pts.push({ x, z, f }); else pts.unshift({ x, z, f });
+          }
+        }
+        if (pts.length < 3) continue;
+        for (const c of own) taken.add(c);
+        const cA = SAND[Math.floor(hash(k, 10) * SAND.length)], cB = SAND[Math.floor(hash(k, 11) * SAND.length)], rise = 0.12 + 0.4 * hash(k, 12), np = pts.length;
+        let prev = null;
+        for (let a = 0; a < np; a++) {
+          const { x, z, f } = pts[a], end = sm(Math.min(a, np - 1 - a) / 1.6), e2 = Math.min(1, end * 1.5), Da = D * (0.2 + 0.8 * end) * (0.65 + 0.7 * patch(x, z, 6));   // (the ends run out into the ground)
+          const g0 = (o) => gH(x + f[0] * o, z + f[1] * o), at = (o, y) => { const gy = g0(o) - 0.06; return [x + f[0] * o, gy + (y - gy) * e2, z + f[1] * o]; };
+          const yc = gH(x, z) + rise * end, yl = yc - 0.08 - 0.12 * patch(x - 60, z, 5), yf = g0(Da + 1.5) - 0.45, h = Math.max(0.3, yl - yf);
+          const row = { x, z, p: [at(-1.3, g0(-1.3) - 0.3), at(-0.3, yc), at(Da, yl), at(Da + 0.1, yl - h * 0.42), at(Da + 0.55, yl - h * 0.46), at(Da + 0.7, yl - h * 0.86), at(Da + 1.5, yf)], ins: [x - f[0], yf - 4, z - f[1]] };
+          if (prev) {
+            const mx = (x + prev.x) / 2, mz = (z + prev.z) / 2, gg = scen.get(mx, mz), gc = gCol(mx, mz);
+            const slb = (0.86 + 0.2 * hash(k * 31 + a, 7)) * (hash(k * 31 + a, 13) < 0.2 ? 0.84 : 1), S1 = (c, m) => { const v = mix(c, gc, m); return [v[0] * slb, v[1] * slb, v[2] * slb]; };
+            const cols = [mix(gc, cA, 0.35), S1(tone(mix(cA, ROCK_L, 0.4), mx, mz, 0.16), 0.38), S1(tone(shade(cA, 0.86), mx, mz, 0.18), 0.12), S1(tone(mix(cB, ROCK_L, 0.3), mx + 40, mz, 0.12), 0.2), S1(tone(shade(cB, 0.74), mx, mz + 40, 0.18), 0.1), mix(shade(cB, 0.8), gc, 0.5)];
+            const ins = [(row.ins[0] + prev.ins[0]) / 2, Math.min(row.ins[1], prev.ins[1]), (row.ins[2] + prev.ins[2]) / 2];
+            for (let j = 0; j < 6; j++) gg.quadO(prev.p[j], prev.p[j + 1], row.p[j + 1], row.p[j], cols[j], ins);
+            st.ledgeM += Math.hypot(x - prev.x, z - prev.z);
+          }
+          prev = row;
+          // (a block or two broken off, below the foot)
+          for (let b = 0, nb = Math.floor(hash(k * 31 + a, 30) * 1.7); b < nb; b++) {
+            const o = Da + 1.8 + 2.6 * hash(k * 31 + a, 32 + b), w = (hash(k * 31 + a, 36 + b) - 0.5) * 2.4, bx = x + f[0] * o - f[1] * w, bz = z + f[1] * o + f[0] * w, sz = 0.22 + 0.42 * hash(k * 31 + a, 40 + b);
+            if (!tile(bx, bz) || near(bx, bz).m < 0.8 + sz || excl(bx, bz)) continue;
+            const c = mix(cB, gCol(bx, bz), 0.3);
+            box(scen.get(bx, bz), bx, gH(bx, bz) - 0.25, bz, sz * (1 + 0.8 * hash(k, 48 + b)), 0.25 + sz * 0.5, sz, hash(k * 31 + a, 52 + b) * 6.28, tone(shade(c, 0.8), bx, bz, 0.14), tone(mix(c, ROCK_L, 0.3), bx, bz, 0.1), true); st.blocks++;
+          }
+        }
+        st.ledges++;
+      }
+    }
+    st.ledgeM = Math.round(st.ledgeM);
+
+    /* the ground: plates of bare rock (in groups, the joints between them the ground itself) and pale gravel, from the verge outwards */
+    for (let i = 1; i < N - 1; i++) for (const side of [-1, 1]) for (let q = 0; q < 2; q++) {
+      const k = i * 8 + q + (side > 0 ? 40000 : 30000), bar = side > 0 ? T.br[i] : T.bl[i], d = VERGE + 0.8 + Math.pow(hash(k, 1), 1.4) * (bar + 14 - VERGE), j = (hash(k, 2) - 0.5) * 2;
+      const x = T.px[i] + T.nx[i] * side * d - T.nz[i] * j, z = T.pz[i] + T.nz[i] * side * d + T.nx[i] * j;
+      if (hash(k, 3) > 0.5 || near(x, z).d < VERGE + 1.6 || excl(x, z) || API.vrSlope(x, z) > 0.7) continue;
+      if (hash(k, 4) < 0.55) {
+        const n = 2 + Math.floor(hash(k, 5) * 4), rot = hash(k, 6) * 3.14;
+        for (let a = 0; a < n; a++) { const r = 0.55 + 0.6 * hash(k, 60 + a), ang = rot + a * 2.4, o = a ? 0.9 + 0.5 * a : 0, px = x + Math.cos(ang) * o, pz = z + Math.sin(ang) * o;
+          if (near(px, pz).d < VERGE + r || excl(px, pz)) continue;
+          if (plate(px, pz, r, rot + hash(k, 70 + a), mix(tone(mix(PLATE, SAND[Math.floor(hash(k, 80 + a) * SAND.length)], 0.3), px, pz, 0.14), gCol(px, pz), 0.4), k * 7 + a)) st.plates++; }
+      } else if (blot(x, z, 0.9 + 1.5 * hash(k, 7), 0.7 + 1.1 * hash(k, 8), hash(k, 9) * 3.14, tone(GRAVEL, x, z, 0.12))) st.gravel++;
+    }
+
+    /* the plants: cushion shrubs and straw tussocks beyond the barrier line, denser where the land cover is not bare */
+    const R = API.rng(35054);
+    for (let i = 1; i < N - 1; i++) for (const side of [-1, 1]) for (let q = 0; q < 3; q++) {
+      const k = i * 8 + q + (side > 0 ? 60000 : 50000), bar = side > 0 ? T.br[i] : T.bl[i], d = bar + 0.9 + Math.pow(hash(k, 1), 1.3) * 33, j = (hash(k, 2) - 0.5) * 2;
+      const x = T.px[i] + T.nx[i] * side * d - T.nz[i] * j, z = T.pz[i] + T.nz[i] * side * d + T.nx[i] * j;
+      if (!tile(x, z)) continue;
+      const c = lc(x, z), pr = (c === 4 ? 0.3 : c === 3 ? 0.34 : 0.66) * (0.4 + 1.2 * patch(x + 500, z, 22));
+      if (hash(k, 3) > pr || API.vrSlope(x, z) > 1.1) continue;
+      const r = 0.36 + 0.62 * hash(k, 4);
+      if (near(x, z).m < 0.8 + r || excl(x, z)) continue;
+      const y = gH(x, z), gg = scen.get(x, z);
+      if (hash(k, 5) < 0.45) { API.ico(gg, x, y + r * 0.22, z, r, 0.6, tone(SHRUB[Math.floor(hash(k, 6) * SHRUB.length)], x, z, 0.2), R, 0.3); st.shrubs++; }
+      else { const cs = STRAW[Math.floor(hash(k, 6) * STRAW.length)]; API.cone(gg, x, y - 0.05, z, r * 0.7, 0.4 + r * 0.75, 5, shade(cs, 0.72), cs, hash(k, 7) * 6.28); st.tufts++; }
+    }
+
+    /* the dry-stone walls: broken runs along the contour on the canyon's side (the left) beside the stretch of the village */
+    for (let s = T.startS + 96; s < T.startS + 404; s += 9) {
+      const i = T.idx(s), k = 70000 + i; if (hash(k, 1) > 0.62) continue;
+      const d = T.bl[i] + 2.2 + 6 * hash(k, 2), x0 = T.px[i] - T.nx[i] * d, z0 = T.pz[i] - T.nz[i] * d, f = fall(x0, z0);
+      let dx = f ? -f[1] : -T.nz[i], dz = f ? f[0] : T.nx[i], x = x0, z = z0; const n = 2 + Math.floor(hash(k, 3) * 3);
+      for (let a = 0; a < n; a++) {
+        const L = 2.2 + 1.6 * hash(k, 10 + a), bx = x + dx * L, bz = z + dz * L, mx = (x + bx) / 2, mz = (z + bz) / 2;
+        const gap = hash(k, 20 + a) < 0.22, h = (a === 0 || a === n - 1 ? 0.3 : 0.5) + 0.45 * hash(k, 30 + a);
+        if (!gap && tile(mx, mz) && near(mx, mz).m > 0.8 + L * 0.55 && !excl(mx, mz)) {
+          const lo = Math.min(gH(x, z), gH(bx, bz), gH(mx, mz)) - 0.5, hi = Math.max(gH(x, z), gH(bx, bz)) + h;
+          box(scen.get(mx, mz), mx, lo, mz, L + 0.08, hi - lo, 0.6, Math.atan2(dz, dx), tone(WALLC, mx, mz, 0.2), tone(WALLT, mx, mz, 0.14), true); st.wallRuinM += L;
+        }
+        x = bx; z = bz; const f2 = fall(x, z); if (f2) { const t = hash(k, 40 + a) - 0.5; dx = -f2[1] + f2[0] * t * 0.3; dz = f2[0] + f2[1] * t * 0.3; const l = Math.hypot(dx, dz); dx /= l; dz /= l; }
+      }
+    }
+    st.wallRuinM = Math.round(st.wallRuinM);
+
+    /* the footpath to the viewpoint (OSM node 3135560243): trodden pale earth from the verge to the terrace */
+    { const VX = 52.7, VZ = 242.2, nr = near(VX, VZ), i = nr.i, ux = (VX - T.px[i]) / nr.d, uz = (VZ - T.pz[i]) / nr.d;
+      for (let o = VERGE + 1; o < nr.d - 2.5; o += 1.5) { const w = Math.sin(o * 0.7) * 0.35, x = T.px[i] + ux * o - uz * w, z = T.pz[i] + uz * o + ux * w;
+        if (blot(x, z, 1.25, 1.05, Math.atan2(uz, ux), tone(PATH, x, z, 0.08))) st.pathM += 1.5; }
+      st.pathM = Math.round(st.pathM); }
   }
 
   // the canyon's rock rim: per 3 m of the line a row across it (a hem flush with the ground above, the crest, its lip, the upper face,
