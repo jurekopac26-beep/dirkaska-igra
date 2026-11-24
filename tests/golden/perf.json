@@ -392,11 +392,11 @@
   "jsMs": 1.04
  },
  "kagerod": {
-  "calls": 225,
-  "maxCalls": 255,
-  "kverts": 471,
-  "maxKverts": 527,
-  "jsMs": 0.83
+  "calls": 230,
+  "maxCalls": 272,
+  "kverts": 550,
+  "maxKverts": 637,
+  "jsMs": 1.95
  },
  "sosnova": {
   "calls": 189,
@@ -560,11 +560,11 @@
   "jsMs": 1.02
  },
  "riohondo": {
-  "calls": 194,
-  "maxCalls": 270,
-  "kverts": 630,
-  "maxKverts": 789,
-  "jsMs": 0.96
+  "calls": 190,
+  "maxCalls": 289,
+  "kverts": 625,
+  "maxKverts": 841,
+  "jsMs": 1.11
  },
  "hakone": {
   "calls": 184,
@@ -707,11 +707,11 @@
   "jsMs": 1.26
  },
  "batangas": {
-  "calls": 244,
-  "maxCalls": 286,
-  "kverts": 812,
-  "maxKverts": 859,
-  "jsMs": 1.04
+  "calls": 251,
+  "maxCalls": 287,
+  "kverts": 819,
+  "maxKverts": 865,
+  "jsMs": 1.66
  },
  "sogeri": {
   "calls": 144,
