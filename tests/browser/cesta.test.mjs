@@ -443,14 +443,16 @@ try {
       if (Math.abs(lat(x, z, mi)) > T.wAt(mi) + 0.2) sidePaint++; }
     let road = 1e9;
     for (let k = 0; k < P.length; k += 4) { rows.add(P[k + 3]); let m = 1e18, mi = 0; for (let i = 0; i < T.N; i++) { const d = (P[k] - T.px[i]) ** 2 + (P[k + 2] - T.pz[i]) ** 2; if (d < m) { m = d; mi = i; } } road = Math.min(road, Math.sqrt(m) - T.wAt(mi)); }
-    return { n: W.stranske, osm: T.def.stranske.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, gravel, broken, through, sidePaint,
+    return { n: W.stranske, osm: (T.def.stranske || []).length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, gravel, broken, through, sidePaint,
       posts: P.length / 4, rows: rows.size, road: +road.toFixed(1), stat: [W.stats.stranske, W.stats.stebricki], model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
   }, id);
   // (Izoard has none: its one road, a track at its real width, meets the barrier's line 22.5 m in, and the decision of 24. 11. 2026, point 3, leaves it out, #1025;
-  // Hakone 45 or more: the export cuts a road where it reaches a house of OpenStreetMap and leaves out one too short then, 24. 11. 2026, point 5)
+  // Hakone 45 or more: the export cuts a road where it reaches a house of OpenStreetMap and leaves out one too short then, 24. 11. 2026, point 5;
+  // Kågeröd none since main's roadside draws its roads, js/world-kagerod-obcestje.js, #1040: the export leaves its 13 rows out, decision e-obcestje pending)
   for (const [id, name, open, min, paint] of [['hakone', 'Hakone', true, 45, true], ['kagerod', 'Kågeröd', false, 11, false], ['kildare', 'Kildare', false, 4, false]]) {
     await startTrack(page, id);
     const q = await stranskeQ(id);
+    if (!q.osm) { noRoads(name, q, q.posts); continue; }   // (Kågeröd: js/world-kagerod-obcestje.js)
     T.check(name + ': OpenStreetMap\'s side roads for the look (' + min + ' or more, at most the track\'s rows: those under a braking board or off the edges left out), a strip from each mouth (3 to 40 m wide) to the asphalt\'s edge, the posts across every mouth 2 m or more off the asphalt, the stats, the track\'s model untouched',
       q.n >= min && q.n <= q.osm && q.mouths === q.n && q.wMin >= 3 && q.wMax <= 40 && q.strips >= 1 && q.stripV >= 20 * q.n && q.far === 0 && q.rows === q.n && q.posts >= 2 * q.n && q.road >= 2 && q.stat[0] === q.n && q.stat[1] === q.posts && q.model, JSON.stringify(q));
     T.check(name + (open ? ': an open road: the edge line breaks off at every mouth' : ': a circuit: the edge line goes on across every mouth on the asphalt (none on the gravel)') + (paint ? ', the side roads\' stop lines (Japan: 0.3 m, white)' : ', no paint on the side roads (no rule of the country in CRTE, or class 0)'),
