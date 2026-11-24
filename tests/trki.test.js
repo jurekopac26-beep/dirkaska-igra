@@ -654,6 +654,10 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
     const row = (key) => { const out = [], re = new RegExp('data-set="' + key + '">(.*?)</div>', 'g'); let x; while ((x = re.exec(html))) out.push((x[1].match(/data-v="[^"]*"/g) || []).map(t => t.replace(/[^0-9]/g, '')).join(',')); return out.join(' | '); };
     const rows = { crV: row('crV'), debris: row('debris'), wheelOver: row('wheelOver'), damage: row('damage'), pullAll: row('pullAll') };
     const pullOk = has(def, 'pullAll', '1') && /S\.pullAll = \+S\.pullAll === 0 \? 0 : 1;/.test(src) && rows.pullAll === '1,0' && core.pull === null && !!on && on.pull === null && tOn.pull === null && !!off && off.pull === 0 && tOff.pull === 0 && tNet.pull === null;   // Vleka krmila po trku: Vsi avti (default) / Samo moj avto (TX.pull 0)
+    { let t = [], e2 = '';   // Trk s prometom: Po masah (the default: nothing to the core) / Tovornjak izbit od 120 km/h (TX.tf 1) / Stari dotik (TX.tf 2); never to a race with a friend
+      try { t = [of({ crV: 5 }, false), of({ crV: 5, crTf: 1 }, false), of({ crV: 5, crTf: 2 }, false), of({ crV: 5, crTf: 2 }, true)]; } catch (e) { e2 = String(e && e.message || e); }
+      ok('Nastavitve, Trk s prometom: the default 0 (Po masah) gives the core nothing, 1 and 2 are Core TX.tf, a race with a friend gets none; a stored value out of range is the default; the row has the three choices',
+        !e2 && t.length === 4 && t[0].tf === null && t[1].tf === 1 && t[2].tf === 2 && JSON.stringify(t[3]) === '{}' && has(def, 'crTf', '0') && /S\.crTf = \[1, 2\]\.includes\(\+S\.crTf\) \? \+S\.crTf : 0;/.test(src) && row('crTf') === '0,1,2', e2 || JSON.stringify(t.map(x => x && x.tf)) + ' ' + row('crTf')); }
     const wheel = /wheelRule: solo \|\| chase \|\| !\+S\.wheelOver \? undefined : WHEEL_RULE,/.test(src);
     const valid = /S\.crV = Number\.isInteger\(\+S\.crV\) && \+S\.crV >= 0 && \+S\.crV <= CR_REAL \? \+S\.crV : CR_REAL;/.test(src) && /CR_OLD = 4, CR_REAL = 5;/.test(src);
     ok('Nastavitve: the game\'s default is Realistična (js/game.js DEF: Trki 5, Odpadli deli Vklop, Odpadlo kolo Konec dirke, Poškodbe Samo videz; the one-time move tdgp-defaults-v6 sets the first three and leaves Poškodbe; a stored version out of range becomes Realistična; index.html: Trki Realistično / Kot zdaj in Nastavitve and in the pause, the four older versions in Preizkus), the core\'s own stays Simulacija (no choice given: no version, no deb), so the references of the drive do not move; Odpadli deli: Vklop gives the core nothing, Izklop TX.deb 0, a race with a friend neither (and no version); Odpadlo kolo: Dirka teče naprej gives the race no wheel rule',
@@ -927,6 +931,24 @@ for (const tid of ['spa', 'bathurst']) {
       if (o.p < 4 && !o.off && !o.bok) good = good && Math.abs(a.vc - Math.abs(o.v * (1 - 1.25 * a.mb / (a.ma + a.mb)))) < 1e-9 && Math.abs(a.vb - 1.25 * o.v * a.ma / (a.ma + a.mb)) < 1e-9;   // (the old touch centred: e 0.25 by the two weights)
       if (!good) okAll = false; rows.push(`${NAME[o.p]}: ${f(a.vc * 3.6, 1)} / ${f(a.vb * 3.6, 1)} km/h`); }
     ok('the traffic, cv 1, 3 and 5 the same to the digit, by the old touch (centred: the bounce 0.25 by the two weights, no yaw rate); a friend\'s car online in Realistična as in cv 1', okAll, rows.join('; ')); }
+  // Nastavitve »Trk s prometom« (Core TX.tf; the user's choice of 20. 11. 2026: by the two weights the default, the other two in Nastavitve):
+  // 1 a truck with its semi-trailer closed on at 120 km/h or more comes loose (then a free body by its weight: the pair's momentum kept), under
+  // that speed, along its flank (30 deg at 120 km/h: 60 km/h into it) and every other vehicle as the default to the digit; 2 the old touch, as
+  // cv 1 to the digit; neither changes cv 1 or cv 5
+  { const rows = []; let okAll = true; const key = (q) => [q.st, q.vc, q.vcl, q.vb, q.vbn, q.vv, q.w, q.kc, q.R, q.ev, q.dmg, q.hitCar, q.dp, q.dE].join(' ');
+    const T1 = { cv: 6, tf: 1 };
+    for (const v of [V, 160 / 3.6, 200 / 3.6]) for (const off of [0, 0.6]) { const d = hit(REAL, { p: 5, v, off }), q = hit(T1, { p: 5, v, off });
+      const good = !q.nan && q.st === 1 && q.dp < 1e-9 && q.dE < 1e-9 && q.vb > 0 && (v > V || d.st === 0); if (!good) okAll = false;
+      if (!good || !off) rows.push(`truck ${f(v * 3.6, 0)} km/h: st ${d.st} -> ${q.st}, it ${f(q.vb * 3.6, 1)} km/h, dp ${q.dp.toExponential(1)}`); }
+    for (const o of [{ p: 5, v: 110 / 3.6 }, { p: 5, v: 60 / 3.6 }, { p: 5, v: V, bok: 30 }, { p: 5, v: 60 / 3.6, bok: 5 }, { p: 2, v: V }, { p: 2, v: V, bok: 5 }, { p: 0, v: V, off: 0.6 }, { p: 1, v: 60 / 3.6 }, { p: 3, v: V }, { p: 4, v: V }]) {
+      const good = key(hit(REAL, o)) === key(hit(T1, o)); if (!good) { okAll = false; rows.push(`${NAME[o.p]} ${f(o.v * 3.6, 0)} km/h${o.bok ? ' ' + o.bok + ' deg' : ''}: not the default`); } }
+    ok('Realistična, Trk s prometom 1 (Tovornjak izbit od 120 km/h): a truck rear-ended at 120, 160 and 200 km/h comes loose (by the weights alone only from 160 km/h) and the pair keeps its momentum (1e-9), no energy gained; at 110 and 60 km/h, along its flank and every other vehicle (a bus, a car, a van, a motorbike, a cyclist) as the default to the digit', okAll, rows.join('; ')); }
+  { const rows = []; let okAll = true; const key = (q) => [q.st, q.vc, q.vcl, q.vb, q.vbn, q.vv, q.w, q.kc, q.R, q.ev, q.dmg, q.hitCar, q.dp, q.dE].join(' ');
+    for (const o of [{ p: 0, v: V }, { p: 0, v: V, off: 0.6 }, { p: 1, v: 60 / 3.6 }, { p: 2, v: V, bok: 30 }, { p: 3, v: V }, { p: 4, v: V }, { p: 5, v: V }, { p: 5, v: 60 / 3.6 }, { p: 5, v: V, bok: 30 }]) { const a = hit(SIM, o), b = hit({ cv: 6, tf: 2 }, o), r = hit(REAL, o);
+      const same = [hit({ cv: 1, tf: 1 }, o), hit({ cv: 1, tf: 2 }, o)].every(q => key(q) === key(a)) && [hit({ cv: 5, tf: 1 }, o), hit({ cv: 5, tf: 2 }, o)].every(q => key(q) === key(hit(OLD, o)));
+      const good = key(a) === key(b) && same; if (!good) okAll = false; rows.push(`${NAME[o.p]}${o.bok ? ' ' + o.bok + ' deg' : ''}: st ${b.st} (by the weights ${r.st}), ${f(b.vc * 3.6, 1)} / ${f(b.vb * 3.6, 1)} km/h${key(b) === key(r) ? ' (as by the weights)' : ''}`); }
+    C.setTest(null); const none = C.TX.tf; C.setTest({ cv: 6, tf: 2 }); const set = C.TX.tf; C.setTest(null);
+    ok('Realistična, Trk s prometom 2 (Stari dotik): every vehicle as cv 1 to the digit (the truck rear-ended at 120 km/h knocked off its lane); in cv 1 and cv 5 neither choice changes anything; the core\'s own: none (TX.tf null)', okAll && none === null && set === 2, rows.join('; ')); }
 }
 
 // Realistična and the people (Traffic._hitPeds -> _hitPedR; docs/trki-realizem.md): the player's car (BURJA R7, Bathurst's endless drive) over

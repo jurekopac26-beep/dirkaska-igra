@@ -518,6 +518,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .set-cat .set-body { padding: 0 12px 6px; }
 .set-note { margin: 2px 0 6px; font: 500 12px/1.35 var(--f-ui); color: var(--muted); }
 .set-list .row.nbx { opacity: .45; }   /* (a row the chosen version of Trki med avti leaves out: Preizkus' knock rows with Stara, Razbijanje: odboji in vrtenje ob trku with the others) */
+.set-list .row.tfx { opacity: .45; }   /* (Trk s prometom with a version other than Realistično: the row is Realistično's own) */
 .set-sub { margin: 12px 0 2px; font: 700 12px/1 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 input[type=range] { width: 160px; accent-color: var(--curb); }
 .val { font: 700 italic 13px/1 var(--f-ui); color: var(--lcd); min-width: 3em; }
