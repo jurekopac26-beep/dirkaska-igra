@@ -1,0 +1,53 @@
+{
+  "id": "vaoala",
+  "about": "Vaoala, Samoa (id vaoala): the Cross Island Road south of Apia on Upolu, from Letava uphill past Vaoala to Tiapapata, one run (docs/proge/vaoala.md)",
+  "box": [
+    -13.905,
+    -171.785,
+    -13.865,
+    -171.755
+  ],
+  "closed": false,
+  "dist": {
+    "grid": 400
+  },
+  "route": [
+    [
+      -13.878663828032224,
+      -171.76588976885438,
+      "Falealili Cross Island Road",
+      "start: on the slope by Letava, southbound uphill"
+    ],
+    [
+      -13.891528500399174,
+      -171.7739780671602,
+      "Falealili Cross Island Road",
+      "finish: by Tiapapata"
+    ]
+  ],
+  "prefer": [
+    "Falealili Cross Island Road"
+  ],
+  "geoRoads": [
+    "Falealili Cross Island Road"
+  ],
+  "geoWater": [],
+  "marks": [],
+  "places": [
+    [
+      "Letava",
+      "12231009699",
+      null
+    ],
+    [
+      "Vaoala",
+      "12231009698",
+      null
+    ],
+    [
+      "Tiapapata",
+      "12231662135",
+      null
+    ]
+  ]
+}
