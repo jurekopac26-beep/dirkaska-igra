@@ -198,8 +198,8 @@
  "gudauri": {
   "calls": 179,
   "maxCalls": 219,
-  "kverts": 515,
-  "maxKverts": 690,
+  "kverts": 514,
+  "maxKverts": 689,
   "jsMs": 1.11
  },
  "ngorongoro": {
@@ -233,7 +233,7 @@
  "portomoniz": {
   "calls": 245,
   "maxCalls": 295,
-  "kverts": 659,
+  "kverts": 657,
   "maxKverts": 815,
   "jsMs": 0.97
  },
@@ -427,24 +427,24 @@
   "jsMs": 0.09
  },
  "canaries": {
-  "calls": 210,
+  "calls": 209,
   "maxCalls": 223,
-  "kverts": 682,
+  "kverts": 681,
   "maxKverts": 803,
   "jsMs": 1.06
  },
  "savusavu": {
   "calls": 191,
   "maxCalls": 226,
-  "kverts": 507,
-  "maxKverts": 610,
+  "kverts": 504,
+  "maxKverts": 608,
   "jsMs": 0.98
  },
  "koror": {
   "calls": 161,
   "maxCalls": 192,
-  "kverts": 441,
-  "maxKverts": 676,
+  "kverts": 440,
+  "maxKverts": 675,
   "jsMs": 0.99
  },
  "longyearbyen": {
@@ -457,8 +457,8 @@
  "vaoala": {
   "calls": 147,
   "maxCalls": 154,
-  "kverts": 348,
-  "maxKverts": 462,
+  "kverts": 347,
+  "maxKverts": 461,
   "jsMs": 0.89
  },
  "krasnahorka": {

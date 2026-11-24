@@ -159,7 +159,7 @@
     out.marks.palm = st.palms;
     tp.addTo(root, true);
 
-    // the houses (OpenStreetMap's footprints): white walls on a basalt plinth down the slope, orange tiles (the big blocks of the town: a flat
+    // the houses (OpenStreetMap's footprints): white walls down to the ground (on a slope the downhill wall is taller), orange tiles (the big blocks of the town: a flat
     // roof), the shutters on the long sides of those near the road
     {
       const RB = rng(LOOK.seed + 21), WALL = [[0.94, 0.93, 0.89], [0.96, 0.94, 0.87], [0.91, 0.91, 0.89], [0.95, 0.91, 0.82], [0.93, 0.86, 0.72], [0.9, 0.92, 0.9]];
@@ -170,13 +170,14 @@
         if (lo < seaY + 0.6) continue;   // (none in the water)
         const area = b.L * b.W, fl = b.h > 0 ? clamp(Math.round(b.h / 3), 1, 5) : area > 160 ? 2 + (RB() < 0.4 ? 1 : 0) : area > 55 && RB() < 0.45 ? 2 : 1, H = fl * 3.0;
         const wc = vary(WALL[Math.floor(RB() * WALL.length)], RB, 0.03), flat = b.L > 22 || area > 320;
-        box(g, b.x, lo - 0.6, b.z, b.L + 0.1, hi - lo + 0.9, b.W + 0.1, b.ang, basalt, null, true);
-        box(g, b.x, hi + 0.3, b.z, b.L, H - 0.3, b.W, b.ang, wc, null, true);
-        if (flat) box(g, b.x, hi + H, b.z, b.L + 0.3, 0.35, b.W + 0.3, b.ang, [0.82, 0.81, 0.78], [0.62, 0.6, 0.57], true);
-        else gable(g, b.x, hi + H, b.z, b.L + 0.7, b.W + 0.7, Math.min(b.W, 11) * 0.3, b.ang, vary(LOOK.roofs[Math.floor(RB() * LOOK.roofs.length)], RB, 0.06), wc);
+        const F0 = Math.max(lo, hi - 0.6);   // (the floor: the house is cut into the slope by up to 0.6 m, its windows stay 0.4 m clear of the ground on the uphill side)
+        box(g, b.x, lo - 0.6, b.z, b.L, F0 - lo + 0.6 + H, b.W, b.ang, wc, null, true);   // (the wall down to the ground on the downhill side too: no dark plinth under the house, the user's decision of 24. 11.)
+        if (flat) box(g, b.x, F0 + H, b.z, b.L + 0.3, 0.35, b.W + 0.3, b.ang, [0.82, 0.81, 0.78], [0.62, 0.6, 0.57], true);
+        else gable(g, b.x, F0 + H, b.z, b.L + 0.7, b.W + 0.7, Math.min(b.W, 11) * 0.3, b.ang, vary(LOOK.roofs[Math.floor(RB() * LOOK.roofs.length)], RB, 0.06), wc);
         if (d < 110) { const n = Math.max(1, Math.min(3, Math.floor(b.L / 3.4))), sc = shut[Math.floor(RB() * shut.length)];
-          for (let f = 0; f < Math.min(fl, 3); f++) for (const sd of [-1, 1]) for (let q = 0; q < n; q++) { const u = (q - (n - 1) / 2) * b.L / n, v = sd * (b.W / 2 + 0.03);
-            box(g, b.x + c * u - s * v, hi + 1.0 + f * 3.0, b.z + s * u + c * v, 0.95, 1.25, 0.07, b.ang, sc, null, true); st.windows++; } }
+          for (let f = 0; f < Math.min(fl, 3); f++) for (const sd of [-1, 1]) for (let q = 0; q < n; q++) { const u = (q - (n - 1) / 2) * b.L / n, v = sd * (b.W / 2 + 0.03), wx = b.x + c * u - s * v, wz = b.z + s * u + c * v;
+            if (!f && F0 + 1.0 < G(wx, wz) + 0.3) continue;   // (none with its sill in the ground: where the hillside rises over the footprint's corners)
+            box(g, wx, F0 + 1.0 + f * 3.0, wz, 0.95, 1.25, 0.07, b.ang, sc, null, true); st.windows++; } }
         st.houses++;
       }
     }
