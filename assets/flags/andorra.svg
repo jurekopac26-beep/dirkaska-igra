@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700">
+  <title>Andorra</title>
+  <!-- Ratio 7:10. Three vertical bands blue, yellow, red in widths 8:9:8, and in the yellow band the state arms (a shield quartered:
+       a mitre, the red pales on gold twice, two cows). Simplified (the flag is a few pixels wide in the menu): the shield's outline and
+       its four quarters. Colours: blue #10069F, yellow #FEDD00, red #D50032. -->
+  <rect width="1000" height="700" fill="#FEDD00"/>
+  <rect width="320" height="700" fill="#10069F"/>
+  <rect x="680" width="320" height="700" fill="#D50032"/>
+  <path d="M400 230H600V400C600 460 556 492 500 514C444 492 400 460 400 400Z" fill="#C7B37F" stroke="#7A5C18" stroke-width="8"/>
+  <path d="M500 230V514M400 372H600" stroke="#7A5C18" stroke-width="6"/>
+  <path d="M420 250H480V352H420Z" fill="#D50032"/>
+  <path d="M520 254H530V352H520ZM546 254H556V352H546ZM572 254H582V352H572Z" fill="#D50032"/>
+  <path d="M410 392H490V400C490 440 470 466 444 480C424 468 410 440 410 400ZM510 392H590V400C590 440 576 468 556 480C530 466 510 440 510 400Z" fill="#FEDD00"/>
+  <path d="M420 392H430V460H420ZM444 392H454V476H444ZM468 392H478V466H468Z" fill="#D50032"/>
+  <path d="M530 410H572V444H530Z" fill="#D50032"/>
+</svg>
