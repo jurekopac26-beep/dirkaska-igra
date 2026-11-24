@@ -129,7 +129,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
-| 10.14 | #795 Harju testna | Koli je na `main`, zato Harju dobi `test: true` (prošnja uporabnika 19. 11. 2026); misija 10 prestavljena na Koli, Harju brez videa ovinka, oblike v meniju in mest gledalcev. | partyslo | osnutek; varovalo testnih prog čaka na `--dovoli harju`, nato ga pripelje Združevanje |
+| 10.14 | #795 Harju testna | Koli je na `main`, zato Harju dobi `test: true` (prošnja uporabnika 19. 11. 2026); misija 10 prestavljena na Koli, Harju brez videa ovinka, oblike v meniju in mest gledalcev. | partyslo | osnutek, spojen z `main` 24. 11.; varovalo pade samo zaradi preleta in `world-harju.js` z `main` (vprašanje `harju-zamrznitev`), po odgovoru ga pripelje Združevanje |
 | 10.14 | #821 Zbirna grafika (chase) biketraveler | Kamera za avtom, tla ob cesti: #815 (9 prog), #820 (7 prog), #826 (5 prog), vse POTEM (odločitev uporabnika 20. 11.); #824 čaka končni »ok« | biketraveler | povezani testi zeleni (20. 11.); osnutek do vrste, združi seja Združevanje |
 | 10.14 | #965 Predogled do 12 | `MAX` 8 → 12, da izbira prog ne da 404 (majhen, brez konfliktov) | jure.kopac26 | osnutek, testi zeleni |
 | 10.15 | #945 Pravila 22. 11. | dnevni PR pravil (`CLAUDE.md`, `docs/odlocitve.md`) | jure.kopac26 | osnutek |
