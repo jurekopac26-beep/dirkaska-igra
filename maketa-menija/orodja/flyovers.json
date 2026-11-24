@@ -2319,7 +2319,7 @@
    "kbps": 450,
    "alt": [
     724,
-    735
+    741
    ]
   }
  ],
@@ -2396,6 +2396,112 @@
    "alt": [
     158,
     308
+   ]
+  }
+ ],
+ [
+  "hiva",
+  {
+   "kbps": 450,
+   "alt": [
+    97,
+    97
+   ],
+   "places": [
+    {
+     "n": "West Gate",
+     "d": 174
+    },
+    {
+     "n": "North Gate",
+     "d": 762
+    },
+    {
+     "n": "Under the Minaret",
+     "d": 2073
+    }
+   ]
+  }
+ ],
+ [
+  "krasnahorka",
+  {
+   "kbps": 450,
+   "alt": [
+    624,
+    469
+   ],
+   "places": [
+    {
+     "n": "Hairpin 1",
+     "d": 304
+    },
+    {
+     "n": "Hairpin 2",
+     "d": 1306
+    },
+    {
+     "n": "Hairpin 3",
+     "d": 1786
+    }
+   ]
+  }
+ ],
+ [
+  "mapileng",
+  {
+   "kbps": 450,
+   "alt": [
+    1184,
+    1245
+   ],
+   "places": [
+    {
+     "n": "Hairpin 1 · 1,210 m",
+     "d": 357
+    },
+    {
+     "n": "Hairpin 3 · 1,243 m",
+     "d": 716
+    },
+    {
+     "n": "Monument",
+     "d": 855
+    }
+   ]
+  }
+ ],
+ [
+  "tapini",
+  {
+   "kbps": 450,
+   "alt": [
+    636,
+    590
+   ]
+  }
+ ],
+ [
+  "vaoala",
+  {
+   "kbps": 450,
+   "alt": [
+    306,
+    480
+   ],
+   "places": [
+    {
+     "n": "Vaoala",
+     "d": 554
+    },
+    {
+     "n": "Forest above Vaoala",
+     "d": 1250
+    },
+    {
+     "n": "Tiapapata · 480 m",
+     "d": 1910
+    }
    ]
   }
  ]

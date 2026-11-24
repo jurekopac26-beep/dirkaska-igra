@@ -608,6 +608,21 @@ window.MENU = {
   },
   "koli": {
    "base": 159
+  },
+  "hiva": {
+   "base": 97
+  },
+  "tapini": {
+   "base": 636
+  },
+  "mapileng": {
+   "base": 1184
+  },
+  "vaoala": {
+   "base": 306
+  },
+  "krasnahorka": {
+   "base": 624
   }
  },
  "intro": {
