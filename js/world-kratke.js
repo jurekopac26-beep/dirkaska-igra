@@ -1,5 +1,5 @@
 /* =========================================================================
-   WORLD — the short roads outside Europe (docs/nove-proge-1-0.md, Del 4; themes 'mujib', 'atitlan'): one builder (buildKratke) for both,
+   WORLD — the short roads outside Europe (docs/nove-proge-1-0.md, Del 4; themes 'mapileng', 'mujib' ...): one builder (buildKratke) for the five,
    each with its own look (KR[theme] below), registered as World.ext[theme]. What it uses of World comes from World.api: the helpers bound here
    once, the state that changes as API.<name>, the track being built and its theme (LOD, T) copied in at each build. Built on Vršič's corridor
    (vrPrep and Los Caracoles' terrain helpers caH / caGround read the same forms: def.dem, def.lc), as Santo Antão and Dadès; the walls between
@@ -25,6 +25,38 @@
      (words, boards: krAtlas, krAtlas2), its houses (house) and its own signs and spectators (signs, fans). Only geographic names on the boards;
      the landmarks by the road (def.marks: a memorial, a shrine, a museum, a café) generic, no names or signs of their own. */
   const KR = {
+    // Mã Pí Lèng (Vietnam): the grey limestone of the karst plateau showing through the grass in patches and outcrops everywhere, maize in
+    // the pockets of soil between the rocks with low walls of loose stones round the fields, shrubs and a few trees, the hazy karst peaks
+    // beyond; the narrow asphalt with a dashed white centre line, low concrete parapets on the drops (red and white blocks round the
+    // hairpins); the memorial to the road's builders (a white obelisk on a stepped plinth, a small shrine beside it), a little museum and a
+    // café by the road
+    mapileng: {
+      seed: 5311, dust: [0.56, 0.52, 0.45],
+      pal: { grass: [0.45, 0.52, 0.28], dry: [0.6, 0.58, 0.4], soil: [0.5, 0.42, 0.32], shrub: [0.3, 0.4, 0.2], tree: [0.22, 0.33, 0.17],
+        field: [0.47, 0.56, 0.25], field2: [0.64, 0.6, 0.38], wall: [0.62, 0.62, 0.6], built: [0.6, 0.58, 0.54], bare: [0.6, 0.6, 0.58],
+        rock: [0.64, 0.64, 0.62], rock2: [0.5, 0.51, 0.5], path: [0.56, 0.5, 0.4], verge: [0.5, 0.47, 0.41], karst: 0.75 },
+      far: (A, sl, q) => { const rk = Math.min(1, sstep(0.42, 0.85, sl) * 0.75), wood = sstep(1250, 1600, A) * 0.4;
+        let c = [0.41 + q * 0.05, 0.48 + q * 0.04, 0.3 + q * 0.03]; c = [lerp(c[0], 0.25, wood), lerp(c[1], 0.34, wood), lerp(c[2], 0.21, wood)];
+        return [lerp(c[0], 0.6 + q * 0.06, rk), lerp(c[1], 0.6 + q * 0.05, rk), lerp(c[2], 0.57 + q * 0.04, rk)]; },
+      lines: { centre: [0.93, 0.93, 0.89], dash: [3, 5] },
+      para: { stone: [0.7, 0.7, 0.68], top: [0.86, 0.86, 0.84], hp: [0.8, 0.16, 0.13], back: [0.56, 0.56, 0.54], wall: [0.56, 0.56, 0.54], cope: [0.72, 0.72, 0.7] },
+      rocks: { main: [[0.62, 0.62, 0.6], [0.68, 0.68, 0.65], [0.56, 0.57, 0.56], [0.72, 0.71, 0.68]], alt: [[0.47, 0.47, 0.46], [0.54, 0.52, 0.49]], karst: 1 },
+      kinds: ['broad', 'pine', 'shrub', 'tuft', 'maize'],
+      mix: { 0: [0.08, [0.07, 0.04, 0.3, 0.59, 0]], 1: [0.35, [0.55, 0.3, 0.15, 0, 0]], 2: [0.3, [0.1, 0.02, 0.7, 0.18, 0]], 3: [0.05, [0.6, 0, 0.4, 0, 0]],
+        4: [0.008, [0, 0, 1, 0, 0]], 5: [0, [0, 0, 1, 0, 0]], 6: [0.55, [0.01, 0, 0.03, 0.06, 0.9]] },
+      house: { cols: [[0.66, 0.56, 0.44], [0.72, 0.66, 0.56], [0.86, 0.85, 0.8]], roof: [0.34, 0.34, 0.36], flat: [0.56, 0.55, 0.52], gable: 0.85, tall: 0.15 },
+      words: { start: 'XUẤT PHÁT', finish: 'VỀ ĐÍCH', fin: 'MÃ PÍ LÈNG', title: 'MÃ PÍ LÈNG', sub: 'ĐỒNG VĂN · QL4C', cp: ['#1f4f8f', '#f7d116'], finBg: '#1d4f9a', ban: ['#c8261c', '#f7d116'] },
+      boards: [['ĐỒNG VĂN', '#1d4f9a'], ['MÈO VẠC', '#1d4f9a'], ['MÃ PÍ LÈNG', '#1d4f9a'], ['ĐIỂM NGẮM CẢNH', '#6b4a22'], ['ĐƯỜNG ĐÈO NGUY HIỂM', '#f2f0ea'], ['ĐI CHẬM', '#f2f0ea'], ['QL4C', '#1d4f9a'], ['LŨNG CÚ', '#1d4f9a']],
+      // the signs (krAtlas2's boards by number): Đồng Văn and Lũng Cú behind the start for the cars coming down, the road's number after the
+      // start, the dangerous pass road before the first hairpin, slow before the third, Mã Pí Lèng before the memorial, Mèo Vạc ahead past the
+      // finish, the viewpoint's board before it
+      signs: (c) => { c.signAt(c.sStart - 60, -1, 0); c.signAt(c.sStart - 110, -1, 7); c.signAt(c.sStart + 40, 1, 6);
+        if (c.cv[0]) c.signAt(c.sStart + c.cv[0][0] - 110, 1, 4); if (c.cv[2]) c.signAt(c.sStart + c.cv[2][0] - 70, 1, 5);
+        const q = c.names.find(n => n.n.startsWith('Spomenik')); if (q) c.signAt(c.sStart + q.d - 90, 1, 2);
+        c.signAt(c.sFin + 110, -c.sdP, 1); for (const v of c.views) c.signAt(v.i * c.ds - 45, v.sd || 1, 3); },
+      // a group of spectators by the memorial (the top of the climb)
+      fans: (c) => { const q = c.names.find(n => n.n.startsWith('Spomenik')); if (q) c.run(c.sStart + q.d - 30, c.sStart + q.d + 10, -1, { rows: 1, dens: 0.35, clump: 0.9, label: 'KR memorial' }); },
+    },
     // Wadi Mujib (Jordan): the canyon's bare slopes of pale limestone and marl in beds (pal.strata: bands of their colours by height; the
     // harder beds standing out of the scree as long low ledges along the contours: rocks.ledges), boulders, sparse grey-green shrubs and
     // tufts of dry grass, a few umbrella acacias; the dam's lake on the canyon's floor far below (far; def.far.lake); the asphalt with a dashed
@@ -98,6 +130,110 @@
           for (let k = 0; k < 2; k++) { const px = kx + T.nx[i] * ox * (2.6 + k * 0.8) + cs * (k - 0.5) * 1.4, pz = kz + T.nz[i] * ox * (2.6 + k * 0.8) + sn * (k - 0.5) * 1.4; c.person(px, pz, Math.atan2(px - kx, kz - pz), true, Math.hypot(px - v.x, pz - v.z) < v.r - 0.3 ? y + 0.05 : null); }   // (its customers, on the terrace's floor)
           c.exclPush(kx, kz, 3); c.marks.stall = [kx, kz]; n++;
         }
+        return n;
+      },
+    },
+    // Sans Souci (the Seychelles, Mahé): the island's rainforest to the road's edge (tall trees with broad crowns high up, tree ferns and the
+    // undergrowth; coconut palms and bananas by the houses), the grey granite in rounded boulders among the trees (rocks.boulders) and in the
+    // bare domes of the peaks beyond (far), the red earth where it shows; the village's houses in their colours, pastel walls under iron roofs
+    // painted red, green, blue or left grey (house.roofs); the asphalt with a dashed white centre line, concrete parapets on the drops (black
+    // and white blocks round the hairpin), the concrete bridge over the stream; the boards in English (only places and plain words); the
+    // buses' stops (def.stops), the village's lanes and drives up to the houses (def.lanes), the trailhead to the Morne Seychellois past the
+    // finish (def.marks: trail)
+    sanssouci: {
+      seed: 7533, dust: [0.52, 0.42, 0.34],
+      pal: { grass: [0.35, 0.5, 0.21], dry: [0.45, 0.55, 0.25], soil: [0.56, 0.37, 0.26], shrub: [0.26, 0.4, 0.16], tree: [0.19, 0.31, 0.13],
+        field: [0.4, 0.53, 0.22], field2: [0.47, 0.56, 0.26], wall: [0.6, 0.58, 0.55], built: [0.5, 0.49, 0.44], bare: [0.6, 0.58, 0.54],
+        rock: [0.6, 0.58, 0.55], rock2: [0.44, 0.43, 0.41], path: [0.56, 0.41, 0.31], verge: [0.44, 0.42, 0.34], karst: 0 },
+      far: (A, sl, q) => { const rk = Math.min(1, sstep(0.55, 1.05, sl) * 0.85), lo = 1 - sstep(40, 200, A);   // (the forest dark on the mountains, lighter by the coast; the granite's domes grey on the steep)
+        let c = [0.19 + q * 0.04, 0.3 + q * 0.04, 0.14 + q * 0.03]; c = [lerp(c[0], 0.3, lo * 0.5), lerp(c[1], 0.41, lo * 0.5), lerp(c[2], 0.21, lo * 0.5)];
+        return [lerp(c[0], 0.56 + q * 0.05, rk), lerp(c[1], 0.55 + q * 0.05, rk), lerp(c[2], 0.52 + q * 0.04, rk)]; },
+      lines: { centre: [0.92, 0.92, 0.88], dash: [3, 6] },
+      para: { stone: [0.72, 0.71, 0.68], top: [0.86, 0.86, 0.84], hp: [0.13, 0.13, 0.14], back: [0.6, 0.6, 0.58], wall: [0.6, 0.59, 0.56], cope: [0.75, 0.74, 0.71] },
+      rocks: { main: [[0.62, 0.6, 0.57], [0.68, 0.65, 0.61], [0.56, 0.55, 0.53], [0.71, 0.67, 0.62]], alt: [[0.4, 0.39, 0.37], [0.47, 0.45, 0.42]], karst: 0, crag: 0.85, boulders: 1 },
+      kinds: ['rain', 'palm', 'fern', 'banana', 'shrub'],
+      mix: { 0: [0.1, [0.12, 0.3, 0.08, 0.25, 0.25]], 1: [0.42, [0.64, 0.05, 0.19, 0.02, 0.1]], 2: [0.3, [0.12, 0.05, 0.22, 0.06, 0.55]], 3: [0.07, [0.15, 0.4, 0, 0.35, 0.1]],
+        4: [0.01, [0, 0, 0.3, 0, 0.7]], 5: [0, [0, 0, 0, 0, 1]], 6: [0.25, [0.04, 0.22, 0, 0.6, 0.14]] },
+      house: { cols: [[0.93, 0.86, 0.6], [0.72, 0.85, 0.7], [0.92, 0.76, 0.72], [0.74, 0.84, 0.9], [0.93, 0.92, 0.88], [0.95, 0.8, 0.55]], roof: [0.58, 0.2, 0.16],
+        roofs: [[0.6, 0.2, 0.16], [0.22, 0.42, 0.26], [0.55, 0.56, 0.58], [0.2, 0.34, 0.56], [0.66, 0.26, 0.18]], flat: [0.62, 0.6, 0.56], gable: 0.9, tall: 0.12 },
+      words: { start: 'START', finish: 'FINISH', fin: 'SANS SOUCI', title: 'SANS SOUCI · MAHÉ', sub: 'VICTORIA · PORT GLAUD', cp: ['#1d4f8f', '#fcd856'], finBg: '#1f6b3a', ban: ['#d62828', '#fcd856'] },
+      boards: [['VICTORIA', '#1f6b3a'], ['PORT GLAUD', '#1f6b3a'], ['SANS SOUCI', '#1f6b3a'], ['VIEWPOINT', '#6b4a22'], ['DANGEROUS BENDS', '#f2f0ea'], ['SLOW', '#f2f0ea'],
+        ['MORNE SEYCHELLOIS', '#6b4a22'], ['MORNE BLANC', '#1f6b3a']],
+      // the signs (krAtlas2's boards by number): they drive on the left, so each stands on the left of the cars it is for (side -1 for the cars
+      // going up, +1 for those coming down): Victoria behind the start for the cars going down, the bends' warning before the hairpin, the
+      // village's name and slow into it (the buses' turning point), the viewpoint's board where the track to it leaves the road (~848 m, left:
+      // the viewpoint itself ~80 m off the road, def.views), Port Glaud and Morne Blanc ahead past the finish, the national park's name by the
+      // trailhead
+      signs: (c) => { c.signAt(c.sStart - 60, 1, 0); if (c.cv[0]) c.signAt(c.sStart + c.cv[0][0] - 100, -1, 4);
+        c.signAt(c.sStart + 420, -1, 2); c.signAt(c.sStart + 505, -1, 5); c.signAt(c.sStart + 803, -1, 3);
+        c.signAt(c.sFin + 70, 1, 6); c.signAt(c.sFin + 110, -1, 1); c.signAt(c.sFin + 175, -1, 7); },
+    },
+    // Banaue (the Philippines, Ifugao): the rice terraces of the Ifugao on the slope below the road (terr: the slope cut into level paddies
+    // along its contours, flooded silver, muddy or green with the rice, the walls of earth grown over with grass between them, a dike along
+    // each), the woods of broadleaved trees and a few pines above it, bananas and ferns by the houses; the hamlet's houses of concrete in their
+    // colours under iron roofs (grey, rusty, green, blue, red; house.roofs); the concrete road in its slabs (lines.concrete: krConcTex, a joint
+    // across every 4 m) with a yellow centre line, low concrete parapets on the drops (yellow blocks round the hairpin); the boards in English
+    // (only places and plain words); the viewpoints over the terraces beside the road (viewR: the map's up to 40 m off the road), a souvenir
+    // stall by each and an Ifugao house (a bale) by the first (extras)
+    banaue: {
+      seed: 8641, dust: [0.5, 0.45, 0.37],
+      pal: { grass: [0.37, 0.51, 0.21], dry: [0.47, 0.54, 0.27], soil: [0.5, 0.38, 0.26], shrub: [0.27, 0.4, 0.17], tree: [0.19, 0.31, 0.13],
+        field: [0.42, 0.55, 0.23], field2: [0.55, 0.6, 0.55], wall: [0.31, 0.41, 0.18], built: [0.54, 0.52, 0.48], bare: [0.55, 0.5, 0.42],
+        rock: [0.55, 0.53, 0.5], rock2: [0.42, 0.41, 0.38], path: [0.52, 0.44, 0.34], verge: [0.45, 0.44, 0.35], karst: 0,
+        fband: 1.0 },   // (the fields' bands along the contours closer: the terraces beyond the reach of their own steps, fading where the grid can't draw them)
+      far: (A, sl, q) => { const rk = Math.min(1, sstep(0.75, 1.25, sl) * 0.55), t = sstep(1450, 1150, A) * sstep(0.75, 0.35, sl);   // (the woods dark on the ridges, the terraces' lighter greens down the valleys' gentler slopes)
+        let c = [0.2 + q * 0.04, 0.31 + q * 0.04, 0.15 + q * 0.03]; c = [lerp(c[0], 0.38 + q * 0.05, t * 0.8), lerp(c[1], 0.47 + q * 0.04, t * 0.8), lerp(c[2], 0.26 + q * 0.03, t * 0.8)];
+        return [lerp(c[0], 0.47 + q * 0.04, rk), lerp(c[1], 0.47 + q * 0.04, rk), lerp(c[2], 0.42 + q * 0.03, rk)]; },
+      lines: { centre: [0.93, 0.75, 0.16], edge: [0.9, 0.9, 0.86], concrete: true },
+      para: { stone: [0.74, 0.73, 0.7], top: [0.86, 0.85, 0.82], hp: [0.93, 0.77, 0.15], back: [0.62, 0.61, 0.58], wall: [0.6, 0.59, 0.56], cope: [0.75, 0.74, 0.71] },
+      rocks: { main: [[0.52, 0.5, 0.47], [0.58, 0.56, 0.52], [0.47, 0.46, 0.44], [0.62, 0.6, 0.55]], alt: [[0.4, 0.37, 0.33], [0.45, 0.41, 0.36]], karst: 0, crag: 1.15 },
+      kinds: ['broad', 'rain', 'pine', 'shrub', 'tuft', 'banana', 'fern'],
+      mix: { 0: [0.1, [0.12, 0.04, 0.03, 0.3, 0.38, 0.08, 0.05]], 1: [0.42, [0.42, 0.25, 0.12, 0.12, 0, 0.02, 0.07]], 2: [0.3, [0.1, 0.03, 0.03, 0.6, 0.12, 0.05, 0.07]],
+        3: [0.07, [0.15, 0, 0, 0.15, 0.1, 0.5, 0.1]], 4: [0.01, [0, 0, 0, 0.7, 0.3, 0, 0]], 5: [0, [0, 0, 0, 1, 0, 0, 0]], 6: [0.05, [0.05, 0, 0, 0.25, 0.5, 0.15, 0.05]] },
+      house: { cols: [[0.8, 0.79, 0.74], [0.9, 0.86, 0.72], [0.74, 0.84, 0.72], [0.9, 0.79, 0.76], [0.76, 0.84, 0.9], [0.93, 0.92, 0.88]], roof: [0.5, 0.3, 0.2],
+        roofs: [[0.5, 0.3, 0.2], [0.24, 0.42, 0.3], [0.25, 0.36, 0.55], [0.62, 0.22, 0.18], [0.56, 0.57, 0.58]], flat: [0.6, 0.59, 0.56], gable: 0.7, tall: 0.35 },
+      words: { start: 'START', finish: 'FINISH', fin: 'BANAUE', title: 'BANAUE · IFUGAO', sub: 'BONTOC · BANAUE', cp: ['#0038a8', '#fcd116'], finBg: '#1f6b3a', ban: ['#ce1126', '#fcd116'] },
+      boards: [['BANAUE', '#1f6b3a'], ['BONTOC', '#1f6b3a'], ['RICE TERRACES', '#6b4a22'], ['VIEWPOINT', '#6b4a22'], ['DANGEROUS CURVES', '#f2f0ea'], ['SLOW DOWN', '#f2f0ea'],
+        ['MAYOYAO', '#1f6b3a'], ['HUNGDUAN', '#1f6b3a']],
+      // the signs (krAtlas2's boards by number): they drive on the right (side +1 for the cars of the race, -1 for those coming the other way):
+      // Bontoc behind the start for the cars going north, the terraces' board after the start, slow before the hamlet, the viewpoint's board
+      // before each, the bends' warning before the hairpin, Banaue, Mayoyao and Hungduan ahead past the finish (the roads from the town)
+      signs: (c) => { c.signAt(c.sStart - 60, -1, 1); c.signAt(c.sStart + 35, 1, 2); c.signAt(c.sStart + 215, 1, 5);
+        for (const v of c.views) c.signAt(v.i * c.ds - 45, v.sd || 1, 3);
+        if (c.cv[0]) c.signAt(c.sStart + c.cv[0][0] - 110, 1, 4);
+        c.signAt(c.sFin + 70, 1, 0); c.signAt(c.sFin + 120, 1, 6); c.signAt(c.sFin + 165, 1, 7); },
+      viewR: 40,
+      // the terraces (buildKratke: the rice terraces): a step every dh m of height, from d0 m beyond the barrier (full d0 + 6 on), within reach
+      // m of the road (and 25 m more fading out), on slopes from flat (full at 2.5 flat) up to slope (gone 0.35 steeper), the dikes lip m over
+      // the paddy and dikeW wide; each paddy's colour on its patch m along its band (paddy: [share, colour]: the
+      // flooded ones the sky's silver, the muddy, the young rice, the rice grown, ripening), the walls' grass and the dikes'
+      terr: { dh: 2.1, d0: 6, reach: 125, slope: 1.0, flat: 0.05, patch: 14, lip: 0.3, dikeW: 0.5,
+        paddy: [[0.17, [0.58, 0.65, 0.68]], [0.08, [0.45, 0.39, 0.3]], [0.36, [0.46, 0.62, 0.24]], [0.31, [0.36, 0.5, 0.19]], [0.08, [0.62, 0.6, 0.3]]],
+        wall: [0.35, 0.42, 0.21], dike: [0.45, 0.55, 0.26] },
+      // at each viewpoint a souvenir stall at the terrace's far end along the road (a kiosk of planks under an iron roof, woven cloths in their
+      // reds and blacks hung along its front, a table of carvings), by the first an Ifugao house (a bale: a box of dark wood on four posts,
+      // each under its round guard, a tall pyramid of thatch over it) at the near end; generic, no names or words
+      extras: (c) => {
+        let n = 0;
+        c.views.forEach((v, kv) => {
+          const i = v.i, hd = T.hd[i], cs = Math.cos(hd), sn = Math.sin(hd), y = v.h, ox = (v.x - T.px[i]) * T.nx[i] + (v.z - T.pz[i]) * T.nz[i] > 0 ? 1 : -1, nx = T.nx[i] * ox, nz = T.nz[i] * ox;
+          const kx = v.x + cs * (v.r - 1.7), kz = v.z + sn * (v.r - 1.7), g = c.scen.get(kx, kz), wd = [0.46, 0.33, 0.21], wd2 = [0.38, 0.27, 0.17], roofC = [0.55, 0.56, 0.58];
+          box(g, kx, y - 0.4, kz, 2.2, 2.75, 2.0, hd, wd, wd2);   // the kiosk
+          box(g, kx - nx * 0.25, y + 2.35, kz - nz * 0.25, 2.8, 0.08, 2.9, hd, roofC, roofC);   // its roof, over the counter towards the road
+          for (const u of [-1.3, 1.3]) cyl(g, kx + cs * u - nx * 1.55, y - 0.05, kz + sn * u - nz * 1.55, 0.05, 2.4, 4, wd2);
+          const tc = [[0.66, 0.12, 0.1], [0.1, 0.09, 0.09], [0.86, 0.84, 0.78], [0.62, 0.16, 0.12]];
+          for (let q = 0; q < 4; q++) { const u = -0.85 + q * 0.56, px = kx + cs * u - nx * 1.06, pz = kz + sn * u - nz * 1.06; box(g, px, y + 0.85, pz, 0.46, 1.25, 0.04, hd, tc[(q + kv) % 4], tc[(q + kv) % 4]); }   // (the cloths)
+          box(g, kx - nx * 1.45, y, kz - nz * 1.45, 1.9, 0.8, 0.6, hd, wd2, [0.56, 0.42, 0.28]);   // the table
+          c.exclPush(kx, kz, 2.4); c.CR.block(kx - nx * 0.5, kz - nz * 0.5, 2.6, 3.4, hd); n++;
+          if (kv === 0) {   // the bale
+            const bx = v.x - cs * (v.r - 2.3), bz = v.z - sn * (v.r - 2.3), gb = c.scen.get(bx, bz), post = [0.22, 0.16, 0.11], wood = [0.29, 0.2, 0.13], th = [0.52, 0.44, 0.31], th2 = [0.44, 0.37, 0.26];
+            for (const [a, b] of [[-1.05, -1.05], [1.05, -1.05], [1.05, 1.05], [-1.05, 1.05]]) { const px = bx + a * cs - b * sn, pz = bz + a * sn + b * cs;
+              cyl(gb, px, y - 0.2, pz, 0.12, 1.75, 6, post, null, 0.1); cyl(gb, px, y + 1.5, pz, 0.34, 0.08, 8, wood, wood); }   // (the posts, the rats' guards)
+            box(gb, bx, y + 1.62, bz, 2.7, 1.15, 2.7, hd, wood, wood);
+            cone(gb, bx, y + 2.15, bz, 2.85, 3.2, 4, th, th2, hd + Math.PI / 4);
+            c.exclPush(bx, bz, 2.8); c.CR.block(bx, bz, 3.6, 3.6, hd); n++;
+          }
+        });
         return n;
       },
     },
@@ -1265,8 +1401,7 @@
 
     /* ---- the view beyond the corridor (def.farDem: the hills and the valleys round; irFar, World.update moves it with the camera); finish
        the meshes ---- */
-    if (LK.farWet) LK.far.wet = LK.farWet;   // (the lakes' colour: irFar reads colFn.wet)
-    const FAR = API.irFar ? API.irFar(LK.far) : null; if (FAR) { FAR.th = 4; FAR.mesh.visible = false; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; th: moved on again once the camera is 4 m on, as Mount Baldy's, not every frame: the lines of sight to the hills hardly change)
+    const FAR = API.irFar ? API.irFar(LK.far, LK.farWet) : null; if (FAR) { FAR.th = 4; FAR.mesh.visible = false; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; th: moved on again once the camera is 4 m on, as Mount Baldy's, not every frame: the lines of sight to the hills hardly change)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true); ledg.addTo(sceneryGroup, matV, false, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: krAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
@@ -1281,8 +1416,14 @@
 
 
   // the roads of this builder: each its own theme (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
+  World.keep('VR', 'mapileng');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
+  World.ext.mapileng = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.mapileng);
   World.keep('VR', 'mujib');
   World.ext.mujib = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.mujib);
+  World.keep('VR', 'sanssouci');
+  World.ext.sanssouci = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.sanssouci);
+  World.keep('VR', 'banaue');
+  World.ext.banaue = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.banaue);
   World.keep('VR', 'atitlan');
   World.ext.atitlan = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.atitlan);
 })();

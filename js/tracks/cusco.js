@@ -36,9 +36,6 @@ var TRACK_DEFS = TRACK_DEFS || [];
       summitRecord: ["At the finish! A new personal best, {time}!"], summitEven: ["{time} at the finish, dead level with your best!"],
       summit: ["At the finish in {time}, {delta} seconds off your best."],
     },
-    // roads for the look only (package Realizem E, World.cesta.stranske; tools/cesta/izvoz.py from OpenStreetMap, ODbL): the roads that
-    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]]; nobody drives there
-    stranske: [[528,-1,1,4.0,0,0,[-344.0,-371.7,-349.3,-405.4,-346.3,-435.1]]],
     // ---- uvoz: začetek (tools/proga-uvoz.mjs: ne urejaj ročno; izhodišče -13.510739, -71.982265)
     realKm: 0.94, alt: [3531,3592],
     start: [0,0], finish: [-189.5,-534.4], cps: [[-153.7,-104.6],[-283.8,-234.9],[-302.5,-358],[-188.8,-353]],

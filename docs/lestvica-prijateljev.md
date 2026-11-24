@@ -73,7 +73,7 @@ Pri vseh: meni bere podatke prek mostu (`G.friends(d)`, `G.sendTimes()`), napisi
 - Vsak čas je najboljši, kar jih je prijatelj kdaj poslal (najmanjši po ključu, z dnem in avtom). Vrstni red odpiranja ni pomemben: ista povezava dvakrat ne spremeni ničesar, starejša ne pokvari novejše. Vzdevek je iz povezave z najnovejšim `sent`.
 - Kdor ponastavi igro ali zamenja telefon brez uvoza profila, dobi nov ključ (nova vrstica); z uvozom profila ostane isti.
 - Tvoji časi se v tabeli berejo sproti iz rekordov (brez kopije). Do prijatelja pride posodobitev samo z novo povezavo (brez strežnika ni samodejnega pošiljanja); zato rezultati po novem rekordu ponudijo *Pošlji prijateljem*.
-- Meje: do 40 prijateljev (41. izrine tistega z najstarejšo zadnjo povezavo, s sporočilom), do 1200 časov na prijatelja (do 19. 11. 2026 600; vse proge imajo zdaj več kot 600 ključev rekordov).
+- Meje: do 40 prijateljev (41. izrine tistega z najstarejšo zadnjo povezavo, s sporočilom), do 1200 časov na prijatelja (do 19. 11. 2026 600, na `main` od 21. 11. 2026 1000; vse proge imajo zdaj več kot 1000 ključev rekordov).
 
 ## Shranjevanje
 

@@ -71,8 +71,15 @@ const repack = (o) => L.pack(J(o));
     check('a changed nickname: not taken', (await tryLink(t2)) === null);
     let cut = 0; for (const k of [1, 5, 20, Math.floor(l.z.length / 2)]) { L.use(B.s); if ((await L.readLink(l.z.slice(0, l.z.length - k), NOW)) === null) cut++; }
     check('a cut link: not taken', cut === 4, cut + ' of 4');
-    let flip = 0; for (let i = 0; i < 12; i++) { const at = 20 + Math.floor((l.z.length - 40) * i / 12), z = l.z.slice(0, at) + (l.z[at] === 'Q' ? 'R' : 'Q') + l.z.slice(at + 1); L.use(B.s); if ((await L.readLink(z, NOW)) === null) flip++; }
-    check('one character of the link changed (12 places): not taken', flip === 12, flip + ' of 12');
+    // (a changed character of the packed link that unpacks to the very same packets is no change: deflate can say one text two ways, about
+    // 1 change in 3 600 on a random key, 23. 11. 2026; such a place gives way to the next one. The same: a signature whose base64url
+    // differs only in its last character's unused bits)
+    const sameAs = (u) => { try { const x = JSON.parse(u); return J(Object.assign({}, x, { p: x.p.map(q => [q[0], Buffer.from(q[1], 'base64url').toString('hex')]) })); } catch (_) { return null; } };
+    const orig = sameAs(await L.unpack(l.z)), same = async (z) => { let u; try { u = await L.unpack(z); } catch (_) { return false; } return sameAs(u) === orig; };
+    let flip = 0, skip = 0; for (let i = 0; i < 12; i++) { let at = 20 + Math.floor((l.z.length - 40) * i / 12), z;
+      for (;; at++) { z = l.z.slice(0, at) + (l.z[at] === 'Q' ? 'R' : 'Q') + l.z.slice(at + 1); if (!(await same(z))) break; skip++; }
+      L.use(B.s); if ((await L.readLink(z, NOW)) === null) flip++; }
+    check('one character of the link changed (12 places, each a real change of what it unpacks to): not taken', flip === 12, flip + ' of 12' + (skip ? ', ' + skip + ' place(s) unpacking the same skipped' : ''));
     const X = await player('Lisica', { 'spa@cs': [134310, 309, null] }), t3 = JSON.parse(ch); t3.p[0][1] = X.pk[1];
     check('another player\'s signature: not taken', (await tryLink(t3)) === null);
     const t4 = JSON.parse(ch); const pk4 = JSON.parse(t4.p[0][0]); pk4.pub = JSON.parse(X.pk[0]).pub; t4.p[0][0] = J(pk4);

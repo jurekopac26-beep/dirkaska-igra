@@ -10,6 +10,7 @@
 // 4. driven into one (Core.stubDrive, as the police would: in to the rail at its end, turned round, out): no wall until the rail, the height
 //    smooth, the progress pinned at the junction while deep in it, no wrong way, the cones knocked over; out onto the road again
 // 5. a race on each (12 AI and the player on autopilot, 90 s): no car ever deep in a side road
+// 6. driven at the barrier by each mouth at a slant (real tracks): never thrown across in a step, never behind the barrier
 //   node tests/junctions.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -19,7 +20,7 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
-const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller', 'ujarras', 'isuna', 'koli', 'vinales'];
+const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller', 'ujarras', 'isuna', 'koli', 'vinales', 'longyearbyen', 'krasnahorka'];
 const NAMED = { mulholland: ['Cornell School Road', 'Simes Lane', 'Seminole Drive', 'Lower Brewster Road'], bigsur: ['Coast Road'], uncompahgre: ['Engineer Pass Road'], chapman: ['Military Road'], vrsic: ['Borovška cesta', 'Koroška ulica'] };
 
 // every track with side roads is on the list (an open road), the others have none
@@ -55,7 +56,7 @@ for (const id of IDS) {
     const near = (s) => S.some(x => Math.abs(x.s0 - s) < 90 || Math.abs(x.sF - s) < 90);
     let gaps = 0, stray = 0; for (const G of T.gap) for (let i = 0; i < T.N; i++) if (G[i]) { gaps++; if (!near(i * T.ds)) stray++; }
     let diff = 0, pts = 0; const q = {}, q0 = {}, n1 = [0, 0], n0 = [0, 0];
-    for (let i = 3; i < T.N - 3; i += 7) { if (S.some(x => Math.abs(x.s0 - i * T.ds) < 260)) continue;
+    for (let i = 3; i < T.N - 3; i += T.N < 1000 ? 3 : 7) { if (S.some(x => Math.abs(x.s0 - i * T.ds) < 260)) continue;   // (every 3rd point on a short road: Krásna Hôrka's 0.6 km)
       for (const d of [-T.w - 6, -T.w - 2, -T.w + 0.5, 0, T.w - 0.5, T.w + 2, T.w + 6]) { const x = T.px[i] + T.nx[i] * d, z = T.pz[i] + T.nz[i] * d; T.query(x, z, i, q); T0.query(x, z, i, q0); pts++;
         if (q.k >= 0 || q.s !== q0.s || q.d !== q0.d || T.wall(q, 0.5, n1) !== T0.wall(q0, 0.5, n0) || T.surface(q) !== T0.surface(q0) || T.yAt(q) !== T0.yAt(q0)) diff++; } }
     check(`${id}: the barriers the same, open only across the mouths; away from the junctions the road exactly as without them`, same && gaps >= S.length * 2 && !stray && pts > (T.N * T.ds < 2000 ? 35 : 200) && !diff,   // (a short road: most of it within 260 m of a junction)
@@ -96,6 +97,30 @@ for (const id of IDS) {
     for (let t = 0; t < 90; t += DT) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); for (const c of r.cars) if (c.q.deep) inSide++; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
     Math.random = orig;
     check(`${id}: a race (12 AI and the player on autopilot, 90 s): no car ever deep in a side road`, !inSide, `car-steps deep in one: ${inSide}, the leader ${Math.round(Math.max(...r.cars.map(c => c.dist || 0)))} m on`);
+  }
+  // 6. driven at the barrier by each mouth, at a slant, on its own (real tracks only): never thrown across (a step's move at most 1.5 m off
+  //    its speed's; a deep query past a side road's rail took a corner come along the road's wide verge, its push back 39 m: Chapman's Peak
+  //    by the road at 3096 m), never behind the barrier off a hill (Track._stubQ, SR.po)
+  if (!def.test && !def.pending) { const o1 = { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, tt: true }, res = [];
+    let jmp = 0, esc = 0, runs = 0;
+    for (const St of S) for (const ds0 of [-25, -15, -8, 0, 8]) for (const ang of [20, 55]) for (const dir of [1, -1]) {
+      const orig = Math.random; Math.random = seeded(7);
+      const r = new C.Race(T, o1), P = r.player; r.start(); P.locked = false;
+      const i = T.idx(St.s0 + ds0), h = T.hd[i] + (dir < 0 ? Math.PI : 0) + St.side * dir * ang * Math.PI / 180;
+      P.place(T.px[i], T.pz[i], h); P.y = P.py = T.hy[i]; P.roadY = P.y; P.vx = Math.cos(h) * 25; P.vz = Math.sin(h) * 25;
+      let mj = 0, me = 0;
+      for (let k = 0; k < 300 && !P.fall; k++) {
+        P.inSteer = 0; P.inThr = 0.6; P.inBrk = 0; P.inHand = 0;
+        const x0 = P.x, z0 = P.z, vx = P.vx, vz = P.vz; r.step(DT); const Q = P.q;
+        mj = Math.max(mj, Math.hypot(P.x - x0 - vx * DT, P.z - z0 - vz * DT));
+        if (Q.k < 0 && !(T.hill && T.hill.on[Q.d > 0 ? 1 : 0][Q.a])) me = Math.max(me, Math.abs(Q.d) - (Q.d > 0 ? Q.br : Q.bl));
+      }
+      Math.random = orig; runs++;
+      const tag = `${Math.round(St.s0 - T.startS)} m ${St.side > 0 ? 'R' : 'L'} from ${ds0} m at ${ang}° ${dir > 0 ? 'on' : 'back'}`;
+      if (mj > 1.5) { jmp++; if (res.length < 6) res.push(`${tag}: thrown ${mj.toFixed(1)} m`); }
+      if (me > 1) { esc++; if (res.length < 6) res.push(`${tag}: ${me.toFixed(1)} m behind the barrier`); }
+    }
+    check(`${id}: driven at the barrier by each mouth (${runs} runs): never thrown across, never behind the barrier`, !jmp && !esc, `thrown ${jmp}, behind ${esc}${res.length ? ': ' + res.join(' | ') : ''}`);
   }
 }
 

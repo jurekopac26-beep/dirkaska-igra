@@ -675,7 +675,7 @@
       for (let k = 0; k < m.count; k++) { m.getMatrixAt(k, m4); w4.multiplyMatrices(m.matrixWorld, m4); const el = w4.elements, cx = Math.floor((el[12] - x0) / C), cz = Math.floor((el[14] - z0) / C);
         if (cx < 0 || cz < 0 || cx >= nx || cz >= nz) continue; const id = cz * nx + cx; top[id] = Math.max(top[id], el[13] + 1.7); } });
     o.root.traverse(m => {
-      if (!m.isMesh || m.isInstancedMesh || m.name === 'life' || !m.geometry || !m.geometry.attributes.position) return;
+      if (!m.isMesh || m.isInstancedMesh || m.name === 'life' || (m.userData && m.userData.rob) || !m.geometry || !m.geometry.attributes.position) return;
       const pa = m.geometry.attributes.position; if (pa.isInterleavedBufferAttribute || pa.itemSize !== 3 || pa.count < 3) return;
       const A = pa.array, e = m.matrixWorld.elements, n = pa.count;
       let on = 0, tried = 0;   // (the terrain or the road: a sample of its vertices all on the ground)

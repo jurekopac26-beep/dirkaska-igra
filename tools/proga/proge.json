@@ -1802,5 +1802,124 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "DARVAZ_H"
+  },
+  "irishtown": {
+    "ime": "Irishtown, Jamajka",
+    "okvir": [
+      18.03,
+      -76.745,
+      18.075,
+      -76.71
+    ],
+    "pot": [
+      [
+        18.04455,
+        -76.72522
+      ],
+      [
+        18.06251,
+        -76.72146
+      ]
+    ],
+    "start": [
+      18.04662,
+      -76.7275
+    ],
+    "cilj": [
+      18.05954,
+      -76.72233
+    ],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 4,
+    "gauss": 2.5,
+    "razredi": [
+      "secondary"
+    ],
+    "visine": {
+      "mediana": 50,
+      "glajenje": 30,
+      "naklon": 0.12,
+      "serpentine": 0.3,
+      "serpentine_m": 20,
+      "gor": false,
+      "tesno": true
+    },
+    "s2": "S2B_18QUE_20240129_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "IRISHTOWN_H"
+  },
+  "vaoala": {
+    "ime": "Vaoala, Samoa",
+    "okvir": [
+      -13.905,
+      -171.785,
+      -13.865,
+      -171.755
+    ],
+    "pot": [
+      [
+        -13.87754,
+        -171.765256
+      ],
+      [
+        -13.878888,
+        -171.766459
+      ],
+      [
+        -13.881715,
+        -171.767482
+      ],
+      [
+        -13.883866,
+        -171.769456
+      ],
+      [
+        -13.886411,
+        -171.771181
+      ],
+      [
+        -13.889905,
+        -171.771744
+      ],
+      [
+        -13.891457,
+        -171.773984
+      ],
+      [
+        -13.892812,
+        -171.775248
+      ]
+    ],
+    "start": [
+      -13.878888,
+      -171.766459
+    ],
+    "cilj": [
+      -13.891457,
+      -171.773984
+    ],
+    "zalet": 160,
+    "po_cilju": 190,
+    "polsirina": 4,
+    "gauss": 2.5,
+    "razredi": [
+      "primary"
+    ],
+    "visine": {
+      "mediana": 50,
+      "glajenje": 30,
+      "naklon": 0.12,
+      "serpentine": 0.3,
+      "serpentine_m": 20,
+      "gor": true
+    },
+    "s2": "S2B_2LMK_20240423_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "VAOALA_H"
   }
 }
