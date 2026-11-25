@@ -20,7 +20,7 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
-const ALL = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller', 'ujarras', 'isuna', 'koli', 'longyearbyen', 'krasnahorka', 'mombasa', 'portobelo', 'seoul', 'santoantao', 'rastro'], IDS = process.env.JUNCTIONS_ONLY ? process.env.JUNCTIONS_ONLY.split(',') : ALL;   // (JUNCTIONS_ONLY=<id,...>: only these)
+const ALL = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller', 'ujarras', 'isuna', 'koli', 'longyearbyen', 'krasnahorka', 'santoantao'], IDS = process.env.JUNCTIONS_ONLY ? process.env.JUNCTIONS_ONLY.split(',') : ALL;   // (JUNCTIONS_ONLY=<id,...>: only these)
 const NAMED = { mulholland: ['Cornell School Road', 'Simes Lane', 'Seminole Drive', 'Lower Brewster Road'], bigsur: ['Coast Road'], uncompahgre: ['Engineer Pass Road'], chapman: ['Military Road'], vrsic: ['Borovška cesta', 'Koroška ulica'] };
 
 // every track with side roads is on the list (an open road), the others have none

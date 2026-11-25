@@ -194,7 +194,6 @@
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     exclPush(padF.x, padF.z, padF.r + 4); if (mir) exclPush(mir.x, mir.z, 17);
-    API.stubExcl(exclPush);   // (nothing grows or stands on the side roads: def.sideRoads, OSM)
     out.marks = {}; if (mir) out.marks.Mirante = [mir.x, mir.z];   // (where the landmarks stand: the tests look for them)
 
     /* ---- terrain tiles, the ponds on the plateau ---- */
@@ -237,10 +236,8 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const onBr = new Uint8Array(N), sw = 0.5;
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
-    const SB = API.stubGeo({ gCol: rrGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.66, 0.6, 0.54], shC: [0.66, 0.6, 0.54], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       if (onBr[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
-      const ms = API.stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
@@ -262,7 +259,7 @@
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
-          for (const [o0, o1] of SB.edges(i, j, [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]])) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
+          for (const [o0, o1] of [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
           for (const [o0, o1] of [[-0.21, -0.09], [0.09, 0.21]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ylw, ylw, ylw, ylw]);
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j], sc = onBr[i] ? deck : gc;
@@ -272,7 +269,6 @@
               else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
-        SB.emit(c0, c0 + 60, gr, gs, gl);   // (the side roads whose junctions are in this chunk)
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
       }
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];   // chequered start and finish lines, a white line at each checkpoint
@@ -285,7 +281,6 @@
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
     const scen = new Chunks(110), fac = new Chunks(110, true), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (fac: the walls with windows; ban: the race's boards, ban2: the signs)
-    out.stubStats = API.stubProps({ scen, out, root, gH: caGround, loc: { closed: 'ESTRADA FECHADA', gate: 'FECHADO' }, posts: 'none' });   // the side roads' cones, the rails at their ends
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.12, 0.55, 0.3], [0.96, 0.82, 0.12], [0.95, 0.95, 0.95], [0.14, 0.26, 0.62], [0.84, 0.14, 0.12], [0.2, 0.62, 0.38], [0.98, 0.86, 0.2], [0.12, 0.14, 0.2], [0.46, 0.7, 0.92], [1, 0.55, 0.1]];
     const CR = crowdCtx({ gH: caGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: (x, z) => vrWater(x, z).e > -4, shirts: fans }), crSoft = new Set();
@@ -393,7 +388,6 @@
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || onBr[i]) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
-        API.stubRails(nd, side);   // (open across the side roads' mouths)
         nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
         for (let i = 0; i < N - 1; i++) {
@@ -567,7 +561,7 @@
     }
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'rastro', { gH: caGround, slope: caSlope, near: vrNear, lc: vrLC, prof: (i, sd) => vp[sd > 0 ? 1 : 0][i] });   // (the roadside ground for the chase camera: js/world-chase-bt15.js)
-    out.stats = { trees: nTrees, araucarias: nArauc, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length, sideRoads: out.stubStats.n };   // (read by the tests)
+    out.stats = { trees: nTrees, araucarias: nArauc, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
     return out;
   }
 

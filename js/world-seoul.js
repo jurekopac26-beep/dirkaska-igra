@@ -98,9 +98,8 @@
         if (dd > 1) v = lerp(v, nrFar(x, z), sstep(2, 60, dd));
         return dd < 6 ? Math.min(v, hn - 0.3 + 0.12 * dd * dd) : v;
       }
-      return API.STG ? API.vrStubH(x, z, h, API.NRN.dd) : h;   // (the side roads: the ground levelled under them)
+      return h;
     };
-    API.vrStubs(); API.stubExcl(exclPush);   // the side roads (def.sideRoads, OSM): their table; nothing grows or stands on them
     // the ground's colours: the woods' floor of needles and leaves, the park's lawns, the town's paving, the grass of the open slopes; bare earth
     // on the steep banks
     P.colFn = (x, z, ny, dd, cov, o) => {
@@ -122,19 +121,15 @@
     const RC = 128, tileL = 8, secT = new Float32Array(N), WL = [0.9, 0.9, 0.86];
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 30 + Math.floor(crH(k, 3, 71) * 50), t = 0.9 + crH(k, 5, 71) * 0.14; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.78 - 0.1 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
-    const sMat = new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true });   // (the side roads' gravel)
-    const SB = API.stubGeo({ gCol: API.nrGCol, paveC: [0.78, 0.78, 0.79], gravC: [0.7, 0.66, 0.6], shC: [0.7, 0.66, 0.6], line: 'solid' });   // the side roads (their mouths; their surfaces below)
     for (let c0 = 0; c0 < N - 1; c0 += RC) {
       const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1;
       for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
         const w = T.wAt(i), offs = [-w, -w / 2, 0, w / 2, w], v = i * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o, w)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, 4); pr = r;
         const l = gl.row([Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)], [WL, WL, WL, WL]);
-        if (pl >= 0) { if (SB.edgeOn(0, i - 1, i)) gl.link(pl, l, 0, 1); if (SB.edgeOn(1, i - 1, i)) gl.link(pl, l, 2, 3); } pl = l;   // (no edge line across a side road's mouth)
+        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
       }
       addM(gr, aMat); addM(gl, lMat);
-      const ga = new GB(true), gs = new GB(true), gk = new GB(); SB.emit(c0, c0 + RC, ga, gs, gk);   // (the side roads whose junctions are in this chunk)
-      addM(ga, aMat); addM(gs, sMat); addM(gk, lMat);
     }
     const CROSS = SD.cross.map(([s, sig]) => ({ s, sig }));
     const nearCross = (s, m) => CROSS.some(c => Math.abs(c.s - s) < m);
@@ -172,7 +167,6 @@
     for (let c0 = 0; c0 < N - 1; c0 += RC) {
       const gr = new RB();
       for (const side of [-1, 1]) for (let i = c0; i < Math.min(c0 + RC, N - 1); i++) {
-        if (T.gap && (T.gap[side > 0 ? 1 : 0][i] || T.gap[side > 0 ? 1 : 0][i + 1])) continue;   // (the blocks open across a side road's mouth)
         const j = i + 1, s0 = i * ds, blk = Math.floor(s0 / 2) % 2, bi = bar(i, side), bj = bar(j, side);
         const top = bend[i] ? (blk ? RED : WHT) : (blk ? CON : CON.map(v => v * 0.93)), face = bend[i] ? top : (blk ? COND : COND.map(v => v * 0.95));
         let p = [Pt(i, side * (bi + 0.1), -0.4), Pt(i, side * (bi + 0.1), 0.82), Pt(i, side * (bi + 0.6), 0.82)], q = [Pt(j, side * (bj + 0.1), -0.4), Pt(j, side * (bj + 0.1), 0.82), Pt(j, side * (bj + 0.6), 0.82)];
@@ -186,21 +180,19 @@
       const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
       for (let c0 = 0; c0 < N - 1; c0 += RC) { const gf = new RB(true);
         for (const side of [-1, 1]) { let pr = -1;
-          for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) { if (T.gap && T.gap[side > 0 ? 1 : 0][i]) { pr = -1; continue; } const o = side * (bar(i, side) + 0.35), acc = i * ds;   // (the fence open there too)
+          for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) { const o = side * (bar(i, side) + 0.35), acc = i * ds;
             let p = [Pt(i, o, 0.8), Pt(i, o, 3.4)]; if (side < 0) p = p.reverse();
             const r = gf.row(p, [W1, W1], [[acc / 3, 0], [acc / 3, 1]]); if (pr >= 0) gf.link(pr, r, 0, 1); pr = r; } }
         addM(gf, fMat); }
     }
     const scen = new Chunks(192);
-    out.stubStats = API.stubProps({ scen, out, root, gH: nrGround, loc: { closed: '도로 폐쇄', gate: '폐쇄' }, posts: 'none' });   // the side roads' cones, the rails at their ends
     for (const [i, sg] of [[0, -1], [N - 1, 1]]) { const ex = T.px[i] + T.tx[i] * sg * 1.0, ez = T.pz[i] + T.tz[i] * sg * 1.0;
       for (let o = -T.bl[i]; o <= T.br[i]; o += 2.05) { const bx = ex + T.nx[i] * o, bz = ez + T.nz[i] * o; box(scen.get(bx, bz), bx, T.hy[i] - 0.1, bz, 0.7, 0.92, 1.95, T.hd[i], [0.8, 0.8, 0.78], CON); } }
 
     /* ---- the verges between the asphalt and the blocks and a little beyond: a concrete kerb, then the ground's own colours (the woods' floor,
        the lawns, the town's paving), lifted onto the ground where it rises ---- */
     const vergeRow = (i, side) => {
-      const w = T.wAt(i), b = bar(i, side), ms = API.stubVerge(SB, i, side, w, b); if (ms) return ms;   // (a side road's mouth: the verge at its surface)
-      const y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
+      const w = T.wAt(i), b = bar(i, side), y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
       return [[w, 0.0], [w + 0.5, 0.05], lift(Math.max(w + 0.9, b - 0.2), 0.0), lift(b + 0.8, 0.0), lift(b + 3.0, -0.12)];
     };
 
@@ -556,7 +548,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, landmarks: nMark, wall: Math.round(nWall), lamps: nLamp, stops: nStop, towers: nTower, fans: nFans, sideRoads: out.stubStats.n };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, landmarks: nMark, wall: Math.round(nWall), lamps: nLamp, stops: nStop, towers: nTower, fans: nFans };   // (read by the tests)
     return out;
   }
 

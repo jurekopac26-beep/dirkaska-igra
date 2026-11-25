@@ -114,8 +114,7 @@
       if (sd > 0) h = Math.min(h, SEA - 0.6 - Math.min(sd, 70) * 0.07);   // the sea's floor, deeper away from the shore
       else if (sd > -30) h = Math.max(h, SEA + 0.4 + Math.min(-sd, 30) * 0.03);   // (the shore stays above the water)
       const fw = fortW(x, z); if (fw > 0) h = lerp(h, nrDem(x, z), fw);
-      return API.STG ? API.vrStubH(x, z, h, API.NRN.dd) : h; };   // (the side roads: the ground levelled under them)
-    API.vrStubs(); API.stubExcl(exclPush);   // the side roads (def.sideRoads, OSM): their table; nothing grows or stands on them
+      return h; };
     // the ground's colours (the coast of Kenya): the red earth and ochre dust, dry grass in patches, the trees' canopy farther
     // out and the leaf litter under the crowns near the road, the dust of the town, the red rock of the steep banks, the sand of the beaches
     P.colFn = (x, z, ny, dd, cov, o) => {
@@ -159,8 +158,6 @@
     };
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 37) * 70), t = 0.9 + crH(k, 5, 37) * 0.15; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
-    const sMat = new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true });   // (the side roads' gravel)
-    const SB = API.stubGeo({ gCol: API.nrGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.86, 0.7, 0.54], shC: [0.86, 0.7, 0.54], line: 'solid' });   // the side roads (their mouths; their surfaces below)
     for (let c0 = 0; c0 < N - 1; c0 += RC) {
       const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1, pc = 0;
       for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
@@ -169,12 +166,10 @@
         const wl = [0.9, 0.9, 0.86], cl = CL ? CL[i] : 0, lp = [Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)];
         if (cl) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));
         const l = gl.row(lp, lp.map(() => wl));
-        if (pl >= 0) { if (SB.edgeOn(0, i - 1, i)) gl.link(pl, l, 0, 1); if (SB.edgeOn(1, i - 1, i)) gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;   // (no edge line across a side road's mouth)
+        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
       }
       for (const q of xk.get(c0 / RC) || []) layX(gl, q);
       addM(gr, aMat); addM(gl, lMat);
-      const ga = new GB(true), gs = new GB(true), gk = new GB(); SB.emit(c0, c0 + RC, ga, gs, gk);   // (the side roads whose junctions are in this chunk)
-      addM(ga, aMat); addM(gs, sMat); addM(gk, lMat);
     }
     {   // the chequered lines: the start, the finish
       const gq = new GB(true), HYp = (p) => T.hy[p[3]];
@@ -205,7 +200,6 @@
         let prev = -1, pk = -1;
         for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
           const k = kindAt(i);
-          if (T.gap && T.gap[side > 0 ? 1 : 0][i]) { prev = -1; continue; }   // (the barrier open across a side road's mouth)
           if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, i, side, pk), 0, 3); prev = -1; }
           const r = wallRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
         }
@@ -213,7 +207,6 @@
       addM(gr, rMat, true);
     }
     const scen = new Chunks(128);
-    out.stubStats = API.stubProps({ scen, out, root, gH: nrGround, loc: { closed: 'ROAD CLOSED', gate: 'CLOSED' }, posts: 'none' });   // the side roads' cones, the rails at their ends
     for (const [i, dir] of [[0, -1], [iE, 1]]) {   // (the barrier across the road at each end: Core's invisible end walls made visible)
       const eX = T.px[i] + T.tx[i] * 1.2 * dir, eZ = T.pz[i] + T.tz[i] * 1.2 * dir;
       for (let o = -T.bl[i]; o <= T.br[i]; o += 2.05) { const bx = eX + T.nx[i] * o, bz = eZ + T.nz[i] * o; box(scen.get(bx, bz), bx, T.hy[i] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[i], [0.78, 0.77, 0.74], [0.86, 0.85, 0.82]); }
@@ -229,8 +222,7 @@
 
     /* ---- the verges between the asphalt, the barriers and the terrain (lifted onto the ground where it rises) ---- */
     const vergeRow = (i, side) => {
-      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], ms = API.stubVerge(SB, i, side, w, bar); if (ms) return ms;   // (a side road's mouth: the verge at its surface)
-      const y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
+      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
       return [[w, 0.0], [w + 0.8, -0.04], lift(Math.max(w + 1.2, bar - 0.3), -0.08), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
     };
 
@@ -474,7 +466,7 @@
     const rob = World.ext.mombasaRob ? World.ext.mombasaRob({ scen, excluded, seaD, inFort, root, out }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob, sideRoads: out.stubStats.n };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
     return out;
   }
 
