@@ -111,6 +111,13 @@
   "maxKverts": 448,
   "jsMs": 0.94
  },
+ "limalimo": {
+  "calls": 155,
+  "maxCalls": 186,
+  "kverts": 380,
+  "maxKverts": 465,
+  "jsMs": 0.87
+ },
  "silkeborg": {
   "calls": 246,
   "maxCalls": 295,
