@@ -288,6 +288,8 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - **Rezervni načrt, ko račun obstane (odločitev uporabnika 25. 11. 2026 ob ~19.40; tabla #382):** vsaka vrstica v `docs/vrsta.md` ima poleg stolpca »Račun« še »Rezerva« (drug račun, vpiše ga Matej ali koordinacija lastnika). Ko račun obstane (poraba pred resetom, ni sej, ustavitev), Matej na #382 objavi »<račun> stoji do <čas>« in teme preda rezervi s predajo (prva vrstica PR »Lastnik: rezerva, od datuma«); po resetu se lastnik vrne samo s predajo. Brez vpisane rezerve prevzame račun, ki je najbolj pod ciljem porabe. Trki #608: rezerva partyslo.
 
 - **partyslo do 20 sej (odločitev uporabnika 25. 11. 2026 ob ~22.25):** izjema od meje 10: partyslo sme do četrtka 26. 11. ob 3.00 imeti do 20 sej s kodo (Opus, Sonnet; brez Fable), da doseže 100 24 h pred resetom; od 3.00 spet do 10.
+- **Nove proge samo s potrjenega seznama (odločitev uporabnika 25. 11. 2026 ob ~22.58; tabla #382):** #1092–#1097 (Stavrovouni, Kudowa-Zdrój, Meteora, Šipka, Trebević, Tatev) ustavljeni, ostanejo osnutki brez dela; proge do 70 samo #788 (Kali Gandaki, Musandam, Limalimo, Darvaz, Mujib), rezervi #1090 in #1091 po #788.
+- **Grafika prog partyslo počaka na Fable (odločitev uporabnika 25. 11. 2026 ob ~23.15):** dodelava prog do ravni Pikes Peaka pri partyslo šele po resetu v petek 27. 11. ob 3.00, na Fable, samo proge zunaj skupin biketravelerja; prej ne na Opusu.
 
 ### Seje
 - **Nov Matej vsak dan** ob 5.00 s kratko predajo (stari se ustavi; model in napor ostaneta). Velike izpise (`list_sessions`, stanje PR) bere majhen pomočnik in vrne do 5 vrstic; ob 5.00 uporabnik dobi seznam PR s povezavami, po njegovem »ok« PR do `main` pripelje seja Združevanje (`docs/varcevanje.md`, »Manj sklopov 2. del«).
