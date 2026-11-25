@@ -1,0 +1,59 @@
+{
+  "id": "kudowa",
+  "about": "Kudowa-Zdrój, Poljska (id kudowa): the lower part of the Road of a Hundred Bends (DW387, Droga Stu Zakrętów) in the Stołowe Mountains, downhill through the forest along the Trzemeszna stream to Kudowa Górna, point to point (docs/proge-po-drzavah.md, Poljska)",
+  "box": [
+    50.435,
+    16.255,
+    50.475,
+    16.34
+  ],
+  "closed": false,
+  "dist": {
+    "grid": 160
+  },
+  "route": [
+    [
+      50.46435,
+      16.32187,
+      "",
+      "the run-up: 160 m back up the same road"
+    ],
+    [
+      50.46428,
+      16.31964,
+      "",
+      "start: forest above Kudowa (725 m)"
+    ],
+    [
+      50.45992,
+      16.30453,
+      "",
+      ""
+    ],
+    [
+      50.45205,
+      16.29491,
+      "",
+      ""
+    ],
+    [
+      50.45102,
+      16.27896,
+      "",
+      ""
+    ],
+    [
+      50.44749,
+      16.27079,
+      "",
+      "finish: Kudowa Górna (439 m)"
+    ]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [
+    "Trzemeszna"
+  ],
+  "marks": [],
+  "places": []
+}
