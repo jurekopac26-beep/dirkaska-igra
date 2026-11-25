@@ -135,5 +135,5 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(only || DEL !== 'vse' ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
+if (update) { fs.writeFileSync(FILE, JSON.stringify(Object.assign({}, golden, out), null, 1) + '\n'); console.log('written ' + FILE); }   // (the tracks not measured, the test ones such as Longyearbyen, keep their references)
 else T.done();

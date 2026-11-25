@@ -746,7 +746,7 @@
       for (const o of [-Wd / 2 + 0.2, Wd / 2 - 0.2]) box(g, x + nx * o + T.tx[i] * 0.16, y - 0.3, z + nz * o + T.tz[i] * 0.16, 0.1, y0 + H + 0.3, 0.1, T.hd[i], [0.55, 0.56, 0.58]);
       board(x, y + y0, z, T.tx[i], T.tz[i], Wd, H, cellK); exclPush(x, z, 3);
     };
-    const CR = crowdCtx({ gH: nrGround, near: (x, z) => (rbNear(x, z), RBN.dd), maxSlope: 0.9, shirts: LK.shirts });   // spectators (instanced)
+    const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.9, shirts: LK.shirts });   // spectators (instanced; nrNear, not rbNear: the worlds' LK.pad read its API.NRN, Biķernieki)
     const PADS = typeof LK.pads === 'function' ? LK.pads(def) : LK.pads;
     if (PADS && PADS.length) {   // (Aguascalientes: the infield's roads off the lap, [{ p: [x, z, ...], hw, k }], flat asphalt ribbons on the ground, resampled every 3 m: no trees, farms or crowds on them; cut short at the barriers and off the level pits)
       const gp = new RB(true);
@@ -1451,9 +1451,8 @@
           const cl = nrLC(x, z), far = rd > 70;
           const p = WD ? WD.p[cl] : RIO ? RIO_TP[cl] : AU ? (cl === 1 ? (LK.trees === 'bt' ? 0.42 : 0.55) : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
-          if (excluded(x, z)) continue;   // (before rbNear: both pure, the cheaper first)
-          if (rd < 48 && rbNear(x, z) >= 0 && (RBN.dd < 3.5 || (RBN.dd < 8 && r2 < 0.4))) continue;
-          if ((P.pad(x, z, 0) !== 0 && !(LK.padTrees && LK.padTrees(x, z))) || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon; LK.padTrees: trees on a world's own pad: Lombok's stream swales)
+          if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue; }   // (nrNear, not rbNear: the worlds' LK.pad below read its API.NRN, Pembrey, Kågeröd, Biķernieki)
+          if (excluded(x, z) || (P.pad(x, z, 0) !== 0 && !(LK.padTrees && LK.padTrees(x, z))) || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon; LK.padTrees: trees on a world's own pad: Lombok's stream swales)
           const y = nrGround(x, z); let sp, hgt, wid;
           if (WD) [sp, hgt, wid] = WD.pick(cl, R, far, x, z);
           else if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);

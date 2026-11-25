@@ -23,7 +23,8 @@ let WORLD_OWN = [];
 
 // datoteke svetov v vrstnem redu index.html (podatki js/data/<x>.js gredo z js/world-<x>.js)
 export function worldFiles(html = rd('index.html')) {
-  const re = /<(?:script\b[^>]*\bsrc|link\b[^>]*\bdata-svet="[^"]*"[^>]*\bhref)="(js\/(?:world-[a-z0-9]+|data\/[a-z0-9]+)\.js)[^"]*"/g;
+  // (also js/world-<ime>-<dodatek>.js: ob progi, chase-bt…, dolina-bt, ki ob nalaganju ovijejo kljuke drugih svetov)
+  const re = /<(?:script\b[^>]*\bsrc|link\b[^>]*\bdata-svet="[^"]*"[^>]*\bhref)="(js\/(?:world-[a-z0-9]+(?:-[a-z0-9]+)*|data\/[a-z0-9]+)\.js)[^"]*"/g;
   const out = [];
   for (const m of html.matchAll(re)) if (!out.includes(m[1])) out.push(m[1]);
   return out;
@@ -48,8 +49,9 @@ export function analyse(html) {
   { const w = rd('js/world.js'), at = w.lastIndexOf('return { build,'); WORLD_OWN = at >= 0 ? objKeys(w, at) : []; }
   const files = worldFiles(html);
   const provides = {}, uses = {}, themes = {}, dataOf = {};
+  const srcOf = {};
   for (const f of files) {
-    const src = rd(f);
+    const src = srcOf[f] = rd(f);
     const p = new Set();
     for (const m of src.matchAll(/Object\.assign\(\s*(?:World\.)?API\s*,/g)) objKeys(src, m.index + m[0].length).forEach(k => p.add(k));
     for (const m of src.matchAll(/Object\.defineProperties\(\s*(?:World\.)?API\s*,/g)) objKeys(src, m.index + m[0].length).forEach(k => p.add(k));
@@ -78,9 +80,25 @@ export function analyse(html) {
   for (const m of worldSrc.matchAll(/Object\.(?:assign|defineProperties)\(\s*API\s*,/g)) objKeys(worldSrc, m.index + m[0].length).forEach(k => core.add(k));
   const owner = {};
   for (const f of files) for (const k of provides[f]) if (!core.has(k) && !(k in owner)) owner[k] = f;
+  // ovite kljuke (ob nalaganju): datoteka, ki bere API.rbLook (videz skupnega graditelja, ki ga mnoge datoteke ob zagonu ovijejo: rbLook.<id>.extra),
+  // rabi vse, ki ga postavijo; datoteka, ki bere World.ext.<tema> ali World.ext[…] z imeni tem v narekovajih (js/world-dolina-bt.js IDS),
+  // rabi graditelje teh tem — sicer bi ovila prazno in svet bi bil drugačen kot ob zagonu
+  const rbProv = files.filter(f => /\brbLook\s*=\s*Object\.assign\(/.test(srcOf[f]));
+  // videz prelaza: kdor bere PL_LOOK.<id> ob nalaganju (js/world-medeu-obcestje.js), rabi datoteko, ki ga postavi (API.PL_LOOK.medeu = {…})
+  const plOwner = {};
+  for (const f of files) for (const m of srcOf[f].matchAll(/\bPL_LOOK\.([a-z0-9_]+)\s*=(?!=)/g)) if (!(m[1] in plOwner)) plOwner[m[1]] = f;
+  const wrapDeps = {};
+  for (const f of files) {
+    const src = srcOf[f], w = new Set();
+    for (const m of src.matchAll(/\bPL_LOOK\.([a-z0-9_]+)\b(?!\s*=(?!=))/g)) if (plOwner[m[1]]) w.add(plOwner[m[1]]);
+    if (/\brbLook\b/.test(src) && !rbProv.includes(f)) rbProv.forEach(x => w.add(x));
+    for (const m of src.matchAll(/\bWorld\.ext\.([a-z0-9_]+)\b(?!\s*=(?!=))/g)) if (themes[m[1]]) w.add(themes[m[1]]);
+    if (/\bWorld\.ext\[[^\]]+\](?!\s*=(?!=))/.test(src)) for (const m of src.matchAll(/'([a-z0-9_]+)'/g)) if (themes[m[1]]) w.add(themes[m[1]]);
+    w.delete(f); wrapDeps[f] = w;
+  }
   const deps = {};
   for (const f of files) {
-    const d = new Set();
+    const d = new Set(wrapDeps[f]);
     for (const k of uses[f]) { const o = owner[k]; if (o && o !== f) d.add(o); }
     if (dataOf[f]) d.add(dataOf[f]);
     deps[f] = d;
@@ -112,12 +130,12 @@ export function manifest(html) {
     need[id] = order(s);
     if (t.frozen) s.forEach(x => eager.add(x));
   }
+  // datoteke brez proge (pomočniki, npr. zastave, cesta, ljudje, zaslon, ovijalci kljuk: chase-bt…, ob progi) ostanejo ob zagonu
+  const used = new Set(Object.values(need).flat());
+  for (const f of A.files) if (!used.has(f)) eager.add(f);
   // datoteke, ki jih rabi datoteka ob zagonu, so tudi ob zagonu (ob nalaganju ali gradnji) — do konca
   let grew = true;
   while (grew) { grew = false; for (const f of [...eager]) for (const d of A.deps[f]) if (!eager.has(d)) { eager.add(d); grew = true; } }
-  // datoteke brez proge (pomočniki, npr. zastave, cesta, ljudje, zaslon) ostanejo ob zagonu
-  const used = new Set(Object.values(need).flat());
-  for (const f of A.files) if (!used.has(f)) eager.add(f);
   const lazy = A.files.filter(f => !eager.has(f));
   const real = {}, svet = {};
   for (const [id, t] of Object.entries(T)) if (!t.frozen) {
@@ -127,7 +145,8 @@ export function manifest(html) {
   // lena datoteka rabi samo datoteke ob zagonu in lene pred seboj, ki se naložijo za iste teme (World.need jih naloži po vrsti)
   const problems = [];
   for (const f of lazy) for (const d of A.deps[f]) if (!eager.has(d)) {
-    if (A.files.indexOf(d) > A.files.indexOf(f)) problems.push(f + ' rabi ' + d + ', ki je za njo');
+    // (datoteka za njo: na strani se vse naloži po vrsti, zato jo lahko rabi samo ob gradnji, npr. World.killarObcestje iz
+    // js/world-killar-obcestje.js; dovolj je, da se naloži za iste teme, World.need počaka obe)
     for (const th of svet[f] || []) if (!(svet[d] && svet[d].has(th))) problems.push(f + ' (' + th + ') rabi ' + d + ', ki se za ' + th + ' ne naloži');
   }
   const themes = {}; for (const f of lazy) themes[f] = [...(svet[f] || [])].sort();
