@@ -1,6 +1,6 @@
 // Zabava · 6 · Ti loviš (docs/zabava.md, c; docs/police-chase.md): a mode of its own (lov: in the menu Police chase, the side Police) on
 // every open road with traffic: the run from the police the other way round. The player's car is a patrol car, white like the ones in the
-// run (lights, siren, the traffic pulls over for it: Traffic._siren), the fugitive an AI car up the road at the start (the rivals' own code
+// run (lights, siren, the traffic pulls over for it: Traffic._siren), the fugitive a red AI car up the road at the start (the rivals' own code
 // drives it), racing away through traffic as thin as in the run (tfDens). Caught: fill s in all within near m of it (a knock counts more);
 // it pulls over and stops. Escaped: farT s on end more than 400 m ahead, or over the finish, or the 3:00 are up. By the difficulty (KD,
 // after POL_DIFF in js/core.js turned round): the head start, near, fill and farT; Normal is K. Under the line a meter (h-lovm): the arrest
@@ -24,6 +24,7 @@
       race.zbMode = 'lov'; race.zbLov = true;
       const P = race.player; P.police = true; P.pol = { mode: 'chase', kind: 'car', t: 0 };   // (the patrol car's look and siren; the traffic makes way for it)
       P.color = 0xf2f4f6;   // (white, as the patrol cars in the run from the police: Police._car; before the cars are drawn)
+      const o = race.cars.find(c => c !== P); if (o) o.color = 0xd81f45;   // (the fugitive red: its driver's own, AI_COLORS[0], is near white, too like the patrol)
     },
     begin(race) {
       this.st = null;

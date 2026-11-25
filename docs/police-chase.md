@@ -30,12 +30,14 @@ Fizika vožnje in vožnja obstoječih tekmecev se ne spremenita (golden testi di
 | Super hard | 190 m | 12 m | 7,5 s | 7 s |
 
   Razmerja iz `POL_DIFF` obrnjeno (ujet 3 / 2,5 / 2 / 1,6 s, skrit 14 / 18 / 22 / 26 s). Begunca vozi obstoječa koda tekmecev (`aiControl`), njegova spretnost že sledi težavnosti (`DIFF`); te kode ni bilo treba spreminjati. Spletni Pregon s prijatelji (`js/zabava/beg.js`) ostane pri `K`.
-- **Bela patrulja**: igralčev avto v `lov` dobi belo barvo patrulj iz bega (`0xf2f4f6`, `Police._car`), trak POLICIJA in luči kot doslej (`polGear`).
+- **Bela patrulja, rdeč begunec**: igralčev avto v `lov` dobi belo barvo patrulj iz bega (`0xf2f4f6`, `Police._car`), trak POLICIJA in luči kot doslej (`polGear`). Begunec je rdeč (`0xd81f45`): njegova barva (`AI_COLORS[0]`) je skoraj bela, preveč podobna patrulji.
 - **Merilnik pod vrstico** (`#h-lovm`, `css/zabava.css`): zelen = aretacija, rdeč = čas, ki ga ima begunec še do pobega.
 - **Testi**: `tests/zabava.test.js`, 8 (stopnje, prednost, ujetje, pobeg, promet, barva, `beg.js`).
 
 ## Odločitve (stran Odločitve croatiadata, do odgovora velja priporočena)
 
-1. **Pravila ujetja**: 1 po težavnosti (zgoraj; priporočeno), 2 enaka na vseh stopnjah (kot pred to temo), 3 zrcalo bega (skoraj stoji, manj kot 9 m, 3 / 2,5 / 2 / 1,6 s).
-2. **Prikaz na zaslonu**: 1 samo vrstica pod uro (kot pred to temo), 2 vrstica in merilnik (priporočeno).
-3. **Videz policijskega avta**: 1 igralčeva barva s trakom in lučmi (kot pred to temo), 2 bel kot patrulje v begu (priporočeno).
+Slike možnosti so samo na strani Odločitve (repozitorij je javen).
+
+1. **Pravila ujetja** (`police-pravila`): 1 po težavnosti (zgoraj; priporočeno), 2 enaka na vseh stopnjah (kot pred to temo), 3 zrcalo bega (skoraj stoji, manj kot 9 m, 3 / 2,5 / 2 / 1,6 s).
+2. **Prikaz na zaslonu** (`police-prikaz`): 1 samo vrstica pod uro (kot pred to temo), 2 vrstica in merilnik (priporočeno).
+3. **Videz** (`police-videz`): 1 igralčeva barva s trakom in lučmi, begunec skoraj bel (kot pred to temo), 2 bela patrulja, begunec skoraj bel (avta sta si podobna), 3 bela patrulja, rdeč begunec (priporočeno).

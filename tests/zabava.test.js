@@ -330,7 +330,7 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   const rT = mkD(1), nT = rT.tf.veh.length, o1 = Object.assign({ playerGrid: 2, laps: 1, phys: 'cs', seed: 4, playerModel: C.MODELS[4], assist: 2, difficulty: 1, chars: true }, lov.opts(ctx)); delete o1.tfDens;
   const n1 = new C.Race(T, o1).tf.veh.length;
   check('the traffic as thin as in the run from the police (tfDens 0.85): fewer vehicles than in the duel in the traffic', lov.opts(ctx).tfDens === 0.85 && nT > 0 && nT < n1, nT + ' / ' + n1);
-  check('the patrol car white, as the ones in the run from the police', rT.player.color === 0xf2f4f6 && rT.player.police);
+  check('the patrol car white, as the ones in the run from the police; the fugitive red (its own near white, as the patrol)', rT.player.color === 0xf2f4f6 && rT.player.police && rT.cars.find(c => c !== rT.player).color === 0xd81f45);
   check('the online pursuit keeps its rules (beg.js copies lov.K: unchanged)', K0 === kv(lov.K) && kv(beg.K || lov.K) === K0, kv(beg.K || {}));
   lov.stop();
 }
