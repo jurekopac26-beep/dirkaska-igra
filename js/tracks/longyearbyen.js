@@ -8,7 +8,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // the traffic and a run from the police.
   TRACK_DEFS.push({
     maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line ends 120 m on at Nybyen; a bigger field's parking would stand car on car (the game's own 21 fit)
-    id: 'longyearbyen', name: 'Longyearbyen, Norveška', theme: 'longyearbyen', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 3.5,
+    id: 'longyearbyen', test: true, name: 'Longyearbyen, Norveška', theme: 'longyearbyen', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 3.5,
     desc: 'Longyearbyen (Norveška): na Svalbardu, pozimi po obali Adventfjordna, skozi središče mesta in po dolini Longyeardalen navzgor do Nybyna pod ledenikom. 4,3 km po steptanem snegu, 110 m vzpona, med lesenimi hišami in cevmi daljinskega ogrevanja na kolih. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Longyearbyen, Norway', desc: 'Longyearbyen (Norway): on Svalbard, in winter along the shore of Adventfjorden, through the town centre and up the Longyeardalen valley to Nybyen under the glacier. 4.3 km on packed snow, a 110 m climb, past wooden houses and district-heating pipes on stilts. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
     say: 'Longyearbyen',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
@@ -20,6 +20,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#16181c', text: '#f4f6f0' }, escTo: 'Do cilja',
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xc4d2dc, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0xd8dee6, hemiI: 0.7, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
+    // the co-driver's own notes (core paceNotes, def.notes: metres after the start line): the gentle bends of the OSM centre line that its
+    // grades do not reach (a radius of 140-280 m, 7-17 degrees), read 'flat' as on a quick road; the road has only three bends of its own
+    notes: [[318, 348, 'flat L'], [638, 688, 'flat R'], [1806, 1856, 'flat R'], [3106, 3180, 'flat L'], [3764, 3820, 'flat R'], [3854, 3938, 'flat L']],
     names: [],
     comm: {
       introPass: ["Welcome to {track}, far up on Svalbard! {cars} cars on the snow, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
