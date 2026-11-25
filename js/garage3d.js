@@ -4320,7 +4320,12 @@ const Garage3D = (function () {
       else if (Math.abs(x - cx) <= Math.max(44, r.w) / 2 && Math.abs(y - cy) <= Math.max(44, r.h) / 2) { const e = Math.hypot(x - cx, y - cy); if (e < nd) { nd = e; near = it; } } }
     if (!best && near) { best = near; bd = screenBox(near).d; }
     const cv = cur; if (cv) { _rv2.set(x / W * 2 - 1, 1 - y / H * 2); _rc.setFromCamera(_rv2, camera); const hit = _rc.intersectObject(cv.v.grp, true).find(h => h.object.visible);
-      if (hit && hit.distance < bd - 0.3) { const p = hit.point, w = cv.wheels.find(w => cv.v.grp.localToWorld(_pk.set(w.x, w.y, w.z)).distanceTo(p) < w.r * 1.15); return { key: w ? 'car:wheel' : 'car:body', kind: 'car' }; } }
+      if (hit && hit.distance < bd - 0.3) { const p = hit.point, bq = bayHit(hit.object); if (bq) return { key: 'car:el', kind: 'car', el: bq, part: 'hood' };   // (a part in the open bay: its menu, the bonnet stays up)
+        const w = cv.wheels.find(w => cv.v.grp.localToWorld(_pk.set(w.x, w.y, w.z)).distanceTo(p) < w.r * 1.15);
+        if (w) { const q = cv.v.grp.worldToLocal(_pk.copy(p)); return Math.hypot(q.x - w.x, q.y - w.y) < w.r * 0.64 ? { key: 'car:el', kind: 'car', el: 'platisca' } : { key: 'car:wheel', kind: 'car' }; }   // (the rim's disc: the rims; its rubber: the tyres)
+        const pt = hit.object === cv.v.body && hit.faceIndex != null ? partAt(cv, hit.faceIndex * 3) || partGuess(cv, p) : null; if (pt) return pt[0] === 'car:el' ? { key: 'car:el', kind: 'car', el: pt[1] } : { key: pt[0], kind: 'car', part: pt[1] };
+        const ge = grpEl(cv, hit.object, p); if (ge) return { key: 'car:el', kind: 'car', el: ge };
+        return { key: 'car:body', kind: 'car' }; } }
     return best ? { key: best.key, kind: best.kind, name: best.name, i: best.i, hex: best.hex, el: best.el } : null; }
   /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
   // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): a pass (REF.gm) then writes the image again into REF.gt
@@ -5539,7 +5544,7 @@ const Garage3D = (function () {
     if (swapP) { swapNext = spec; return swapP; }   // (one waiting already: it drives in this car instead; quick taps through the cars play one swap)
     swapNext = spec;
     return (swapP = play(function* () {
-      const spec = swapNext; swapNext = null; swapP = null; svcStop();
+      const spec = swapNext; swapNext = null; swapP = null; svcStop(); openShut();
       if (cur && cur.M === spec.M && cur.spec.color === spec.color && stripeK(cur.spec) === stripeK(spec) && deliKey(cur.spec) === deliKey(spec)) { if (spec.again) show(spec); return; }   // (again: shown as it is now)
       const old = cur, nw = makeCar(spec);
       // (the new car's shaders are made now, while the old one still stands: no stutter when it rolls in)
@@ -6577,6 +6582,131 @@ const Garage3D = (function () {
         if (dec && C.dec) { dec.position.copy(C.dec[0]); dec.quaternion.copy(C.dec[1]); if (th > 0) { dec.position.sub(Av).applyAxisAngle(Ua, t).add(Av); dec.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(Ua, t)); } } },
       close() { L.set(0); } };
     return L;
+  }
+  // A PANEL OPENED BY A TAP (the garage's menu of the hood, the doors, the boot lid, garage.js onTap): of a car drawn from a kit the range a
+  // vertex of its body is in: [the tap's key, the range's name] (a boot lid or a tailgate: car:trunk); null: none of those (or no kit)
+  const OPEN_KEY = { hood: 'car:hood', doorL: 'car:door', doorR: 'car:door', trunk: 'car:trunk', tailgate: 'car:trunk' };
+  function partAt(cv, vi) {
+    const G = cv.v.body && cv.v.body.geometry, U = G && G.userData; if (!U || !U.kit || !U.ranges || G.index) return null;
+    const inR = (R) => R && ((vi >= R.o[0] && vi < R.o[1]) || (R.i && vi >= R.i[0] && vi < R.i[1]));
+    for (const n in OPEN_KEY) if (inR(U.ranges[n])) return [OPEN_KEY[n], n];
+    for (const n in U.ranges) { const e = rangeEl(n); if (e && inR(U.ranges[n])) return ['car:el', e]; }   // (a part the shop sells: its element)
+    return null;
+  }
+  // (A PART OF THE CAR THE SHOP SELLS, tapped on the car (the garage's menu of that element, as its part on the regal or in a drawer, garage.js
+  // onTap; razširitev garaza-klik-deli, 24. 11.): a kit's range by its name; the bumpers, sills, lip and diffuser the aero kit's)
+  const RANGE_EL = [[/^head[LR]?$/, 'zarometi'], [/^tail[LR]?$/, 'zadnje_luci'], [/^(spoiler|wing|ducktail)/, 'krilo'], [/^(pipe|exhaust)/, 'auspuh'],
+    [/^(bumper|splitter|lip|diffuser|sill|skirt)/, 'aero'], [/^mirror/, 'ogledala'], [/^grille/, 'maska']];
+  function rangeEl(n) { for (const [re, e] of RANGE_EL) if (re.test(n)) return e; return null; }
+  // (a mesh of the car's parts groups (garage3d partsFor) tapped: the aero group's wing (at the back) or lip (at the front), the motor's tips)
+  function grpEl(cv, o, P) {
+    const P2 = cv.parts || {}; let k = null; for (let q = o; q && q !== cv.v.grp; q = q.parent) for (const n in P2) if (P2[n] === q) k = n;
+    if (!k) return null; const G = cv.v.body.geometry; if (!G.boundingBox) G.computeBoundingBox(); const b = G.boundingBox, fx = (cv.v.body.worldToLocal(_pk.copy(P)).x - b.min.x) / Math.max(0.5, b.max.x - b.min.x);
+    if (k === 'aero') return fx < 0.5 ? 'krilo' : 'aero';
+    if (k === 'motor') return fx < 0.3 ? 'auspuh' : null;
+    return null;
+  }
+  // (a car without a kit's panel there (no range of it: KOLIBRI, OSA, SOKOL): the part by where on its body the tap is (the body's frame, its front +x): the
+  // front fifth's top the hood, the rear sixth's the boot lid, the middle's side under the windows a door; the panel stays shut, the menu shows)
+  function partGuess(cv, P) {
+    const b = cv.v.body, G = b.geometry, U = G.userData || {}, has = (k) => !!U.kit && !!U.ranges && Object.keys(OPEN_KEY).some(n => OPEN_KEY[n] === k && U.ranges[n] && U.ranges[n].o[1] > U.ranges[n].o[0]);
+    const g = partZone(b, G, P); return g && !has(g[0]) ? g : null;   // (a kit's own panel there: the tap missed it, the body's paint)
+  }
+  function partZone(b, G, P) {
+    if (!G.boundingBox) G.computeBoundingBox(); const bb = G.boundingBox, q = b.worldToLocal(_pk.copy(P)), L = bb.max.x - bb.min.x, Hh = bb.max.y - bb.min.y, hw = Math.max(Math.abs(bb.min.z), Math.abs(bb.max.z));
+    if (!(L > 0.5) || !(Hh > 0.2)) return null; const fx = (q.x - bb.min.x) / L, fy = (q.y - bb.min.y) / Hh;
+    if (fx > 0.78 && fy > 0.45) return ['car:hood', null];
+    if (fx < 0.16 && fy > 0.45) return ['car:trunk', null];
+    if (fx > 0.3 && fx < 0.68 && fy > 0.2 && fy < 0.62 && Math.abs(q.z) > 0.7 * hw) return ['car:door', null];
+    return null;
+  }
+  // (a door or a boot lid on its hinge, as render.js kitLoosen puts it: a lid across at its edge by the car's middle, at its top there, up
+  // along its face; a door upright at its front edge on its outer face, outward; the parts on it, the start number on it go with it, the
+  // inside is drawn while it is open. set(th), close() as bonnet(); null: no such part)
+  function hinged(cv, name) {
+    if (name === 'hood') return bonnet(cv);
+    const v = cv.v, b = v.body, G = b && b.geometry, U = G && G.userData, R = U && U.ranges && U.ranges[name];
+    if (!U || !U.kit || !R || !(R.o[1] > R.o[0]) || G.index || !G.attributes.normal) return null;
+    const pa = G.attributes.position.array, na = G.attributes.normal.array, PT = typeof Core !== 'undefined' && Core.partsOf ? Core.partsOf(cv.M) : {}, VK = v.kit || {}, E = VK.E, dead = VK.dead || {};
+    const rs = [R.o]; if (R.i && R.i[1] > R.i[0]) rs.push(R.i); for (const n in U.ranges) if (PT[n] && PT[n].on === name && !dead[n]) { const Q = U.ranges[n]; rs.push(Q.o); if (Q.i) rs.push(Q.i); }
+    const H = U.__hg || (U.__hg = {}); let C = H[name]; if (!C) C = H[name] = { rs: rs.map(r => [r[0], r[1], pa.slice(r[0] * 3, r[1] * 3), na.slice(r[0] * 3, r[1] * 3)]), dr: G.drawRange.count };
+    const back = () => { for (const [a, , P, N] of C.rs) { pa.set(P, a * 3); na.set(N, a * 3); } };
+    back();
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, z0 = 1e9, z1 = -1e9, cz = 0; const N = [0, 0, 0], no = R.o[1] - R.o[0];
+    for (let i = R.o[0]; i < R.o[1]; i++) { const px = pa[i * 3], py = pa[i * 3 + 1], pz = pa[i * 3 + 2]; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; if (pz < z0) z0 = pz; if (pz > z1) z1 = pz;
+      cz += pz / no; N[0] += na[i * 3]; N[1] += na[i * 3 + 1]; N[2] += na[i * 3 + 2]; }
+    const door = name === 'doorL' || name === 'doorR', sd = cz < 0 ? -1 : 1, zo = sd < 0 ? z0 : z1, xin = Math.abs(x0) < Math.abs(x1) ? x0 : x1;
+    let A, B; if (R.hinge) { A = R.hinge[0]; B = R.hinge[1]; }
+    else if (door) { A = [x1, y0, zo]; B = [x1, y1, zo]; }
+    else { let ye = -1e9; for (let i = R.o[0]; i < R.o[1]; i++) if (Math.abs(pa[i * 3] - xin) < 0.06 && pa[i * 3 + 1] > ye) ye = pa[i * 3 + 1]; A = [xin, ye, -1]; B = [xin, ye, 1]; }
+    const u = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], ul = Math.hypot(u[0], u[1], u[2]); if (!(ul > 1e-6)) return null;
+    u[0] /= ul; u[1] /= ul; u[2] /= ul;
+    let rm = 0, r = [0, 0, 0];
+    for (let i = R.o[0]; i < R.o[1]; i++) { const qx = pa[i * 3] - A[0], qy = pa[i * 3 + 1] - A[1], qz = pa[i * 3 + 2] - A[2], qd = qx * u[0] + qy * u[1] + qz * u[2], px = qx - qd * u[0], py = qy - qd * u[1], pz = qz - qd * u[2], d = Math.hypot(px, py, pz);
+      if (d > rm) { rm = d; r = [px, py, pz]; } }
+    const m = [u[1] * r[2] - u[2] * r[1], u[2] * r[0] - u[0] * r[2], u[0] * r[1] - u[1] * r[0]], ml = Math.hypot(m[0], m[1], m[2]), nl = Math.hypot(N[0], N[1], N[2]), Nn = nl > 0.15 * no ? [N[0] / nl, N[1] / nl, N[2] / nl] : null;
+    let sg = 1; for (const Q of (door ? [[0, 0, sd], Nn] : [Nn, [0, 1, 0]]).filter(Boolean)) { const d = m[0] * Q[0] + m[1] * Q[1] + m[2] * Q[2]; if (Math.abs(d) > 0.2 * ml) { sg = Math.sign(d); break; } }
+    const Ua = new V3(u[0], u[1], u[2]), Av = new V3(A[0], A[1], A[2]);
+    const dec = v.dec && E && E.body && E.body.decalPart === name ? v.dec : null; if (dec && !C.dec) C.dec = [dec.position.clone(), dec.quaternion.clone()];
+    const L = { th: 0, G,
+      set(th) { L.th = th; back(); const t = sg * th, cs = Math.cos(t), sn = Math.sin(t);
+        if (th > 0) { const turn = (a, i, o) => { const qx = a[i] - o[0], qy = a[i + 1] - o[1], qz = a[i + 2] - o[2], d = (qx * u[0] + qy * u[1] + qz * u[2]) * (1 - cs);
+            a[i] = o[0] + qx * cs + (u[1] * qz - u[2] * qy) * sn + u[0] * d; a[i + 1] = o[1] + qy * cs + (u[2] * qx - u[0] * qz) * sn + u[1] * d; a[i + 2] = o[2] + qz * cs + (u[0] * qy - u[1] * qx) * sn + u[2] * d; }, O = [0, 0, 0];
+          for (const [a, e] of C.rs) for (let i = a; i < e; i++) { turn(pa, i * 3, A); turn(na, i * 3, O); } }
+        G.attributes.position.needsUpdate = true; G.attributes.normal.needsUpdate = true; G.setDrawRange(0, th > 0 ? U.N || C.dr : C.dr);
+        if (dec && C.dec) { dec.position.copy(C.dec[0]); dec.quaternion.copy(C.dec[1]); if (th > 0) { dec.position.sub(Av).applyAxisAngle(Ua, t).add(Av); dec.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(Ua, t)); } } },
+      close() { L.set(0); } };
+    return L;
+  }
+  // (the open one: its part, its hinge, how far (0..1) and where it goes; ~0.4 s each way, eased; a lid ~55 degrees, a door ~60)
+  const OPN = { cv: null, name: null, L: null, k: 0, to: 0 };
+  function openPart(name) {
+    if (!name) { OPN.to = 0; return false; }
+    if (OPN.L && OPN.cv === cur && OPN.name === name) { OPN.to = 1; return true; }
+    openShut();
+    const L = cur ? hinged(cur, name) : null; if (!L) return false;
+    Object.assign(OPN, { cv: cur, name, L, k: 0, to: 1 }); if (name === 'hood') bayBuild(cur, L); return true;
+  }
+  function openShut() { bayDrop(); if (OPN.L) { if (OPN.cv && OPN.cv.v && OPN.cv.v.body && OPN.cv.v.body.geometry === OPN.L.G) OPN.L.close(); shadowDirty = 2; } Object.assign(OPN, { cv: null, name: null, L: null, k: 0, to: 0 }); }
+  // THE OPEN BAY'S PARTS (razširitev garaza-klik-deli, 24. 11.): with the bonnet up its air filter, battery, chip, turbo and the two springs'
+  // tops (the struts by the front wheels) stand in the bay (bayObj's, a spring a coil on its mount), each tapped: its element's menu (pick);
+  // seen once the bonnet is half up, gone with it. Their places across the bay: t along it from the hinge to the free edge, z across (of its half width)
+  const BAY = { g: null, spots: [['turbo', 0.55, 0.15], ['filter_zraka', 0.74, -0.42], ['akumulator', 0.3, -0.6], ['cip', 0.28, 0.58], ['vzmeti', 0.66, 0.74], ['vzmeti', 0.66, -0.74]] };
+  function springObj() {
+    const w = new THREE.Group(), add = (g, m, y) => { const q = new THREE.Mesh(g, m); q.position.y = y; q.castShadow = true; w.add(q); return q; };
+    for (let i = 0; i < 5; i++) add(new THREE.TorusGeometry(0.058, 0.012, 6, 18).rotateX(Math.PI / 2), PM.red, -0.07 + i * 0.03);
+    add(new THREE.CylinderGeometry(0.07, 0.07, 0.016, 18), PM.black, 0.075); add(new THREE.CylinderGeometry(0.014, 0.014, 0.17, 8), PM.chrome, 0);
+    return { o: w, hs: new V3(0.07, 0.085, 0.07) };
+  }
+  function bayBuild(cv, L) {
+    bayDrop(); const b = cv.v.body, G = b.geometry, U = G.userData, pa = G.attributes.position.array; if (!L || !L.loc || !b.parent) return;
+    const top = (x, z) => { let y = -1e9; for (let i = U.outerN; i < U.outerN + U.engN; i++) if (Math.abs(pa[i * 3] - x) < 0.12 && Math.abs(pa[i * 3 + 2] - z) < 0.12 && pa[i * 3 + 1] > y && pa[i * 3 + 1] < L.ye - 0.05) y = pa[i * 3 + 1]; return y > -1e8 ? y : L.yb; };
+    const g = new THREE.Group(); g.matrixAutoUpdate = false; g.matrix.copy(L.Mb); g.matrixWorldNeedsUpdate = true;
+    for (const [el, t, zf] of BAY.spots) { const q = el === 'vzmeti' ? springObj() : bayObj(el), x = L.hx + (L.fx - L.hx) * t, z = el === 'turbo' ? zf : zf * L.z * 0.9;
+      q.o.position.set(x, Math.min(top(x, z), L.ye - 0.05 - 2 * q.hs.y) + q.hs.y, z); q.o.traverse(m => { if (m.isMesh) { m.userData.bayEl = el; m.visible = false; } }); g.add(q.o); }
+    b.parent.add(g); BAY.g = g;
+  }
+  function bayDrop() { if (!BAY.g) return; if (BAY.g.parent) BAY.g.parent.remove(BAY.g); disposeTree(BAY.g); BAY.g = null; }
+  function bayHit(o) { if (!BAY.g) return null; for (let q = o; q; q = q.parent) if (q.userData && q.userData.bayEl) return q.visible ? q.userData.bayEl : null; return null; }
+  // (the camera into the bay while the bonnet's menu or a bay part's is open (from before the car, a little to the near side, looking down
+  // into it; the point looked at below the bay so the bay stands above the menu at the screen's foot), home again when the menu shuts (garage.js closeMenu); a show's camera first: none then)
+  const CAMB = { on: false, tok: 0 };
+  function bayCam(on) {
+    if (!on) { if (!CAMB.on) return false; CAMB.on = false; const tok = ++CAMB.tok; if (!busy) spawn(camTo(HV, 0.8, null, () => tok !== CAMB.tok || busy)); return true; }
+    const cv = cur; if (CAMB.on || busy || !cv || OPN.cv !== cv || OPN.name !== 'hood' || !OPN.L || !OPN.L.bay) return false;
+    cv.v.bodyG.updateMatrixWorld(true); const P = OPN.L.bay(cv.v.bodyG.matrixWorld), gq = cv.v.grp.getWorldQuaternion(new THREE.Quaternion()), d = new V3(Math.sign(OPN.L.fx - OPN.L.hx) || 1, 0, 0).applyQuaternion(gq);
+    const yaw = Math.atan2(d.x, d.z) - Math.sign(d.x || 1) * 0.45, tok = ++CAMB.tok; CAMB.on = true; autoSpin = false; viewTok++;
+    const wide = innerWidth > innerHeight;   // (on a wide screen the menu stands at the side: the bay nearer, at the middle)
+    const sx = wide ? 0.85 : 0;   // (and to the left of the middle, clear of it: the point looked at moved to the camera's right)
+    spawn(camTo(view({ at: [P.x + Math.cos(yaw) * sx, P.y - (wide ? 0.1 : 0.45), P.z - Math.sin(yaw) * sx], yaw, pitch: 0.78, dist: wide ? 1.7 : 2.7, fov: 34 }), 0.8, null, () => tok !== CAMB.tok || busy)); return true;
+  }
+  function openStep(dt) {
+    if (!OPN.L) return; if (OPN.cv !== cur) { openShut(); return; }
+    const k = OPN.k + Math.sign(OPN.to - OPN.k) * dt / 0.4; if (k === OPN.k) return;
+    OPN.k = Math.max(0, Math.min(1, k)); const e = OPN.k * OPN.k * (3 - 2 * OPN.k), deg = OPN.name === 'hood' || OPN.name === 'trunk' || OPN.name === 'tailgate' ? 55 : 60;
+    OPN.L.set(e * deg * Math.PI / 180); shadowDirty = 2;
+    if (BAY.g) { const on = OPN.k > 0.5; BAY.g.traverse(m => { if (m.isMesh) m.visible = on; }); }
+    if (OPN.k <= 0 && OPN.to <= 0) openShut();
   }
   // (the turbo to carry into the bay: its snail (the compressor's, chrome) across the car, its inlet's black ring to the near side, its
   // outlet up out of it along the car, its flange under it (dark); its middle the frame's origin, hs its half sizes)
@@ -8031,7 +8161,7 @@ const Garage3D = (function () {
     puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc; }
   // the car shown first: no drive-in, it stands there
   function show(spec) {
-    svcStop(); if (!fxParked()) fxRest();   // (the robots parked: the tools in their nests, folded over their carriages; what they held back on the old car first)
+    openShut(); svcStop(); if (!fxParked()) fxRest();   // (the robots parked: the tools in their nests, folded over their carriages; what they held back on the old car first)
     for (const k in FREE) if (FREE[k]) FREE[k].away = false;   // (a stand stepped aside for a swap cut short: back)
     if (cur) freeCar(cur);
     if (lift || LIFT.on || LIFT.s || LIFT.c !== LIFT.c0) { lift = 0; Object.assign(LIFT, { s: 0, on: false, plan: null, c: LIFT.c0 }); poseLift(); }   // (the lift down, its arms stowed)
@@ -8046,6 +8176,7 @@ const Garage3D = (function () {
     for (let k = 0; k < ns; k++) runTasks(dts);
     if (cur) idleSmoke(cur, dt);
     for (const cv of liveCars()) poseCar(cv, dt);
+    openStep(dt);
     for (let k = 0; k < ns; k++) { stepFixtures(dt / ns, dts); svcFx(dt / ns, dts); }
     engFrame(dt);
     puffs.update(dt); sparks.update(dt); stepFlames(dt);
@@ -8102,7 +8233,7 @@ const Garage3D = (function () {
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);
     // the things to tap; the cabinet's maquettes (cars: the three cars' specs, null none), its lamps (lit: the maquette 0..2, 3 none), its
     // locked maquettes, its tags' prices; the lift's plate)
-    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; SHIFT.zm = 1; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, preview, get previewed() { return PV.color; }, get ghosted() { return GH.kind; },
+    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; SHIFT.zm = 1; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, openPart, bayCam, get bayOn() { return !!(BAY.g && OPN.k > 0.5); }, get bayCamOn() { return CAMB.on; }, get opened() { return OPN.L ? { name: OPN.name, k: OPN.k, to: OPN.to } : null; }, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, preview, get previewed() { return PV.color; }, get ghosted() { return GH.kind; },
     box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },
     get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex, el: it.el })); },
     // (a drawer of the cabinet out: its element's (DRW.els), the others in; null: all in)
@@ -8119,7 +8250,7 @@ const Garage3D = (function () {
     get thumbed() { return THB.at === THB.n; },   // (a car's picture drawn this frame already)
     reshow(spec) { if (swapP) { swapNext = Object.assign({}, spec, { again: true }); return swapP; } return play(function* () { show(spec); }); },   // (the car shown again at once (another profile), after the show that plays)
     get ready() { return ready; },
-    get idle() { return !busy && !moving() && !drwMoving() && SHIFT.dn === SHIFT.dw && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !FLM.n && !MK.alive; },   // (nothing moving but the dust: the page draws less often)
+    get idle() { return !busy && !moving() && !(OPN.L && OPN.k !== OPN.to) && !drwMoving() && SHIFT.dn === SHIFT.dw && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !FLM.n && !MK.alive; },   // (nothing moving but the dust: the page draws less often)
     sound(on) { sndInit(); if (SND.out) SND.out.gain.value = on ? 0.7 : 0; SND.vol = on ? 0.7 : 0; if (typeof Sfx !== 'undefined') { Sfx.resume(); Sfx.setEnabled(on); } },
     setCond(c) { if (cur) setCond(cur, c); },
     get cur() { return cur; },
