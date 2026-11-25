@@ -1202,22 +1202,22 @@
  "kildare/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 80.59,
+  "winner": 80.64,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6e9832c9cc9efdaeaa103f4f"
+  "digest": "ed1a36be85f0254c569bfc65"
  },
  "kildare/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 96.19,
+  "winner": 96.15,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ed60159c7da87391f49b5f3f"
+  "digest": "2b0e3af0cb1c2bf3c9537b4a"
  },
  "kildare/cs/formula": {
   "finished": 13,
@@ -1242,12 +1242,12 @@
  "kildare/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 80.93,
+  "winner": 81.02,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e28efff85819a75a75501f17"
+  "digest": "e63353e17cb4800f8beb18da"
  },
  "sacalobra/cs": {
   "finished": 13,

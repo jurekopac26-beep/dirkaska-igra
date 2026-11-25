@@ -2352,21 +2352,21 @@
   }
  },
  "kildare/race/cs": {
-  "digest": "7ab00da29abf2fa47fe6ead5",
-  "lead": 1623.5,
+  "digest": "39479ca23dbdecf0db245aa0",
+  "lead": 1628.3,
   "car0": [
-   -287.2,
-   53.44
+   -294.75,
+   54.82
   ],
   "cover": {
-   "dmg": 0.01,
+   "dmg": 0,
    "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "kildare/demo/cs": {
-  "digest": "70d68071f930344cf442113e",
+  "digest": "d26d2fb7fd3e47af4ca07c6c",
   "lead": 1711.6,
   "car0": [
    -232.16,
@@ -2380,11 +2380,11 @@
   }
  },
  "kildare/upg/cs": {
-  "digest": "a76f217681b4e32534794497",
-  "lead": 1706.6,
+  "digest": "79efa49826cd33baac3395b4",
+  "lead": 1706.8,
   "car0": [
-   -277.35,
-   -5.07
+   -278.13,
+   -4.77
   ],
   "cover": {
    "dmg": 0,
@@ -2394,59 +2394,59 @@
   }
  },
  "kildare/crash/cs": {
-  "digest": "fdd98b2b6b15a16457f8bfff",
-  "lead": 1613.8,
+  "digest": "7a1c32a8079f6c1d0421d657",
+  "lead": 2198.8,
   "car0": [
-   -141.89,
-   33.92
+   -299.56,
+   52.27
   ],
   "cover": {
    "dmg": 0.55,
    "loose": 2,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "kildare/formula/cs": {
-  "digest": "bb1a3d895f83e3eabe42b247",
-  "lead": 1687.5,
+  "digest": "96824b78d44214d33da803ef",
+  "lead": 2865.5,
   "car0": [
-   -237.4,
-   43.07
+   -48.6,
+   -121.36
   ],
   "cover": {
-   "dmg": 0.77,
+   "dmg": 0.76,
    "loose": 5,
    "rescues": 1,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "kildare/lm/cs": {
-  "digest": "92ee7848289296ce4b7689fd",
-  "lead": 1672.2,
+  "digest": "5c959c010cbf29fff6d3d09f",
+  "lead": 2848.9,
   "car0": [
-   -257,
-   49.14
+   -55.13,
+   -138.44
   ],
   "cover": {
-   "dmg": 0.75,
+   "dmg": 0.74,
    "loose": 4,
    "rescues": 1,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "kildare/car/cs": {
-  "digest": "d7149bb669ea1e8dcf419b3c",
-  "lead": 1613.9,
+  "digest": "31c0ff8a2cbf407946bf8105",
+  "lead": 2743.7,
   "car0": [
-   -56.11,
-   85.83
+   -198.35,
+   -136.72
   ],
   "cover": {
    "dmg": 1,
    "loose": 4,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "sacalobra/race/cs": {
