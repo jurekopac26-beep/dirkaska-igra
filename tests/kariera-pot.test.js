@@ -33,9 +33,9 @@ function pravilo(Q, tracks, cats) {
   const err = [], T = (tracks || []).filter(K.prava), D = new Map(T.map(d => [d.id, d])), L = new Map(T.map(d => [d.id, K.km(d)]));
   const leg = (id) => K.LEGENDE.includes(id), ord = (a, b) => L.get(a) - L.get(b) || (a < b ? -1 : 1);
   const kmOf = (c) => Math.round(c.tracks.reduce((s, id) => s + (L.get(id) || 0) * Math.max(1, c.laps || (D.get(id) || {}).laps || 1), 0) * 10) / 10;
-  // every real track in one cup exactly (the final aside); nothing else on the path; the ids unique
+  // every real track in one cup exactly (the final and Kratko prvenstvo aside); nothing else on the path; the ids unique
   const cnt = new Map();
-  for (const c of Q.pokali) if (c.vrsta !== 'finale') for (const id of c.tracks) cnt.set(id, (cnt.get(id) || 0) + 1);
+  for (const c of Q.pokali) if (c.vrsta !== 'finale' && c.id !== 's3-kratko') for (const id of c.tracks) cnt.set(id, (cnt.get(id) || 0) + 1);
   for (const d of T) if (cnt.get(d.id) !== 1) err.push(d.id + ' in ' + (cnt.get(d.id) || 0) + ' cups');
   for (const c of Q.vse) for (const id of c.tracks) if (!D.has(id)) err.push(c.id + ': ' + id + ' not a real track');
   if (new Set(Q.vse.map(c => c.id)).size !== Q.vse.length) err.push('ids not unique');
@@ -43,7 +43,7 @@ function pravilo(Q, tracks, cats) {
   // most NAJVEC (the longer parts first), the ids and names numbered (the first part plain, then II, III …), the stage's difficulty
   const grupe = [];
   for (let s = 1; s <= 3; s++) for (const v of ['krog', 'cesta']) {
-    grupe.push({ key: 's' + s + '-' + v, s, v, cups: Q.pokali.filter(c => c.stopnja === s && c.vrsta === v), want: T.filter(d => !leg(d.id) && K.vrsta(d) === v && K.stopnjaProge(d) === s),
+    grupe.push({ key: 's' + s + '-' + v, s, v, cups: Q.pokali.filter(c => c.stopnja === s && c.vrsta === v && c.id !== 's3-kratko'), want: T.filter(d => !leg(d.id) && K.vrsta(d) === v && K.stopnjaProge(d) === s),
       name: (k, m) => (v === 'krog' ? 'Pokal dirkališč' : 'Pokal cest') + (m > 1 ? rim(k) : '') + ' · ' + S[s - 1].name,
       en: (k, m) => (v === 'krog' ? 'Circuit Cup' : 'Road Cup') + (m > 1 ? rim(k) : '') + ' · ' + S[s - 1].en });
   }
@@ -66,6 +66,10 @@ function pravilo(Q, tracks, cats) {
   const lg = Q.pokali.filter(c => c.id === 's4-legende'), wl = K.LEGENDE.filter(id => D.has(id));
   if (wl.length ? !(lg.length === 1 && lg[0].tracks.join() === wl.join() && lg[0].stopnja === 4 && lg[0].vrsta === 'krog' && lg[0].diff === S[3].diff
     && lg[0].name === 'Legende' && lg[0].en.name === 'Legends') : lg.length) err.push('the Legends');
+  // Kratko prvenstvo (Matej, #382, 25. 11.): stage 3's last cup, its real tracks of KRATKO in the series' order, a cup of circuits
+  const kp = Q.pokali.filter(c => c.id === 's3-kratko'), wk = K.KRATKO.filter(id => D.has(id)), s3 = Q.pokali.filter(c => c.stopnja === 3);
+  if (wk.length ? !(kp.length === 1 && kp[0].tracks.join() === wk.join() && kp[0].stopnja === 3 && kp[0].vrsta === 'krog' && kp[0].kind === 'pokal' && kp[0].diff === S[2].diff
+    && kp[0].name === 'Kratko prvenstvo' && kp[0].en.name === 'Short Championship' && s3[s3.length - 1] === kp[0]) : kp.length) err.push('Kratko prvenstvo');
   // the final: FINALE_N circuits shorter than DOLGA (or all of them), each continent's longest first, the continents evenly (a continent
   // with fewer than one less than the most only when it has no more)
   const fin = Q.pokali.filter(c => c.vrsta === 'finale'), kr = T.filter(d => K.vrsta(d) === 'krog' && L.get(d.id) < K.DOLGA);
@@ -128,7 +132,7 @@ function pravilo(Q, tracks, cats) {
   const zv = Q.stopnje.map((st, i) => 3 * (Q.pokali.filter(c => c.stopnja === i + 1).length + pos.filter(e => e.stopnja === i + 1).length));
   const prag = K.PRAG.map((x, i) => Math.min(Math.round(x * Q.max / 132), zv.slice(0, i).reduce((a, b) => a + b, 0)));
   if (Q.max !== 3 * Q.vse.length || JSON.stringify(Q.pragovi) !== JSON.stringify(prag)) err.push('the thresholds ' + JSON.stringify(Q.pragovi) + ', not ' + JSON.stringify(prag));
-  if (Q.pokali.length !== grupe.reduce((s, g) => s + g.cups.length, 0) + lg.length + fin.length) err.push('a cup of no kind');
+  if (Q.pokali.length !== grupe.reduce((s, g) => s + g.cups.length, 0) + lg.length + kp.length + fin.length) err.push('a cup of no kind');
   return err;
 }
 
