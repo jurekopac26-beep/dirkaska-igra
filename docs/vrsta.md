@@ -139,6 +139,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.17 | #1057 Longyearbyen med testne | `test: true` za Longyearbyen, Norveška, kotni video iz menija (prošnja uporabnika, #382 7121179904); proga, zato zadnje | partyslo | pripravljen, svež `main`, povezani testi 18/18 (24. 11.); osnutek do vrste; predaja v opisu PR |
 | 10.18 | #1026 Zbirka obcestje 23. 11. b | grafika ob progi za 8 prog (Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro), odločitve uporabnika izvedene; predaja v opisu PR | partyslo | svež `main` (25. 11.), zlate vrednosti 8 prog; osnutek do vrste |
 | 10.18 | #1066 Orodje za predajo | `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje, test, kazalo, varčevanje (Matej, #382 7148056618, točka 10); orodje, ne proga | partyslo | osnutek, povezani testi zeleni; predaja za Združevanje partyslo |
-| 10.20 | #1016 Odcepi Cusco, Hiva, Livorno | stranske ceste iz OSM (grafika na progah, proge zadnje) | biketraveler | svež `main` spojen 25. 11.; manjka krog povezanih testov in perf (predaja v opisu PR); osnutek do vrste |
+| 10.20 | #1016 Odcepi Cusco, Hiva, Livorno | stranske ceste iz OSM (grafika na progah, proge zadnje) | biketraveler | svež `main` spojen 25. 11., zlate vrednosti (svet, perf) osvežene, povezani testi zeleni (26/26); perf največ 206 klicev / 601k (hiva). Osnutek do vrste |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
