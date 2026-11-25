@@ -14,6 +14,7 @@ Cesta Kabale–Kisoro čez prelaz Kanaba v gorovju Kigezi na jugozahodu Ugande, 
 Okolica (skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom `PL_LOOK.kanaba`):
 
 - **Visokogorje poleti**: zelena polja in pašniki na rdeči prsti, gozdni pasovi in grmičevje (raba tal iz ESA WorldCover, Sentinel-2 in karte višin krošenj), rdeče-rjava preperela kamnina v useku. Barve tal iz satelitskega posnetka Sentinel-2 (30. 7. 2025). Snega ni.
+- **Drevesa** (`js/world-kanaba.js`): v gozdnem rezervatu Echuya (meja iz OpenStreetMap; prvi del proge do ~2,6 km) gorski gozd z drevesi širokih krošenj (Hagenia, Rapanea) in gostimi šopi gorskega bambusa (*Arundinaria alpina*, približno tretjina gozda); zunaj rezervata, na kmetijah zahodnega pobočja, nasadi evkaliptusov (štirje od petih) in črne akacije ter nekaj samotnih dreves med polji. Smrek ni; dreves ni več kot prej (nasadi so za desetino redkejši, ker je nekaj grmov med polji zdaj samotnih dreves).
 - **Hiše**: obrisi iz OpenStreetMap ob cesti, generične, s pločevinastimi strehami (sive in rjave); brez imen in napisov.
 - **Obzorje**: onstran pasu ob cesti pravi teren ~9 km naokoli (Copernicus DEM, mreža 250 m).
 - **Cesta**: bela prekinjena sredinska črta (v ostrih ovinkih neprekinjena), rumene robne črte, jeklene varnostne ograje, kjer teren pada; obrabljen asfalt z rdečim prahom ob robu (`world-cesta.js`, vrstica `kanaba`).
@@ -24,6 +25,6 @@ Okolica (skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom 
 ## Negotovo
 
 - **Črte na cesti**: pravila Ugande (bela sredinska, rumeni robni črti, `'Uganda'` v `js/world-cesta.js`) niso preverjena s fotografijami z istega mesta (Wikimedia Commons in Mapillary iz okolja seje nista dosegljiva).
-- **Drevesa**: v resnici so ob cesti veliko evkaliptusov in nasadi; v igri so drevesa generična, razporejena po rabi tal, ne po resničnih legah.
+- **Drevesa**: vrste so iz besedilnih virov (`README.md`, »Zasluge«), njihovi deleži so ocenjeni; drevesa so generična, razporejena po rabi tal, ne po resničnih legah. Slike pred in po: `docs/slike/kanaba/`.
 
 Podatke proge pripravi `tools/proga/proga.py` (`python3 tools/proga/proga.py kanaba --zapisi`, nastavitve v `tools/proga/proge.json`). Vire glej v `README.md` pod »Zasluge«.
