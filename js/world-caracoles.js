@@ -332,7 +332,8 @@
         for (let k = 1; k < n; k++) { const B = row(k), p = R.pts[k];
           if (API.vrDist(p[0], p[1]) < 420) for (let m = 0; m + 1 < O.length; m++) g.quadUp(A[m], A[m + 1], B[m + 1], B[m], [col(O[m]), col(O[m + 1]), col(O[m + 1]), col(O[m])], [uv(A[m]), uv(A[m + 1]), uv(B[m + 1]), uv(B[m])]);
           A = B; }
-        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
+        if (!g.empty) { const geo = g.geometry(), nn = geo.attributes.normal; for (let q = 0; q < nn.count; q++) nn.setXYZ(q, 0, 1, 0);   // (one normal, straight up, as a lake's: the quads' own normals on a falling, winding ribbon caught the sun in facets)
+          const m = new THREE.Mesh(geo, wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
       }
       if (P.lakes.length || P.rivers.length) out.dyn.water = tex.water;
     }
