@@ -231,11 +231,11 @@
   "jsMs": 1.29
  },
  "portomoniz": {
-  "calls": 235,
-  "maxCalls": 288,
-  "kverts": 632,
-  "maxKverts": 805,
-  "jsMs": 0.83
+  "calls": 216,
+  "maxCalls": 263,
+  "kverts": 637,
+  "maxKverts": 808,
+  "jsMs": 2.04
  },
  "seoul": {
   "calls": 137,
