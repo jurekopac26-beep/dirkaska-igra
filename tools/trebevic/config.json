@@ -1,0 +1,22 @@
+{
+  "id": "trebevic",
+  "about": "Trebević, Bosna in Hercegovina (id trebevic): the narrow asphalt road from Dolovi at the edge of Sarajevo up Trebević to the viewpoint Vidikovac, past the old bobsleigh track and under the cable car, point to point (docs/proge-po-drzavah.md, Bosna in Hercegovina: Trebević)",
+  "box": [43.828, 18.425, 43.862, 18.468],
+  "closed": false,
+  "dist": {"grid": 160},
+  "route": [
+    [43.85007, 18.44543, "Dolovi", "start: Dolovi at the edge of Sarajevo (815 m)"],
+    [43.84295, 18.4399, null, "the hairpins above the town"],
+    [43.84105, 18.45135, null, "finish: the end of the asphalt at the viewpoint Vidikovac (1138 m)"]
+  ],
+  "prefer": ["Dolovi"],
+  "geoRoads": ["Dolovi"],
+  "geoWater": [],
+  "marks": [
+    ["Stara bob steza (start)", "Old bobsleigh track (start)", "landmark", ["w33884012"]],
+    ["Stara bob steza (dvojni zavoj)", "Old bobsleigh track (double bend)", "landmark", ["w33884014"]],
+    ["Stara bob steza (cilj)", "Old bobsleigh track (finish)", "landmark", ["w750719261"]],
+    ["Žičara", "Cable car", "landmark", ["w566726605"]]
+  ],
+  "places": [["Dolovi", null, 0], ["Trebević", null, 1500], ["Vidikovac", null, 2785]]
+}
