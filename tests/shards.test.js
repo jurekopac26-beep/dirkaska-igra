@@ -71,7 +71,7 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
     ['js/world-montreal.js', ['stamp.test.js', 'razdelitev.test.js', 'montreal.test.js', 'browser/world.test.mjs', 'browser/world2.test.mjs', 'browser/gfx.test.mjs', 'browser/gfx2.test.mjs']],
     ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'cilj-odprte-ceste.test.js', 'nova.test.js', 'trki.test.js', 'padec.test.js', 'kariera.test.js', 'kariera-pot.test.js', 'rally.test.js', 'sovoznik.test.js', 'sovoznik-glas.test.js', 'weather.test.js', 'oprijem.test.js', 'zgumirana-linija.test.js', 'ljudje-mesta.test.js', 'katu.test.js', 'serpentine.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'neskoncna.test.js', 'videz.test.js', 'cisterna.test.js', 'zrcalni.test.js', 'rezervna-kolesa.test.js', 'browser/repro.test.mjs', 'browser/padec.test.mjs']],
     ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
-    ['README.md', ['fleet.test.js']],
+    ['README.md', ['viri.test.js', 'fleet.test.js']],
     ['tools/carshots.mjs', []],
     ['assets/maps/corner-spa.webm', ['testne-proge.test.js', 'menu-corner.test.js', 'browser/menu.test.mjs']],   // (an asset: its tests by RELATED only, not the track's by its name)
     ['assets/tracks/gozd.webp', ['testne-proge.test.js']],   // (a test track's picture: only the freeze, CLAUDE.md »Testne proge«)
