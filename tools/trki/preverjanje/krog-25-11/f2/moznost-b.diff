@@ -1,0 +1,11 @@
+--- a/js/core.js
++++ b/js/core.js
+@@ -5095,7 +5095,7 @@
+       if (!(gap > 2 && gap < hg)) continue;
+       const yaw = Math.abs(wrapPi(o.h - T.hd[o.q.i]));
+       if (yaw > HZ.yaw && yaw < Math.PI - HZ.yaw ? !(o.speed < HZ.vs || (yaw > HZ.yw && yaw < Math.PI - HZ.yw && o.speed < HZ.vw) || Math.abs(wrapPi(Math.atan2(o.vz, o.vx) - o.h)) > HZ.sl)
+-        : !(o.speed < HZ.vs && (dnf(o) || (o.stuckT > HZ.st && _hzGo.has(o)) || yaw >= Math.PI - HZ.yaw))) continue;   // (across the road: standing, square to it or sliding; or standing lengthways: retired, stuck (not one yet to set off from the grid), facing back)
++        : !(o.speed < HZ.vs && (dnf(o) || (o.stuckT > HZ.st && (_hzGo.has(o) || !(o.inThr > 0))) || yaw >= Math.PI - HZ.yaw))) continue;   // (across the road: standing, square to it or sliding; or standing lengthways: retired, stuck (not one yet to set off from the grid), facing back)
+       const sy = Math.abs(Math.sin(yaw)), cy = Math.abs(Math.cos(yaw)), e = (o.m.len * sy + o.m.wid * cy) * 0.5, wq = T.wa ? T.wa[o.q.i] : T.w;
+       if (Math.abs(o.q.d) - e > wq) continue;   // (all of it off the road)
+       h = o; hg = gap; he = e; hl = (o.m.len * cy + o.m.wid * sy) * 0.5;

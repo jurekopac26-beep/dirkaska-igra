@@ -115,3 +115,11 @@
 - $S/f2/zlate-races-ujarras.txt
 - $S/f2/zlate-races-vaoala.txt
 - $S/f2/zlate-races-vse.txt
+
+## 17:10 UTC – končno stanje
+- races.json: celoten tek ustavljen ob 17:04 pri 82 dirkah OK, 0 razlik (16 prog v celoti + livorno 2). Skupaj z 8 ciljanimi progami: 22 prog v celoti (110 dirk) + 2 = 112 od 360, 0 razlik. Ostane 248 dirk; world.json, perf.json (brskalnik) in testne-proge.json niso tekli; `npm run golden:update` ni tekel. sim.json 504/504, trki.json prek trki.test.js.
+- Ponovni zagon: en sam prehod grid -> racing (js/core.js 7676, 8326), nova dirka je `new Core.Race` (js/game.js 2550-2561) z novimi avti, zato se `_hzGo` počisti sam. `_serveRespawn` (9312) in ponovni start po rdeči zastavi (opts.flags; samo po verižnem trku; med čakanjem stuckT ne teče, 8586) nespremenjena in nemerjena.
+- Veja v glavnem repozitoriju: 9b2c787; js/ in tests/ enaka kot 308f299 (0 datotek razlike); merge-tree brez sporov.
+- Možnost B (NI v commitu; odločitev glavne seje): $S/f2/moznost-b.diff (nanese se na 4d2b953; 5098: `_hzGo.has(o)` -> `(_hzGo.has(o) || !(o.inThr > 0))`). Izmerjeno v kopiji $S/f2/b: start race: »prog 60 z oviro pred prvim dotikom 0 nabor race«; start upg: »prog 60 z oviro pred prvim dotikom 0 nabor upg«; `node tests/trki.test.js`: OK: all 80 checks (83 s); pocez skoda: 0 razlik z izhodiščem; B pocez enakost IZHOD 0 17:10:43 | 'razhajanje nikoli' 0 od 1. Igralec brez plina ob štartu: B enako stari veji na 6 progah ($S/f2/spi-b.txt). Na B niso tekli: demo, formula, lm, sam avto, zlate.
+- Datoteke B: $S/f2/moznost-b.diff, $S/f2/b-start-race.txt, $S/f2/b-start-upg.txt, $S/f2/b-trki-test.txt, $S/f2/b-pocez-skoda.txt, $S/f2/b-pocez-enakost.txt, $S/f2/b-veriga.cas
+- Popravek zapisa: B pocez enakost (proti $S/snap): vrstic z »nikoli« 8 (izpis: $S/f2/b-pocez-enakost.txt).

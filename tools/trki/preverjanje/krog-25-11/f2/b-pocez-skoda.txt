@@ -1,0 +1,24 @@
+Avto počez (90°, držan) 400 m pred vodilnim od 10 s, 12 tekmecev, do 50 s; škoda po postavitvi
+  proga    seme  različica    škoda tekmecev Σ %  v avto počez / v druge / ograja %  škoda avta počez %  koraki z udarcem  najmočnejši m/s  izpadli  mimo 
+  cusco    71    cv 1         277.5               141 / 109 / 27                     100.0               188               22.4             0        12/12
+  cusco    71    cv 6 osnova  80.3                35 / 46 / 0                        50.1                13                22.4             0        12/12
+  cusco    71    cv 6 igra    127.4               18 / 109 / 0                       10.6                44                5.7              0        12/12
+  cusco    72    cv 1         273.4               146 / 126 / 2                      99.1                43                27.7             0        12/12
+  cusco    72    cv 6 osnova  312.5               45 / 154 / 113                     60.6                6                 27.7             0        12/12
+  cusco    72    cv 6 igra    185.7               3 / 69 / 113                       3.3                 24                5.0              0        12/12
+  hiva     71    cv 1         66.3                56 / 10 / 0                        71.9                55                37.0             0        12/12
+  hiva     71    cv 6 osnova  112.7               58 / 26 / 28                       66.4                7                 37.0             0        12/12
+  hiva     71    cv 6 igra    65.2                9 / 28 / 28                        9.4                 46                6.9              0        12/12
+  hiva     72    cv 1         115.8               77 / 38 / 0                        93.1                16                36.7             0        12/12
+  hiva     72    cv 6 osnova  127.7               70 / 58 / 0                        81.5                5                 36.7             0        12/12
+  hiva     72    cv 6 igra    45.4                0 / 45 / 0                         0.0                 22                2.3              0        12/12
+  tianmen  71    cv 1         55.4                40 / 15 / 0                        55.5                6                 20.7             0        12/12
+  tianmen  71    cv 6 osnova  48.4                47 / 2 / 0                         57.0                5                 22.1             0        12/12
+  tianmen  71    cv 6 igra    2.4                 0 / 2 / 0                          0.0                 2                 0.9              0        12/12
+  tianmen  72    cv 1         75.4                39 / 36 / 0                        54.5                5                 20.6             0        12/12
+  tianmen  72    cv 6 osnova  71.2                39 / 32 / 0                        53.0                3                 20.6             0        12/12
+  tianmen  72    cv 6 igra    41.0                0 / 41 / 0                         0.0                 41                2.5              0        12/12
+  cusco: skupna škoda cv 1 750 %, cv 6 osnova 504 % (0.67×), cv 6 igra 327 % (0.44×)
+  hiva: skupna škoda cv 1 347 %, cv 6 osnova 388 % (1.12×), cv 6 igra 120 % (0.35×)
+  tianmen: skupna škoda cv 1 241 %, cv 6 osnova 230 % (0.95×), cv 6 igra 43 % (0.18×)
+  vse: cv 1 1338 %, osnova 1121 %, igra 490 %
