@@ -792,6 +792,8 @@
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
     if (CAT) out.rastje = { moc: World.rastje.MOC, tla: CAT.trava, golo: CAT.golo, pozidano: CAT.pozidano, drevesa: null };   // (Realizem G: no leaves to tint, docs/proge/caracoles.md)
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'caracoles', { gH: caGround, slope: caSlope,
+      bad: (x, z) => { const n = API.vrNear(x, z); return n.i >= 0 && galAt[n.i] !== 0 && n.dd < 1.2; } });   // (the roadside ground for the chase camera: js/world-chase-bt13.js; nothing in a gallery's parapet and pillars)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), railway: nRailway, galleries: GAL.length, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }

@@ -119,6 +119,7 @@ Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanje
 - `.claude/settings.json`: `env.CLAUDE_CODE_AUTO_COMPACT_WINDOW` `200000` (odločitev uporabnika 11. 11. 2026 ob ~00.40, komentar 6782294421, točka b1; prej `400000` po `zetoni-3`, pred tem okno 1 milijon).
 - **Prag:** CLI od okna odšteje 20 tisoč (`effective_window`), platforma pa nastavi `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` 80, zato seja pogovor povzame pri 80 % od tega: pri 200000 pri ~144 tisoč, pri prejšnjih 400000 pri ~304 tisoč (`get_session` → `external_metadata.autocompact_state`: `effective_window` 380.000, `threshold` 304.000, 11. 11. 2026; 3. 11. 2026 je bil prag 349.600, 92 %).
 - Po povzetku podrobnosti z začetka seje niso več v pogovoru: kar mora ostati (odločitve, stanje, poti), seja sproti zapiše v datoteke, commite ali docs.
+- **Predaja z orodjem** (25. 11. 2026, odločitev uporabnika prek Mateja, #382 7148056618, točka 10): osnutek predaje (do ~20 vrstic: datoteke po temah, odprta vprašanja, kaj ostane, rezultat `npm run test:related`) napiše `node tools/predaja.mjs --za "<seja>" --seja <povezava>` iz commitov veje; seja ga pregleda in vstavi v opis PR namesto ročnega pisanja.
 - Predaja vseh sej pri ~80 tisoč (od 12. 11. 2026; prej ~150 tisoč; `CLAUDE.md`, Seje) je glavna pot, povzetek je rezerva, kadar predaje ni. `get_session` → `external_metadata.context_usage` pokaže `max_tokens` (okno) in `used_tokens`; 11. 11. 2026 je `used_tokens` med korakom kazal 0, zato je velikost konteksta le ocena: predaja ob koncu teme ali po velikem koraku je zanesljivejša.
 - **Odprto (Matej; od 12. 11. 2026 prag predaje ~80 tisoč, zato verjetno brez predmeta):** pri oknu 200000 pride povzetek (~144 tisoč) malo pred predajo pri ~150 tisoč; okno 220000 bi dalo prag ~160 tisoč.
 
@@ -208,6 +209,21 @@ Matejevi predlogi 11–20, komentar 6953506391 na tabli #382 (uporabnik: »brez 
 - **19 Sveže seje:** sveže male seje s predajo namesto zbujanja starih velikih.
 - **20 Brez preverjanja v zanki:** na teste `subscribe_pr_activity`, drugače vpis v zbirko `cakanje`.
 - **Povzetek ob 21.00** (točka 9): koordinacija partyslo vsak dan ob 21.00 napiše na stran Odločitve povzetek stanja v 5 vrsticah.
+
+## Deset pravil (`zetoni-5`; odločitev uporabnika 22. 11. 2026: »1-10 uporabi vse«, brez izgube kakovosti)
+
+Matejevi predlogi 1–10; večina že velja, novo so 2, 8 in 10.
+
+1. **Zbirne veje** (že velja, točka 14).
+2. **Zastareli PR (novo):** koordinacija ob branju table zapre PR, ki je že na `main` ali ga je nadomestil drug; PR brez commita 3 dni in brez mesta v `docs/vrsta.md` zapre s predajo v opisu ali ga prenese v zbirno vejo. Ne zapira PR, ki čakajo na uporabnikovo izbiro (oznaka `predogled`).
+3. **Manj vzporednih PR na istih datotekah** (že velja, `CLAUDE.md`, Postopek): na iste datoteke raje v obstoječi PR.
+4. **Model po nalogi** (že velja, točka 12).
+5. **Napor max samo, kjer je nujen** (že velja, točka 12 in »Napor«).
+6. **Čakajoča seja se ustavi** (že velja, točka 20 in zbirka `cakanje`).
+7. **Predaja pri ~80 tisoč** (že velja, `docs/odlocitve.md`; točka 19).
+8. **Slike enkrat na skupino (novo):** za vprašanje en sklop slik za vse možnosti; za zbirno vejo slike zdaj/potem enkrat za vso vejo, ne na vsak PR v njej; obrezane, do ~300 KB.
+9. **Tabla 2× na dan in samo novi komentarji** (že velja, »Tabla« in točka 15).
+10. **Vprašanja enkrat na dan (novo):** seja vprašanje zapiše na stran Odločitve takoj; uporabnik jih dobi zbrana v dnevnem stanju; odgovor seja bere ob 23.20, največ dvakrat (`docs/vprasanja.md`).
 
 ## Stanje
 

@@ -4632,6 +4632,7 @@
     pkMoving(K);
 
     if (rastje) out.rastje = rastje;   // (Realizem G: read by the tests and the docs)
+    if (World.ext && World.ext.goreRob && World.ext.goreRob.pkLC) World.ext.goreRob({ excluded, root, out }, 'pikes', { gH: pkGround, slope: pkSlope, lc: World.ext.goreRob.pkLC(pkGround, pkSlope, pkTreeline), near: pkNear });   // (the roadside ground for the chase camera: js/world-chase-bt16.js)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
   }
