@@ -1,0 +1,38 @@
+# Nočni robot (tools/robot.mjs): na samodejnem pilotu prevozi krog vsake prave proge in poroča o nalaganju nad 5 s, zidovih na cesti
+# (obtičal avto, udarec brez drugega avta), padcih pod cesto in sličicah nad mejo telefona (300 klicev risanja, 900 tisoč oglišč).
+# Poročilo je v povzetku posla in v artefaktu; posel ne ustavi ničesar (--mehko), najdbe pregleda seja, ki bere nočne teke.
+name: Nočni robot
+on:
+  schedule:
+    - cron: '43 2 * * *'   # (vsako noč ob 2.43 UTC, po nočnem krogu testov)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  robot:
+    name: Robot (${{ matrix.del }}/4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        del: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/robot.mjs --del ${{ matrix.del }}/4 --mehko
+      - if: ${{ !cancelled() && hashFiles('test-results/robot/porocilo.md') != '' }}
+        run: cat test-results/robot/porocilo.md >> "$GITHUB_STEP_SUMMARY"
+      - if: ${{ !cancelled() && hashFiles('test-results/robot/porocilo.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-${{ matrix.del }}
+          path: test-results/robot/
+          retention-days: 14
