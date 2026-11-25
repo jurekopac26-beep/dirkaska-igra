@@ -148,7 +148,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     riohondo: { ban: RH_BAN, at: RH_AT, nums: 14, numC: ['#5b97cf', '#fff', '#fff'], shirts: RH_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.12, 1.04, 0.9], gravel: false, noVid: true,
       pitBox: [-140, 150, -1], mow: 0.4,   // (the pit garages on the left of the main straight; faint mowing stripes; no farms by the circuit)
-      woods: RH_WOODS, extra: rhExtra, lane: true, fl: { ar: AR }, ck: 2, postSh: false, mowStep: 2, wearCell: 512,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view; postSh, mowStep: the phone's budget, js/world-rbring.js)
+      woods: RH_WOODS, extra: rhExtra, lane: true, fl: { ar: AR }, ck: 2, postSh: false, mowStep: 2, wearCell: 512, lineCh: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view; postSh, mowStep: the phone's budget, js/world-rbring.js)
       flags: { stand: [{ ar: 0.8, tm: 0.2 }, { ar: 0.7, tm: 0.15, rb: 0.15 }], ga: { ar: 0.8, tm: 0.2 }, camp: { ar: 0.85, tm: 0.15 }, pole: 'ar', podium: 'ar' },
       vid: [], poles: [-200, 160, 1], runoff: ['RÍO HONDO', 'ARGENTINA', 'SANTIAGO'], straight: [-210, 170, 1],
       farm: { wall: [0.93, 0.9, 0.84], roof: [0.55, 0.32, 0.24], end: [0.9, 0.87, 0.8], barn: [0.55, 0.45, 0.35], barnRoof: [0.6, 0.62, 0.64], barnEnd: [0.52, 0.42, 0.32] },

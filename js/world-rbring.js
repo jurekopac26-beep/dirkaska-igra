@@ -417,14 +417,14 @@
   function buildRbring(scene, tex, opts) {
     const R = rng(4318), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true, wearCell: LK.wearCell };   // (ownMarks: its decals paint the tyre marks; wearCell: js/world.js, roadWear)
+    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true };   // (ownMarks: its decals paint the tyre marks)
     const ownTex = (t) => { out.ownTex.push(t); return t; };
     const dS = (s) => { let d = s - sStart; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };   // metres from the start line (-L/2 .. L/2)
     const sAt = (d) => (((sStart + d) % L) + L) % L;
     const hyS = (s) => T.elevAt(wrapS(s)).y;
     const PD = def.pit, PB = def.pitBuilding || [-230, 70];
     const PSD = PD && PD[0] < 0 ? -1 : 1;   // (the pit lane's side: Styria right, Bathurst left: def.pit[0] < 0)
-    const LK = RB_LOOK[THEME] || RB_LOOK.rbring, AT = LK.at, BAN = LK.ban, PER = !!LK.period;   // (Styria's, Bathurst's or Crystal Palace's own touches; PER: the 1930s)
+    const LK = RB_LOOK[THEME] || RB_LOOK.rbring, AT = LK.at, BAN = LK.ban, PER = !!LK.period; out.wearCell = LK.wearCell;   // (wearCell: js/world.js, roadWear)   // (Styria's, Bathurst's or Crystal Palace's own touches; PER: the 1930s)
     const CKF = LK.ck || 1;   // (the chunks of the road, its run-offs and the scenery CKF times as big: fewer draws where much of a short circuit is in view at once, Silkeborg)
     nrPrep();
     const P = API.NR, G = P.G;
@@ -487,8 +487,9 @@
       : (i, o) => { const rl = (T.gl || T.rl)[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; if (LK.road) k = LK.road(i, o, k); return [k, k, k * 1.02]; };   // (LK.road: Rio's worn asphalt)
     const MOW_D = LK.trees === 'rio' ? [0.05, 0.035, 0.045] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
     const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5, MOW_S = LK.mowStep || 1;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
+    const LN_G = LK.lineCh || 1; let glS = null;
     for (let c0 = 0; c0 < N; c0 += CH) {
-      const gr = new RB(true), gl = new RB(), gk = new RB(true), gg = SFG ? new RB(true) : null;
+      const gr = new RB(true), gl = LN_G > 1 && glS && (c0 / CH) % LN_G ? glS : new RB(), gk = new RB(true), gg = SFG ? new RB(true) : null; glS = gl;   // (LK.lineCh: the lines of LN_G chunks in one draw)
       let pr = -1, pl = -1, pg = -1; const pk = [-1, -1];
       for (let ii = c0, ie = Math.min(c0 + CH, N); ii <= ie; ii++) {
         const i = ii % N, v = ii * ds / tileL;
@@ -518,7 +519,7 @@
           } else pk[si] = -1;
         }
       }
-      addM(gr, aMat); addM(gl, lMat); addM(gk, cMat); if (gg) addM(gg, gvMat);
+      addM(gr, aMat); if (LN_G < 2 || (c0 / CH) % LN_G === LN_G - 1 || c0 + CH >= N) addM(gl, lMat); addM(gk, cMat); if (gg) addM(gg, gvMat);
     }
     /* ---- run-offs: pale asphalt from the kerb (or the edge) to just before the barrier where the barrier stands far out (Core: T.gravL /
        gravR; with def.runoffTarmac the cars drive on asphalt there), tapering in and out; a green band along the track limit ---- */

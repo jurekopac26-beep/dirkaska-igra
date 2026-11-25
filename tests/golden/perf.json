@@ -287,11 +287,11 @@
   "jsMs": 1.1
  },
  "riohondo": {
-  "calls": 205,
-  "maxCalls": 303,
-  "kverts": 630,
-  "maxKverts": 836,
-  "jsMs": 1.62
+  "calls": 202,
+  "maxCalls": 298,
+  "kverts": 655,
+  "maxKverts": 867,
+  "jsMs": 1.44
  },
  "hakone": {
   "calls": 199,
@@ -385,11 +385,11 @@
   "jsMs": 0.89
  },
  "batangas": {
-  "calls": 240,
-  "maxCalls": 282,
-  "kverts": 776,
-  "maxKverts": 823,
-  "jsMs": 1.99
+  "calls": 235,
+  "maxCalls": 277,
+  "kverts": 781,
+  "maxKverts": 830,
+  "jsMs": 1.45
  },
  "quezaltepeque": {
   "calls": 249,
