@@ -28,11 +28,11 @@
   "jsMs": 3.05
  },
  "spa": {
-  "calls": 186,
-  "maxCalls": 232,
-  "kverts": 494,
-  "maxKverts": 618,
-  "jsMs": 1.5
+  "calls": 197,
+  "maxCalls": 238,
+  "kverts": 511,
+  "maxKverts": 631,
+  "jsMs": 1.9
  },
  "rbring": {
   "calls": 228,
