@@ -1,8 +1,9 @@
 # Ptice in živali: raziskava in načrt
 
 Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7120588492). Veja `grafika/ptice-zivali-bt`.
-**Stanje 24. 11. zvečer:** točki 1 in 2 sta v kodi (PR #1060); tri stopnje podrobnosti so v kodi kot preizkus (privzeto sedanja ptica),
-vprašanje `ptice-podrobnost-1060` čaka na strani Odločitve; raziskava dopolnjena ([19]–[36]), vrste po državah še niso v kodi (glej »Predaja«).
+**Stanje 25. 11.:** točke 1–3 so v kodi (PR #1060). Točka 4: v kodi sta dve vrsti, ki ju potrjujejo prebrani viri [1]–[18]
+(žerjav v klinu: Nürburg, Kågeröd; črni jastreb v kroženju: Aguascalientes, Quezaltepeque, Ujarrás, Rio do Rastro). Viri [19]–[38] iz okolja
+niso dosegljivi (glej »Predaja«), zato druge vrste ostajajo zunaj kode.
 
 ## Odločitev (povzetek)
 
@@ -40,7 +41,7 @@ Kar ni potrjeno, je označeno z »ni vira« in **ne gre v kodo**, dokler vira ni
 | Kanadska gos (*Branta canadensis*) | ni vira (kot klina je odvisen od velikosti jate) | V (klin), vodilne se menjajo | ni vira | Severna Amerika (meritve z radarjem); Kanada, ZDA izrecno ni vira | [21] [22] |
 | Rožnati kakadu, galah (*Eolophus roseicapilla*) | »velike, hrupne jate«, števila ni vira | ohlapna jata; poskakujoč, akrobatski let | ni vira | Avstralija; Novi Južni Wales (opazovanja jat brez štetja) | [23] |
 | Rumenokljuni škarnik (*Milvus aegyptius*) | nomadske jate; prenočišče 1500–3500 (KwaZulu-Natal) | formacija ni vira | ni vira | južna Afrika (avgust–marec); Kenija, Tanzanija: domorodna vrsta, jate ni vira | [24] [25] |
-| Andski kondor (*Vultur gryphus*) | ni vira | jadranje; maha le ~1 % časa leta, ob stenah v termiki | ni vira | Andi, Čile | [26] |
+| Andski kondor (*Vultur gryphus*) | ni vira | jadranje; maha le ~1 % časa leta (osem mladih ptic z merilniki) | ni vira | Patagonija pri Barilocheju, **Argentina** (ne Čile: popravljeno 25. 11.) | [26] |
 | Velika burnica (*Fregata minor*) | ni vira | jadranje v termiki pod kopastimi oblaki, redki, počasni in globoki zamahi | ni vira | Tihi in Indijski ocean; Fidži, Samoa, Palau izrecno ni vira | [27] |
 | Bela štorklja (*Ciconia ciconia*) | jate negnezdečih (Harghita), števila ni vira | jadranje v termiki | ni vira | Romunija (popis 2025: več kot 7500 parov) | [28] |
 | Veliki plamenec (*Phoenicopterus roseus*) | ni vira | ni vira | ni vira | Katar (november–april, obala); Bahrajn (vrh decembra, štetje 1991) | [29] |
@@ -83,7 +84,7 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 | Rumenokljuni škarnik, jadranje | Južna Afrika, Kenija, Tanzanija, Uganda | Južna Afrika potrjena (jate, avgust–marec) [24] [25]; Kenija, Tanzanija le prisotnost; Uganda ni vira |
 | Kanadska gos, klin | Kanada, ZDA | klin potrjen [22]; kraj in število manjkata (hww.ca iz okolja ni dosegljiv) |
 | Galah, ohlapna jata | Avstralija | potrjeno [23]; število manjka (Bathurst je dirkališče: ptice v petini časa) |
-| Andski kondor, jadranje posamič | Čile | potrjeno [26]; število manjka |
+| Andski kondor, jadranje posamič | Čile | **ni potrjeno**: meritev [26] je iz Argentine (Bariloche); za Čile in za število manjka vir, v kodo ne gre |
 | Bela štorklja, jadranje | Romunija | kraj potrjen [28]; število v jati manjka |
 | Veliki plamenec | Katar, Bahrajn, Angola (Luanda) | kraj potrjen [29]; Angola: jate ob polotoku Mussulo [32], nad mestno cesto ni vira; formacija in število manjkata |
 | Puranji jastreb, jadranje | Jamajka (Irishtown) | potrjeno: pogost po vsem otoku, po njem ime gorovja [30]; število manjka |
@@ -121,17 +122,31 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 - Rišejo se samo ptice v zraku (`setDrawRange`); brez jate nič oglišč. Sepang je pri najgostejšem mestu tik pod mejo (899 tisoč od 900):
   vsaka dodatna geometrija na tej progi test zmogljivosti obrne.
 
+## Vrste v kodi (25. 11.)
+
+- Polje `ptice` v datoteki proge (`js/tracks/<id>.js`), opis vrste v `BIRD_KIND` (`js/render.js`, pred razredom `Birds`). Proga brez polja,
+  testna ali zamrznjena ima sedanjo ptico (ob morju galeba).
+- `ptice: 'zerjav'` (Nürburg, Kågeröd): klin 9–16 ptic, vodilna na konici, druge izmenično levo in desno za njo, vse mahajo ves čas
+  [1] [2] [3]. Pravi klini štejejo do 400 ptic; meja je 16 ptic razreda `Birds`. Nürburg je dirkališče: jata pride v petini časa.
+- `ptice: 'jastreb'` (Aguascalientes, Quezaltepeque, Ujarrás, Rio do Rastro): 3–7 ptic kroži v termiki, vsaka na svojem krogu (7–19 m),
+  vse v isto smer, nagnjene v zavoj; ravna krila, vsakih 4–9 s sekunda hitrih plitvih zamahov; črne, bele lise ob konicah kril [10] [11] [12].
+- Jata vrste pride cela ali je ni (če je v zraku premalo prostih ptic, počaka). Velikost ptice je enaka kot prej (za razpone kril ni prebranega vira).
+- Brez vrste ostanejo: Finska (Koli in Harju sta zimski, Ouninpohja testna; žerjavi so pozimi na jugu), Cusco (za višino nad 3000 m ni vira),
+  Portobelo (ob morju ostanejo galebi), Pembrey in italijanske proge (glej vprašanje o škorcih spodaj), vse zamrznjene proge.
+- Test `tests/browser/ptice.test.mjs`; `Render.birdsInfo()` je odprt samo zanj. Klici risanja in oglišča se ne spremenijo (isti en klic, največ 1056 oglišč).
+
 ## Predaja (naslednja seja)
 
-1. Podrobnost ptic je končana (C, glej zgoraj); ostane samo raziskava vrst.
-2. Raziskava: za Zelenortske otoke, Alžirijo in Kitajsko vrsta ni potrjena (ostane sedanja ptica); manjkajo številke jat v letu; `en.wikipedia.org` in `hww.ca` iz okolja nista dosegljiva.
-   Dovolj potrjeno za kodo (kraj + formacija + let): žerjav (Nemčija, Švedska, Finska; klin), črni jastreb (jadranje), andski kondor (Čile; jadranje),
-   škorec (Združeno kraljestvo, Italija; gosta jata). Številke v jati so potrjene le za žerjava in škorca.
-3. Vrsta po državi: polje v datoteki proge (npr. `ptice: { vrsta, n: [min, max], formacija, let }`), samo za potrjene vrstice; sicer sedanja ptica.
-   Formacije: klin, vrsta, ohlapna jata, gosta jata, posamič ali par (jadranje v krogu). `Birds` uporablja `Math.random` (ne semena dirke).
-4. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena (odločeno 24. 11.).
-   `npm run test:related` 25. 11.: 18 od 20 zelenih; `perf` (Sepang) in `okolje` (Spa) popravljena in posamič zelena.
-5. Zvonci: koordinacija 25. 11. sporoča odgovor uporabnika »1 · Ok, brez zvoncev«: Spa in Red Bull Ring ostaneta brez čred in zvoncev.
-6. Odprto za svežo sejo: (a) preveri vire [19]–[38] na straneh (vsako številko in kraj), šele nato vrste v kodo;
-   (b) Sepang je pri 899 od 900 tisoč oglišč že na `main`: ptice tega ne slabšajo več, rezerva zahteva poseg v progo (ločena tema).
-7. Vire, ki gredo v kodo, z licenco dopiši v `README.md`, »Zasluge«.
+1. **Omrežje:** okolje »Koordinacija« dovoli samo `overpass-api.de` in `api.openstreetmap.org`; strani virov [19]–[38] se 25. 11. niso odprle
+   (preverjeno osem naslovov). Dokler koordinacija ne dovoli gostiteljev (savingcranes.org, www.euronews.com, www.wwt.org.uk, sora.unm.edu,
+   birdlife.org.au, pmc.ncbi.nlm.nih.gov, www.audubon.org, www.romania-insider.com, visitqatar.com, en.wikipedia.org, hww.ca,
+   datazone.birdlife.org), točka »preveri vsako številko na strani« ni izvedljiva. Iskanje vrne samo izpise.
+2. Iz izpisov iskanja 25. 11.: [26] drži za 1 % mahanja in osem ptic, kraj je Argentina (popravljeno zgoraj). Drugi viri [19]–[38] niso preverjeni.
+3. **Vprašanje za uporabnika (prek koordinacije):** škorec je potrjen za Združeno kraljestvo [6] in Rim pozimi [20], a jata šteje povprečno
+   30 000 ptic; `Birds` jih ima 16. Možnosti: (a) ostane sedanja ptica, (b) gost oblak 16 ptic, (c) nov razred z več sto pikami (nov klic risanja).
+   Do odgovora Pembrey in italijanske proge ostanejo pri sedanji ptici.
+4. Naslednje vrste, ko bodo viri prebrani: siva gos (NL, DK; klin: formacija `wedge` je že v kodi), kanadska gos, črni škarnik (Japonska; `soar`),
+   bela štorklja (Romunija; `soar`), rumenokljuni škarnik (Južna Afrika). Nova vrsta = vnos v `BIRD_KIND` in polje `ptice` v progi.
+5. Sepang: na `main` je pri 899 od 900 tisoč oglišč; ptice tega ne spreminjajo (Sepang nima polja `ptice`). Rezerva zahteva poseg v progo: ločena tema.
+6. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena (odločeno 24. 11.); zvonci: »1 · Ok, brez zvoncev«.
+7. Viri v kodi so v `README.md`, »Zasluge« (vrstica »Ptice po državi proge«); ob novi vrsti jo dopolni.
