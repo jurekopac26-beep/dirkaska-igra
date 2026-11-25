@@ -7,6 +7,8 @@
 - Zbrano v #1085: #798, #809, #811, #818. Zbrano v #1023: #843.
 - Zbrano v #713: #696, #699. Zbrano v #783: #539.
 
+**Pravilo (Matej 23.45):** ne zapiraj PR, omenjenih v `CLAUDE.md` ali `docs/vrsta.md` (npr. #605, izjema za fiziko »Dež in sneg«), in ne PR s seznama za izogibanje (croatiadata). Napaki 25. 11.: #678 in #605 zaprta, ponovno odprta.
+
 Metoda: `git merge-base --is-ancestor origin/<veja PR> origin/<zbirna veja>` (`git cherry` in tritočkovna razlika nista zanesljiva).
 
 ## Ostaja odprto (unikatno delo, brez zbirnega naslednika)
