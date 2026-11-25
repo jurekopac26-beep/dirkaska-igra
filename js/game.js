@@ -6464,7 +6464,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
      the browser (tdgp-ctrl: { keys: { act: [code, code] }, lbl: { code: the key's name }, pads: { device: binding }, dev }); Ponastavi:
      the defaults of the page shown. ---------------- */
   const CTL_KEY = 'tdgp-ctrl';
-  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['tyre', 'Gume za postanek'], ['replay', 'Posnetek do sem'], ['flag', 'Zastavica (napaka)'], ['dev', 'Prikaz za razvijalca']];
+  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['tyre', 'Gume za postanek'], ['replay', 'Posnetek do sem'], ['flag', 'Zastavica (napaka)'], ['dev', 'Prikaz za razvijalca'], ['fps', 'Števec sličic']];
   const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['rescue', 'Nazaj na progo']];
   let ctl = { keys: null, lbl: {}, pads: {}, dev: '' }, ctlTab = 'keys', ctlWait = null;
   const ctlInOk = (q) => isObj(q) && Number.isInteger(q.i) && q.i >= 0 && q.i < 64 && (q.t === 'b' || (q.t === 'a' && isFinite(q.lo) && isFinite(q.hi) && q.lo !== q.hi));
@@ -6567,14 +6567,14 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
 
   /* ---------------- main loop ---------------- */
-  // the frame counter (open the game with ?fps in the address): frames a second, the slowest frame of the last second, and where the time goes
+  // the frame counter (the key K, Input's 'fps', for anyone: PH.key; or open the game with ?fps in the address): frames a second, the slowest frame of the last second, and where the time goes
   // (PH.s: the race's steps, PH.r: Render.frame; the rest of the frame is the HUD, the sound and the browser itself). Orodje za napake's
   // Prikaz za razvijalca (the key O, its settings: PH.dev, js/napake.js) shows it too, with more lines (phMore): the draw calls and the
   // vertices a frame (renderer.info, every pass of the frame: not reset by each render while shown), the metres from the start and the lap,
   // the world's theme and its graphics tier, the physics' level of detail of a big field (Core LOD)
   const PH = (() => {
     let url = false; try { url = /[?&]fps\b/.test(location.search); } catch (_) { /* no location */ }
-    const o = { url, dev: false, get on() { return o.url || o.dev; }, s: 0, r: 0, n: 0, t0: 0, worst: 0, last: 0, el: null, calls: 0, tris: 0, info: null };
+    const o = { url, dev: false, key: false, get on() { return o.url || o.dev || o.key; }, s: 0, r: 0, n: 0, t0: 0, worst: 0, last: 0, el: null, calls: 0, tris: 0, info: null };
     o.tick = (now) => {
       if (!o.on) { if (o.el) { o.el.remove(); o.el = null; } if (o.info) { o.info.autoReset = true; o.info = null; } o.t0 = o.last = 0; return; }
       if (!o.el) { o.el = document.createElement('div'); o.el.id = 'ph-fps'; o.el.style.cssText = 'position:fixed;left:10px;top:66px;z-index:99999;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.65);color:#7CFF8A;font:600 12px/1.35 monospace;pointer-events:none;white-space:pre'; document.body.appendChild(o.el); }
@@ -7176,6 +7176,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       ctlLoad();   // (the keys and the pads' buttons as the player set them)
       Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
       Input.onFlag = () => { if (screen === 'none' && !replay) Napake.flag('key'); };   // (F: a flag in the race, Orodje za napake)
+      Input.onFps = () => { PH.key = !PH.key; toast(tr('Števec sličic') + ': ' + tr(PH.key ? 'Vklop' : 'Izklop').toLowerCase(), 1400); };   // (K: frames a second, the slowest frame, steps and draw ms)
       Input.onDev = () => Napake.dev();   // (O: Prikaz za razvijalca on or off, Orodje za napake)
       Input.onReplay = () => { if (Napake.on) return; if (replay) { if (replay.here && screen === 'none') rpRace(); } else if (screen === 'none' || screen === 'pause') rpHere(); };   // (I: Posnetek do sem; in it again: Nazaj v dirko; not while marking: Označi)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
