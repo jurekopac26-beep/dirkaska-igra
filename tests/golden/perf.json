@@ -98,11 +98,11 @@
   "jsMs": 1.22
  },
  "livorno": {
-  "calls": 155,
+  "calls": 156,
   "maxCalls": 185,
-  "kverts": 370,
-  "maxKverts": 461,
-  "jsMs": 2.88
+  "kverts": 369,
+  "maxKverts": 457,
+  "jsMs": 3.21
  },
  "balea": {
   "calls": 166,
@@ -329,11 +329,11 @@
   "jsMs": 0.66
  },
  "cusco": {
-  "calls": 149,
-  "maxCalls": 180,
-  "kverts": 368,
-  "maxKverts": 468,
-  "jsMs": 0.68
+  "calls": 151,
+  "maxCalls": 182,
+  "kverts": 373,
+  "maxKverts": 473,
+  "jsMs": 1.42
  },
  "mombasa": {
   "calls": 135,
@@ -371,11 +371,11 @@
   "jsMs": 0.92
  },
  "hiva": {
-  "calls": 167,
+  "calls": 169,
   "maxCalls": 206,
-  "kverts": 543,
-  "maxKverts": 611,
-  "jsMs": 0.94
+  "kverts": 545,
+  "maxKverts": 601,
+  "jsMs": 0.88
  },
  "mapileng": {
   "calls": 141,
