@@ -27,15 +27,13 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 
 ## Ob cesti
 
-Stranske ulice in dovozi, ki se priključijo na glavno cesto (`js/world-koror-obcestje.js`, potek in razred iz OpenStreetMap, slike prej in potem v `docs/slike/koror/`):
+Priključki stranskih ulic in dovozov, samo za videz (paket E: `stranske` v `js/tracks/koror.js`, `World.cesta.stranske`, `tools/cesta/izvoz.py`, `docs/realizem/paket-e.md`; potek in razred iz OpenStreetMap):
 
-- **Katere**: 11 poti med startom in ciljem, od roba asfalta v igri navzven, največ 70 m od ceste (120 m po poti). Stanovanjski 181309695 (105 m za startom) in 23035104 (1985 m); servisne 376149091 (60 m), 655297251 (780 m), 181309698 (795 m, nasproti prejšnje), 376149491 (2260 m), 376149492 (2525 m), 376149493 (2715 m), 376149495 (2940 m) in 655300152 (2995 m, njen konec je 2,5 m od 376149495, 31 m od ceste); dovoz 1564824059 (3150 m).
-- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`, ki bi poti naredil prevozne). Pot se konča, kjer se začne morje, voda iz OpenStreetMap ali hiša, ki jo igra riše; na njej ni palm, dreves, skal ali gledalcev.
-- **Ob ustju**: jeklena ograja na zunanji strani ovinka se čez ustje odpre (1,5 m od robov poti, brez ostanka, krajšega od 12 m), pri 376149491, 376149493 in 376149495. Trije beli smerniki, ki bi stali sredi ustja, so odstranjeni.
-- **Površina**: nobena od 11 poti v OpenStreetMap nima oznake `surface`; vseh 6 poti ob tej cesti, ki jo imajo (servisne), je neasfaltiranih. Narisane so kot makadam v teksturi in barvi makadamske bankine glavne ceste (želja uporabnika 2. 11. 2026, `docs/igra.md`, »Makadam«), kolesnice malo svetlejše; v dežju so temnejše kot bankina.
-- **Predpostavke** (OpenStreetMap tu nima širin): širina po razredu (stanovanjska 4,5 m, servisna 3,5 m, dovoz 3 m), ustje 2,5 m širše, ki se zoži v prvih 6 m za asfaltom; čez jarek ob cesti gre pot po nasipu (cev pod njim ni narisana). Cesta v igri je širša od prave, zato se pot začne na robu asfalta v igri. 655297251 se konča 15 m pred koncem v OpenStreetMap, kjer tla v igri ob zahodnem koncu mostu padejo v laguno.
-- **Ni narisano**: servisna pot 15 m za startom (181309703, zunaj pogleda kamere za avtom), servisna pot ob zahodnem koncu mostu, ki ne seže do ceste (181309697), servisna pot pri 1055 m (655299344: laguna v igri se tam začne približno 8 m za asfaltom, ostal bi le štrcelj), poti za ciljem; nobenih imen.
-- **Odprto vprašanje**: (a) vseh 11 poti kot makadam (`koror-1960m-po.webp`) ali (b) brez stanovanjskih ulic 181309695 in 23035104 (`koror-1960m-b-brez-stanovanjskih.webp`): oznako `unpaved` imajo ob tej cesti samo servisne poti, za stanovanjske ulice ni vira.
-- **Zmogljivost**: makadam je v mreži bankine glavne ceste, brežine ob robovih v kosih okolice: brez lastnih klicev risanja (1776 mrež kot prej). Na telefonu 145 klicev na sliko (največ 166, prej 142 in 164), 357 tisoč oglišč (največ 562 tisoč, prej 349 in 553 tisoč).
+- **Kateri**: 10 priključkov med startom in ciljem: 9 dovozov (3,6 m) in ena ulica (5,2 m), trak 34–64 m od roba asfalta po poteku s karte; 7 na levi strani. Širina gre po razredu, ker OpenStreetMap tu nima širin.
+- **Ob ustju**: ograja in robna črta glavne ceste sta čez ustje prekinjeni, čez odprtino stoji vrsta oranžnih stebričkov (količkov), konec traku zbledi v tla.
+- **Površina**: ulica je v tonu asfalta glavne ceste, dovozi so svetel makadam (nobena od poti v OpenStreetMap nima oznake `surface`: predpostavka).
+- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`); priključki niso vozni.
+- **Odločitev uporabnika 24. 11. 2026**: samo priključki s količki. Ulic in dovozov v celi dolžini kot makadam (11 poti iz OSM, prej v ločeni datoteki obcestja) ni več.
+- **Zmogljivost**: na telefonu 148 klicev risanja na sliko (največ 170) in 365 tisoč oglišč (največ 571 tisoč) (`tests/golden/perf.json`); z ulicami v celi dolžini 149 klicev in 370 tisoč oglišč (največ 581 tisoč). Svet ima 1793 mrež kot prej in 26 tisoč oglišč manj (903 tisoč).
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py koror --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.

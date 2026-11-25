@@ -25,8 +25,8 @@
      palms, bananas, shrubs, tufts of grass), the houses, guesthouses and shops (def.bld: plastered walls in pastel colours under hipped roofs
      of red tile or sheet metal, a veranda in front; generic: no names or signs of any hotel, café or shop), the bus shelters (def.stops), the
      stalls by the road (def.poi), the masonry walls holding the legs of the hairpins, the low black-and-white parapets on the drops and round
-     the bends, the chevrons, the viewpoint (def.views), the lanes by the road (def.ways: side streets, driveways, footpaths, steps, a
-     footbridge; the zebra past the finish), three-wheelers parked at the finish, the land beyond the corridor (irFar: the forested hills,
+     the bends, the chevrons, the viewpoint (def.views), the footways by the road (def.ways: footpaths, steps, a footbridge;
+     the zebra past the finish; the roads that meet the track are package E's connectors, def.stranske), three-wheelers parked at the finish, the land beyond the corridor (irFar: the forested hills,
      the rock faces, the plains far below). Only geographic names on the boards. */
   const ECOL = [0, 0, 0];
   let ST = null;   // the streams (def.streams, prepared at each build): points every ~4 m downstream, the water's level, e[k] 1 at a stream's last point; a hash of the segments
@@ -568,11 +568,12 @@
       }
     }
 
-    /* ---- the lanes by the road (OSM: def.ways, def.crossings; tools/ella/obcestje.py): the side streets and the service roads (asphalt,
-       concrete), the driveways, the footpaths (gravel, the red earth) on the ground, the steps up and down the banks, the footbridge over the
-       stream (down to its far side in steps), the zebra crossing past the finish. Scenery only: the cars do not drive on them and the barrier
-       stays (not def.sideRoads, which the cars can drive into); where one meets the road the parapet has a gap (mo); the plants, the rocks,
-       the crowds and the chevrons keep off them (exclPush) ---- */
+    /* ---- the footways by the road (OSM: def.ways, def.crossings; tools/ella/obcestje.py): the footpaths (gravel, the red earth) on the
+       ground, the steps up and down the banks, the footbridge over the stream (down to its far side in steps), the zebra crossing past the
+       finish. The map's streets, service roads and driveways are not laid here: package E's connectors with the posts are their picture
+       (def.stranske, World.cesta.stranske above; the user's choice 24. 11. 2026: only those). Scenery only: the cars do not drive on them
+       and the barrier stays (not def.sideRoads, which the cars can drive into); where one meets the road the parapet has a gap (mo); the
+       plants, the rocks, the crowds and the chevrons keep off them (exclPush) ---- */
     const mo = [new Uint8Array(N), new Uint8Array(N)]; let nLane = 0, nStep = 0, nFoot = 0, nCross = 0;
     {
       const pO = { vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 };

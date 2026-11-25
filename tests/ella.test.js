@@ -86,14 +86,15 @@ check('track: an open road with four ways to drive it (race, time trial, traffic
     B.length > 400 && B.every(b => b.length === 7 && [0, 1, 5, 6].includes(b[5])) && B.filter(b => b[5] === 5).length > 20 && st.length >= 4 && st.every(s => s.length === 3 && Math.abs(s[1]) === 1) &&
     (def.views || []).length === 2 && (def.parks || []).length === 2 && (def.poi || []).length >= 8 && Buffer.from(F.b64, 'base64').length === 2 * nf && F.lake.reduce((a, b) => a + b, 0) === nf && F.cell === 250,
     `${B.length} buildings (${B.filter(b => b[5] === 5).length} guesthouses and shops), ${st.length} stops, ${def.views.length} viewpoints, ${def.parks.length} car parks, ${def.poi.length} shops and cafés, far ${F.nx}x${F.nz} from ${F.lo} m`);
-  // the lanes by the road (tools/ella/obcestje.py, OpenStreetMap): scenery on the ground, numbers only (no names); each part off the asphalt
-  // and near the road, the steps and the footbridge among them; the zebra on the road past the line
+  // the footways by the road (tools/ella/obcestje.py, OpenStreetMap): scenery on the ground, numbers only (no names); each part off the
+  // asphalt and near the road: footpaths, steps and the footbridge, no streets or driveways (those are package E's connectors with the
+  // posts, def.stranske: the user's choice 24. 11. 2026); the zebra on the road past the line
   const W = def.ways || [], kc = new Array(6).fill(0), q = {}; let off = true, near = true;
-  const okW = W.length >= 15 && W.every(r => r.length >= 7 && r.length % 2 === 1 && r.every(v => typeof v === 'number') && r[0] >= 0 && r[0] <= 5 && r[1] >= 0 && r[1] <= 4 && r[2] >= 8 && r[2] <= 80);
+  const okW = W.length >= 5 && W.every(r => r.length >= 7 && r.length % 2 === 1 && r.every(v => typeof v === 'number') && r[0] >= 0 && r[0] <= 5 && r[1] >= 0 && r[1] <= 4 && r[2] >= 8 && r[2] <= 80);
   W.forEach((r) => { kc[r[0]]++; let dm = 1e9; for (let j = 3; j + 1 < r.length; j += 2) { T.query(r[j], r[j + 1], -1, q); dm = Math.min(dm, Math.abs(q.d)); if (Math.abs(q.d) < T.w - 0.3) off = false; } if (dm > T.w + 41) near = false; });
   const zc = (def.crossings || []).map(([x, z]) => { T.query(x, z, -1, q); return [q.s, q.d]; });
-  check('data: the lanes by the road (streets, driveways, footpaths, steps, a footbridge), each off the asphalt and near the road; one zebra on the road past the line',
-    okW && off && near && kc[0] >= 3 && kc[4] >= 3 && kc[5] === 1 && zc.length === 1 && zc[0][0] > T.finishS && zc[0][0] < T.finishS + 250 && Math.abs(zc[0][1]) < 6,
+  check('data: the footways by the road (footpaths, steps, a footbridge; no streets or driveways), each off the asphalt and near the road; one zebra on the road past the line',
+    okW && off && near && kc[0] + kc[1] + kc[2] === 0 && kc[3] >= 2 && kc[4] >= 2 && kc[5] === 1 && zc.length === 1 && zc[0][0] > T.finishS && zc[0][0] < T.finishS + 250 && Math.abs(zc[0][1]) < 6,
     `${W.length} parts (by kind ${kc.join('/')}), the zebra ${zc.map(([s, d]) => `${Math.round(s - T.finishS)} m past the line, ${d.toFixed(1)} m across`).join('')}`);
 }
 

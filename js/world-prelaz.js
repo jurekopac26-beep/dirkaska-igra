@@ -689,7 +689,6 @@
         const nearV = (i) => { const o = side * (bar[i] + 0.12), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; for (const p of pulls) if (p.view && Math.hypot(x - p.x, z - p.z) < p.r - 0.3) return true; return false; };
         for (let i = 0; i < N; i++) if (noRail[side > 0 ? 1 : 0][i] || (L.view && nearV(i))) nd[i] = 0;   // (L.view: the viewpoints' plots open to the road, their gaps not closed)
       }
-      if (L.railGap) L.railGap(need);   // (a look's own gaps: where a side street joins the road, js/world-savusavu-obcestje.js)
       return need; };
     const RN = L.hills ? railNeed() : null;   // (L.hills: known here already, the verge without its ditch where no rail stands, the hills' soft limits there)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
@@ -770,7 +769,6 @@
                 gv.quadUp(a, b, c, d, [bc(i, r), bc(i, r + 1), bc(j, r + 1), bc(j, r)], [[u0, a[1] / 4], [u0, b[1] / 4], [u1, c[1] / 4], [u1, d[1] / 4]]); } }
           }
         }
-        if (L.gravel) L.gravel(gs0, c0, Math.min(c0 + 60, N - 1));   // (a look's own gravel in this chunk's shoulder mesh: the side streets joining the road, js/world-savusavu-obcestje.js)
         addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); addM(gv0, gMat);
         if (SR) { const gb = new API.RB(true); SR.robovi(gb, c0, Math.min(c0 + 60, N), plGCol); addM(gb, gMat); }   // (the side roads' shoulders: the ground's colour and the verges' material)
       }

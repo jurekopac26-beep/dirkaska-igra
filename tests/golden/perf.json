@@ -191,9 +191,9 @@
  "gudauri": {
   "calls": 158,
   "maxCalls": 188,
-  "kverts": 372,
-  "maxKverts": 503,
-  "jsMs": 1.29
+  "kverts": 359,
+  "maxKverts": 501,
+  "jsMs": 1.61
  },
  "ngorongoro": {
   "calls": 141,
@@ -210,11 +210,11 @@
   "jsMs": 1.67
  },
  "ella": {
-  "calls": 170,
-  "maxCalls": 214,
-  "kverts": 337,
-  "maxKverts": 522,
-  "jsMs": 1.73
+  "calls": 169,
+  "maxCalls": 211,
+  "kverts": 334,
+  "maxKverts": 506,
+  "jsMs": 1.4
  },
  "llogara": {
   "calls": 159,
@@ -301,11 +301,11 @@
   "jsMs": 1.44
  },
  "luanda": {
-  "calls": 116,
-  "maxCalls": 148,
-  "kverts": 231,
-  "maxKverts": 302,
-  "jsMs": 0.76
+  "calls": 114,
+  "maxCalls": 145,
+  "kverts": 227,
+  "maxKverts": 318,
+  "jsMs": 0.74
  },
  "ujarras": {
   "calls": 131,
@@ -350,11 +350,11 @@
   "jsMs": 0.97
  },
  "eljem": {
-  "calls": 104,
-  "maxCalls": 126,
-  "kverts": 317,
-  "maxKverts": 461,
-  "jsMs": 0.86
+  "calls": 101,
+  "maxCalls": 122,
+  "kverts": 257,
+  "maxKverts": 339,
+  "jsMs": 0.97
  },
  "isuna": {
   "calls": 127,
@@ -428,17 +428,17 @@
  },
  "savusavu": {
   "calls": 172,
-  "maxCalls": 210,
-  "kverts": 418,
-  "maxKverts": 516,
-  "jsMs": 1.08
+  "maxCalls": 209,
+  "kverts": 411,
+  "maxKverts": 503,
+  "jsMs": 1.02
  },
  "koror": {
-  "calls": 149,
+  "calls": 148,
   "maxCalls": 170,
-  "kverts": 370,
-  "maxKverts": 581,
-  "jsMs": 1.36
+  "kverts": 365,
+  "maxKverts": 571,
+  "jsMs": 0.96
  },
  "longyearbyen": {
   "calls": 115,

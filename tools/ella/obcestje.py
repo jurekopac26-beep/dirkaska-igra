@@ -1,6 +1,7 @@
-# Ella, Šrilanka: the lanes by the road from OpenStreetMap (the side streets, the driveways, the tracks, the footpaths, the steps, the footbridge)
-# and the zebra crossing, for js/world-ella.js to draw on the ground: scenery only (not the road: the cars do not drive on them, the barrier and
-# the verge stay as they are).
+# Ella, Šrilanka: the footways by the road from OpenStreetMap (the footpaths, the steps, the footbridge) and the zebra crossing, for
+# js/world-ella.js to draw on the ground: scenery only (the cars do not drive on them, the barrier and the verge stay as they are). The map's
+# roads that meet the track (the streets, the service roads and driveways, the tracks) are not written: package E's connectors with the posts
+# are their picture (def.stranske, tools/cesta/izvoz.py; the user's choice 24. 11. 2026: only those).
 #   python3 -I tools/ella/obcestje.py OSM [--dry]   -> »ways« and »crossings« in js/tracks/ella.js, between »obcestje (tools/ella/obcestje.py)«
 #                                                    and »konec obcestja« (after build.py's block; the block is added there the first time)
 # OSM: the API's map call for the track's box (config.json box), saved as an .osm file:
@@ -9,9 +10,9 @@
 # ways: [kind, surface, width in dm, x0, z0, x1, z1, ...] in the game's frame (metres, the start line at 0, 0), the parts of each way between the
 #   game's asphalt edge (the centre line + HW) and RMAX m from it (none beyond the line's ends), simplified to 0.25 m; a part that comes from
 #   the road starts at its edge.
-#   kind: 0 a street (residential, unclassified, ... and the road to Passara), 1 a service road or driveway, 2 a track, 3 a footpath, 4 steps,
-#   5 a footbridge; surface: 0 asphalt, 1 concrete, 2 paving stones, 3 gravel or compacted, 4 earth (the laterite); untagged: the streets
-#   asphalt, the service roads and the steps concrete, the tracks and the paths earth.
+#   kind: 3 a footpath, 4 steps, 5 a footbridge (0 a street, 1 a service road or driveway, 2 a track: read, not written); surface: 0 asphalt,
+#   1 concrete, 2 paving stones, 3 gravel or compacted, 4 earth (the laterite); untagged: the steps concrete, the paths earth.
+#   Only the footways that start at the road and the ones that hang on those are written (hang): not the ones that came off a street.
 # crossings: [x, z] the zebra crossings on the road (the nodes highway=crossing, crossing=zebra / marked / crossing_ref=zebra within 6 m).
 import json, math, os, re, sys
 import xml.etree.ElementTree as ET
@@ -25,6 +26,7 @@ RMAX = 70.0    # the farthest a way is kept from the asphalt's edge, m
 TOL = 0.25     # the simplification's tolerance, m
 MINL = 3.0     # the shortest part kept, m
 NEAR = 40.0    # ... and a part is kept only if it comes this close to the asphalt's edge somewhere (not the far bits in the forest)
+JOIN = 1.5     # a footway hangs on the road, or on another footway, when an end of it is this close to it, m
 ENDS = 30      # nothing beyond the ends of the game's line or in its last 15 m (its 0.5 m samples): the road ends there
 
 KIND = {'primary': 0, 'secondary': 0, 'tertiary': 0, 'unclassified': 0, 'residential': 0, 'living_street': 0, 'service': 1, 'track': 2,
@@ -88,6 +90,17 @@ def parts(Q):   # the way's parts between the asphalt's edge and RMAX m from it 
     if cur: out.append(np.array(cur))
     return [p for p in out if np.hypot(*np.diff(p, axis=0).T).sum() >= MINL and dist(p).min() <= HW + NEAR]
 
+def hang(ways):   # the footways only (kind >= 3): the parts that start at the road's edge and the ones that hang on those
+    F = [r for r in ways if r[0] >= 3]; Pt = [np.array(r[3:], float).reshape(-1, 2) for r in F]
+    Dn = [np.concatenate([np.linspace(p[i], p[i + 1], max(2, int(math.ceil(np.hypot(*(p[i + 1] - p[i])) / 0.25)) + 1)) for i in range(len(p) - 1)]) for p in Pt]
+    def touch(a, b): return min(np.hypot(*(Dn[b] - e).T).min() for e in (Pt[a][0], Pt[a][-1])) <= JOIN
+    keep = [dist(p).min() <= HW + JOIN for p in Pt]; more = True
+    while more:
+        more = False
+        for i in range(len(F)):
+            if not keep[i] and any(keep[j] and (touch(i, j) or touch(j, i)) for j in range(len(F))): keep[i] = True; more = True
+    return [r for r, k in zip(F, keep) if k]
+
 def width(tg, hw):
     m = re.match(r'\s*([0-9]+(?:\.[0-9]+)?)', tg.get('width', ''))
     return float(m.group(1)) if m and 0.5 <= float(m.group(1)) <= 12 else WDEF[hw]
@@ -97,7 +110,7 @@ def main():
     if not a: sys.exit('python3 -I tools/ella/obcestje.py OSM [--dry]')
     root = ET.parse(a[0]).getroot()
     N = {n.get('id'): (float(n.get('lat')), float(n.get('lon')), {t.get('k'): t.get('v') for t in n.iter('tag')}) for n in root.iter('node')}
-    ways, cnt = [], {}
+    ways = []
     for w in root.iter('way'):
         tg = {t.get('k'): t.get('v') for t in w.iter('tag')}; hw = tg.get('highway')
         if hw not in KIND or tg.get('area') == 'yes': continue
@@ -111,13 +124,13 @@ def main():
         if kind == 5 and 'width' not in tg: wd = 1.6
         for p in parts(Q):
             p = rdp(p, TOL); ways.append([kind, surf, int(round(wd * 10))] + [round(float(v), 1) for v in p.ravel()])
-            cnt[kind] = cnt.get(kind, 0) + 1
     cr = []
     for lat, lon, tg in N.values():
         if tg.get('highway') == 'crossing' and (tg.get('crossing') in ('zebra', 'marked', 'uncontrolled') or tg.get('crossing_ref') == 'zebra'):
             q = game(lat, lon)
             if dist([q])[0] <= 6: cr.append([round(float(q[0]), 1), round(float(q[1]), 1)])
-    ways.sort(key=lambda r: (r[0], r[3], r[4]))
+    ways.sort(key=lambda r: (r[0], r[3], r[4])); ways, cnt = hang(ways), {}
+    for r in ways: cnt[r[0]] = cnt.get(r[0], 0) + 1
     log('ways: %d parts (%s), %d points; crossings: %d' % (len(ways), ', '.join('kind %d: %d' % kv for kv in sorted(cnt.items())),
         sum((len(r) - 3) // 2 for r in ways), len(cr)))
     blk = ('    // ---- obcestje (tools/ella/obcestje.py) ----\n    ways: %s,\n    crossings: %s,\n    // ---- konec obcestja ----\n'
