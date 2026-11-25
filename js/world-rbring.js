@@ -785,7 +785,7 @@
        glazed floor above under a white roof, the race control tower ---- */
     let nBoxes = 0;
     if (LK.pitBox) {
-      const [q0, q1, sd] = LK.pitBox, gq = new GB(true), gl = new GB(), one = [1, 1, 1], wl = [0.95, 0.95, 0.94], F = 18;   // (F: the garages' front past the pit wall)
+      const [q0, q1, sd] = LK.pitBox, gq = new GB(true), gl = new GB(), one = [1, 1, 1], wl = [0.95, 0.95, 0.94], F = LK.pitF || 18;   // (F: the garages' front past the pit wall; LK.pitF: Kildare's OSM garages)
       const TC = [[0.86, 0.12, 0.14], [0.12, 0.22, 0.5], [0.05, 0.42, 0.22], [0.98, 0.6, 0.1], [0.14, 0.14, 0.16], [0.95, 0.78, 0.12], [0.16, 0.36, 0.8], [0.94, 0.94, 0.92], [0.55, 0.26, 0.7], [0.1, 0.62, 0.72], [0.7, 0.1, 0.1], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55]];
       const WH = [0.92, 0.92, 0.9], WT = [0.8, 0.81, 0.82], GLS = [0.3, 0.42, 0.55], SH = [0.72, 0.74, 0.77], DK = [0.12, 0.12, 0.13];
       const bw = (s) => { const i = T.idx(s); return sd > 0 ? T.br[i] : T.bl[i]; }, at = (s, o, y) => { const [x, z] = atSf(s, sd * o); return [x, hyS(s) + y, z]; };
@@ -822,7 +822,7 @@
           { const sm = sAt(q + 1); B(sm, bw(sm) + F, -0.3, 2.04, 0.72, 0.22, KB); }
           if (acc % 6 === 0) B(s0, o0 + 0.05, -0.3, 0.09, 3.0, 0.09, PO);   // (the posts just behind the mesh: the banners hang on its face)
           if (acc % 10 === 0) { const [ex, ez] = atSf(s0, sd * (o0 + 7)); exclPush(ex, ez, 7); CR.exclAdd(ex, ez, 6); } }
-      } else {
+      } else if (!LK.pitOwn) {   // (LK.pitOwn: the track's own garages and tower from OSM, Kildare: none built here)
       for (let q = pq0 - Math.floor((pq0 - q0) / 10) * 10, k = 0; q < q1; q += 10, k++) {   // the garages (F m past the pit wall, 9 m deep) and the floor above, in step with the crews' boxes (def.pitRow: a garage behind each box)
         const s = sAt(q + 5), f0 = bw(s) + F, tc = crew.get(q), open = tc || (!PD && k % 3 === 1);
         B(s, f0 + 9, -2.5, 10, 6.5, 0.3, WH);                                                     // back wall
