@@ -175,11 +175,11 @@
   "jsMs": 1.22
  },
  "zandvoort": {
-  "calls": 212,
-  "maxCalls": 253,
-  "kverts": 700,
-  "maxKverts": 885,
-  "jsMs": 1.09
+  "calls": 221,
+  "maxCalls": 261,
+  "kverts": 702,
+  "maxKverts": 875,
+  "jsMs": 1.08
  },
  "furka": {
   "calls": 173,
@@ -254,9 +254,9 @@
  "sepang": {
   "calls": 195,
   "maxCalls": 234,
-  "kverts": 731,
-  "maxKverts": 899,
-  "jsMs": 1.02
+  "kverts": 711,
+  "maxKverts": 890,
+  "jsMs": 0.89
  },
  "lombok": {
   "calls": 219,
@@ -282,9 +282,9 @@
  "lusail": {
   "calls": 182,
   "maxCalls": 241,
-  "kverts": 593,
-  "maxKverts": 896,
-  "jsMs": 1.1
+  "kverts": 566,
+  "maxKverts": 869,
+  "jsMs": 0.83
  },
  "riohondo": {
   "calls": 214,
@@ -387,9 +387,9 @@
  "batangas": {
   "calls": 244,
   "maxCalls": 287,
-  "kverts": 818,
-  "maxKverts": 862,
-  "jsMs": 1.37
+  "kverts": 814,
+  "maxKverts": 857,
+  "jsMs": 0.89
  },
  "quezaltepeque": {
   "calls": 249,
