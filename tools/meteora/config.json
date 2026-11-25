@@ -1,0 +1,16 @@
+{
+  "id": "meteora",
+  "about": "Meteora, Grčija (id meteora): the asphalt road from the village of Kastraki uphill past the rock pillars and monasteries of Meteora to the viewpoints over the Kalambaka valley, point to point, 5.0 km (docs/proge-po-drzavah.md, Grčija; card ena-proga-grcija on the Odločitve page)",
+  "box": [39.700, 21.605, 39.730, 21.655],
+  "closed": false,
+  "route": [
+    [39.716426, 21.619918, null, "start: above the village of Kastraki (279 m)"],
+    [39.719469, 21.633229, null, "under the rock pillars, towards the monasteries"],
+    [39.718164, 21.640465, null, "finish: viewpoints over the Kalambaka valley (513 m)"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}
