@@ -19,9 +19,9 @@
 
   /* the common walk: every `step` m on both sides a group's place to `reach` m behind the barriers; ok(x, z): the strength there (0–1;
      0 = nothing stands), given the builder's own tests (excluded, the sea, the fortress); each(gx, gz, k, R) plants the group */
-  const walk = (ctx, seed, step, reach, o0, ok, each) => {
+  const walk = (ctx, seed, step, reach, o0, ok, each, smooth) => {   // smooth: API.ROCK_SMOOTH during the walk, restored after
     const T = API.T, { nrGround, nrNear, NR: P } = API; if (!T || !P || !nrGround || !T.br) return null;
-    const R = rng(seed), smooth0 = API.ROCK_SMOOTH, { excluded, seaD, inFort } = ctx;
+    const R = rng(seed), smooth0 = API.ROCK_SMOOTH, { excluded, seaD, inFort } = ctx; API.ROCK_SMOOTH = smooth;
     const free = (x, z, r) => { const q = nrNear(x, z); return !(q.i >= 0 && q.dd < r) && !excluded(x, z) && !(seaD && seaD(x, z) > -3) && !(inFort && inFort(x, z, 6)); };
     for (let s = 0; s < T.len; s += step) for (const sd of [-1, 1]) {
       const r0 = R(), r1 = R(), r2 = R(), o = o0 + Math.pow(r1, 1.4) * reach, [gx, gz] = side(T, s + (r2 - 0.5) * step, sd, o);
@@ -41,7 +41,6 @@
   World.ext.luandaRob = (ctx) => {
     const { nrGround, nrSlope, NR: P } = API, { scen } = ctx, straw = [0.8, 0.68, 0.42], pale = [0.86, 0.74, 0.5], olive = [0.56, 0.54, 0.3], red = [0.74, 0.44, 0.3]; let n = 0, m = 0;
     const ok = (x, z) => open(x, z) * (0.45 + 0.45 * sstep(0.35, 0.7, P.n3(x * 0.7 + 30, z * 0.7 - 80)));
-    API.ROCK_SMOOTH = true;
     walk(ctx, 9471, 4, 28, 2.5, ok, (gx, gz, k, R, free) => {
       const ol = sstep(0.55, 0.8, P.n1(gx * 1.1 - 60, gz * 1.1 + 210));
       if (R() < 0.16 && nrSlope(gx, gz) < 0.4 && free(gx, gz, 5)) { soil(scen, nrGround, gx, gz, 1.2 + R() * 1.6, vary(red, R, 0.03), R); m++; }
@@ -50,7 +49,7 @@
         if (!free(x, z, 2.4)) { R(); continue; }
         const col = a < 0.5 * ol ? olive : mix3(straw, pale, a);
         tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.55, 0.32 + h * 0.42, vary(col, R, 0.03), R); n++; }
-    });
+    }, true);
     return { sopi: n, prst: m };
   };
 
@@ -62,7 +61,6 @@
     const { nrGround, NR: P } = API, { scen, seaD } = ctx, green = [0.42, 0.52, 0.24], lime = [0.56, 0.6, 0.3], straw = [0.72, 0.66, 0.4];
     const coral = [[0.78, 0.68, 0.5], [0.7, 0.6, 0.44], [0.84, 0.76, 0.6], [0.62, 0.55, 0.43]]; let n = 0, m = 0;
     const ok = (x, z) => open(x, z) * (0.45 + 0.45 * sstep(0.35, 0.7, P.n3(x * 0.7 - 120, z * 0.7 + 50)));
-    API.ROCK_SMOOTH = true;
     walk(ctx, 9473, 4, 28, 2.5, ok, (gx, gz, k, R, free) => {
       const dry = sstep(0.5, 0.8, P.n1(gx * 1.1 + 140, gz * 1.1 - 30));
       for (let q = 0, cnt = 4 + Math.floor(R() * 5); q < cnt; q++) {
@@ -70,15 +68,14 @@
         if (!free(x, z, 2.4)) { R(); continue; }
         const col = a < 0.55 * dry ? straw : mix3(green, lime, a);
         tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.6, 0.34 + h * 0.46, vary(col, R, 0.03), R); n++; }
-    });
-    API.ROCK_SMOOTH = false;
+    }, true);
     const okS = (x, z) => { if (API.nrLC(x, z) >= 3) return 0; const d = seaD ? seaD(x, z) : -1e9; return d > -70 ? 0.25 + 0.3 * sstep(-70, -15, d) : 0; };
     walk(ctx, 9479, 7, 26, 3, okS, (gx, gz, k, R, free) => {
       for (let q = 0, cnt = 3 + Math.floor(R() * 5); q < cnt; q++) {
         const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, w = 0.2 + Math.pow(R(), 2.2) * 0.75;
         if (API.nrLC(x, z) >= 3 || !free(x, z, 2.2 + w)) { R(); R(); continue; }
         rock(scen.get(x, z), x, nrGround(x, z) + w * 0.14, z, w * 1.4, w * 0.55, w, R() * TAU, vary(coral[Math.floor(R() * coral.length)], R, 0.03), R, 0.34, 0.35); m++; }
-    });
+    }, false);
     return { sopi: n, kamni: m };
   };
   /* El Jem: docs/proge/eljem.md: »oljke in palme na suhih okrastih tleh«. Between the olives the dry ochre ground of the Sahel was a
@@ -91,14 +88,13 @@
     // in the shadow pass, ~7k vertices a frame by the amphitheatre, where the track is at its busiest: tests/golden/perf.json)
     const own = ctx.root && ctx.matV ? new API.Chunks(256) : null, scen = own || ctx.scen;
     const ok = (x, z) => open(x, z) * (0.38 + 0.5 * sstep(0.45, 0.8, P.n2(x, z)));
-    API.ROCK_SMOOTH = true;
     walk(ctx, 9483, 3, 28, 2.5, ok, (gx, gz, k, R, free) => {
       if (R() < 0.1 && nrSlope(gx, gz) < 0.4 && free(gx, gz, 5)) { soil(scen, nrGround, gx, gz, 0.9 + R() * 1.1, vary(dust, R, 0.03), R); m++; }
       for (let q = 0, cnt = 3 + Math.floor(R() * 5); q < cnt; q++) {
         const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = R(), a = R();
         if (!free(x, z, 2.4)) { R(); continue; }
         tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.5, 0.3 + h * 0.4, vary(mix3(straw, pale, a), R, 0.03), R, 3); n++; }
-    });
+    }, true);
     if (own) { const grp = new THREE.Group(); own.addTo(grp, ctx.matV, false, true); for (const c of grp.children) c.name = 'rob'; if (grp.children.length) ctx.root.add(grp); }
     return { sopi: n, prst: m };
   };

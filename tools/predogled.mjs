@@ -25,7 +25,8 @@ const { shareVideos } = require('./predogled-posnetki.js'), { shareAssets } = re
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 // (each preview ~200 MB, mostly assets/: ~93 MB less where its videos are main's, ~70 MB less where its pictures and data are; main in the root ~210 MB.
 // 12. 11. 2026, odločitev uporabnika: more previews at once; with the shared files ~45 MB a preview, LIMIT still leaves out what does not fit)
-const MAX = 8;
+// 22. 11. 2026: 12 (with 8, seven went to those labelled »predogled« and a new pull request the user chose to try had none: 404; the site was 716 MB)
+const MAX = 12;
 // MB for the whole site (main and the previews; MB: 2^20 bytes): GitHub Pages publishes a site up to 1 GB, the rest is room for the archive's own
 // overhead (9. 11. 2026: 3 previews and main with maketa-menija/ made an artifact of ~940 MB, with the 22 new tracks of #569 it would be ~1.2 GB)
 const LIMIT = 950;
