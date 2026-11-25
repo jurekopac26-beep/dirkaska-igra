@@ -112,11 +112,11 @@
   "jsMs": 0.94
  },
  "silkeborg": {
-  "calls": 246,
-  "maxCalls": 295,
-  "kverts": 656,
-  "maxKverts": 727,
-  "jsMs": 1.48
+  "calls": 244,
+  "maxCalls": 290,
+  "kverts": 660,
+  "maxKverts": 785,
+  "jsMs": 1.8
  },
  "kagerod": {
   "calls": 237,
@@ -147,18 +147,18 @@
   "jsMs": 1.05
  },
  "kildare": {
-  "calls": 225,
-  "maxCalls": 260,
-  "kverts": 527,
-  "maxKverts": 616,
-  "jsMs": 0.93
+  "calls": 227,
+  "maxCalls": 262,
+  "kverts": 536,
+  "maxKverts": 625,
+  "jsMs": 1.63
  },
  "sacalobra": {
-  "calls": 244,
-  "maxCalls": 292,
-  "kverts": 661,
-  "maxKverts": 868,
-  "jsMs": 1.15
+  "calls": 247,
+  "maxCalls": 295,
+  "kverts": 672,
+  "maxKverts": 876,
+  "jsMs": 1.38
  },
  "kotor": {
   "calls": 219,
@@ -184,9 +184,9 @@
  "furka": {
   "calls": 173,
   "maxCalls": 211,
-  "kverts": 383,
-  "maxKverts": 530,
-  "jsMs": 1.23
+  "kverts": 384,
+  "maxKverts": 532,
+  "jsMs": 1.13
  },
  "santoantao": {
   "calls": 179,
@@ -203,11 +203,11 @@
   "jsMs": 1.11
  },
  "ngorongoro": {
-  "calls": 160,
-  "maxCalls": 190,
-  "kverts": 393,
-  "maxKverts": 453,
-  "jsMs": 1.21
+  "calls": 161,
+  "maxCalls": 188,
+  "kverts": 396,
+  "maxKverts": 450,
+  "jsMs": 1.14
  },
  "medeu": {
   "calls": 181,
@@ -245,11 +245,11 @@
   "jsMs": 0.63
  },
  "tuzla": {
-  "calls": 203,
-  "maxCalls": 254,
-  "kverts": 549,
-  "maxKverts": 712,
-  "jsMs": 1.11
+  "calls": 204,
+  "maxCalls": 252,
+  "kverts": 595,
+  "maxKverts": 757,
+  "jsMs": 1.24
  },
  "sepang": {
   "calls": 195,
@@ -336,11 +336,11 @@
   "jsMs": 0.68
  },
  "mombasa": {
-  "calls": 132,
-  "maxCalls": 208,
-  "kverts": 334,
-  "maxKverts": 375,
-  "jsMs": 0.92
+  "calls": 135,
+  "maxCalls": 215,
+  "kverts": 337,
+  "maxKverts": 385,
+  "jsMs": 0.78
  },
  "isalo": {
   "calls": 126,
@@ -399,11 +399,11 @@
   "jsMs": 0.95
  },
  "aguascalientes": {
-  "calls": 194,
-  "maxCalls": 217,
-  "kverts": 426,
-  "maxKverts": 585,
-  "jsMs": 1.09
+  "calls": 203,
+  "maxCalls": 225,
+  "kverts": 463,
+  "maxKverts": 604,
+  "jsMs": 1.56
  },
  "koli": {
   "calls": 181,
@@ -517,11 +517,11 @@
   "maxKverts": 1516,
   "jsMs": 0
  },
- "envalira": {
-  "calls": 140,
-  "maxCalls": 155,
-  "kverts": 338,
-  "maxKverts": 352,
-  "jsMs": 1.13
+ "hafit": {
+  "calls": 133,
+  "maxCalls": 165,
+  "kverts": 426,
+  "maxKverts": 632,
+  "jsMs": 1.47
  }
 }

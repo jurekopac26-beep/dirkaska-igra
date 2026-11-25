@@ -922,19 +922,6 @@
    53.7
   ]
  },
- "longyearbyen": {
-  "s": 1564,
-  "o": "Desni ovinek",
-  "cam": [
-   1214.7,
-   32.1,
-   669.8,
-   1196.6,
-   7,
-   602.1,
-   56.6
-  ]
- },
  "irishtown": {
   "s": 856,
   "o": "Serpentina 1, lasnica v desno pod zaselkom Irishtown (~190°)",
@@ -1001,6 +988,18 @@
    -3.9,
    -29.5,
    55.8
+  ] },
+ "hafit": {
+  "s": 2028,
+  "o": "Serpentine pod apnenčasto steno",
+  "cam": [
+   -35,
+   190.1,
+   989.4,
+   -82.5,
+   126.6,
+   1071.6,
+   51.3
   ]
  }
 }
