@@ -34,7 +34,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - **Model**: Opus zasnova, koda, proge, meni; Fable 5.2 grafika, fizika; **Trki samo Fable 5.2**; **rutina samo Haiku/Sonnet**; spori, dokumenti, vrsta, Združevanje Sonnet medium. Modela in napora ne menjaj; max samo trki, grafika, težke napake, zasnova. **Težje delo na Fable 5.2, dokler je Fable več kot 5 točk pod vsemi modeli** (od 18. 11.). Koordinacija ob zagonu preveri model in napor.
 - **Več agentov samo za trke** (do 5, preverjanje enkrat pred `main`).
 - **Poraba 100 % 24 h pred iztekom**: pod ciljem seje dodajaj (največ 10), nad ciljem nobene nove; zaostanek več kot 5 točk = do 10 sej s kodo, sicer 2.
-- **Varčevanje** (`docs/varcevanje.md`, »Varčevanje 17. 11.«): seja brez commita 2 h ali ponavljajoča: ustavi, sveža s predajo; tabla `since=`; brez preverjanja v zanki.
+- **Varčevanje** (`docs/varcevanje.md`, »Varčevanje 17. 11.«): seja brez commita 2 h ali ponavljajoča: ustavi, sveža s predajo; tabla `since=`; brez preverjanja v zanki; deset pravil 22. 11. (`zetoni-5`: zastareli PR, slike enkrat na skupino, vprašanja enkrat na dan).
 - **Fizika vožnje se ne spreminja** (samo trki; izjemi: »Dež in sneg«, #605).
 - Čakanje: `subscribe_pr_activity`; drugo `cakanje`; brez `sleep`.
 

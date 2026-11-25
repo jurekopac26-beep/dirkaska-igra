@@ -129,6 +129,7 @@
     extra: (ctx) => {
       const { scen, out } = ctx;
       out.ujarras = { lookout: lookout(scen) };
+      if (World.ext.goreRob) World.ext.goreRob(ctx, 'ujarras');   // (the roadside ground from the chase camera: js/world-chase-bt11.js)
     },
   });
 })();
