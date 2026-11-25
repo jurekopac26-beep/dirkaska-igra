@@ -2924,6 +2924,7 @@ const Render = (function () {
   class Particles {
     constructor(max, additive) {
       this.max = max; this.cur = 0; this.n = 0;   // (n: how many were ever emitted: the tests)
+      this.cap = Infinity;   // (the longest life emit() gives: emitFx sets it for a car's tyre smoke and dust)
       this.pos = new Float32Array(max * 3); this.col = new Float32Array(max * 4); this.size = new Float32Array(max);
       this.vel = new Float32Array(max * 3); this.life = new Float32Array(max); this.ml = new Float32Array(max);
       this.floor = new Float32Array(max);
@@ -2967,6 +2968,7 @@ const Render = (function () {
     }
     emit(x, y, z, vx, vy, vz, life, s0, s1, r, g, b, a, grav, drag, floor, keep) {
       if (this.mute) return;   // (a view's first frame: its old news not emitted again, the random numbers for it drawn all the same: updateCars)
+      if (life > this.cap) { s1 = s0 + (s1 - s0) * Math.sqrt(this.cap / life); life = this.cap; }   // (emitFx, FX_FADE: a puff gone by 15 m behind its car; as big at its end as the uncut one at that age)
       const i = this.cur; this.cur = (this.cur + 1) % this.max; this.n++; this.keep[i] = keep ? 1 : 0;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
       this.pos[i * 3] = x; this.pos[i * 3 + 1] = y; this.pos[i * 3 + 2] = z;
@@ -9710,6 +9712,10 @@ const Render = (function () {
     const T = curTrack, q = c.wq && c.wq[wi]; if (!T || !q || q.k >= 0 || !(q.a >= 0)) return false;
     return Math.abs(q.d) > (T.wa ? T.wa[q.a] : T.w) + 0.3;
   }
+  // the user's, 25. 11. 2026 (popravek-dim-15m): tyre smoke and dust are gone by 15 m behind the car that raised them (a field of 100: far fewer
+  // see-through puffs over each other, the game runs as in a time trial). The puff's life is cut to 15 m at the car's speed; no random number
+  // more or less is drawn
+  const FX_FADE = 15;
   function emitFx(v, c, dt, x, z, h) {
     const M = c.m, spd = c.speed;
     const tw = M.wid * 0.43, yb = c.y || 0;
@@ -9799,6 +9805,7 @@ const Render = (function () {
           if (Math.random() < 0.4) particles.emit(px, 0.3 + yb, pz, vxs * 0.6, 0.5 + Math.random() * 0.5, vzs * 0.6, 0.5 + Math.random() * 0.3, 0.8, 2.4, 0.62, 0.62, 0.58, 0.2, -0.05, 1.8, yb);
         }
       } else if (onHard && intens > 0.22 && spd > Math.max(lv, 0.8 + 2.2 * (1 - ls))) {
+        particles.cap = FX_FADE / Math.max(1, spd * 0.88);   // (the puff takes 0.12 of the car's speed with it)
         const hz = c.latR < 1.5 && spd < 18 ? 0.4 : 1;   // (wheelspin getting away, the car straight: a light haze, not the drift's cloud; a late start: a thick cloud)
         v.acc[k] += Math.min(1.3, intens) * 42 * dt * (ls > 0.05 ? Math.max(hz, 0.3 + ls) : hz);
         while (v.acc[k] >= 1) {
@@ -9810,6 +9817,7 @@ const Render = (function () {
         }
       } else if (!onHard && spd > 4) {
         const amt = (surf === 3 || surf === 5 ? 1.0 : 0.45) * clamp(spd / 20, 0.2, 1.4) + intens * 0.5, D = dust || DUST0;
+        particles.cap = FX_FADE / Math.max(1, spd * 0.75);
         v.acc[k] += amt * 26 * dt * (surf === 3 || surf === 5 ? D.rate : 1);
         while (v.acc[k] >= 1) {
           v.acc[k] -= 1;
@@ -9829,6 +9837,7 @@ const Render = (function () {
           }
         }
       } else v.acc[k] = 0;
+      particles.cap = Infinity;
     }
     // sparks
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
