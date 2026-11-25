@@ -1,0 +1,150 @@
+{
+  "id": "el-castano",
+  "about": "El Castaño, Venezuela (id el-castano): 4 km of the mountain road L-6 Maracay - Choroní above El Castaño, km 6.5-10.5 (the twistiest part, through the cloud forest of the national park, up from ~1185 to ~1495 m); the line from 200 m before the start line (the grid) to 250 m past the finish",
+  "box": [
+    10.336,
+    -67.623,
+    10.374,
+    -67.576
+  ],
+  "closed": false,
+  "dist": {
+    "grid": 480
+  },
+  "route": [
+    [
+      10.35112,
+      -67.59216,
+      "Carretera Regional Maracay - Choroní",
+      "run-up for the grid, 200 m before the start line"
+    ],
+    [
+      10.35231,
+      -67.59346,
+      "Carretera Regional Maracay - Choroní",
+      "start: L-6 at km 6.5 from El Castaño (end of Avenida Las Delicias), ~1185 m"
+    ],
+    [
+      10.35269,
+      -67.59519,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 6750 m from El Castaño"
+    ],
+    [
+      10.35425,
+      -67.59634,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 7000 m from El Castaño"
+    ],
+    [
+      10.35401,
+      -67.59818,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 7250 m from El Castaño"
+    ],
+    [
+      10.35442,
+      -67.59969,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 7500 m from El Castaño"
+    ],
+    [
+      10.35458,
+      -67.60148,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 7750 m from El Castaño"
+    ],
+    [
+      10.35568,
+      -67.6025,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 8000 m from El Castaño"
+    ],
+    [
+      10.35633,
+      -67.60459,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 8250 m from El Castaño"
+    ],
+    [
+      10.35625,
+      -67.60657,
+      "Carretera Regional Maracay - Choroní",
+      "over the Río El Castaño (Río Madre Vieja) and the Quebrada Madre Vieja"
+    ],
+    [
+      10.35665,
+      -67.60496,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 8750 m from El Castaño"
+    ],
+    [
+      10.35619,
+      -67.60324,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 9000 m from El Castaño"
+    ],
+    [
+      10.35725,
+      -67.60174,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 9250 m from El Castaño"
+    ],
+    [
+      10.35589,
+      -67.60032,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 9500 m from El Castaño"
+    ],
+    [
+      10.35702,
+      -67.59845,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 9750 m from El Castaño"
+    ],
+    [
+      10.35739,
+      -67.59627,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 10000 m from El Castaño"
+    ],
+    [
+      10.35755,
+      -67.59684,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 10250 m from El Castaño"
+    ],
+    [
+      10.35764,
+      -67.59813,
+      "Carretera Regional Maracay - Choroní",
+      "finish, ~1495 m"
+    ],
+    [
+      10.3578,
+      -67.59586,
+      "Carretera Regional Maracay - Choroní",
+      "250 m past the finish (the cars' slots)"
+    ]
+  ],
+  "prefer": [
+    "Carretera Regional Maracay - Choroní"
+  ],
+  "geoRoads": [
+    "Carretera Regional Maracay - Choroní"
+  ],
+  "geoWater": [
+    "Río Madre Vieja",
+    "Río El Castaño",
+    "Quebrada Madre Vieja",
+    "Quebrada Punta Vieja"
+  ],
+  "marks": [],
+  "places": [
+    [
+      "La Regresiva del Diablo",
+      "5774986455",
+      null
+    ]
+  ]
+}
