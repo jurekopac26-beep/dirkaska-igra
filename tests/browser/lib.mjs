@@ -173,6 +173,7 @@ export function checker(title) {
   console.log('== ' + title);
   return {
     check(name, ok, detail = '') { n++; if (!ok) { bad++; ghErr(title, `FAIL ${name}${detail ? ' — ' + detail : ''}`); } console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); return ok; },
-    done() { console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`); process.exitCode = bad ? 1 : 0; return bad; },
+    // no check at all is a failure too (a test that checked nothing must not pass as OK)
+    done() { if (!n) { bad = 1; ghErr(title, 'FAIL no checks ran'); console.log('FAIL no checks ran'); } else console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`); process.exitCode = bad ? 1 : 0; return bad; },
   };
 }

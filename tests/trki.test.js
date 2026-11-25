@@ -16,8 +16,8 @@
 //   a PIT turns the car more than Simulacija
 // - the new physics (Nova) with Simulacija: the same knocks nudge, turn and straighten, nothing NaN
 // - a friend's car online (net) is not moved by the knock: the local car takes the whole separation and only its own share of the push
-// - the walls as they were (the user's): the knock off a barrier is the same in every version
-// - races (Spa, Bathurst: 12 rivals, the player on the autopilot, 150 s) in every version: nothing NaN, every car moving, no two cars
+// - the walls as they were (the user's): the car really hits the barrier (hitWall), and the knock off it is the same in every version
+// - races (Spa, Bathurst: 12 rivals, the player on the autopilot, 150 s) in every version: at least one touch between cars, nothing NaN, every car moving, no two cars
 //   touching side by side for 2 s on end (glued), spins (past 40 deg at speed) at most 4 in Simulacija, Arkadna and Mehka
 //   node tests/trki.test.js
 'use strict';
@@ -166,10 +166,11 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   const T = new C.Track(C.TRACKS.find(d => d.id === 'spa'));
   const hit = (tx) => test(tx, () => { const c = new C.Car(C.MODELS[4], { phys: 'cs' }); const i = 200, br = T.br[i];
     c.place(T.px[i] - T.nx[i] * (br - 0.5), T.pz[i] - T.nz[i] * (br - 0.5), Math.atan2(T.tz[i], T.tx[i]) - 0.35); c.q.i = i; T.query(c.x, c.z, i, c.q);
-    const v = 25, h = c.h; c.vx = Math.cos(h) * v; c.vz = Math.sin(h) * v; c.w = 0.2; c.wq.forEach(q => q.i = -1); for (let k = 0; k < 30; k++) { c.x += c.vx / 120; c.z += c.vz / 120; T.query(c.x, c.z, c.q.i, c.q); C.wallCollide(c, T); }
-    return [c.x, c.z, c.vx, c.vz, c.w].map(x => x.toFixed(6)).join(','); });
+    const v = 25, h = c.h; c.vx = Math.cos(h) * v; c.vz = Math.sin(h) * v; c.w = 0.2; c.wq.forEach(q => q.i = -1); let hw = 0; for (let k = 0; k < 30; k++) { c.x += c.vx / 120; c.z += c.vz / 120; T.query(c.x, c.z, c.q.i, c.q); C.wallCollide(c, T); hw = Math.max(hw, c.hitWall || 0); }
+    return { s: [c.x, c.z, c.vx, c.vz, c.w].map(x => x.toFixed(6)).join(','), hw }; });
   const w = [OLD, SIM, ARC, SOFT, STUNT].map(hit);
-  ok('walls: the knock off the barrier is the same in every version (the user\'s: the walls stay as they were)', w.every(x => x === w[0]), w.join(' | '));
+  ok('walls: the car really hits the barrier (hitWall over 0 in every version) and the knock off it is the same in every version (the user\'s: the walls stay as they were)',
+    w.every(x => x.hw > 0 && x.s === w[0].s), w.map(x => `${x.s} (hit ${f(x.hw)})`).join(' | '));
 }
 
 // ---- races ----
@@ -177,22 +178,22 @@ function race(tid, tx) {
   return test(tx, () => {
     Math.random = seeded(64); const T = new C.Track(C.TRACKS.find(d => d.id === tid));
     const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 5, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }); r.start();
-    const sp = new Map(), glue = new Map(); let spins = 0, glued = 0, nan = false, hits = 0;
+    const sp = new Map(), glue = new Map(); let spins = 0, glued = 0, nan = false, hits = 0, touches = 0;
     for (let k = 1; k <= 150 / DT; k++) {
       Math.random = seeded(1000 + k); C.aiControl(r.player, r, DT); r.step(DT);
-      for (const c of r.cars) { if (!Number.isFinite(c.x + c.z + c.vx + c.vz + c.w)) nan = true; if (c.hitCar > 3) hits++; c.hitCar = 0;
+      for (const c of r.cars) { if (!Number.isFinite(c.x + c.z + c.vx + c.vz + c.w)) nan = true; if (c.hitCar > 0) touches++; if (c.hitCar > 3) hits++; c.hitCar = 0;
         const s = Math.abs(c.beta || 0) > 0.7 && c.speed > 8; if (s && !sp.get(c)) spins++; sp.set(c, s); }
       if (k % 12 === 0) for (let a = 0; a < r.cars.length; a++) for (let b = a + 1; b < r.cars.length; b++) { const A = r.cars[a], B = r.cars[b], dx = B.x - A.x, dz = B.z - A.z; if (dx * dx + dz * dz > 36) { glue.set(a * 100 + b, 0); continue; }
         const ch = Math.cos(A.h), sh = Math.sin(A.h), lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch, touch = Math.abs(lx) < A.m.len * 0.9 && Math.abs(lz) < (A.m.wid + B.m.wid) * 0.5 + 0.08 && A.speed > 5;
         const n = touch ? (glue.get(a * 100 + b) || 0) + 1 : 0; glue.set(a * 100 + b, n); if (n === 20) glued++; }
     }
-    return { nan, spins, glued, hits, moving: r.cars.filter(c => c.speed > 5).length, n: r.cars.length };
+    return { nan, spins, glued, hits, touches, moving: r.cars.filter(c => c.speed > 5).length, n: r.cars.length };
   });
 }
 for (const tid of ['spa', 'bathurst']) {
   const res = [SIM, ARC, SOFT, STUNT, OLD].map(tx => race(tid, tx)), nm = ['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska', 'Stara'];
-  ok(`race ${tid} in every version: nothing NaN, every car moving, no two cars glued side by side for 2 s, spins at most 4 in Simulacija, Arkadna and Mehka`,
-    res.every(x => !x.nan && x.moving === x.n && x.glued === 0) && res.slice(0, 3).every(x => x.spins <= 4), res.map((x, i) => `${nm[i]}: ${x.hits} knocks, ${x.spins} spins, ${x.glued} glued, ${x.moving}/${x.n} moving`).join('; '));
+  ok(`race ${tid} in every version: at least one touch between cars (else the glue check proves nothing), nothing NaN, every car moving, no two cars glued side by side for 2 s, spins at most 4 in Simulacija, Arkadna and Mehka`,
+    res.every(x => x.touches > 0 && !x.nan && x.moving === x.n && x.glued === 0) && res.slice(0, 3).every(x => x.spins <= 4), res.map((x, i) => `${nm[i]}: ${x.touches} touches, ${x.hits} knocks, ${x.spins} spins, ${x.glued} glued, ${x.moving}/${x.n} moving`).join('; '));
 }
 
 let bad = 0;
