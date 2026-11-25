@@ -109,9 +109,9 @@
   }
 
   // the lone trees (def.sk.tr: [x, z, kind]: OSM natural=tree): the palms in the courtyard of the big grandstand, the broadleaved trees along
-  // the service roads; not where the builder put a stand, a building or a road (excluded), nor by the track; one instanced draw a kind
+  // the service roads; not where the builder put a stand, a building or a road (excluded), nor by the track; instanced, a kind in 256 m squares (the far ones left out on NIZKA)
   function spLoneTrees({ root, exclPush, excluded }, st) {
-    const tr = (API.T.def.sk || {}).tr || [], R = rng(9139), mat = new THREE.MeshLambertMaterial({ vertexColors: true }), ch = [0, 1].map(k => new IChunks(spTreeGeo(k, false), mat, 4096));
+    const tr = (API.T.def.sk || {}).tr || [], R = rng(9139), mat = new THREE.MeshLambertMaterial({ vertexColors: true }), ch = [0, 1].map(k => new IChunks(spTreeGeo(k, false), mat, 256));
     for (let k = 0; k + 2 < tr.length; k += 3) {
       const x = tr[k], z = tr[k + 1], kind = tr[k + 2], nn = nrNear(x, z);
       if ((nn.i >= 0 && nn.dd < 16) || excluded(x, z)) continue;
@@ -141,7 +141,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     sepang: { ban: SP_BAN, at: SP_AT, nums: 15, numC: ['#0b1f6b', '#fff', '#f5c400'], shirts: SP_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.04, 1.0, 0.88], gravel: true, noVid: true,
       pitBox: [-30, 300, 1], mow: 0.8,   // (the pit building on the right of the main straight; sand-coloured gravel traps; no farms among the estates)
-      woods: SP_WOODS, extra: spExtra, lane: true, fl: { my: MY }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: SP_WOODS, extra: spExtra, lane: true, fl: { my: MY }, ck: 1,   // (ck: the chunks at their usual 128 m: what is out of view or far is left out; at 256 m the phone budget was over 900k vertices with the roadside, PR #1047)
       flags: { stand: [{ my: 0.8, tm: 0.2 }, { my: 0.7, tm: 0.2, rb: 0.1 }], ga: { my: 0.75, tm: 0.25 }, camp: { my: 0.85, tm: 0.15 }, pole: 'my', podium: 'my' },
       vid: [], poles: [-220, 300, -1], runoff: ['SEPANG', 'SELANGOR', 'MALAYSIA'], straight: [4520, 4680, 1],
       farm: { wall: [0.93, 0.92, 0.88], roof: [0.42, 0.44, 0.47], end: [0.9, 0.88, 0.84], barn: [0.55, 0.45, 0.35], barnRoof: [0.42, 0.44, 0.47], barnEnd: [0.52, 0.42, 0.32] },
