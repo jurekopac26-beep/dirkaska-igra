@@ -3370,7 +3370,8 @@ const Render = (function () {
     renderer.shadowMap.type = THREE.PCFShadowMap;   // (SOFT_SHADOW: the spread of its samples)
     // what is drawn only into the shadow map (a kit car's hull on the lowest tier, the player's wheels' stand-ins: kitShadows): shown while it is drawn
     // (three.js draws it after it has picked what the camera draws, so the camera never draws them), hidden again after
-    { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { for (const v of views) if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on;
+    { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { const cut = views.length > CROWD_N && !dbg.shAll; for (const v of views) { if (cut && v.fxD > fx2 && !v.car.isPlayer) { v.grp.visible = !on; if (v.tlG) v.tlG.visible = !on; }   // (gneča, 25. 11. 2026: in a big field only the FX_K cars nearest the camera cast a shadow, fxCut: the others out of the shadow map's pass, their soft contact shadow stays)
+          if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on; }
         if (world && world.shadowLo) { let fr = null; if (on) { sun.shadow.updateMatrices(sun); fr = sun.shadow.getFrustum(); }
           for (const [m, of] of world.shadowLo) m.visible = on && (of.visible || !!of.userData.ov) && (!of.userData.vb || boxesIn(of, fr)); } };   // (NIZKA: the plants' shadow copies, where their meshes are shown or only out of the view: where their plants are in the shadow box)
       sm.render = function (...a) { show(true); try { return r0.apply(this, a); } finally { show(false); } }; }
