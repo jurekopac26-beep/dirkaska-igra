@@ -4091,8 +4091,8 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = mk ? (i, o) => { const rl = T.rl[i], k = 0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
-        : (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
+      const shade = mk ? (i, o) => { const rl = (T.gl || T.rl)[i], k = 0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
+        : (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
       const yel = [0.98, 0.74, 0.1], wht = [0.95, 0.95, 0.92], gc = [0.92, 0.84, 0.78], sw = 0.9;
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       // verge cross-section per sample and side: [offset, height above the road] from the gravel strip out past the barrier, lifted onto the ground where the slope starts to rise
@@ -4601,6 +4601,7 @@
 
     pkMoving(K);
 
+    if (World.ext && World.ext.goreRob && World.ext.goreRob.pkLC) World.ext.goreRob({ excluded, root, out }, 'pikes', { gH: pkGround, slope: pkSlope, lc: World.ext.goreRob.pkLC(pkGround, pkSlope, pkTreeline), near: pkNear });   // (the roadside ground for the chase camera: js/world-chase-bt16.js)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
   }
