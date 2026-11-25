@@ -18,7 +18,7 @@
   /* ================= SPA-FRANCORCHAMPS (theme 'spa') =================
      Its own builder on the Nordschleife's corridor terrain (nrPrep and the nr* helpers: the LiDAR bare earth of def.dem on a 16 m grid, the
      OpenStreetMap land cover def.lc), in the Ardennes' own look: fresh grazed pastures, spruce planted in straight rows on the steep valley
-     sides (forestry compartments of mature, young and felled spruce and of beech; birches along the edges of the woods), a Formula 1
+     sides (forestry compartments of mature, young and felled spruce and of beech; birches along the edges of the woods), a top-category
      circuit's run-offs (asphalt where the barriers stand far out, gravel in a few corners: def.runoffTarmac, def.gravelStrips), red and
      white kerbs, mown stripes on the verges, concrete walls, tyre walls and catch fences, slate-roofed houses, grandstands with coloured
      seats; the pits, the support pits behind their wall, the Eau Rouge brook, the TV towers, the big screens, the sponsors' boards and the
@@ -128,13 +128,13 @@
       let r = 0.97 + (m - 0.5) * 0.14 + (q - 0.5) * 0.12, g = 1.0 + (m - 0.5) * 0.12 + (q - 0.5) * 0.08, b = 0.98 + (m - 0.5) * 0.1;
       const hay = sstep(0.62, 0.8, P.n5(x, z)) * 0.55; r += hay * 0.3; g += hay * 0.1; b -= hay * 0.08;   // a few hay meadows
       const lu = sstep(0.55, 0.8, P.n2(x, z)) * 0.6; r -= lu * 0.12; g -= lu * 0.04;   // lush, darker patches
-      let fl = Math.max(clamp(cov, 0, 1), fo * lerp(0.35, 1, sstep(225, 250, nrDist(x, z)))), fr = 0.74 + m * 0.12, fg = 0.52 + m * 0.08, fb = 0.46;   // needles under the spruce
+      let fl = Math.max(sstep(0, 0.55, clamp(cov, 0, 1)), fo * lerp(0.35, 1, sstep(225, 250, nrDist(x, z)))), fr = 0.74 + m * 0.12, fg = 0.52 + m * 0.08, fb = 0.46;   // needles under the spruce
       if (fo > 0.5 && comp(x, z).kind === 2) { fl = Math.max(fl, fo * 0.85); fr = 1.22; fg = 0.8; fb = 0.6; }   // a felled compartment: dry bracken and heather
       r = lerp(r, fr, fl); g = lerp(g, fg, fl); b = lerp(b, fb, fl);
       r = lerp(r, 0.95, sc * 0.5); g = lerp(g, 0.9, sc * 0.5); b = lerp(b, 0.78, sc * 0.5);   // scrub
       r = lerp(r, 1.02, se * 0.6); g = lerp(g, 0.98, se * 0.6); b = lerp(b, 0.96, se * 0.6);   // lawns and car parks
       const st = sstep(0.86, 0.62, ny) * 0.85; r = lerp(r, 1.1, st); g = lerp(g, 0.8, st); b = lerp(b, 0.86, st);   // earth and slate on the steep banks
-      if (dd < 5) { const t = sstep(5, 0.5, dd); r = lerp(r, 0.97, t); g = lerp(g, 1.08, t); b = lerp(b, 0.95, t); }   // mown right behind the barriers
+      if (dd < 5) { const t = sstep(5, 0.5, dd), sp = Math.sin(dd * 1.96) > 0 ? 1.04 : 0.95; r = lerp(r, 0.97 * sp, t); g = lerp(g, 1.08 * sp, t); b = lerp(b, 0.95 * sp, t); }   // mown right behind the barriers, in light and dark stripes along the track
       o[0] = r; o[1] = g; o[2] = b; return o;
     };
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
@@ -159,7 +159,7 @@
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
-    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.8 - (0.13 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.03]; };
+    const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.8 - (0.13 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.03]; };
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
       let pr = -1, pl = -1; const pk = [-1, -1];
@@ -233,7 +233,7 @@
       }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
-    if (T.drs) {   // the DRS lines across the road (def.drs, as on the Red Bull Ring): a solid one at each detection point, a dashed one where the zone opens
+    if (T.drs) {   // the DRS lines across the road (def.drs, as on Štajerska): a solid one at each detection point, a dashed one where the zone opens
       const gd = new GB(), wl = [0.95, 0.95, 0.92], HYp = (p) => T.hy[p[3]];
       for (const z of T.drs) for (const [at, dash] of [[z.det, false], [z.act, true]]) {
         const s0 = sAt(at), s1 = s0 + 0.3;
@@ -699,7 +699,7 @@
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now; mown in stripes along the track (as at the
-       Red Bull Ring and Suzuka): MOW_W m bands on the verge inside the barrier, light and dark in turn from 1.2 m past the edge, and MOW_B dark
+       Štajerska and Suzuka): MOW_W m bands on the verge inside the barrier, light and dark in turn from 1.2 m past the edge, and MOW_B dark
        bands on the open lawns out past the barrier from 3.5 m behind it (the terrain's own colour and grass, fading out 20-36 m out, 5 cm over
        the ground): not in the woods, the scrub or by the villages, under the stands and buildings, by the brook, where another leg of the track
        is nearer, where the inside of a bend would fold them, nor on the pit lane's side ---- */
@@ -742,6 +742,7 @@
         }
         addM(gv, gMat);
       }
+      if (World.ext.spaRob) out.rob = World.ext.spaRob({ excluded, inBrook, root, matV });   // the roadside ground from the camera behind the car: js/world-chase-bt9.js
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
