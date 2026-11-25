@@ -112,11 +112,11 @@
   "jsMs": 0.83
  },
  "silkeborg": {
-  "calls": 246,
-  "maxCalls": 296,
-  "kverts": 657,
-  "maxKverts": 729,
-  "jsMs": 1.03
+  "calls": 244,
+  "maxCalls": 290,
+  "kverts": 660,
+  "maxKverts": 786,
+  "jsMs": 1.58
  },
  "kagerod": {
   "calls": 236,
@@ -147,18 +147,18 @@
   "jsMs": 0.93
  },
  "kildare": {
-  "calls": 225,
+  "calls": 227,
   "maxCalls": 262,
-  "kverts": 529,
-  "maxKverts": 620,
-  "jsMs": 0.84
+  "kverts": 540,
+  "maxKverts": 630,
+  "jsMs": 1.16
  },
  "sacalobra": {
-  "calls": 244,
-  "maxCalls": 292,
-  "kverts": 661,
-  "maxKverts": 868,
-  "jsMs": 1.22
+  "calls": 247,
+  "maxCalls": 295,
+  "kverts": 672,
+  "maxKverts": 877,
+  "jsMs": 1.34
  },
  "kotor": {
   "calls": 219,
@@ -247,9 +247,9 @@
  "furka": {
   "calls": 174,
   "maxCalls": 211,
-  "kverts": 383,
-  "maxKverts": 530,
-  "jsMs": 0.89
+  "kverts": 384,
+  "maxKverts": 531,
+  "jsMs": 1.13
  },
  "santoantao": {
   "calls": 179,
@@ -266,11 +266,11 @@
   "jsMs": 0.95
  },
  "ngorongoro": {
-  "calls": 160,
-  "maxCalls": 190,
-  "kverts": 393,
-  "maxKverts": 453,
-  "jsMs": 0.95
+  "calls": 161,
+  "maxCalls": 188,
+  "kverts": 396,
+  "maxKverts": 450,
+  "jsMs": 1
  },
  "medeu": {
   "calls": 181,
@@ -308,11 +308,11 @@
   "jsMs": 0.5
  },
  "tuzla": {
-  "calls": 203,
-  "maxCalls": 254,
-  "kverts": 549,
-  "maxKverts": 712,
-  "jsMs": 0.95
+  "calls": 204,
+  "maxCalls": 252,
+  "kverts": 595,
+  "maxKverts": 757,
+  "jsMs": 1
  },
  "sepang": {
   "calls": 195,
@@ -399,11 +399,11 @@
   "jsMs": 0.55
  },
  "mombasa": {
-  "calls": 135,
-  "maxCalls": 213,
-  "kverts": 356,
-  "maxKverts": 404,
-  "jsMs": 0.6
+  "calls": 138,
+  "maxCalls": 220,
+  "kverts": 361,
+  "maxKverts": 415,
+  "jsMs": 0.99
  },
  "isalo": {
   "calls": 125,
@@ -462,11 +462,11 @@
   "jsMs": 0.93
  },
  "aguascalientes": {
-  "calls": 194,
-  "maxCalls": 217,
-  "kverts": 426,
-  "maxKverts": 585,
-  "jsMs": 0.74
+  "calls": 203,
+  "maxCalls": 225,
+  "kverts": 463,
+  "maxKverts": 604,
+  "jsMs": 1.13
  },
  "koli": {
   "calls": 183,
