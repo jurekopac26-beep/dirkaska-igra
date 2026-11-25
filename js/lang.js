@@ -454,7 +454,7 @@
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Most čez kanal': 'Channel Bridge', 'Nasipi ob laguni': 'Lagoon Causeways', 'Gozdnati grič': 'Wooded Hill', 'Do Kororja': 'To Koror',   // (Koror: the HUD, the results of an escape)
     'Valea Bâlii': 'Bâlea Valley', 'Lacul Bâlea': 'Bâlea Lake', 'Do jezera': 'To the lake',   // (Bâlea: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
-    'Most čez Pšiharv': 'Pshikharv Bridge', 'Stena nad Panjem': 'Wall above the Panj', 'Soteska Darvaz': 'Darvaz Gorge', 'Po soteski': 'Up the gorge',   // (Darvaz: the HUD, the results of an escape)
+    'Most čez Pšiharv': 'Pshikharv Bridge', 'Stena nad Panjem': 'Wall above the Panj', 'Soteska Darvaz': 'Darvaz Gorge',   // (Darvaz: the HUD, the results of an escape)
     'Dvojni levi': 'Double Left', 'Hitri desni': 'Fast Right', 'Ovinek pri tribunah': 'Grandstand Corner', 'Gozdni ovinek': 'Forest Corner', 'Ovinek pri gomili': 'Barrow Corner', 'Ovinek ob resavi': 'Heath Corner', 'Ciljna ravnina': 'Finish Straight',   // (Silkeborg: its corners by plain descriptions, the burial mound and the heath by them)
     'Hitri levi': 'Fast Left', 'Levi pod klancem': 'Left Below the Hill', 'Klanec': 'The Climb', 'Lasnica na vrhu': 'Hilltop Hairpin', 'Levi na spustu': 'Downhill Left', 'Desni nad reko': 'Right over the River',
     'Levi ob reki': 'River Left',   // (Kågeröd: its corners by plain descriptions, the river by them)
