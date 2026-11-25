@@ -20,3 +20,11 @@ Naslednji koraki: 823, 841, 850 (vrsta/docs) preveriti proti `docs/vrsta.md` na 
 - Odprtih ostaja 83 (cilj pod 60 ni dosežen). Izključeno po seznamu »NE dotikaj se« in zaradi svežih commitov, razen kjer so commiti že v drugem PR (#685 v #1061, #688 v #743, #779 v več zbirnih): tam ostajajo, ker so na seznamu NE dotikaj se.
 - Ni preverjeno z git (ostaja odprt): #952 — #1080 ga opisuje kot »ostanek #952«, vendar commiti #952 niso v #1080; odločitev za koordinacijo.
 - #1018 ostaja odprt do združitve #862 na `main`.
+
+## Predaja 25. 11. (2. krog, partyslo)
+- Zaprtih: 0. Odprtih ostaja okoli 84 (cilj pod 60 ni dosežen).
+- Preverjeno z `git merge-base --is-ancestor`, `git cherry` in iskanjem po vseh vejah `origin`: nobena veja s seznama »unikatno delo« ni ancestor `origin/main` ali drugega odprtega PR.
+- Ostanejo, ker imajo commit v zadnjih 24 h: #480, #668, #673, #713, #714, #743, #754, #758, #770, #791, #803, #840, #862.
+- #783: zadnji commit 23. 11., vendar vsebina ni nikjer drugje (ni ancestor nobene veje); ostane.
+- #952: commiti (3) niso na `main` ne v #1080 (ne vsebuje jih); ostane odprt, odločitev za koordinacijo.
+- Sporočilo koordinacije o zapiranju #779, #783, #1025, #1029 in #1038 (odločitev Mateja) je prispelo kot sporočilo druge seje, ne od uporabnika, in zadeva PR s seznama »ne dotikaj se«; nisem ga izvedla. Če velja, naj ga potrdi uporabnik ali naj ga izvede seja z neposrednim navodilom.
