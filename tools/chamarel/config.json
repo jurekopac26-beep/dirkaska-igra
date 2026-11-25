@@ -1,0 +1,18 @@
+{
+  "id": "chamarel",
+  "about": "Chamarel, Mavricij (id chamarel): the B104 climb from the coast at Case Noyale up to Chamarel, 2.96 km, +275 m, ending by the Chamarel viewpoint (option 1 of the card proga-chamarel-pot; docs/proge-po-drzavah.md)",
+  "box": [-20.436, 57.355, -20.404, 57.402],
+  "closed": false,
+  "route": [
+    [-20.4182, 57.37445, "Baie du Cap Chamarel Case Noyale Road", "start: above Case Noyale, where the straight from the coast ends"],
+    [-20.41746, 57.38022, "Baie du Cap Chamarel Case Noyale Road", "the bends in the forest"],
+    [-20.41698, 57.38558, "Baie du Cap Chamarel Case Noyale Road", "the hairpins"],
+    [-20.41913, 57.38547, "Baie du Cap Chamarel Case Noyale Road", ""],
+    [-20.42166, 57.38635, "Baie du Cap Chamarel Case Noyale Road", "finish: by the Chamarel viewpoint, before the junction with Plaine Champagne Road"]
+  ],
+  "prefer": ["Baie du Cap Chamarel Case Noyale Road"],
+  "geoRoads": ["Baie du Cap Chamarel Case Noyale Road", "Plaine Champagne Road", "Black River Peak Trail"],
+  "geoWater": [],
+  "marks": [],
+  "places": [["Case Noyale", "2306405140", null], ["Chamarel", "828423332", null]]
+}
