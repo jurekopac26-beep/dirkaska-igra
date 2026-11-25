@@ -120,7 +120,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     batangas: { ban: BT_BAN, at: BT_AT, nums: 13, numC: ['#ce1126', '#fff', '#fff'], shirts: BT_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.04, 1.06, 0.9], gravel: false, noVid: true,
       pitBox: [-175, 30, 1], mow: 0.7,   // (the pit buildings on the right of the main straight, their garages; fainter mowing stripes; no farms by the circuit)
-      woods: BT_WOODS, extra: btExtra, lane: true, fl: { ph: PH }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: BT_WOODS, extra: btExtra, lane: true, fl: { ph: PH }, ck: 2, postSh: false, mowStep: 2, wearCell: 512,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view; postSh, mowStep: the phone's budget, js/world-rbring.js)
       flags: { stand: [{ ph: 0.8, rb: 0.2 }, { ph: 0.7, tm: 0.15, rb: 0.15 }], ga: { ph: 0.8, tm: 0.2 }, camp: { ph: 0.85, tm: 0.15 }, pole: 'ph', podium: 'ph' },
       vid: [], poles: [-170, 30, -1], runoff: ['BATANGAS', 'ROSARIO', 'PILIPINAS'], straight: [-200, 300, -1],
       farm: { wall: [0.94, 0.92, 0.86], roof: [0.6, 0.3, 0.2], end: [0.9, 0.88, 0.82], barn: [0.55, 0.45, 0.35], barnRoof: [0.6, 0.3, 0.2], barnEnd: [0.52, 0.42, 0.32] },

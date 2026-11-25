@@ -417,7 +417,7 @@
   function buildRbring(scene, tex, opts) {
     const R = rng(4318), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len;
     const root = new THREE.Group(); scene.add(root);
-    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true };   // (ownMarks: its decals paint the tyre marks)
+    const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true, wearCell: LK.wearCell };   // (ownMarks: its decals paint the tyre marks; wearCell: js/world.js, roadWear)
     const ownTex = (t) => { out.ownTex.push(t); return t; };
     const dS = (s) => { let d = s - sStart; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };   // metres from the start line (-L/2 .. L/2)
     const sAt = (d) => (((sStart + d) % L) + L) % L;
@@ -486,7 +486,7 @@
     const shade = PER ? (i, o) => { const rl = (T.gl || T.rl)[i]; let k = (0.84 - (0.1 + 0.08 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.6) k += 0.06 * sstep(w * 0.6, w, Math.abs(o)); return [k * 1.04, k, k * 0.92]; }   // (the 1930s: a warmer tar macadam, the racing line less rubbered, its edges paler where the cars seldom run and the dust settles)
       : (i, o) => { const rl = (T.gl || T.rl)[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; if (LK.road) k = LK.road(i, o, k); return [k, k, k * 1.02]; };   // (LK.road: Rio's worn asphalt)
     const MOW_D = LK.trees === 'rio' ? [0.05, 0.035, 0.045] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
-    const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
+    const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5, MOW_S = LK.mowStep || 1;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true), gg = SFG ? new RB(true) : null;
       let pr = -1, pl = -1, pg = -1; const pk = [-1, -1];
@@ -679,7 +679,8 @@
       }
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
-    const nPosts = posts.addTo(root, true);
+    const nCh0 = root.children.length, nPosts = posts.addTo(root, true);
+    if (LK.postSh === false) for (let k = nCh0; k < root.children.length; k++) root.children[k].castShadow = false;   // (LK.postSh false: the 13 cm posts behind the rail cast no shadow of their own, the rail's covers it: the phone's budget; the meshes and their names as before)
     // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     if (!LK.noAds) { const sb = new Chunks(128 * CKF, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
@@ -1456,10 +1457,11 @@
         return f < 0.05 ? null : { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
       for (let c0 = 0; c0 < N; c0 += CH) {
         const gv = new RB(true), pv = [-1, -1], pw = [null, null], pm = [new Array(MOW_B).fill(-1), new Array(MOW_B).fill(-1)];
-        for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
+        for (let ii = c0, iE = Math.min(c0 + CH, N); ii <= iE; ii++) {
           const i = ii % N;
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, bar = side > 0 ? T.br[i] : T.bl[i], fold = side * T.k[i] > 0 ? 0.7 / Math.abs(T.k[i]) : 1e9, pit = side === PSD && PD && (T.pitAt(i * ds) || T.pitAt(i * ds + 20) || T.pitAt(i * ds - 20));
+            if (MOW_S > 1 && ii % MOW_S && ii !== iE) continue;   // (LK.mowStep: a row of the bands every MOW_S samples: the ground under them is no finer)
             for (let b = 0; b < MOW_B; b++) {
               const oa = bar + 3.5 + b * 2 * MOW_O, ob = oa + MOW_O, A = !pit && ob < fold ? mowPt(i, side, oa) : null, B = A ? mowPt(i, side, ob) : null;
               if (!B) { pm[si][b] = -1; continue; }
