@@ -23,4 +23,15 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Približki**: drevesa, palme, grmovje, skale in gledalci so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah. Hiše so generične.
 - **Pravno**: samo zemljepisna imena (Savusavu, Vanua Levu); brez imen letovišč, trgovin, marin, letališča in oseb.
 
+## Ob cesti
+
+Priključki stranskih ulic in dovozov, samo za videz (paket E: `stranske` v `js/tracks/savusavu.js`, `World.cesta.stranske`, `tools/cesta/izvoz.py`, `docs/realizem/paket-e.md`; potek in razred iz OpenStreetMap):
+
+- **Kateri**: 8 priključkov med startom in ciljem: 2 dovoza (3,6 m) in 6 ulic (5,2 m), vsak trak 64 m od roba asfalta po poteku s karte; 4 na levi strani. Širina gre po razredu, ker OpenStreetMap tu nima širin.
+- **Ob ustju**: ograja in robna črta glavne ceste sta čez ustje prekinjeni, čez odprtino stoji vrsta oranžnih stebričkov (količkov), konec traku zbledi v tla.
+- **Površina**: ulice so v tonu asfalta glavne ceste, dovoza sta svetel makadam (predpostavka po razredu; oznake `surface=unpaved` s karte, ki jo ima 7 od 14 poti ob tej cesti, priključki ne upoštevajo).
+- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`); priključki niso vozni.
+- **Odločitev uporabnika 24. 11. 2026**: samo priključki s količki. Ulic in dovozov v celi dolžini kot makadam (14 poti iz OSM, prej v ločeni datoteki obcestja) ni več.
+- **Zmogljivost**: na telefonu 172 klicev risanja na sliko (največ 209) in 411 tisoč oglišč (največ 503 tisoč) (`tests/golden/perf.json`); z ulicami v celi dolžini 172 klicev (največ 210) in 418 tisoč oglišč (največ 516 tisoč). Svet ima 1636 mrež kot prej in 32 tisoč oglišč manj (733 tisoč).
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py savusavu --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.

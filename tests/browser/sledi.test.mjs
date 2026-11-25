@@ -61,7 +61,7 @@ try {
   const fpath = await dl.path(), file = JSON.parse(fs.readFileSync(fpath, 'utf8'));
   const same = Array.isArray(file.marks) && file.marks.length === 3 && file.marks.every((m, i) => Buffer.compare(Buffer.from(m, 'base64'), Buffer.from(s3b[i])) === 0);
   T.check('the ghost as a file: the time, the ghost and the three runs\' marks (base64, the newest first, as stored)', file.kind === 'ghost' && file.track === 'rastro' && !!file.ghost && same, JSON.stringify({ kind: file.kind, marks: file.marks && file.marks.length }));
-  await pa.evaluate(() => window.__game.ghShare('rastro', 'link')); await pa.waitForTimeout(400);
+  await pa.evaluate(() => window.__game.ghShare('rastro', 'link')); await pa.waitForFunction(() => window.__game.ghostLink !== undefined, null, { timeout: 30000 });   // (packing a long ghost takes seconds)
   const link = await pa.evaluate(() => window.__game.ghostLink), lo = link ? unlink(link, 'duh') : null;
   T.check('the ghost as a link: under 16 000 characters, the marks as many as fit (or a file when the ghost is too long for one)', !link || (link.length < 16200 && (lo.marks || []).length <= 3), JSON.stringify({ len: link && link.length, marks: lo && (lo.marks || []).length }));
 
@@ -84,7 +84,7 @@ try {
 
   // 6. a challenge's link with the marks it has room for; opened on the second phone they are kept, its card says how many
   await pa.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-board'); }); await pa.waitForTimeout(300);
-  await pa.evaluate(() => window.__game.onAction('gh-chal')); await pa.waitForTimeout(800);
+  await pa.evaluate(() => window.__game.onAction('gh-chal')); await pa.waitForFunction(() => window.__game.chalLink !== undefined, null, { timeout: 30000 });   // (a ghost too long for it tried first: ~3 s)
   const clink = await pa.evaluate(() => window.__game.chalLink), co = clink ? unlink(clink, 'izziv') : null, nm = co && Array.isArray(co.marks) ? co.marks.length : 0;
   T.check('the challenge\'s link: under 16 000 characters, the time and the marks as many as fit (the ghost when it fits too)', !!clink && clink.length < 16200 && co.kind === 'challenge' && nm >= 1 && nm <= 3, JSON.stringify({ len: clink && clink.length, marks: nm, ghost: !!(co && co.ghost) }));
   await pb.goto(srv.base + '/index.html' + clink.slice(clink.indexOf('#'))); await pb.reload();   // (loaded again: the same page with only another # would not start the game again)

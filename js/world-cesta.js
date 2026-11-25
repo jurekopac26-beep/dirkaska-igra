@@ -63,7 +63,7 @@
     'Samoa':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (left-hand traffic since 2009; no source on the markings: white lines, a dash to its gap 1 : 3, single solid before blind bends)
     'Palau':        { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (the US markings, as the country's roads follow them: a yellow centre line, white edges)
   };
-  const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
+  const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (the main road of a country not in the table, crte(): white, as most of the world; stranske() falls back to Italija's lines instead, mouths painted: pass barva: false where the country's rules were not found)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
   // the markings of the track's country and where its centre line runs: at[i] 0 none, 1 a dash, 2 solid (no overtaking: within `pred` m
   // before a bend tighter than `r` m and through it, both ways, as the lines are for the traffic of both directions). o.sred false: the

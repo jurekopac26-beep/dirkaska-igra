@@ -884,6 +884,7 @@
     if (wires.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(wires, 3)); g.computeBoundingSphere();
       const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x1c1d1f })); m.matrixAutoUpdate = false; m.name = 'hkWires'; root.add(m); }
     crowdFinish(CR, root, out);
+    if (World.ext.hakoneRob) out.rob = World.ext.hakoneRob({ excluded: (x, z) => excluded(x, z) || inRect(x, z), railD: hkRailD, root, matV, summer: HKS, prof: (i, sd) => vp[sd > 0 ? 1 : 0][i], out });   // (the roadside ground from the camera behind the car: js/world-chase-bt10.js)
     out.stats = { trees: nTrees, fill: nFill, sasa: nSasa, tiles: nTiles, farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), base, buildings: nBld, poles: nPoles, hydrangeas: nHyd, crossings: nCross, railM: Math.round(nRailM), stops: nStop, portals: nPortal, cedars: nCedar, paving: nPave, far: FAR ? FAR.P0.length / 3 : 0, boats: FAR ? FAR.boats.length : 0, fujiOver: !!(FAR && FAR.mesh2), stranske: SC ? SC.n : 0, stebricki: nStb };   // (read by the tests)
     return out;
   }

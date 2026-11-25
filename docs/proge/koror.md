@@ -25,4 +25,15 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Približki**: most čez kanal je narisan kot nasip z zidovi in ograjami (brez stebrov in razpona nad vodo). Drevesa, palme, grmovje, skale in gledalci so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah. Hiše so generične.
 - **Pravno**: samo zemljepisna imena (Koror, Babeldaob, Palau); brez imen mostu, hotelov, trgovin, pristanišč in oseb.
 
+## Ob cesti
+
+Priključki stranskih ulic in dovozov, samo za videz (paket E: `stranske` v `js/tracks/koror.js`, `World.cesta.stranske`, `tools/cesta/izvoz.py`, `docs/realizem/paket-e.md`; potek in razred iz OpenStreetMap):
+
+- **Kateri**: 10 priključkov med startom in ciljem: 9 dovozov (3,6 m) in ena ulica (5,2 m), trak 34–64 m od roba asfalta po poteku s karte; 7 na levi strani. Širina gre po razredu, ker OpenStreetMap tu nima širin.
+- **Ob ustju**: ograja in robna črta glavne ceste sta čez ustje prekinjeni, čez odprtino stoji vrsta oranžnih stebričkov (količkov), konec traku zbledi v tla.
+- **Površina**: ulica je v tonu asfalta glavne ceste, dovozi so svetel makadam (nobena od poti v OpenStreetMap nima oznake `surface`: predpostavka).
+- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`); priključki niso vozni.
+- **Odločitev uporabnika 24. 11. 2026**: samo priključki s količki. Ulic in dovozov v celi dolžini kot makadam (11 poti iz OSM, prej v ločeni datoteki obcestja) ni več.
+- **Zmogljivost**: na telefonu 148 klicev risanja na sliko (največ 170) in 365 tisoč oglišč (največ 571 tisoč) (`tests/golden/perf.json`); z ulicami v celi dolžini 149 klicev in 370 tisoč oglišč (največ 581 tisoč). Svet ima 1793 mrež kot prej in 26 tisoč oglišč manj (903 tisoč).
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py koror --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.

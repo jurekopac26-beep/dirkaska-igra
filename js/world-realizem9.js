@@ -11,44 +11,16 @@
    Looked at and left as they are: Furka (Švica, 2429 m) and Izoard (Francija, 2360 m), whose ground has had
    the satellite's colours on main already (Sentinel-2, 8. 8. and 9. 7. 2025), and along whose roads OpenStreetMap maps no barriers but a
    few retaining walls (87 m and 132 m), which the pass builder draws already wherever the ground drops away under the barrier. It
-   changes neither js/world.js, js/render.js, the shared builders (js/world-prelaz.js, js/world-gore.js) nor the worlds' and the tracks'
-   files: the passes would go through the hooks of their looks (API.PL_LOOK[theme].pre and .extra, which run after whatever the look
-   already has), the others by wrapping World.ext[theme] (as js/world-realizem5.js). The satellite's colours are the
+   changes neither js/world.js, js/render.js, the shared builders (js/world-prelaz.js, js/world-gore.js) nor the tracks' files: Cusco by
+   wrapping World.ext.cusco (as js/world-realizem5.js), Isalo through its builder's hook (World.isaloHooks.colFn). The satellite's colours are the
    builders' (reflectance^(1/2.2), tools/proga/proga.py), all of a road in a season times one factor that keeps the mean brightness (luma)
    of what the camera sees: the scene's exposure stays the builder's (January's sun and July's stand at different heights), the hue and
-   the relative brightness of the classes are the satellite's. Its own random numbers come from a seeded generator, so the pictures and
-   the tests repeat.
+   the relative brightness of the classes are the satellite's.
    ========================================================================= */
 (function () {
   'use strict';
   if (typeof World === 'undefined' || !World.api || !World.ext) return;
   const API = World.api;
-
-  // a seeded Math.random for this module's own placements (three.js and the builders' helpers use Math.random)
-  const uu = { s: 104729 };
-  const own = (fn) => { const r = Math.random; Math.random = () => (uu.s = (uu.s * 48271) % 2147483647) / 2147483647; try { return fn(); } finally { Math.random = r; } };
-
-  // after the base world of a track has been built: fn(out, scene, tex, opts) on its root
-  const wrap = (id, fn) => {
-    const base = World.ext[id]; if (typeof base !== 'function') return;
-    World.ext[id] = function (scene, tex, opts, api) {
-      const out = base.call(this, scene, tex, opts, api);
-      if (out && out.root) { uu.s = 104729; own(() => fn(out, scene, tex, opts)); }
-      return out;
-    };
-  };
-
-  // the passes: after the look's own hooks
-  const R9 = {};
-  const passes = () => {
-    const PL = API.PL_LOOK; if (!PL) return;
-    for (const th of Object.keys(R9)) {
-      const L = PL[th], mine = R9[th]; if (!L || !mine) continue;
-      const pre0 = L.pre, extra0 = L.extra;
-      if (mine.pre) L.pre = function (k) { if (pre0) pre0.call(this, k); uu.s = 104729; own(() => mine.pre(k)); };
-      if (mine.extra) L.extra = function (k) { if (extra0) extra0.call(this, k); uu.s = 15485863; own(() => mine.extra(k)); };
-    }
-  };
 
   // ---- the seasons (out.ownSeason): wet in summer and autumn, dry in winter, built again when it changes (out.paintFor); never snow ----
   const wetOf = (opts) => !(opts && opts.season === 'winter');
@@ -132,24 +104,19 @@
       o[0] = r; o[1] = g; o[2] = b; return o;
     };
   };
-  // The world sets API.NR.colFn inside its build, on the grid nrPrep has just made there (API.NR is a getter that cannot be redefined):
-  // the assignment is caught, for that grid only, by a setter on Object.prototype that lives only while the build runs.
+  // The world's builder asks World.isaloHooks.colFn(P, opts) for its ground colours right after its own (js/world-isalo.js): the same
+  // structure on its grid P, the satellite's colours of the season.
   const isaloOn = () => {
     const base = World.ext.isalo; if (typeof base !== 'function' || !API.clamp || !API.lerp || !API.nrLCf || !API.sstep) return;
+    World.isaloHooks = Object.assign(World.isaloHooks || {}, {
+      colFn: (P, opts) => (P && P.n2 && P.n3 && P.n4 && P.n7 ? isaloCol(P, wetOf(opts) ? IS_WET : IS_DRY) : null),
+    });
     World.ext.isalo = function (scene, tex, opts, api) {
-      const OP = Object.prototype; if (Object.getOwnPropertyDescriptor(OP, 'colFn')) return base.call(this, scene, tex, opts, api);
-      const wet = wetOf(opts), A = wet ? IS_WET : IS_DRY;
-      Object.defineProperty(OP, 'colFn', { configurable: true, enumerable: false, get() { return undefined; }, set(f) {
-        const mine = this === API.NR && typeof f === 'function' && this.n2 && this.n3 && this.n4 && this.n7;
-        Object.defineProperty(this, 'colFn', { configurable: true, enumerable: true, writable: true, value: mine ? isaloCol(this, A) : f });
-      } });
-      let out; try { out = base.call(this, scene, tex, opts, api); } finally { delete OP.colFn; }
-      seasons(out, wet); return out;
+      const out = base.call(this, scene, tex, opts, api);
+      seasons(out, wetOf(opts)); return out;
     };
   };
 
   cuscoOn();
   isaloOn();
-  passes();
-  void wrap;
 })();

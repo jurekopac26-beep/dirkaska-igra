@@ -96,6 +96,8 @@
       r = lerp(r, 0.9 + q * 0.06, rk); g = lerp(g, 0.7 + q * 0.06, rk); b = lerp(b, 0.54 + q * 0.04, rk);
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.9, t); g = lerp(g, 0.7, t); b = lerp(b, 0.52, t); }   // (the red dust of the verges)
       o[0] = r; o[1] = g; o[2] = b; return o; };
+    // another module's colours for the same structure (js/world-realizem9.js): World.isaloHooks.colFn(P, opts) returns a colFn or nothing
+    { const H = World.isaloHooks; const f = H && typeof H.colFn === 'function' ? H.colFn(P, opts) : null; if (typeof f === 'function') P.colFn = f; }
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(isGroundTex()), vertexColors: true });
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
@@ -114,7 +116,7 @@
     const wF = (f) => { const a = fA(f), t = clamp(f - a, 0, 1); return t < 1e-4 ? T.wAt(a) : t > 1 - 1e-4 ? T.wAt(a + 1) : lerp(T.wAt(a), T.wAt(a + 1), t); };
     const edgeL = (f, si) => { const w = wF(f); return si ? [PtF(f, w - 0.36, 0.034), PtF(f, w - 0.22, 0.034)] : [PtF(f, -w + 0.22, 0.034), PtF(f, -w + 0.36, 0.034)]; };
     const vergeAt = (i, side, d) => { const pr = vergeRow(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
-    const SR = World.cesta && World.cesta.stranske && def.stranske && def.stranske.length ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: (i) => 0.82 * secT[i] - 0.03, odprta: true }) : null;
+    const SR = World.cesta && World.cesta.stranske && def.stranske && def.stranske.length ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: (i) => 0.82 * secT[i] - 0.03, odprta: true, barva: false }) : null;
     const tek = (si, bit, a, b) => (SR ? SR.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
     const naSR = (x, z) => { if (SR) for (const k of SR.krogi) if ((x - k[0]) ** 2 + (z - k[1]) ** 2 < k[2] * k[2]) return true; return false; };
     let nStb = 0;
@@ -358,6 +360,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'isalo', { gH: nrGround, slope: API.nrSlope, lc: nrLC, near: nrNear });   // (the roadside ground for the chase camera: js/world-chase-bt14.js)
     out.stats = { tiles: nTiles, trees: nTrees, stone: nStone, fans: nFans, rocks: out.rocks };   // (read by the tests)
     if (SR) Object.assign(out.stats, { stranske: SR.n, stebricki: nStb });
     return out;

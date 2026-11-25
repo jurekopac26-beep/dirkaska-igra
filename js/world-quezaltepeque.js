@@ -37,6 +37,7 @@
     const at = (a, b) => (a < 0 || b < 0 || a >= L.nx || b >= L.nz ? 0 : qzLv[b * L.nx + a]);
     return (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - v) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * v;
   }
+  API.qzLava = qzLava;   // (the stones on the flow: js/world-realizem-bt.js)
 
   // ---- the trees (unit height 1, instanced; LK.woods): 0 a palm (a slender ringed trunk leaning a little, a crown of drooping fronds,
   //      both faces), 1 a broadleaf tree of the valley (a short trunk, a wide crown of soft clumps in two tiers), 2 a bush (low green clumps);

@@ -12,5 +12,6 @@
     skiers: 50, nets: true, snowbanks: true,
     animals: [],
     keepOut: (push) => { if (World.k15 && World.k15.koli) World.k15.koli(push); },   // (Realizem 15: no trees on what js/world-realizem15-koli.js draws)
+    extra: (ctx) => { if (World.ext.goreRob) World.ext.goreRob(ctx, 'koli'); },   // (the roadside ground for the chase camera: js/world-chase-bt19.js)
   });
 })();

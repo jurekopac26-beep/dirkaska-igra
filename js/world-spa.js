@@ -128,13 +128,13 @@
       let r = 0.97 + (m - 0.5) * 0.14 + (q - 0.5) * 0.12, g = 1.0 + (m - 0.5) * 0.12 + (q - 0.5) * 0.08, b = 0.98 + (m - 0.5) * 0.1;
       const hay = sstep(0.62, 0.8, P.n5(x, z)) * 0.55; r += hay * 0.3; g += hay * 0.1; b -= hay * 0.08;   // a few hay meadows
       const lu = sstep(0.55, 0.8, P.n2(x, z)) * 0.6; r -= lu * 0.12; g -= lu * 0.04;   // lush, darker patches
-      let fl = Math.max(clamp(cov, 0, 1), fo * lerp(0.35, 1, sstep(225, 250, nrDist(x, z)))), fr = 0.74 + m * 0.12, fg = 0.52 + m * 0.08, fb = 0.46;   // needles under the spruce
+      let fl = Math.max(sstep(0, 0.55, clamp(cov, 0, 1)), fo * lerp(0.35, 1, sstep(225, 250, nrDist(x, z)))), fr = 0.74 + m * 0.12, fg = 0.52 + m * 0.08, fb = 0.46;   // needles under the spruce
       if (fo > 0.5 && comp(x, z).kind === 2) { fl = Math.max(fl, fo * 0.85); fr = 1.22; fg = 0.8; fb = 0.6; }   // a felled compartment: dry bracken and heather
       r = lerp(r, fr, fl); g = lerp(g, fg, fl); b = lerp(b, fb, fl);
       r = lerp(r, 0.95, sc * 0.5); g = lerp(g, 0.9, sc * 0.5); b = lerp(b, 0.78, sc * 0.5);   // scrub
       r = lerp(r, 1.02, se * 0.6); g = lerp(g, 0.98, se * 0.6); b = lerp(b, 0.96, se * 0.6);   // lawns and car parks
       const st = sstep(0.86, 0.62, ny) * 0.85; r = lerp(r, 1.1, st); g = lerp(g, 0.8, st); b = lerp(b, 0.86, st);   // earth and slate on the steep banks
-      if (dd < 5) { const t = sstep(5, 0.5, dd); r = lerp(r, 0.97, t); g = lerp(g, 1.08, t); b = lerp(b, 0.95, t); }   // mown right behind the barriers
+      if (dd < 5) { const t = sstep(5, 0.5, dd), sp = Math.sin(dd * 1.96) > 0 ? 1.04 : 0.95; r = lerp(r, 0.97 * sp, t); g = lerp(g, 1.08 * sp, t); b = lerp(b, 0.95 * sp, t); }   // mown right behind the barriers, in light and dark stripes along the track
       o[0] = r; o[1] = g; o[2] = b; return o;
     };
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
@@ -783,6 +783,7 @@
         for (const g of SC.asfalt(RB, nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
         nStb = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki;   // (where the posts stand: read by the tests)
       }
+      if (World.ext.spaRob) out.rob = World.ext.spaRob({ excluded, inBrook, root, matV });   // the roadside ground from the camera behind the car: js/world-chase-bt9.js
       G.col = G.cov = P.edge = null;   // (build only)
     }
 

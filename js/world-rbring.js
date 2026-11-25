@@ -63,6 +63,7 @@
       } },
   };
   Object.assign(RB_LOOK, API.rbLook);   // (the looks of the worlds whose parts are in files of their own: js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js; tools/razdeli-proge.mjs)
+  API.rbLook = Object.assign(API.rbLook || {}, { rbring: RB_LOOK.rbring });   // (Styria's own look too, for the files that chain its LK.extra: js/world-chase-bt17.js)
   function rbCrowdTex(orange) {   // seated crowd for the grandstand tiers (as Tex.crowd; the orange one for the stands full of Dutch fans)
     return Tex.crowdPic(orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
       : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#1a1b1f', '#1bbfd6'], orange ? 77 : 78);
@@ -1438,7 +1439,7 @@
           const p = WD ? WD.p[cl] : RIO ? RIO_TP[cl] : AU ? (cl === 1 ? (LK.trees === 'bt' ? 0.42 : 0.55) : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
           if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue; }
-          if (excluded(x, z) || P.pad(x, z, 0) !== 0 || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon)
+          if (excluded(x, z) || (P.pad(x, z, 0) !== 0 && !(LK.padTrees && LK.padTrees(x, z))) || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon; LK.padTrees: trees on a world's own pad: Lombok's stream swales)
           const y = nrGround(x, z); let sp, hgt, wid;
           if (WD) [sp, hgt, wid] = WD.pick(cl, R, far, x, z);
           else if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);
