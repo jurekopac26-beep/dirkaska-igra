@@ -1,6 +1,13 @@
 # Fizika 7 velikih vozil: raziskava in zasnova
 
-Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7138172424): polna posodobitev fizike velikih vozil. Izjema pri pravilu »fizika vožnje se ne spreminja« velja **samo** za teh 7 vozil; trki se ne spreminjajo. **Stanje: zasnova, čaka izbiro možnosti** (stran Odločitve, `velika-vozila-1`). Kode fizike še ni.
+Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7138172424): polna posodobitev fizike velikih vozil. Izjema pri pravilu »fizika vožnje se ne spreminja« velja **samo** za teh 7 vozil; trki se ne spreminjajo. **Stanje: izbrana možnost 2** (»Resnična teža, dirkalni motor«; uporabnik 24. 11. 2026 ob 23.28, stran Odločitve, `velika-vozila-1`). Kode fizike še ni: začne se po združitvi Trkov #608 na `main` (zbirka `cakanje`, `pr-608-velika-vozila`).
+
+## Predaja (25. 11. 2026)
+
+- Veja `fizika/velika-vozila-bt`, osnutek PR #1061; narejena samo raziskava in zasnova (ta dokument).
+- Naslednja seja (nova, s to predajo), ko je #608 na `main`: spoji svež `main`; z viri potrdi ocene iz razdelka »Ni še potrjeno z virom«; nato skupni model po možnosti 2 (stolpec 2 v tabeli), uglasitev 7 vozil, AI, testi (`npm run test:related`), slike zdaj in potem pred `main`.
+- Parametri možnosti 2 iz računa (izhodišče za uglasitev): mase 37,3 / 60 / 25,3 / 29,3 / 40 / 18 / 16 t (cisterna, vlak, avtovoz, krilo, hlodi, avtobus, gasilec); `vLim` 130; pragovi prevrnitve 0,42 / 0,40 / 0,38 / 0,45 / 0,31 / 0,53 / 0,50 g; pojemek 6,5 m/s²; slabljenje zavor med 350 in 550 °C (`FADE_K` 0,55); motorna zavora odvzame polovico dela; po prevrnitvi časovna kazen.
+- Fizika drugih vozil in trki se ne spreminjajo.
 
 ## Vozila in stanje zdaj
 
