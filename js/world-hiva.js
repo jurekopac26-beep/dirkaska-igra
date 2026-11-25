@@ -414,9 +414,10 @@
     }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
+    const rob = World.ext && World.ext.hivaRob ? World.ext.hivaRob({ scen, excluded, root, matV }) : null;   // (the roadside ground from the camera behind the car: js/world-chase-bt6.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, wall: WS.length, stranske: SC ? SC.n : 0, stebricki: nPost };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, wall: WS.length, stranske: SC ? SC.n : 0, stebricki: nPost, rob };   // (read by the tests)
     return out;
   }
 

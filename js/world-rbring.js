@@ -63,6 +63,7 @@
       } },
   };
   Object.assign(RB_LOOK, API.rbLook);   // (the looks of the worlds whose parts are in files of their own: js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js; tools/razdeli-proge.mjs)
+  API.rbLook = Object.assign(API.rbLook || {}, { rbring: RB_LOOK.rbring });   // (Styria's own look too, for the files that chain its LK.extra: js/world-chase-bt17.js)
   function rbCrowdTex(orange) {   // seated crowd for the grandstand tiers (as Tex.crowd; the orange one for the stands full of Dutch fans)
     return Tex.crowdPic(orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
       : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#1a1b1f', '#1bbfd6'], orange ? 77 : 78);

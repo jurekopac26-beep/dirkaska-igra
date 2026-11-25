@@ -840,6 +840,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: eAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: eAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'ella', { gH: caGround, slope: caSlope, bad: (x, z) => stNear(x, z).d < 4 });   // (the roadside ground for the chase camera: js/world-chase-bt12.js)
     out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, water: nWater,
       culverts: culv.length, bridges: P.gul.length, stops: nStops, stalls: nStalls, views: views.length, parks: parks.length, lanes: nLane, steps: nStep, footbridges: nFoot, zebras: nCross, far: !!FAR };   // (read by the tests)
     if (SC) Object.assign(out.stats, { stranske: SC.n, stebricki: nStb });

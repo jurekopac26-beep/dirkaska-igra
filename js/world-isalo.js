@@ -360,6 +360,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'isalo', { gH: nrGround, slope: API.nrSlope, lc: nrLC, near: nrNear });   // (the roadside ground for the chase camera: js/world-chase-bt14.js)
     out.stats = { tiles: nTiles, trees: nTrees, stone: nStone, fans: nFans, rocks: out.rocks };   // (read by the tests)
     if (SR) Object.assign(out.stats, { stranske: SR.n, stebricki: nStb });
     return out;
