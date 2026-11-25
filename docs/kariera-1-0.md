@@ -42,6 +42,12 @@ Odločitev Mateja 22. 11.: »kariero hitreje, pred Realizem G«, »Atlas Career 
   - boljši izid pozneje plača razliko;
   - pokali, pokali razredov, finale, prve zmage in darila stopenj po tabeli `EKONOMIJA.hitro`.
 
+## Kariera raste s progami (25. 11. 2026)
+Odločitev Mateja `proge3-kariera`, možnost 2 (tabla #382, komentar 7164268738): pri 83 progah (#788) pot ne sme izgubiti kronometra in dvoboja, ekonomija pa ne sme ostati pri ~120 zmagah.
+- **Stopnja dobi prostor** za dirko, kronometer in dvoboj: velikost stopnje je `VELIKOST` ali več, kolikor potrebujejo njeni pokali, pokali razredov in trije posamični dogodki.
+- **Ekonomija po dolžini poti**: nagrade poti se pomnožijo s faktorjem, ki ga da število dirk na poti; vsi avti so kupljeni ob ~koncu poti.
+- **Testa** `kariera` in `kariera-pot` merita dogodke in zmage glede na število prog, ne s stalnimi 44 in 110–130.
+
 ## Kaj kariera ima zdaj
 - **Stanje** (`js/game.js`):
   - `careerLoad`, `careerNew` in `careerSave` (~173) shranijo kariero v `tdgp-career` prek `Shramba.keep`.
