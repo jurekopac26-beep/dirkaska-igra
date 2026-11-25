@@ -276,6 +276,15 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
   9. **Pregled ob 5.00**: v predaji Mateja odprti PR po temah; osnutek brez commita 24 h se zapre, dvojniki se označijo na tabli #382.
   10. **Ime seje** »#PR tema (račun)«, npr. »#1010 hauba (biketraveler)«; končane seje se arhivirajo.
 
+- **Pot do 1.0 (odločitev uporabnika 25. 11. 2026 ob ~19.10, točke 1, 5, 6, 7, 8, 9, 10; tabla #382):**
+  1. **Čiščenje PR:** odprtih PR je 168; Matej ob 5.00 z majhnim pomočnikom (Haiku) zapre PR, ki so že na `main`, nadomeščeni ali brez commita 3 dni (vsebina ostane na veji), dokler jih ni pod 60.
+  5. **Kartice Trki:** 5 odločitev brez kartic (fizika-2 A/B, vožnja-2/3, vožnja-6, pravila-1, pravila-2) gre v sveženj 26. 11. ob 5.00.
+  6. **Trki #608 po urniku:** v nedeljo 29. 11. ob 10.00 opravilo po urniku na jure.kopac26 zažene 2 seji (Fable, max): fizika (1. del) ter spoj `main` in testi v CI (2. del).
+  7. **#608 v dveh delih:** najprej fizika trkov na `main`, nato iskre, preostali testi in ostanki.
+  8. **Vrstni red:** Trki #608 → #1010 hauba → #1084 garaža; #1084 dela samo animacijo garaže, brez haube, vrat in prtljažnika.
+  9. **Števec 1.0:** Matej ob 5.00 v svežnju ena vrstica: proge na `main`/70, avti/50, dni do 23. 12.
+  10. **Tedenski preizkus:** ob nedeljah v svežnju ob 5.00 uporabnik dobi 10-minutni seznam (Jezero, Toskana, en trk, meni, dež); napake gredo v zbirko popravkov.
+
 ### Seje
 - **Nov Matej vsak dan** ob 5.00 s kratko predajo (stari se ustavi; model in napor ostaneta). Velike izpise (`list_sessions`, stanje PR) bere majhen pomočnik in vrne do 5 vrstic; ob 5.00 uporabnik dobi seznam PR s povezavami, po njegovem »ok« PR do `main` pripelje seja Združevanje (`docs/varcevanje.md`, »Manj sklopov 2. del«).
 - Ena tema na sejo, samostojno; vprašanja na stran Odločitve (`docs/vprasanja.md`), v pogovoru samo če uporabnik piše v sejo. Ure po ljubljanskem času.
