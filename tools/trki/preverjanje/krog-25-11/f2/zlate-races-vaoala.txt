@@ -1,0 +1,6 @@
+vaoala/cs                 fin 13/13 winner   59.42 s spins 0 walls 1 rescues 0 01e7af4d1113dcdb18781840 OK
+vaoala/cs/rain            fin 13/13 winner   72.44 s spins 0 walls 0 rescues 0 3190b425c42413e270548d0c OK
+vaoala/cs/formula         fin 13/13 winner   52.14 s spins 0 walls 3 rescues 0 8a1f8192146de7fd6d0c0126 OK
+vaoala/cs/lm              fin 13/13 winner    52.9 s spins 0 walls 0 rescues 0 ecc2cd2463ce039717c739fe OK
+vaoala/cs/car             fin 13/13 winner   59.54 s spins 0 walls 3 rescues 0 2882bbfec968ae0f53bfa1d0 OK
+OK: all races fine (7 s)

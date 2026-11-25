@@ -1,0 +1,10 @@
+Enakost, cv 6: osnova ($S/snap) proti igri, celo stanje vseh avtov po vsakem koraku (do 90 s ali cilja)
+  proga    seme  do s  razhajanje s  prva nevarnost s  avto nevarnosti            bitno enako do nevarnosti
+  jezero   71    90    nikoli        nikoli            -                          da                       
+  jezero   72    90    nikoli        nikoli            -                          da                       
+  toskana  71    90    nikoli        nikoli            -                          da                       
+  toskana  72    90    nikoli        nikoli            -                          da                       
+  cusco    71    33    nikoli        nikoli            -                          da                       
+  cusco    72    34    nikoli        nikoli            -                          da                       
+  hiva     71    90    nikoli        47.15             14.8 m/s, 82°, škoda 31 %  da                       
+  hiva     72    90    nikoli        nikoli            -                          da                       

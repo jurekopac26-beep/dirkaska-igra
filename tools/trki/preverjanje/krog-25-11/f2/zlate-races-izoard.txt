@@ -1,0 +1,6 @@
+izoard/cs                 fin 13/13 winner  194.49 s spins 0 walls 3 rescues 0 4352662a1951c7cf77d42b21 OK
+izoard/cs/rain            fin 13/13 winner  230.15 s spins 0 walls 0 rescues 0 8ce29bd67466cd3778a73094 OK
+izoard/cs/formula         fin 13/13 winner  179.16 s spins 0 walls 1 rescues 0 c81445c199c06a78d365abdc OK
+izoard/cs/lm              fin 13/13 winner  181.83 s spins 0 walls 0 rescues 0 d716aeceae3dcf4614a72432 OK
+izoard/cs/car             fin 13/13 winner  194.03 s spins 1 walls 1 rescues 0 4cd680973986d6ca68e55a12 OK
+OK: all races fine (17 s)

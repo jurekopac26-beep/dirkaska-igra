@@ -1,0 +1,21 @@
+=== cusco/crash pred k 1274-1282
+  k 1275 rally dotik vogal 1 lokalno [1.975,0.9] pen 0.063 vnVogal -12.63 vnSredisce -13.53 w -0.473
+      wallR tockaSunka lokalno [0.457,0.495] vnTockaSunka -13.332 sunek
+k 1275 rally hit 12.63 skoda 0.247 -> 0.531 w -0.473 -> -2.797
+  k 1281 rally dotik vogal 3 lokalno [-1.975,0.9] pen 0.018 vnVogal -5.936 vnSredisce -1.006 w -2.565
+      wallR tockaSunka lokalno [-0.482,0.495] vnTockaSunka -2.171 sunek
+k 1281 rally hit 5.936 skoda 0.531 -> 0.627 w -2.565 -> -1.473
+  k 1282 rally dotik vogal 3 lokalno [-1.975,0.9] pen 0.013 vnVogal -1.538 vnSredisce 1.221 w -1.445
+      wallR tockaSunka lokalno [-1.086,0.495] vnTockaSunka -0.296 sunek
+k 1282 rally hit 1.538 skoda 0.627 -> 0.627 w -1.445 -> -1.288
+=== cusco/crash po k 1288-1296
+  k 1289 rally dotik vogal 1 lokalno [1.975,0.9] pen 0.047 vnVogal -12.476 vnSredisce -13.497 w -0.54
+      wallR tockaSunka lokalno [0.636,0.495] vnTockaSunka -13.178 sunek
+k 1289 rally hit 12.476 skoda 0.247 -> 0.526 w -0.54 -> -4.033
+  k 1294 rally dotik vogal 3 lokalno [-1.975,0.9] pen 0.064 vnVogal -9.741 vnSredisce -2.524 w -3.778
+      wallR tockaSunka lokalno [-0.432,0.495] vnTockaSunka -4.027 sunek
+k 1294 rally hit 9.741 skoda 0.526 -> 0.729 w -3.778 -> -1.912
+  k 1295 rally dotik vogal 3 lokalno [-1.975,0.9] pen 0.017 vnVogal -1.972 vnSredisce 1.592 w -1.882
+      wallR tockaSunka lokalno [-1.086,0.495] vnTockaSunka -0.368 sunek
+k 1295 rally hit 1.972 skoda 0.729 -> 0.729 w -1.882 -> -1.686
+k 1296 rally hit 1.238 skoda 0.729 -> 0.729 w -1.658 -> -1.296

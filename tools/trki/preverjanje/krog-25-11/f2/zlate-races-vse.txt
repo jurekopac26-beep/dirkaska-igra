@@ -1,0 +1,15 @@
+pikes/cs                  fin 1/1 winner   182.3 s spins 0 walls 0 rescues 0 73f001afc81e7291031ed14f OK
+pikes/cs/rain             fin 1/1 winner  218.36 s spins 0 walls 0 rescues 0 e4057bdd165014ae8ff79b1a OK
+pikes/cs/formula          fin 1/1 winner  164.26 s spins 0 walls 0 rescues 0 0f35bd37b833dd1eb48a1de6 OK
+pikes/cs/lm               fin 1/1 winner  166.21 s spins 0 walls 0 rescues 0 2aa6cd3578f20e9f495d7e09 OK
+pikes/cs/car              fin 1/1 winner  179.21 s spins 0 walls 0 rescues 0 6d001dace99dffb2816dc4d8 OK
+nring/cs                  fin 21/21 winner  439.21 s spins 0 walls 0 rescues 0 266ff990b5e3bd3e25cb1374 OK
+nring/cs/rain             fin 21/21 winner  506.41 s spins 0 walls 2 rescues 0 c7a720984f6f6d3d6b0d1d6a OK
+nring/cs/formula          fin 21/21 winner  363.84 s spins 0 walls 0 rescues 0 21a4979cf84eae51c1e553e9 OK
+nring/cs/lm               fin 21/21 winner  366.18 s spins 0 walls 0 rescues 0 a97c45129eee76dee4dde55f OK
+nring/cs/car              fin 21/21 winner  434.82 s spins 0 walls 0 rescues 0 bd9fd17ca3e2a055b528c896 OK
+spa/cs                    fin 13/13 winner  309.42 s spins 0 walls 0 rescues 0 eedf91c4f569bc8ddd5d0e31 OK
+spa/cs/rain               fin 13/13 winner  360.49 s spins 0 walls 0 rescues 0 456d01b475798d2b5ece39ad OK
+spa/cs/formula            fin 13/13 winner  266.67 s spins 0 walls 0 rescues 0 978349a69eef009219249ac2 OK
+spa/cs/lm                 fin 13/13 winner  269.62 s spins 0 walls 0 rescues 0 e165d4a95d87a96d3842fd26 OK
+spa/cs/car                fin 13/13 winner  324.67 s spins 0 walls 0 rescues 0 cdb6b8f823323528f09e79d4 OK

@@ -1,0 +1,34 @@
+spa
+  stara cv6: igralec v=6.58, dotik igralca 5.94 s (247 korakov), tekmecev z dotikom 8, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 12/12
+  nova cv6: igralec v=13.32, dotik igralca 4.25 s (450 korakov), tekmecev z dotikom 7, oviro videlo 4 od 4.72 s, tekmecev v vožnji po 8 s 12/12
+  nova+B cv6: igralec v=6.58, dotik igralca 5.94 s (247 korakov), tekmecev z dotikom 8, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 12/12
+  main: igralec v=12.94, dotik igralca 4.25 s (450 korakov), tekmecev z dotikom 7, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+cusco
+  stara cv6: igralec v=0.02, dotik igralca nikoli, tekmecev z dotikom 5, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 8/12
+  nova cv6: igralec v=9.94, dotik igralca 3.33 s (560 korakov), tekmecev z dotikom 4, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+  nova+B cv6: igralec v=0.02, dotik igralca nikoli, tekmecev z dotikom 5, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 8/12
+  main: igralec v=1.19, dotik igralca 3.33 s (560 korakov), tekmecev z dotikom 6, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+rastro
+  stara cv6: igralec v=0.04, dotik igralca 4.48 s (422 korakov), tekmecev z dotikom 1, oviro videlo 1 od 1.24 s, tekmecev v vožnji po 8 s 12/12
+  nova cv6: igralec v=0.04, dotik igralca 4.48 s (422 korakov), tekmecev z dotikom 1, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+  nova+B cv6: igralec v=0.04, dotik igralca 4.48 s (422 korakov), tekmecev z dotikom 1, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+  main: igralec v=0.04, dotik igralca 4.48 s (422 korakov), tekmecev z dotikom 1, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+kotor
+  stara cv6: igralec v=0.02, dotik igralca nikoli, tekmecev z dotikom 4, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 8/12
+  nova cv6: igralec v=15.14, dotik igralca 4.35 s (438 korakov), tekmecev z dotikom 8, oviro videlo 2 od 3.67 s, tekmecev v vožnji po 8 s 12/12
+  nova+B cv6: igralec v=0.02, dotik igralca nikoli, tekmecev z dotikom 4, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 8/12
+  main: igralec v=15.67, dotik igralca 4.29 s (445 korakov), tekmecev z dotikom 8, oviro videlo 0, tekmecev v vožnji po 8 s 10/12
+hiva
+  stara cv6: igralec v=3.60, dotik igralca 4.53 s (417 korakov), tekmecev z dotikom 8, oviro videlo 5 od 0.83 s, tekmecev v vožnji po 8 s 12/12
+  nova cv6: igralec v=15.42, dotik igralca 3.49 s (541 korakov), tekmecev z dotikom 3, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+  nova+B cv6: igralec v=3.60, dotik igralca 4.53 s (417 korakov), tekmecev z dotikom 8, oviro videlo 5 od 0.83 s, tekmecev v vožnji po 8 s 12/12
+  main: igralec v=15.44, dotik igralca 3.49 s (541 korakov), tekmecev z dotikom 3, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+jezero
+  stara cv6: igralec v=3.03, dotik igralca 6.17 s (220 korakov), tekmecev z dotikom 6, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 12/12
+  nova cv6: igralec v=10.69, dotik igralca 4.71 s (395 korakov), tekmecev z dotikom 7, oviro videlo 3 od 3.60 s, tekmecev v vožnji po 8 s 12/12
+  nova+B cv6: igralec v=3.03, dotik igralca 6.17 s (220 korakov), tekmecev z dotikom 6, oviro videlo 9 od 0.83 s, tekmecev v vožnji po 8 s 12/12
+  main: igralec v=3.21, dotik igralca 4.57 s (412 korakov), tekmecev z dotikom 7, oviro videlo 0, tekmecev v vožnji po 8 s 12/12
+
+real	0m20.355s
+user	0m15.862s
+sys	0m0.932s

@@ -1,0 +1,6 @@
+tianmen/cs                fin 13/13 winner  185.28 s spins 0 walls 0 rescues 0 101fc16d52366a084710809d OK
+tianmen/cs/rain           fin 13/13 winner  218.23 s spins 0 walls 0 rescues 0 53d31f233ae333b8c09b91a9 OK
+tianmen/cs/formula        fin 13/13 winner  174.39 s spins 0 walls 0 rescues 0 6111cfae7655eb8fbc1813b1 OK
+tianmen/cs/lm             fin 13/13 winner  176.65 s spins 0 walls 0 rescues 0 6f13448f67abe85fccaa1c49 OK
+tianmen/cs/car            fin 13/13 winner  185.36 s spins 0 walls 1 rescues 0 c8cca147dc73a5b492ca6e1e OK
+OK: all races fine (15 s)

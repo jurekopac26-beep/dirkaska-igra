@@ -1,5 +1,5 @@
 diff --git a/js/core.js b/js/core.js
-index 37880a6..7cbe52a 100644
+index 37880a6..75a6824 100644
 --- a/js/core.js
 +++ b/js/core.js
 @@ -4454,25 +4454,38 @@ const Core = (function () {
@@ -7,9 +7,9 @@ index 37880a6..7cbe52a 100644
    // air or rolling over: the push only, no grip to take). The yaw rate after it at most wMax, whichever car.
    // k < 0: a contact that is not a corner (a round thing met along the car's side): it bears where it touches, (wx, wz), at arm of the lever
 -  function wallR(c, wx, wz, nx, nz, k) {
-+  // How far behind the other corners are: on the road's side barrier by the barrier's own line at each corner (wallRoom: one that narrows or
-+  // bends is not the straight line through corner k, and a corner that line puts in it may stand a car's length clear of it), elsewhere along
-+  // the normal at corner k. → 1 the push given, 0 none (wallCollide: no push, no blow, so no dent of it either)
++  // How far behind the other corners are: along the normal at corner k, but on the road's side barrier no deeper than the barrier's own line
++  // at each corner puts it (wallRoom: a barrier that narrows or bends away is not the straight line through corner k, and a corner that line
++  // puts in it may stand a car's length clear of it). → 1 the push given, 0 none (wallCollide: no push, no blow, so no dent of it either)
 +  function wallRoom(c, trk, k, tol) {   // → each corner's room to the side barrier corner k stands on (under 0: in it; k's own 0), null: k is not on it
 +    if (!trk || trk.free || trk.unf || !c.q) return null;
 +    const ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners, q = {}, D = [];
@@ -24,10 +24,10 @@ index 37880a6..7cbe52a 100644
 -    if (k >= 0) { const vn0 = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz, cr = clamp(-W.face * vn0, W.cr0, W.cr1), ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners; let sw = 0, dm = 0;
 -      for (let j = 0; j < P.length; j++) { const d = (P[j][0] * ch - P[j][1] * sh - wx) * nx + (P[j][0] * sh + P[j][1] * ch - wz) * nz; if (j !== k && d < dm) dm = d; }   // (dm: the deepest corner, from this one)
 +    if (k >= 0) { const vn0 = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz, cr = clamp(-W.face * vn0, W.cr0, W.cr1), ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners, D = wallRoom(c, trk, k, W.cr0); let sw = 0, dm = 0;
-+      for (let j = 0; j < P.length; j++) { const d = D ? D[j] : (P[j][0] * ch - P[j][1] * sh - wx) * nx + (P[j][0] * sh + P[j][1] * ch - wz) * nz; if (j !== k && d < dm) dm = d; }   // (dm: the deepest corner, from this one)
++      for (let j = 0; j < P.length; j++) { const l = (P[j][0] * ch - P[j][1] * sh - wx) * nx + (P[j][0] * sh + P[j][1] * ch - wz) * nz, d = D ? Math.max(D[j], l) : l; if (j !== k && d < dm) dm = d; }   // (dm: the deepest corner, from this one)
        ax = 0; az = 0;
 -      for (let j = 0; j < P.length; j++) { const ox = j === k ? wx : P[j][0] * ch - P[j][1] * sh, oz = j === k ? wz : P[j][0] * sh + P[j][1] * ch, t = clamp(1 - ((j === k ? 0 : (ox - wx) * nx + (oz - wz) * nz) - dm) / cr, 0, 1);
-+      for (let j = 0; j < P.length; j++) { const ox = j === k ? wx : P[j][0] * ch - P[j][1] * sh, oz = j === k ? wz : P[j][0] * sh + P[j][1] * ch, t = clamp(1 - ((j === k ? 0 : D ? D[j] : (ox - wx) * nx + (oz - wz) * nz) - dm) / cr, 0, 1);
++      for (let j = 0; j < P.length; j++) { const ox = j === k ? wx : P[j][0] * ch - P[j][1] * sh, oz = j === k ? wz : P[j][0] * sh + P[j][1] * ch, l = (ox - wx) * nx + (oz - wz) * nz, t = clamp(1 - ((j === k ? 0 : D ? Math.max(D[j], l) : l) - dm) / cr, 0, 1);
          if (t > 0) { ax += ox * t; az += oz * t; sw += t; } }
        ax /= sw; az /= sw; }
      ax *= W.arm; az *= W.arm;

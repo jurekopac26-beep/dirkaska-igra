@@ -1,0 +1,6 @@
+kotor/cs                  fin 13/13 winner   181.9 s spins 0 walls 2 rescues 0 2abbfc6bd26e5d1a0d8b3403 OK
+kotor/cs/rain             fin 13/13 winner  214.54 s spins 0 walls 0 rescues 0 95d9af8819a62b67467ba764 OK
+kotor/cs/formula          fin 13/13 winner  166.25 s spins 0 walls 1 rescues 0 9f69222b5dcbb4f5281d7c80 OK
+kotor/cs/lm               fin 13/13 winner  168.45 s spins 0 walls 2 rescues 0 0d8013e170bf5dd79c0d4868 OK
+kotor/cs/car              fin 13/13 winner  181.93 s spins 0 walls 3 rescues 0 6f42c4eb2035e5132edcd0e1 OK
+OK: all races fine (19 s)

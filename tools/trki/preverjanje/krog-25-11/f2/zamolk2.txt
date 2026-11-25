@@ -1,0 +1,13 @@
+prog 60, 4 s: zamolčanih avto-korakov 38, od tega brez plina 0, najmanjši plin 0.80
+tianmen: zamolčano 4, od tega brez plina 0, najmanjši plin 0.80
+rastro: zamolčano 9, od tega brez plina 0, najmanjši plin 0.80
+izoard: zamolčano 4, od tega brez plina 0, najmanjši plin 0.80
+kotor: zamolčano 4, od tega brez plina 0, najmanjši plin 0.80
+seoul: zamolčano 5, od tega brez plina 0, najmanjši plin 0.80
+ujarras: zamolčano 4, od tega brez plina 0, najmanjši plin 0.80
+canaries: zamolčano 2, od tega brez plina 0, najmanjši plin 0.80
+vaoala: zamolčano 6, od tega brez plina 0, najmanjši plin 0.80
+
+real	0m12.211s
+user	0m16.545s
+sys	0m0.758s
