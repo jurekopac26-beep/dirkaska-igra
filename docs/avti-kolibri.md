@@ -78,6 +78,9 @@ Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 3
 - Poskus na treh avtih (TIGER GT, MEDVED 4x4, SUPERKOMBI) za slike prej/potem naredi jure.kopac26 (uporabnik ob ~02.45: »naredi slike kako bodo avti zgledali potem ko bodo posodobljeni«): koda na veji `avti-kolibri/pilot`, slike na `slike/avti-kolibri`, brez PR. Kodo prevzame biketraveler; teh treh avtov medtem ne dela nihče drug.
 
 ## Predaja
+- **30 avtov, 25. 11. (partyslo, veja `avti-kolibri/trideset`)**: delitev s sejo #480 (`avti-kolibri/starejsi`): ta veja dela 20 avtov iz `js/cars/`, ki jih #480 ne spreminja (SOKOL, LEV S, TIGER, TORNADO, KOZOROG, GOZDAR, MEDVED, ZMAJ, LEV R, JASTREB, ŠKORPIJON, PERUN, MODRAS, JELEN, PANTER, SUPERKOMBI, GOLJAT, TITAN, CISTERNA, KAMEN); RIS, OREL, GAMS, ŠAKAL, TUR, BURJA, VIHAR, STRELA EV, FORMULA ORKAN in TAIFUN pridejo po združitvi #480.
+  - **Začni s pilotom**: `avti-kolibri/pilot` (0f41f7c, 11. 11., brez PR) ima notranjost, Visoke in videz razbijanja na TIGRU, MEDVEDU in SUPERKOMBIJU ter `tools/avti-kolibri/` (slike pred/po); slike na veji `slike/avti-kolibri` (`pilot/`). Prenesi ga na svež `main` (spori v `js/render.js`, `tests/browser/*.mjs`), nato skupine po 4–5 avtov.
+  - Fizike vožnje ne spreminjaj; `knockK`, `roof0`, `spinK` so fizika trkov (pravilo »Trki« v `CLAUDE.md`). Barve brez črnih in zelo temnih. Slike pred/po enkrat na skupino na stran Odločitve, »ok« pred `main`.
 
 | Skupina | Stanje | Kaj sledi |
 |---|---|---|
