@@ -40,7 +40,7 @@ export function ukaz(args, now = Date.now()) {
     ] }; }
     case 'skrij': { const id = idIz(a); return { opis: 'vzdevek skrit (»Voznik #…«), prijave pregledane', sql: [`UPDATE igralci SET skrit = 1 WHERE id = ${id}`, pregledane(id)] }; }
     case 'pokazi': { const id = idIz(a); return { opis: 'vzdevek spet viden, prijave pregledane', sql: [`UPDATE igralci SET skrit = 0 WHERE id = ${id}`, pregledane(id)] }; }
-    case 'prepovej': { const id = idIz(a); return { opis: 'oddaja prepovedana; časi izginejo z lestvic zdaj, pospravljanje jih zavrne (prepoved)', sql: [`UPDATE igralci SET prepoved = 1 WHERE id = ${id}`, pregledane(id)] }; }
+    case 'prepovej': { const id = idIz(a); return { opis: 'oddaja prepovedana; časi takoj ne štejejo nikjer (lestvica, skupaj, mesto, duh), dnevno pospravljanje jih zavrne (razlog prepoved)', sql: [`UPDATE igralci SET prepoved = 1 WHERE id = ${id}`, pregledane(id)] }; }
     case 'dovoli': { const id = idIz(a); return { opis: 'oddaja spet dovoljena (zavrnjeni časi ostanejo zavrnjeni)', sql: [`UPDATE igralci SET prepoved = 0 WHERE id = ${id}`] }; }
     case 'sprejmi': { const st = stIz(a); return { opis: 'sumljiv čas sprejet; počasnejše čase igralca pospravljanje izbriše', sql: [
       `UPDATE casi SET stanje = 'ok', razlog = NULL, preverjen = ${now} WHERE st = ${st} AND stanje = 'sumljivo'`,

@@ -4,7 +4,7 @@
 // Tianmen at the bends 55 and 56 (s = 186-200 m) the lower leg's run-off ran up to 4.4 m past the middle, on under the upper leg's
 // verge, 2-3.5 m above it; a car run wide there drove on under it, out of sight, and over into the upper leg's road. Core only:
 // - on every real track no barrier past the middle between two legs (where the legs are not too close for any run-off at all, and
-//   where the track does not set the barrier itself: def.wide, def.walls);
+//   where the track does not set the barrier itself: def.wide, def.walls; nor in a roundabout's zone, def.rings zr: no barrier of the route's there);
 // - on Tianmen at 190 m the run-off is still there, ~1 m short of the middle;
 // - on Tianmen a car run wide at 190 m to the outside of bend 55 is stopped by the barrier on its own leg: it stays at its own road's
 //   height, short of the middle, and never jumps to the upper leg (before: 2.5 m past the middle, its road 2 m up on the upper leg's).
@@ -36,11 +36,14 @@ function pastMiddle(T, i) {
 }
 const sOf = (T, i) => Math.round(i * T.ds - (T.startS || 0));
 // where the track sets the barrier on that side itself (def.wide: more run-off on a circuit, Bangsaen's hairpin; def.walls: a street's
-// houses and walls, Harju), eased in and out: the track's own choice, not _buildEdges'
+// houses and walls, Harju), eased in and out: the track's own choice, not _buildEdges'; or where that barrier stands in a roundabout's
+// zone (def.rings with zr, Medvode: wallCollide holds no barrier of the route's there, a car goes round the island as it likes; the
+// legs of the ring, its way in and out, meet in it)
 function own(T, i, sd) {
   const s0 = i * T.ds - (T.startS || 0), ss = T.open ? [s0] : [s0, s0 - T.len, s0 + T.len];
   const hit = (L, e) => (L || []).some(([a, b, side, , e0]) => side === sd && ss.some(s => s > a - (e0 || e) && s < b + (e0 || e)));
-  return hit(T.def.wide, 30) || hit(T.def.walls, 20);
+  const bar = sd > 0 ? T.br[i] : T.bl[i], zone = T.inZone && T.inZone(T.px[i] + T.nx[i] * sd * bar, T.pz[i] + T.nz[i] * sd * bar);
+  return hit(T.def.wide, 30) || hit(T.def.walls, 20) || zone;
 }
 
 // 1. every real track: no barrier past the middle between the legs of a hairpin

@@ -138,7 +138,7 @@ for (const k of ['LESTVICA_ZETON', 'LESTVICA_STREZNIK', 'ACTIONS_ID_TOKEN_REQUES
       return odg(String(u));
     };
     console.log = (...a) => vrstice.push(a.join(' '));
-    try { const r = await m.krog({ zeton: 'x', streznik: 'http://x/', K, fetch: f, ...o }); return { ...r, posted, glave, naslovi, vrstice }; } finally { console.log = log0; }
+    try { const r = await m.krog({ zeton: 'x', streznik: 'https://x/', K, fetch: f, ...o }); return { ...r, posted, glave, naslovi, vrstice }; } finally { console.log = log0; }
   }
   const gz = zlib.gzipSync(JSON.stringify(R));
   const k1 = await krog((u) => {
@@ -150,7 +150,7 @@ for (const k of ['LESTVICA_ZETON', 'LESTVICA_STREZNIK', 'ACTIONS_ID_TOKEN_REQUES
   je('krog: posnetek se ujema', iz.find(x => x.st === 42) || {}, { izid: 'ok', t: false });
   je('krog: posnetka ni', iz.find(x => x.st === 43) || {}, Z('ni-posnetka'));
   check('krog: en POST, žeton kot je dan, naslovi brez dvojne poševnice', k1.posted.length === 1 && k1.glave.size === 1 && k1.glave.has('Bearer x')
-    && k1.naslovi.every(u => u.startsWith('http://x/v1/preveri')), `${k1.posted.length} POST, ${[...k1.glave].join('|')}`);
+    && k1.naslovi.every(u => u.startsWith('https://x/v1/preveri')), `${k1.posted.length} POST, ${[...k1.glave].join('|')}`);
   check('krog: ena vrstica s števili', k1.vrstice.length === 1 && k1.vrstice[0] === '2 preverjenih: 1 ok (0 približno), 1 zavrnjenih, 0 ni mogoče, 0 sumljivih', k1.vrstice.join(' | '));
   const k2 = await krog((u) => {
     const st = (/[?&]st=(\d+)/.exec(u) || [])[1];
@@ -166,6 +166,46 @@ for (const k of ['LESTVICA_ZETON', 'LESTVICA_STREZNIK', 'ACTIONS_ID_TOKEN_REQUES
   check('krog: vrstica 201', k2.vrstice[0] === '201 preverjenih: 0 ok (0 približno), 200 zavrnjenih, 1 ni mogoče, 0 sumljivih', k2.vrstice.join(' | '));
   const napaka = async (p) => { try { await p; return ''; } catch (e) { return String(e && e.message); } };
   check('krog: seznam zavrnjen', /^seznam: 401$/.test(await napaka(krog(() => new Response('{}', { status: 401 })))));
+  {
+    const f = async () => { throw new Error('omrežje'); }, slab = async (st) => /ni naslova strežnika/.test(await napaka(m.krog({ zeton: 'x', streznik: st, K, fetch: f })));
+    const dober = async (st) => !/ni naslova strežnika/.test(await napaka(m.krog({ zeton: 'x', streznik: st, K, fetch: f })));
+    check('krog: žeton samo prek https (http samo localhost, 127.0.0.1)', await slab('http://lestvica.example') && await slab('http://localhost.example') && await slab('ftp://x') && await slab('https://x@y')
+      && await dober('https://lestvica.example') && await dober('http://localhost:8787') && await dober('http://127.0.0.1:8787/'));
+  }
+  // --- older versions: a time whose core stamp is not this version's is replayed by that version's code (a worktree per stamp, o.starejse
+  // here: a fake older version), an unknown stamp stays ni-mogoce without its record fetched; the stamp's commit found in git's history
+  {
+    const STARO = 'abcdef01', K2 = { ...K, core: STARO }, R2 = kl(R); R2.stamp = { ...R2.stamp, core: STARO };
+    const gz2 = zlib.gzipSync(JSON.stringify(R2)), klici = [];
+    const S = { koda: (j) => { klici.push(j); return j === STARO ? K2 : null; } };
+    const k3 = await krog((u) => {
+      if (/[?&]st=51&del=vnos$/.test(u)) return new Response(gz2, { status: 200 });
+      if (/[?&]st=50&del=vnos$/.test(u)) return new Response(gz, { status: 200 });
+      if (/[?&]st=/.test(u)) return new Response('{"ok":false}', { status: 500 });
+      return new Response(JSON.stringify({ ok: true, casi: [{ ...c0, st: 50 }, { ...c0, st: 51, zig: { ...zig, jedro: STARO } }, { ...c0, st: 52, zig: JSON.stringify({ ...zig, jedro: 'fedcba98' }) }] }), { status: 200 });
+    }, { starejse: S });
+    const iz3 = k3.posted.flatMap(p => p.izidi);
+    je('krog: ta različica', iz3.find(x => x.st === 50) || {}, { izid: 'ok', t: false });
+    je('krog: starejša različica (njena koda)', iz3.find(x => x.st === 51) || {}, { izid: 'ok', t: false });
+    je('krog: neznan žig', iz3.find(x => x.st === 52) || {}, { izid: 'ni-mogoce' });
+    check('krog: posnetek neznanega žiga ni prenesen, ta različica brez iskanja', !k3.naslovi.some(u => /st=52/.test(u)) && JSON.stringify(klici) === JSON.stringify([STARO, 'fedcba98']), klici.join(','));
+    const { execFileSync } = require('child_process');
+    let glava = null; try { glava = execFileSync('git', ['show', 'HEAD:js/core.js'], { cwd: path.join(__dirname, '..'), maxBuffer: 1 << 30, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { /* (no git here) */ }
+    if (glava) {
+      const { stampOfBytes } = require('../tools/stamp.js'), z0 = stampOfBytes(glava), sha = m.commitZaJedro(z0);
+      const z1 = sha ? stampOfBytes(execFileSync('git', ['show', sha + ':js/core.js'], { cwd: path.join(__dirname, '..'), maxBuffer: 1 << 30 })) : null;
+      check('žig jedra → commit z isto različico js/core.js', z1 === z0, `${z0} → ${sha && sha.slice(0, 9)} (${z1})`);
+    }
+    check('neznan ali slab žig → brez commita', m.commitZaJedro('00000000') === null && m.commitZaJedro('nič') === null && m.commitZaJedro() === null);
+  }
+  // --- the bounds: sent (with the token) only when the server's are another core's
+  {
+    const M0 = { v: 1, jedro: K.core, kljuci: { 'harju@cs': {} } }, mk = () => M0;
+    const z = (jedro) => krog((u) => /\/v1\/stanje$/.test(u) ? new Response(JSON.stringify({ ok: true, jedro }), { status: 200 }) : new Response(JSON.stringify({ ok: true, casi: [] }), { status: 200 }), { meje: true, mejeIz: mk });
+    const a = await z('drugo'), b = await z(K.core);
+    check('krog --meje: stare meje zamenjane', a.posted.length === 1 && a.posted[0].jedro === K.core && a.naslovi.includes('https://x/v1/meje') && a.vrstice[0] === 'meje poslane: 1 ključev', a.vrstice.join(' | '));
+    check('krog --meje: iste meje ne poslane', b.posted.length === 0 && !b.naslovi.includes('https://x/v1/meje'));
+  }
   check('krog brez naslova strežnika', /ni naslova strežnika/.test(await napaka(m.krog({ zeton: 'x', K, fetch: async () => { throw new Error('omrežje'); } }))));
 
   // --- the token: given, from the environment, from GitHub's OIDC (audience »lestvica«), else an error

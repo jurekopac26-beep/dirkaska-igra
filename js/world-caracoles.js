@@ -49,7 +49,10 @@
   function caH(x, z) {   // terrain height (as vrH, on caNear: the road's blend near it, the real terrain farther out; never above the road around)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = API.vrFar(x, z);
-    else { const hr = n.h - 0.3; h = dd <= 1 ? hr : lerp(hr, API.vrFar(x, z), sstep(1, 42, dd)); }
+    else { const hr = n.h - 0.3, V = API.VR; if (dd <= 1) h = hr; else { const f = API.vrFar(x, z);
+      if (V.sea === null) h = lerp(hr, f, sstep(1, 42, dd));
+      else if (V.brS && V.brS[i]) h = lerp(hr, Math.min(f, V.sea - 2.2), sstep(1, 3, dd));   // (by the sea: under the bridge the sea floor right past the parapets,
+      else h = lerp(hr, f, sstep(1, f < V.sea + 1 ? 7 : 42, dd)); } }                       //  beside a causeway a steep bank down into the water)
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
     for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
@@ -759,6 +762,8 @@
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'caracoles', { gH: caGround, slope: caSlope,
+      bad: (x, z) => { const n = API.vrNear(x, z); return n.i >= 0 && galAt[n.i] !== 0 && n.dd < 1.2; } });   // (the roadside ground for the chase camera: js/world-chase-bt13.js; nothing in a gallery's parapet and pillars)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), railway: nRailway, galleries: GAL.length, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }

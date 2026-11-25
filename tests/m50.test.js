@@ -21,7 +21,8 @@ const TD = Core.TRACKS.find(t => t.id === 'medvode'), T = new Core.Track(TD);
 check('50: on Medvode, a real track', D.track === 'medvode' && !TD.test);
 const o = D.opts(D);
 check('its race: alone, one run, the lorry slow with soft brakes (a copy of the model), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.vLim === K.VMAX && o.playerModel.brakeK === K.BRK && Core.MODELS.find(m => m.id === 'medved').vLim !== K.VMAX);
-check('the holes on the way, the last ones on the gravel castle road (from 5238 m)', K.HOLES.length >= 10 && K.HOLES.filter(h => h[0] > 5238).length >= 5 && K.HOLES.every(h => h[0] > K.S0 && h[0] < TD.surf[0][1] - 100 && Math.abs(h[1]) < T.wS(T.startS + h[0]) - 1));
+const G0 = Math.round(TD.surf[0][0]);   // (where the gravel castle road begins)
+check(`the holes on the way, the last ones on the gravel castle road (from ${G0} m)`, K.HOLES.length >= 10 && K.HOLES.filter(h => h[0] > G0).length >= 5 && K.HOLES.every(h => h[0] > K.S0 && h[0] < TD.surf[0][1] - 100 && Math.abs(h[1]) < T.wS(T.startS + h[0]) - 1));
 const race = (seed) => { const R = new Core.Race(T, Object.assign({ phys: 'cs', seed }, { numAI: 0, laps: 1, tt: true, traffic: false }, o)); D.made(R); R.start(); return R; };
 let R = race(3);
 check('the start: K.S0 m past the start line', Math.abs(R.player.q.s - (T.startS + K.S0)) < 5, R.player.q.s.toFixed(0));

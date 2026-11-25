@@ -66,7 +66,7 @@ Igra in repozitorij sta javna: kdor hoče, lahko pošlje izmišljen zahtevek. Za
 - Prijava na strežnik z **GitHub OIDC**: strežnik sprejme samo žeton, ki ga GitHub podpiše za ta repozitorij, to opravilo in vejo `main`. Skrivnosti v GitHubu ni.
 - Dnevnik in povzetek opravila izpišeta samo števila (»12 preverjenih, 1 zavrnjen«); opravilo ne nalaga artefaktov (javni repozitorij).
 - Obremenitev: ~0,5 s na ponovitev; 3.000 oddaj na dan je ~25 minut na dan na GitHubu, ki je za javne repozitorije brez stroška. Opravilo zasede en tekač GitHub Actions za 1–3 minute na uro (testi pull requestov tečejo naprej).
-- Čas pod pragom (npr. 10 % hitrejši od najhitrejšega tekmeca AI z istim avtom; prag umeri seja 3 na vožnjah uporabnika) dobi stanje `sumljivo`: viden samo igralcu, dokler ga skrbnik ne pregleda (orodje skrbnika, spodaj).
+- Čas pod pragom (npr. 10 % hitrejši od najhitrejšega tekmeca AI z istim avtom; prag še ni v kodi: potrebuje vožnjo avtopilota za vsak ključ in avto, umeri se na vožnjah uporabnika po namestitvi) dobi stanje `sumljivo`: viden samo igralcu, dokler ga skrbnik ne pregleda (orodje skrbnika, spodaj).
 
 ### 3. Ponovljivost med brskalniki (tveganje, prvi korak kode)
 
@@ -204,6 +204,15 @@ Noben test ne kliče pravega strežnika in ne potrebuje skrivnosti.
 5. Določi kontaktni naslov e-pošte za pravilnik (posebej za igro, ne zasebnega) in ime upravljavca, kot naj bo v pravilniku.
 6. Ob prvem koraku kode na telefonu odpelje 2 vožnji na predogledu in pošlje datoteko posnetka (preizkus ponovljivosti; če ima iPhone, še eno na njem).
 
+## Ocene prog (1–5 zvezdic)
+
+Odločitev uporabnika 12. 11. 2026 ob ~13.45 (pogovor z Matejem, račun jure.kopac26): »vsaka proga v meniju tudi glasovanje, ocena od 1 do 5 … proge so ocenjene skupno povprečje vseh online ocenitev«. Izbira: ocena **po prevoženi progi**, povprečje vidno **od prvega glasa**.
+
+- Igralec oceni progo, ko jo je vsaj enkrat prevozil do cilja (igra to ve iz rekordov, `tdgp-records`); svojo oceno lahko pozneje spremeni. En glas na igralca in progo, podpisan z istim ključem kot oddaja časa (brez računa).
+- Strežnik: `POST /v1/ocena` (id, proga, 1–5, podpis; omejitev pošiljanja kot pri časih), `GET /v1/ocene` (povprečje in število glasov za vse proge, en odgovor, v predpomnilniku) in `GET /v1/ocene/<proga>` (tedenska povprečja zadnjih 8 tednov). V D1 tabela `ocene` (id igralca, proga, ocena, datum); izbris vseh podatkov igralca izbriše tudi njegove ocene.
+- Meni (slike potrjene 12. 11.): ocena je nov podatek **»Rating« v vrstici podatkov** proge (med vzponom in lestvico, npr. ★ 4,3), od prvega glasa. Dotik odpre okno ocene, ki prekrije **ves spodnji del menija pod animacijo**: zvezdice za glas (samo prevožena proga; sicer »Finish this track once to rate it«), povprečje s številom glasov in **graf povprečja po tednih** (zadnjih 8 tednov; brez stolpcev 1–5). Brez interneta zadnje shranjeno stanje, glas čaka v vrsti.
+- Ure: +2 v seji 2 (strežnik), +4 v seji 4 (igra, meni). Samo prave proge.
+
 ## Seje in časi
 
 Vsaka seja je nova seja z vejo `svetovna-lestvica/<korak>` in osnutkom pull requesta; na `main` po vrsti (`docs/vrsta.md`; ta tema ni proga, zato gre pred progami).
@@ -212,13 +221,13 @@ Vsaka seja je nova seja z vejo `svetovna-lestvica/<korak>` in osnutkom pull requ
 |---|---|---|---|---|---|
 | 0 | načrt (ta) | ta dokument, vprašanja | Opus | 1,5 | 8. 11. 2026 |
 | 1 | ponovljivost | zapis vnosa ob vožnji (`opts.repro`, seme), `tools/lestvica-preveri.mjs` brez strežnika, meritev Chrome in telefon | Opus, max | 6 | po tedenskem načrtu (odgovori 9. 11.) |
-| 2 | strežnik | Worker, D1, R2, vmesnik, pregled ob oddaji, filter, omejitve, izbris, orodje skrbnika, testi z lažnim strežnikom, namestitev | Opus, max | 8 | račun, ključ in omrežje (točke 2–4 zgoraj) |
+| 2 | strežnik | Worker, D1, R2, vmesnik, pregled ob oddaji, filter, omejitve, izbris, ocene prog, orodje skrbnika, testi z lažnim strežnikom, namestitev | Opus, max | 10 | račun, ključ in omrežje (točke 2–4 zgoraj) |
 | 3 | preverjanje | opravilo na GitHubu (urnik, OIDC, starejše različice), stanje `sumljivo`; pri trkih usklajen žreb in oznaka »preverjeno približno« (odgovor 13. 11.) | Opus, max | 4 | po 1 in 2 |
-| 4 | igra | `js/svet.js`, oddaja po rekordu, zavihek *World*, Lestvica, rezultati, Nastavitve, brez interneta, prevodi, brskalniški test | Opus, max | 10 | po 2 |
+| 4 | igra | `js/svet.js`, oddaja po rekordu, zavihek *World*, Lestvica, rezultati, ocene prog v meniju, Nastavitve, brez interneta, prevodi, brskalniški test | Opus, max | 14 | po 2 |
 | 5 | pravilnik | `zasebnost.html`, `privacy.html`, pogoji, odgovori Data safety, `README.md` (Zasluge), `docs/igra.md`, kazalo | Sonnet | 3 | po 4 in točki 5 zgoraj |
 | 6 | preizkus | uporabnik na predogledu in telefonu, popravki | Sonnet | 2 | po 5 |
 
-Skupaj ~34 ur. Časovnica do izida 1. 2. 2027: seji 1 in 2 v novembru, 3 in 4 do sredine decembra, 5 do konca decembra, preizkus v prvi polovici januarja, na `main` najpozneje 20. 1. 2027 (rezerva pred izidom). Seji 1 in 4 se dotikata `js/game.js` (seja 1 tudi `js/core.js`, samo zapis vnosa in `repro`), zato gresta na `main` druga za drugo.
+Skupaj ~40 ur (z ocenami prog). Časovnica do izida 1. 2. 2027: seji 1 in 2 v novembru, 3 in 4 do sredine decembra, 5 do konca decembra, preizkus v prvi polovici januarja, na `main` najpozneje 20. 1. 2027 (rezerva pred izidom). Seji 1 in 4 se dotikata `js/game.js` (seja 1 tudi `js/core.js`, samo zapis vnosa in `repro`), zato gresta na `main` druga za drugo.
 
 ## Odločitve uporabnika (stran Odločitve 2, jure.kopac26)
 
@@ -227,6 +236,7 @@ Odgovori 9. 11. 2026 v pogovoru seje (klikljiva izbira), zapisani na stran Odlo�
 - `svetovna-lestvica-gostitelj` = **1 · Cloudflare**: Workers, D1 z jurisdikcijo `eu`, vedro R2 v EU; ponovitve voženj na GitHubu.
 - `svetovna-lestvica-obseg` = **1 · kronometer na cestah in najboljši krog na dirkališčih**, vse prave proge; krog šteje samo iz vožnje brez tekmecev (kvalifikacije ali nov kratek način *Hot lap*).
 - `svetovna-lestvica-posnetki` = **1 · javni duhovi prvih 100** na vsaki lestvici (`GET /v1/duh`, v igri *Race ghost*).
+- 12. 11. 2026 v pogovoru z Matejem: **ocene prog** 1–5 po prevoženi progi, povprečje od prvega glasa (razdelek »Ocene prog«).
 
 Odgovori 13. 11. 2026 ob 11.06 v pogovoru seje 1 (klikljiva izbira; croatiadata nima strani Odločitve, zato zapisani tudi v opisu #672):
 
@@ -243,3 +253,4 @@ Odgovori 13. 11. 2026 ob 11.06 v pogovoru seje 1 (klikljiva izbira; croatiadata 
 - 14. 11. 2026, 17.25: odgovor na `lestvica-cloudflare` je 1 (ključ za sejo): uporabnik naredi API Token (Account: Workers Scripts, D1 in Workers R2 Storage – Edit, Account Settings – Read), nova seja ga zahteva z `request_credential` (gostitelj `api.cloudflare.com`) in postavi strežnik po README (»Namestitev«); plačilno sredstvo za R2 vpraša, če ga Cloudflare zahteva.
 - 15. 11. 2026: seja 4 (igra; prevzem od jure.kopac26 po Matejevi odločitvi 15. 11. ob 18.05, točka d; osnutek #743, veja `svetovna-lestvica/igra` iz #688): `js/svet.js` (ovoj, vzdevek, vrsta, predpomnilnik, prijava, izbris; `CFG.url` prazen, zato je vse skrito do namestitve strežnika), priklopi v `js/game.js` (oddaja po rekordu kronometra, vrstica na rezultatih, razdelek **Svet** na Lestvici s prvimi 100 in **Prijavi**, Nastavitve s pridružitvijo, vzdevkom, izbrisom), zavihek *World* v `js/menu.js` in `css/menu.css` (5 vrstic pokonci, 6 ležeče), prevodi v `js/lang.js`; testa `tests/svet.test.js` (41) in `tests/browser/svet.test.mjs` (14). Ni narejeno: krogi na dirkališčih, *Race ghost*, *Hide driver*; prava vožnja do cilja kronometra v brskalniku ni preizkušena (Pikes Peak je za test predolg). Naslednje: seja 5 (pravilnik, `privacy.html`, `zasebnost.html`), po namestitvi strežnika `Svet.CFG.url`.
 - 16. 11. 2026: seja 5 (croatiadata, Matejeva odločitev 16. 11. ob 18.50; osnutek #743): **krogi na dirkališčih** (vir je samo kvalifikacijski leteči krog brez tekmecev; oddaja po novem rekordu kvalifikacij, ključ `k: 'lap'`, duh `lap: 1`), **Race ghost** (gumb **Duh** v razdelku Svet na Lestvici: `GET /v1/duh`, duh kot drugi duh samo te vožnje, vožnja se začne sama), **Hide driver** (gumb **Skrij**: samo na tej napravi, `tdgp-sl-skriti`, največ 200; **Pokaži skrite voznike**), strani `zasebnost.html` in `privacy.html` (upravljavec in kontakt sta osnutek »dopolni skrbnik pred objavo«, obdelovalci brez imen); pokonci so v razdelku Svet skriti stolpca Avto in Zaostanek (360 px). Testa: `tests/svet.test.js` 51, `tests/browser/svet.test.mjs` 19. Ni narejeno: kratek način *Hot lap* (krog šteje samo iz kvalifikacij, v katerih je igralec sam); `CFG.url` še prazen. Vprašanja v opisu #743.
+- 21. 11. 2026: seja 3, nadaljevanje (jure.kopac26, osnutek #688): popravki pregleda (prepovedani igralci tudi v `skupaj` in `mesto`, OIDC preveri tudi id repozitorija in lastnika, omejitev branja 120 na minuto na IP, krog samo `https`); opravilo `.github/workflows/lestvica-preveri.yml` (vsako uro, OIDC, brez skrivnosti in artefaktov, naslov v spremenljivki repozitorija `LESTVICA_STREZNIK`, brez nje konča brez dela); ponovitev starejših različic (`git worktree` po žigu jedra, neznan žig = `ni-mogoce`); `--meje` pošlje nove meje, ko se jedro na strežniku razlikuje. Odprto: prag hitrosti za `sumljivo` (vožnja avtopilota na ključ in avto), usklajen žreb pri trkih, namestitev (nova seja z ključem Cloudflare po README, ko je #688 na `main`).

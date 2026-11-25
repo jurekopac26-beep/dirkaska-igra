@@ -45,6 +45,18 @@ export async function omeji(env, kaj, kdo, now) {
   const n = await env.DB.prepare('INSERT INTO omejitve (k, n, konec) VALUES (?1, 1, ?2) ON CONFLICT(k) DO UPDATE SET n = n + 1 RETURNING n').bind(k, konec).first('n');
   if (n > max) { if (m.size >= PREKO_MAX) m.clear(); m.set(k, konec); throw cez(); }
 }
+// the public reads' limit (README.md here, »Omejitve«): BRANJE[0] reads in a fixed window of BRANJE[1] s from one IP, counted in the
+// isolate only (no write: a flood spends no writes, and the cache's 500 answers are not emptied faster than this lets one IP); the IP is kept
+// in memory to the window's end, never written or logged. A Cloudflare rule in front (»Namestitev«) also holds it across the isolates.
+export const BRANJE = [120, 60];
+const BRANJA = new WeakMap(), BRANJA_MAX = 20000;
+export function omejiBranje(env, req, now) {
+  const [max, s] = BRANJE, w = s * 1000, okno = Math.floor(now / w), ip = req.headers.get('CF-Connecting-IP') || '?';
+  let o = BRANJA.get(env.DB); if (!o || o.okno !== okno) { o = { okno, n: new Map() }; BRANJA.set(env.DB, o); }
+  if (o.n.size >= BRANJA_MAX && !o.n.has(ip)) o.n.clear();
+  const n = (o.n.get(ip) || 0) + 1; o.n.set(ip, n);
+  if (n > max) throw new Napaka(429, 'omejitev', { cez: Math.max(1, Math.ceil(((okno + 1) * w - now) / 1000)) });
+}
 // the IP's hash: SHA-256 of the salt (a secret, IP_SOL), the day (UTC) and the IP, 22 characters; never kept longer than its window (≤ a
 // day) plus a day to the clean-up
 export async function ipOdtis(env, req, now) {

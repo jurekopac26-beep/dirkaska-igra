@@ -60,6 +60,8 @@ Nekaj milisekund procesorja (`src/pregled.js`), proti mejam iz R2 (`meje.json`, 
 
 Števci v tabeli `omejitve` (fiksno okno): 20 oddaj na uro in 100 na dan, 3 spremembe vzdevka na dan, 10 prijav na dan na igralca; z enega zgoščenega IP (`IP_SOL`, sol se ne vidi) 50 novih igralcev na dan in 300 pisanj na minuto. Prek meje 429 `omejitev` z `cez` in `Retry-After`; ključ prek meje do konca okna zavrne isti izolat brez pisanja v bazo.
 
+Javna branja (`/v1/lestvica`, `/v1/mesto`, `/v1/duh`, `/v1/stanje`): 120 na minuto z enega IP, šteje izolat sam brez pisanja (IP samo v pomnilniku do konca minute, nikoli zapisan; `omejiBranje` v `src/skupno.js`), prek meje 429 `omejitev`. Odgovori lestvic so 60 s v predpomnilniku izolata (do 500), zato poplava različnih poizvedb ne prebere baze več, kot dovoli ta meja. Števec ne velja čez izolate: ob namestitvi preveri, ali paket ponuja vezavo za omejevanje hitrosti Workers (`[[ratelimits]]` v `wrangler.toml`), in jo dodaj z isto mejo.
+
 ## Brisanje
 
 - `/v1/izbris`: igralec, njegovi časi in prijave, ki jih je oddal; objekti v R2 takoj, ob napaki R2 v tabelo `brisanje`. Oznaka `izbrisan:<id>` (3 dni) prepreči, da bi star podpisan zahtevek igralca naredil znova.
@@ -68,7 +70,7 @@ Nekaj milisekund procesorja (`src/pregled.js`), proti mejam iz R2 (`meje.json`, 
 
 ## Preverjanje
 
-Opravilo na GitHubu (`.github/workflows/lestvica-preveri.yml`, na `main`, urnik ali ročni zagon) se prijavi z žetonom OIDC (`audience: lestvica`); strežnik preveri podpis s ključi GitHuba, `iss`, `aud`, repozitorij, vejo, potek in dogodek. Skrivnosti ni. Opravilo vzame seznam časov, starejših od 2 minut (brez id-ja igralca in vzdevka), ponovi posnetke v Node (`tools/lestvica-preveri.mjs --krog`) in pošlje izide po 200: `ok` (s časom iz Node, pri trkih `priblizno`), `zavrnjeno`, `ni-mogoce`, `sumljivo`. Sumljive pregleda skrbnik.
+Opravilo na GitHubu (`.github/workflows/lestvica-preveri.yml`, na `main`, urnik ali ročni zagon) se prijavi z žetonom OIDC (`audience: lestvica`); strežnik preveri podpis s ključi GitHuba, `iss`, `aud`, repozitorij, vejo, potek in dogodek. Skrivnosti ni. Opravilo vzame seznam časov, starejših od 2 minut (brez id-ja igralca in vzdevka), ponovi posnetke v Node (`tools/lestvica-preveri.mjs --krog`) in pošlje izide po 200: `ok` (s časom iz Node, pri trkih `priblizno`), `zavrnjeno`, `ni-mogoce`, `sumljivo`. Sumljive pregleda skrbnik. Posnetek starejše različice igre ponovi s kodo te različice (`git worktree` na zadnjem commitu z istim žigom jedra, zato `fetch-depth: 0`); žig, ki ga v zgodovini `main` ni, dobi `ni-mogoce`. Z `--meje` opravilo najprej primerja `jedro` iz `GET /v1/stanje` s svojim in ob razliki pošlje nove meje (`POST /v1/meje`).
 
 ## Skrbnik
 
@@ -98,7 +100,7 @@ openssl rand -base64 32 | npx wrangler secret put IP_SOL   # sol; seja je ne vid
 npx wrangler deploy                                         # naslov lestvica.<podračun>.workers.dev
 ```
 
-Nato opravilo preverjanja pošlje meje (`/v1/meje`); `GET /v1/stanje` mora vrniti `meje: true` in `sol: true`. Naslov Workerja gre v igro in v dovoljene gostitelje okolja (uporabnik potrdi v oknu za odobritev). Lokalno: `npx wrangler dev` (baza `--local`).
+Naslov Workerja (`https://…workers.dev`) v spremenljivko repozitorija `LESTVICA_STREZNIK` (Settings → Secrets and variables → Actions → Variables; ni skrivnost); brez nje opravilo konča brez dela. Nato opravilo preverjanja (ročni zagon) pošlje meje (`/v1/meje`); `GET /v1/stanje` mora vrniti `meje: true` in `sol: true`. Naslov Workerja gre v igro in v dovoljene gostitelje okolja (uporabnik potrdi v oknu za odobritev). Lokalno: `npx wrangler dev` (baza `--local`).
 
 ## Brezplačni paket
 

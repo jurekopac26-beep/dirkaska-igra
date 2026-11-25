@@ -9,7 +9,10 @@ function idIz(u) { const id = u.searchParams.get('id'); if (typeof id !== 'strin
 const celo = (v, d) => v == null ? d : /^\d{1,4}$/.test(v) ? +v : NaN;
 // the order of a board: the time, then who sent it first (a.ms <= b.ms first: the index's range, then the ties)
 const PRED = '(a.ms <= b.ms AND (a.ms < b.ms OR a.oddan < b.oddan OR (a.oddan = b.oddan AND a.st < b.st)))';
-const PRVIH_ST = `SELECT st FROM casi WHERE kljuc = ?1 AND stanje = 'ok' ORDER BY ms, oddan, st LIMIT ${PRVIH}`;
+// a banned player's checked times count nowhere (not in the total, a place or the first 100) from the ban on, before the clean-up rejects them
+const OK = (c, g) => `${c}.stanje = 'ok' AND NOT EXISTS (SELECT 1 FROM igralci ${g} WHERE ${g}.id = ${c}.igralec AND ${g}.prepoved = 1)`;
+const SKUPAJ = `SELECT COUNT(*) n FROM casi c WHERE c.kljuc = ?1 AND ${OK('c', 'g')}`;
+const PRVIH_ST = `SELECT c.st FROM casi c WHERE c.kljuc = ?1 AND ${OK('c', 'g')} ORDER BY c.ms, c.oddan, c.st LIMIT ${PRVIH}`;
 async function iz(env, k, now, f) { let s = kesBeri(env, k, now); if (s == null) { s = JSON.stringify(await f()); kesPisi(env, k, s, now); } return new Response(s, { headers: { 'Content-Type': 'application/json; charset=utf-8', ...JAVNO } }); }
 
 // GET /v1/lestvica?kljuc=&od=0&n=100: the checked times od+1 … od+n (of the first 100) → { kljuc, od, skupaj, vrstice: [{ mesto, id,
@@ -20,7 +23,7 @@ export async function lestvica(req, env) {
   return iz(env, `l:${k}:${od}:${n}`, ura(env), async () => {
     const [v, s] = await env.DB.batch([
       env.DB.prepare(`SELECT c.igralec id, g.ime, g.skrit, c.ms, c.vmes, c.avto, c.nad, c.pomoc, c.priblizno, c.duh FROM casi c JOIN igralci g ON g.id = c.igralec WHERE c.kljuc = ?1 AND c.stanje = 'ok' AND g.prepoved = 0 ORDER BY c.ms, c.oddan, c.st LIMIT ?2 OFFSET ?3`).bind(k, n, od),
-      env.DB.prepare(`SELECT COUNT(*) n FROM casi WHERE kljuc = ?1 AND stanje = 'ok'`).bind(k),
+      env.DB.prepare(SKUPAJ).bind(k),
     ]);
     return { ok: true, kljuc: k, od, skupaj: s.results[0].n, vrstice: v.results.map((r, i) => ({
       mesto: od + i + 1, id: r.id, ime: r.skrit ? null : r.ime, oznaka: r.id.slice(0, 4).toUpperCase(), ms: r.ms, vmes: JSON.parse(r.vmes), avto: r.avto,
@@ -34,8 +37,8 @@ export async function mesto(req, env) {
   const u = new URL(req.url), k = kljucIz(u), id = idIz(u);
   return iz(env, `m:${k}:${id}`, ura(env), async () => {
     const [m, s] = await env.DB.batch([
-      env.DB.prepare(`SELECT b.ms, (SELECT COUNT(*) FROM casi a WHERE a.kljuc = ?1 AND a.stanje = 'ok' AND ${PRED}) + 1 m FROM casi b WHERE b.kljuc = ?1 AND b.igralec = ?2 AND b.stanje = 'ok' ORDER BY b.ms, b.oddan, b.st LIMIT 1`).bind(k, id),
-      env.DB.prepare(`SELECT COUNT(*) n FROM casi WHERE kljuc = ?1 AND stanje = 'ok'`).bind(k),
+      env.DB.prepare(`SELECT b.ms, (SELECT COUNT(*) FROM casi a WHERE a.kljuc = ?1 AND ${OK('a', 'ga')} AND ${PRED}) + 1 m FROM casi b WHERE b.kljuc = ?1 AND b.igralec = ?2 AND ${OK('b', 'gb')} ORDER BY b.ms, b.oddan, b.st LIMIT 1`).bind(k, id),
+      env.DB.prepare(SKUPAJ).bind(k),
     ]);
     const r = m.results[0];
     return { ok: true, kljuc: k, id, mesto: r ? r.m : null, ms: r ? r.ms : null, skupaj: s.results[0].n };

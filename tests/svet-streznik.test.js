@@ -85,7 +85,7 @@ const MEJE = {
 
   async function zeton(o = {}, kid = 'k1', kljuc = rsa.privateKey) {
     const t = Math.floor(now / 1000);
-    const c = { iss: OI.ISS, aud: 'lestvica', repository: OI.REPO, ref: OI.REF, workflow_ref: OI.WORKFLOW, event_name: 'schedule', exp: t + 300, iat: t - 5, ...o };
+    const c = { iss: OI.ISS, aud: 'lestvica', repository: OI.REPO, repository_id: OI.REPO_ID, repository_owner_id: OI.LASTNIK_ID, ref: OI.REF, workflow_ref: OI.WORKFLOW, event_name: 'schedule', exp: t + 300, iat: t - 5, ...o };
     const h = b64u(Buffer.from(JSON.stringify({ alg: 'RS256', kid, typ: 'JWT' }))), b = b64u(Buffer.from(JSON.stringify(c)));
     const s = new Uint8Array(await subtle.sign('RSASSA-PKCS1-v1_5', kljuc, Buffer.from(h + '.' + b)));
     return `${h}.${b}.${b64u(s)}`;
@@ -337,7 +337,7 @@ const MEJE = {
   check('brez IP_SOL: 503 ni-nastavitve', r.status === 503 && (await beri(r)).napaka === 'ni-nastavitve');
 
   // 11. GitHub's token: the claims, the key's id, the keys fetched again at most once a minute, the settings
-  const slabi = [['brez Bearer', 'x'], ['tuj aud', await zeton({ aud: 'drug' })], ['tuj repozitorij', await zeton({ repository: 'nekdo/drugo' })], ['druga veja', await zeton({ ref: 'refs/heads/dev' })],
+  const slabi = [['brez Bearer', 'x'], ['tuj aud', await zeton({ aud: 'drug' })], ['tuj repozitorij', await zeton({ repository: 'nekdo/drugo' })], ['isto ime, drug repozitorij', await zeton({ repository_id: '1' })], ['isto ime, drug lastnik', await zeton({ repository_owner_id: '2' })], ['id kot število', await zeton({ repository_id: +OI.REPO_ID })], ['druga veja', await zeton({ ref: 'refs/heads/dev' })],
     ['drug potek', await zeton({ workflow_ref: OI.REPO + '/.github/workflows/drug.yml@' + OI.REF })], ['pull_request', await zeton({ event_name: 'pull_request' })],
     ['potekel', await zeton({ exp: Math.floor(now / 1000) - 120 })], ['tuj podpis', await zeton({}, 'k1', (await subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign'])).privateKey)]];
   for (const [ime, tok] of slabi) {
@@ -355,6 +355,16 @@ const MEJE = {
   check('brez OIDC_AUD: 503 ni-nastavitve', r.status === 503 && (await beri(r)).napaka === 'ni-nastavitve');
   r = await zJob('/v1/preveri', 'GET', null, null, { ...env, DB: lazniD1(), FETCH: async () => { throw new Error('mreža'); } });
   check('ključev ni mogoče dobiti: 503 oidc-kljuci', r.status === 503 && (await beri(r)).napaka === 'oidc-kljuci');
+
+  // 11b. the job the server trusts (OI.WORKFLOW): the file is there, runs only on the events the server accepts and only on main, asks for
+  // the OIDC token, has no secrets and uploads no artifacts (a public repository: the players' records stay off GitHub)
+  {
+    const wf = OI.WORKFLOW.slice(OI.REPO.length + 1).split('@')[0], f = path.join(__dirname, '..', wf), y = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+    const on = (/^on:\n((?: {2}.*\n|\n)*)/m.exec(y) || [])[1] || '', ev = [...on.matchAll(/^ {2}([a-z_]+):/gm)].map(m => m[1]);
+    check(`opravilo ${wf}: dogodki strežnika, samo main, OIDC, brez skrivnosti in artefaktov`, !!y && ev.length > 0 && ev.every(e => OI.DOGODKI.includes(e))
+      && /id-token: write/.test(y) && /github\.ref == 'refs\/heads\/main'/.test(y) && y.includes(`github.repository == '${OI.REPO}'`)
+      && !/secrets\.|upload-artifact|set -x/.test(y) && /--krog/.test(y), `${ev.join(',')}`);
+  }
 
   // 12. the router: CORS for the game's pages and a local server, OPTIONS, 405, 404, 500 without the body
   const izvor = async (o) => (await zahteva('/v1/stanje', { headers: { Origin: o } })).headers.get('Access-Control-Allow-Origin');
@@ -375,6 +385,20 @@ const MEJE = {
   console.log = log;
   check('nepričakovana napaka: 500 in ena vrstica dnevnika', r.status === 500 && (await beri(r)).napaka === 'napaka' && izpis.length === 1 && izpis[0] === 'napaka: TypeError: zlomljeno', izpis.join(' | '));
 
+  // 12b. the public reads' limit: per IP in the isolate, no write; another IP and the next window go on
+  {
+    const S = await import('../streznik/svetovna-lestvica/src/skupno.js'), [max] = S.BRANJE, ip = { headers: { 'CF-Connecting-IP': '203.0.113.9' } };
+    now = (Math.floor(now / 60000) + 1) * 60000;
+    const zap = [];
+    for (let i = 0; i <= max; i++) zap.push((await zahteva('/v1/lestvica?kljuc=gora-tt@suho', ip)).status);
+    const zad = await zahteva('/v1/mesto?kljuc=gora-tt@suho&id=' + A.id, ip), zj = await beri(zad);
+    check(`branje: ${max} na minuto z enega IP, nato 429 omejitev z Retry-After`, zap.slice(0, max).every(x => x === 200) && zap[max] === 429 && zad.status === 429 && zj.napaka === 'omejitev' && +zad.headers.get('Retry-After') >= 1, zap.slice(max - 1).join() + ' ' + JSON.stringify(zj));
+    const drug = await zahteva('/v1/lestvica?kljuc=gora-tt@suho', { headers: { 'CF-Connecting-IP': '203.0.113.10' } });
+    now += 60000;
+    const potem = await zahteva('/v1/lestvica?kljuc=gora-tt@suho', ip);
+    check('branje: drug IP in naslednja minuta brez omejitve; brez pisanja v bazo', drug.status === 200 && potem.status === 200 && DB.vrstice("SELECT 1 FROM omejitve WHERE k LIKE 'branje%'").length === 0);
+  }
+
   // 13. the keeper's tool on the same database
   const sk = (args) => { for (const s of SK.ukaz(args, now).sql) DB.exec(s); };
   const skNapaka = (args) => { try { SK.ukaz(args, now); return false; } catch (e) { return /raba:/.test(e.message); } };
@@ -389,7 +413,9 @@ const MEJE = {
   check('skrbnik: prepovej (oddaja 403 prepoved)', z.st === 403 && z.j.napaka === 'prepoved', JSON.stringify(z.j));
   now += 61000;
   j = await beri(await zahteva('/v1/lestvica?kljuc=gora-tt@suho'));
-  check('prepovedan igralec ni na lestvici', j.vrstice.length === 0, JSON.stringify(j).slice(0, 200));
+  check('prepovedan igralec ni na lestvici (tudi ne v skupaj)', j.vrstice.length === 0 && j.skupaj === 0, JSON.stringify(j).slice(0, 200));
+  j = await beri(await zahteva('/v1/mesto?kljuc=gora-tt@suho&id=' + A.id));
+  check('prepovedan igralec nima mesta', j.mesto === null && j.ms === null && j.skupaj === 0, JSON.stringify(j));
   sk(['dovoli', A.id]); sk(['prepovej', A.id]);
   z = await oddaj(C, { t: 95000 });
   sk(['zavrni', String(z.j.st), 'hitrost', 'na', 'ravnini']);

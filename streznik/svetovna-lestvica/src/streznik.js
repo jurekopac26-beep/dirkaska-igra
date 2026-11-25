@@ -2,7 +2,7 @@
 // for the game's pages (env.IZVORI: GitHub Pages and the app, https://localhost) and a local server (http://localhost, 127.0.0.1). An
 // unexpected error is logged by its name and message only (never a request's body or a player's data) and answered 500 napaka.
 import { Napaka, own } from './ovoj.js';
-import { json } from './skupno.js';
+import { json, ura, omejiBranje } from './skupno.js';
 import * as Z from './zahtevki.js';
 import * as B from './branje.js';
 import * as P from './preveri.js';
@@ -12,6 +12,7 @@ export const POTI = {
   '/v1/vzdevek': { POST: Z.vzdevek }, '/v1/oddaja': { POST: Z.oddaja }, '/v1/izbris': { POST: Z.izbris }, '/v1/prijava': { POST: Z.prijava }, '/v1/moje': { POST: Z.moje },
   '/v1/preveri': { GET: P.seznam, POST: P.izidi }, '/v1/meje': { POST: P.meje },
 };
+const JAVNE = new Set(['/v1/lestvica', '/v1/mesto', '/v1/duh', '/v1/stanje']);   // (the public reads: a limit per IP, skupno.js omejiBranje)
 const LOKALNO = /^http:\/\/(localhost|127\.0\.0\.1)(:\d{1,5})?$/;
 const NE = { 'Cache-Control': 'no-store' };
 
@@ -30,7 +31,7 @@ export async function obdelaj(req, env, ctx) {
     if (!m) throw new Napaka(404, 'ni');
     if (req.method === 'OPTIONS') res = new Response(null, { status: 204, headers: { 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '86400' } });
     else if (!own(m, req.method)) res = json({ ok: false, napaka: 'metoda' }, 405, { Allow: [...Object.keys(m), 'OPTIONS'].join(', '), ...NE });
-    else res = await m[req.method](req, env, ctx);
+    else { if (req.method === 'GET' && JAVNE.has(pot)) omejiBranje(env, req, ura(env)); res = await m[req.method](req, env, ctx); }
   } catch (e) {
     if (e instanceof Napaka) res = json({ ok: false, napaka: e.koda, ...(e.extra || {}) }, e.st, e.st === 429 && e.extra ? { 'Retry-After': String(e.extra.cez), ...NE } : NE);
     else { console.log(`napaka: ${e && e.name}: ${String(e && e.message).slice(0, 200)}`); res = json({ ok: false, napaka: 'napaka' }, 500, NE); }
