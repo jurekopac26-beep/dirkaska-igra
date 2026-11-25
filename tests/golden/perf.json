@@ -35,11 +35,11 @@
   "jsMs": 1.5
  },
  "rbring": {
-  "calls": 228,
-  "maxCalls": 278,
-  "kverts": 545,
-  "maxKverts": 689,
-  "jsMs": 1.44
+  "calls": 230,
+  "maxCalls": 277,
+  "kverts": 549,
+  "maxKverts": 716,
+  "jsMs": 1.5
  },
  "caracoles": {
   "calls": 180,
@@ -57,17 +57,17 @@
  },
  "harju": {
   "calls": 193,
-  "maxCalls": 234,
-  "kverts": 564,
-  "maxKverts": 825,
-  "jsMs": 0.25
+  "maxCalls": 235,
+  "kverts": 574,
+  "maxKverts": 834,
+  "jsMs": 0.43
  },
  "bathurst": {
-  "calls": 175,
-  "maxCalls": 254,
-  "kverts": 508,
-  "maxKverts": 557,
-  "jsMs": 1.21
+  "calls": 185,
+  "maxCalls": 261,
+  "kverts": 558,
+  "maxKverts": 660,
+  "jsMs": 1.26
  },
  "chapman": {
   "calls": 169,

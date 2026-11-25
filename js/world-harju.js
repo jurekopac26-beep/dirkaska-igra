@@ -927,6 +927,9 @@
       }
     }
 
+    /* ---- the roadside from OSM (js/world-harju-obcestje.js): in the same chunks, before the crowds are placed ---- */
+    if (typeof API.hjRoadside === 'function') out.roadside = API.hjRoadside({ scen, T, R, WA, G, hjGround, hjNear, onBld, nearDD, exclPush, CR });
+
     /* ---- knockable straw bale stacks on the outside of the tight corners (the first hairpin, the corner onto the gravel, the kink at the stadium, the hairpins by the Lyseo school, the school's corner, Norssi) ---- */
     out.propR = 150;
     out.propFloor = propFloorTable(null, (i, side) => VP[side > 0 ? 1 : 0][i]);
