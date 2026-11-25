@@ -922,19 +922,6 @@
    53.7
   ]
  },
- "longyearbyen": {
-  "s": 1564,
-  "o": "Desni ovinek",
-  "cam": [
-   1214.7,
-   32.1,
-   669.8,
-   1196.6,
-   7,
-   602.1,
-   56.6
-  ]
- },
  "irishtown": {
   "s": 856,
   "o": "Serpentina 1, lasnica v desno pod zaselkom Irishtown (~190°)",
@@ -975,6 +962,19 @@
    155.2,
    1306.9,
    58.7
+  ]
+ },
+ "krasnahorka": {
+  "s": 3326,
+  "o": "Levi ovinek pod gradom",
+  "cam": [
+   -1132.8,
+   -127.7,
+   1227,
+   -1180.3,
+   -169.6,
+   1309.3,
+   49
   ]
  }
 }

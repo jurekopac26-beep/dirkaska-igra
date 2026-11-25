@@ -52,8 +52,8 @@
   }
   function ngCol(x, z, h, ny, dd) {   // ground colour (times the grey grit map): see above
     const P = API.VR, A = h + P.D.base, f = P.n4(x, z), q = P.c2(x, z), m = P.c1(x, z), s5 = P.c5(x * 1.3, z * 1.3);
-    let R = 0.5, G = 0.5, B = 0.27;
-    const dry = sstep(0.45, 0.8, m) * 0.6; R = lerp(R, 0.66, dry); G = lerp(G, 0.58, dry); B = lerp(B, 0.35, dry);   // (straw)
+    let R = 0.56, G = 0.51, B = 0.29;   // (the dry season's tawny grass: docs/proge/ngorongoro.md)
+    const dry = sstep(0.4, 0.8, m) * 0.7; R = lerp(R, 0.66, dry); G = lerp(G, 0.58, dry); B = lerp(B, 0.35, dry);   // (straw)
     const fr = sstep(0.55, 0.85, P.c3(x, z)) * 0.45; R = lerp(R, 0.38, fr); G = lerp(G, 0.48, fr); B = lerp(B, 0.22, fr);   // (fresh green)
     const fl = sstep(1880, 1830, A) * 0.7; R = lerp(R, 0.62, fl); G = lerp(G, 0.59, fl); B = lerp(B, 0.35, fl);   // (the floor's short grass)
     const soil = sstep(0.68, 0.88, q) * 0.4; R = lerp(R, 0.53, soil); G = lerp(G, 0.37, soil); B = lerp(B, 0.25, soil);   // (the red-brown soil)
@@ -68,7 +68,7 @@
       R = lerp(R, lerp(0.45 * k, R, ledge), st); G = lerp(G, lerp(0.4 * k, G, ledge), st); B = lerp(B, lerp(0.34 * k, B, ledge), st); }
     for (let k = 0; k < DU.length; k++) { const u = DU[k], e = Math.hypot(x - u[0], z - u[1]); if (e < u[2]) { const t = sstep(u[2], u[2] * 0.6, e) * 0.8; R = lerp(R, 0.62, t); G = lerp(G, 0.5, t); B = lerp(B, 0.38, t); } }
     const pd = segD(PA, x, z); if (pd < 1.4) { const t = sstep(1.4, 0.4, pd) * 0.75; R = lerp(R, 0.6, t); G = lerp(G, 0.47, t); B = lerp(B, 0.35, t); }
-    if (dd < 1.8) { const t = sstep(1.8, 0.2, dd) * 0.5; R = lerp(R, 0.56, t); G = lerp(G, 0.42, t); B = lerp(B, 0.31, t); }   // (the verge: trodden red dust)
+    if (dd < 2.6) { const t = sstep(2.6, 0.2, dd) * 0.55; R = lerp(R, 0.56, t); G = lerp(G, 0.42, t); B = lerp(B, 0.31, t); }   // (the verge: trodden red dust)
     SCOL[0] = R; SCOL[1] = G; SCOL[2] = B; return SCOL;
   }
   function ngGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (as caGCol, coloured by ngCol)
@@ -1016,6 +1016,17 @@
 
     /* ---- the animals by the road (ngLife; out.dyn.ext poses them every frame) ---- */
     const life = ngLife({ root, excluded, onSide, sStart, out });
+
+    /* ---- the roadside ground for the chase camera (js/world-chase-bt20.js): the streams' green margins as class 6, nothing in their beds
+       nor on the animals' places (each group's ground with 8 m to spare and, for a crossing herd, the far side it walks to) ---- */
+    if (World.ext && World.ext.goreRob) {
+      const zA = [];
+      for (const g of life.L.groups) { const ms = [[g.x, g.z, 0]], A = life.L.A.slice(g.a0, g.a1);
+        if (g.kind === 'cross' && A.length) { let bx = 0, bz = 0; for (const a of A) { bx += a.bx; bz += a.bz; } ms.push([bx / A.length, bz / A.length, 1]); }
+        for (const [cx, cz, far] of ms) { let r = 0; for (const a of A) r = Math.max(r, far ? Math.hypot(a.bx - cx, a.bz - cz) : Math.hypot(a.hx - cx, a.hz - cz)); zA.push([cx, cz, r + 8]); } }
+      World.ext.goreRob({ excluded, root, out }, 'ngorongoro', { gH: caGround, slope: caSlope, near: vrNear, lc: (x, z) => segD(ST, x, z) < 8 ? 6 : vrLC(x, z),
+        bad: (x, z) => segD(ST, x, z) < 2.5 || segD(PA, x, z) < 1.4 || zA.some(e => (x - e[0]) * (x - e[0]) + (z - e[1]) * (z - e[1]) < e[2] * e[2]) });
+    }
 
     /* ---- the view beyond the corridor (ngFar; World.update moves it with the camera); finish the meshes ---- */
     const FAR = ngFar(def); if (FAR) { FAR.mesh.visible = false; FAR.upd = ngFarUpdate; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; moved by its own ngFarUpdate)
