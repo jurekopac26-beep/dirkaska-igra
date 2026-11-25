@@ -3299,7 +3299,7 @@ const Render = (function () {
       this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.castShadow = true; this.mesh.visible = false;
       this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] }));
     }
-    reset(gull) { this.gull = !!gull; for (const f of this.flocks) { f.on = false; f.wait = (2 + Math.random() * 8) * (this.rare || 1); } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; }
+    reset(gull) { this.gull = !!gull; for (const f of this.flocks) { f.on = false; f.wait = (2 + Math.random() * 8) * (this.rare || 1); } this.vx = this.vz = 0; this.cx = this.cz = null; this.mesh.geometry.setDrawRange(0, 0); }
     // one bird into the buffers at o: its place (x, y, z), heading (ch, sh), size sc, half span, the arm's and the hand's angle
     _bird(o, x, y, z, ch, sh, sc, span, a1, a2) {
       const P = this.pos, C = this.col, gull = this.gull;
@@ -3357,7 +3357,7 @@ const Render = (function () {
           }
         }
       }
-      for (let k = b * this.st; k < this.n * this.st; k++) P[k] = 0;
+      this.mesh.geometry.setDrawRange(0, b * this.st / 3);   // (only the birds in the air are drawn: none, no vertices)
       this.attr.needsUpdate = true; this.cattr.needsUpdate = true;
     }
   }

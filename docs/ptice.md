@@ -106,7 +106,8 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
   torej so v zraku petino časa kot drugje.
 - Test `tests/browser/zivali.test.mjs`: Nürburg, Bathurst in Spa brez živali; Katu-Jaryk, Caracoles, Medvode kot prej.
 - **Odločeno 24. 11. (uporabnik, prek koordinacije biketraveler): »Pusti zamrznjene«.** Crystal Palace, London, Marrakech ostanejo nespremenjena.
-  Zvoki živali ob progi (`js/sfx-okolje.js`, golobi `zivali.city`) so nespremenjeni.
+  Zvoki: kravji zvonci nastanejo iz čred sveta, zato jih na dirkališčih (Spa, Red Bull Ring) ni več; napovedovalec ostane.
+  Golobi (`zivali.city`) so nespremenjeni. Test `okolje.test.mjs` je usklajen (25. 11.); zvonci ob čredi na dirki niso več preverjeni.
 
 ## Podrobnost ptic: odločeno 24. 11.
 
@@ -114,6 +115,8 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 - `Birds` v `js/render.js` riše samo še to obliko (`Birds._bird`: trup s hrbtom, glava s temenom, kljun, rep v treh delih, krilo z
   nadlahtjo, dlanjo in prsti; dlan zamahne za nadlahtjo). Stopnje 0, A in B ter `setDetail` so odstranjene.
 - En klic risanja; največ 16 × 66 = 1056 oglišč (prej 144). Barve so odtenki osnovne barve po ogliščih; barve vrst šele po virih.
+- Rišejo se samo ptice v zraku (`setDrawRange`); brez jate nič oglišč. Sepang je pri najgostejšem mestu tik pod mejo (899 tisoč od 900):
+  vsaka dodatna geometrija na tej progi test zmogljivosti obrne.
 
 ## Predaja (naslednja seja)
 
@@ -124,5 +127,5 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 3. Vrsta po državi: polje v datoteki proge (npr. `ptice: { vrsta, n: [min, max], formacija, let }`), samo za potrjene vrstice; sicer sedanja ptica.
    Formacije: klin, vrsta, ohlapna jata, gosta jata, posamič ali par (jadranje v krogu). `Birds` uporablja `Math.random` (ne semena dirke).
 4. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena (odločeno 24. 11.).
-   `npm run test:related` se 24. 11. v 30 min ni končal (brez izida); zelena test živali in `stamp --check`.
+   `npm run test:related` 25. 11.: 18 od 20 zelenih; `perf` (Sepang) in `okolje` (Spa) popravljena in posamič zelena.
 5. Vire, ki gredo v kodo, z licenco dopiši v `README.md`, »Zasluge«.
