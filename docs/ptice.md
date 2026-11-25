@@ -131,4 +131,7 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
    Formacije: klin, vrsta, ohlapna jata, gosta jata, posamič ali par (jadranje v krogu). `Birds` uporablja `Math.random` (ne semena dirke).
 4. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena (odločeno 24. 11.).
    `npm run test:related` 25. 11.: 18 od 20 zelenih; `perf` (Sepang) in `okolje` (Spa) popravljena in posamič zelena.
-5. Vire, ki gredo v kodo, z licenco dopiši v `README.md`, »Zasluge«.
+5. Zvonci: koordinacija 25. 11. sporoča odgovor uporabnika »1 · Ok, brez zvoncev«: Spa in Red Bull Ring ostaneta brez čred in zvoncev.
+6. Odprto za svežo sejo: (a) preveri vire [19]–[38] na straneh (vsako številko in kraj), šele nato vrste v kodo;
+   (b) Sepang je pri 899 od 900 tisoč oglišč že na `main`: ptice tega ne slabšajo več, rezerva zahteva poseg v progo (ločena tema).
+7. Vire, ki gredo v kodo, z licenco dopiši v `README.md`, »Zasluge«.
