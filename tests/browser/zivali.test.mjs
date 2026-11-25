@@ -11,7 +11,7 @@
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'katu', 'bathurst', 'iroha', 'caracoles', 'medvode'];   // (Medvode: scenes at their real places with things of their own, its stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026; Ouninpohja, a test track since 8. 11. 2026, has no animals' scenes)
+const TRACKS = ['nring', 'katu', 'bathurst', 'spa', 'caracoles', 'medvode'];   // (Spa in Irohazaka's place, a test track since 12. 11. 2026; Medvode: scenes at their real places with things of their own, its stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026; Ouninpohja, a test track since 8. 11. 2026, has no animals' scenes)
 // (how many glades a track must have: Katu-Jaryk's ladder of hairpins keeps each leg's run-off short of the middle between the legs since the
 // serpentines' barriers of Track._buildEdges (limitNear, 6. 11. 2026), so fewer spots fit between them: 5 glades, before 11)
 const MIN = { katu: 4 };

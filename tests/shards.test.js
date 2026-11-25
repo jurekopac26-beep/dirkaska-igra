@@ -1,5 +1,5 @@
-// The shares of the test runner (tests/run.js --shard k/n; GitHub runs the browser tests in 6 shares on 6 machines at once, see
-// .github/workflows/tests.yml): for every suite and 1-8 shares each test in exactly one share, none left out; the browser tests' shares
+// The shares of the test runner (tests/run.js --shard k/n; GitHub runs the browser tests in 10 shares on 10 machines at once, see
+// .github/workflows/tests.yml): for every suite and 1-10 shares each test in exactly one share, none left out; the browser tests' shares
 // as many as the workflow's (its matrix and its --shard k/n) and about as long as each other (by run.js's SECS); every browser test that
 // takes long (over 4 min) has its time in SECS, and SECS names only tests in the list; a bad --shard stops with an error, never runs
 // everything. --related (npm run test:related): the tests of the files given (--files) by their names and RELATED; --quiet: a passing test
@@ -18,19 +18,19 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 const run = (...a) => spawnSync(process.execPath, [RUN, ...a], { encoding: 'utf8' });
 const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
 
-// 1. every suite, 1-8 shares: each test in exactly one share
+// 1. every suite, 1-10 shares: each test in exactly one share
 {
   const out = [];
   for (const suite of ['node', 'fleet', 'browser']) {
     const all = lines(run(suite, '--list'));
-    for (let k = 1; k <= 8; k++) {
+    for (let k = 1; k <= 10; k++) {
       let got = [];
       for (let j = 1; j <= k; j++) got = got.concat(lines(run(suite, '--shard', `${j}/${k}`, '--list')).slice(1));
       const ok = all.length > 0 && got.length === all.length && new Set(got).size === got.length && all.every(f => got.includes(f));
       if (!ok) out.push(`${suite} in ${k}: ${got.length} of ${all.length}`);
     }
   }
-  check('every suite in 1-8 shares: each test in exactly one share, none left out', !out.length, out.join('; ') || 'node, fleet, browser');
+  check('every suite in 1-10 shares: each test in exactly one share, none left out', !out.length, out.join('; ') || 'node, fleet, browser');
 }
 
 // 2. the browser tests in as many shares as on GitHub (each job's matrix 1..n, its --shard k/n and its name k/n: the full suite's, browser,
@@ -67,11 +67,11 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
 {
   const rel = (files) => { const r = run('--related', '--files', files, '--list'); return r.status === 0 ? lines(r).slice(1) : ['exit ' + r.status]; };
   const cases = [
-    ['docs/proge/medvode.md', ['testne-proge.test.js', 'medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'fleet.test.js', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs']],
-    ['js/world-montreal.js', ['stamp.test.js', 'razdelitev.test.js', 'montreal.test.js', 'browser/world.test.mjs', 'browser/gfx.test.mjs']],
-    ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'rally.test.js', 'sovoznik.test.js', 'sovoznik-glas.test.js', 'weather.test.js', 'oprijem.test.js', 'ljudje-mesta.test.js', 'katu.test.js', 'serpentine.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'neskoncna.test.js', 'cisterna.test.js', 'zrcalni.test.js', 'rezervna-kolesa.test.js', 'browser/repro.test.mjs']],
+    ['docs/proge/medvode.md', ['testne-proge.test.js', 'medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'fleet.test.js', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-net.test.mjs', 'browser/medvode-props.test.mjs']],
+    ['js/world-montreal.js', ['stamp.test.js', 'razdelitev.test.js', 'montreal.test.js', 'browser/world.test.mjs', 'browser/world2.test.mjs', 'browser/gfx.test.mjs', 'browser/gfx2.test.mjs']],
+    ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'cilj-odprte-ceste.test.js', 'nova.test.js', 'trki.test.js', 'padec.test.js', 'kariera.test.js', 'kariera-pot.test.js', 'rally.test.js', 'sovoznik.test.js', 'sovoznik-glas.test.js', 'weather.test.js', 'oprijem.test.js', 'zgumirana-linija.test.js', 'ljudje-mesta.test.js', 'katu.test.js', 'serpentine.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'neskoncna.test.js', 'videz.test.js', 'cisterna.test.js', 'zrcalni.test.js', 'rezervna-kolesa.test.js', 'browser/repro.test.mjs', 'browser/padec.test.mjs']],
     ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
-    ['README.md', ['fleet.test.js']],
+    ['README.md', ['viri.test.js', 'fleet.test.js']],
     ['tools/carshots.mjs', []],
     ['assets/maps/corner-spa.webm', ['testne-proge.test.js', 'menu-corner.test.js', 'browser/menu.test.mjs']],   // (an asset: its tests by RELATED only, not the track's by its name)
     ['assets/tracks/gozd.webp', ['testne-proge.test.js']],   // (a test track's picture: only the freeze, CLAUDE.md »Testne proge«)
@@ -83,10 +83,10 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
   check('--files without --related: an error (exit 2)', r.status === 2);
 }
 
-// 6. --quiet: a passing test prints nothing of its own, the summary how many passed
+// 6. --quiet: a passing test prints only its one progress line (OK [n/N] name (s)), the summary how many passed
 {
   const r = run('--related', '--files', 'tools/stamp.js', '--quiet'), out = r.stdout;
-  check('--quiet: only the summary for a passing test (stamp.test.js)', r.status === 0 && !/###|^OK  /m.test(out) && /^1 of 1 tests passed/m.test(out), out.trim().split('\n').slice(-3).join(' | '));
+  check('--quiet: only the progress line and the summary for a passing test (stamp.test.js)', r.status === 0 && !/###|^OK   (?!\[\d+\/\d+\] )/m.test(out) && /^OK   \[1\/1\] stamp\.test\.js/m.test(out) && /^1 of 1 tests passed/m.test(out), out.trim().split('\n').slice(-3).join(' | '));
 }
 
 // 7. --koda: the code's fingerprint (in a repository of its own, a commit for each change): the same when only documents (.md) change or
