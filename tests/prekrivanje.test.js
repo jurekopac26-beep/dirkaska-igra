@@ -30,6 +30,10 @@ const tool = (...a) => spawnSync(process.execPath, [TOOL, ...a], { cwd: dir, enc
     assert.deepStrictEqual(M.lastnikIzOpisa('Lastnik: partyslo, od 20. 11.\nPredaja: partyslo → croatiadata, 24. 11.'), { racun: 'croatiadata', vir: 'predaja' });
     assert.deepStrictEqual(M.lastnikIzOpisa('Lastnik: partyslo, od 20. 11.\n## Predaja\nNaslednja seja biketraveler …'), { racun: 'partyslo', vir: 'lastnik' });
     assert.strictEqual(M.lastnikIzOpisa('Lastnik: nekdo, od 1. 1.'), null);
+    assert.strictEqual(M.lastnikIzOpisa('Lastnik: croatiadata.').racun, 'croatiadata');              // punctuation after the account
+    assert.strictEqual(M.lastnikIzOpisa('> Lastnik: (partyslo); od 1. 1.').racun, 'partyslo');
+    assert.deepStrictEqual(M.lastnikIzOpisa('Lastnik: partyslo\nPredaja: partyslo -> biketraveler)'), { racun: 'biketraveler', vir: 'predaja' });   // ASCII arrow
+    assert.strictEqual(M.lastnikIzOpisa('Predaja: seja A → seja B\nLastnik: jure.kopac26, od 2. 2.').racun, 'jure.kopac26');   // a session handoff is not an account handoff
     assert.strictEqual(M.sejaIzSporocila('x\n\nClaude-Session: https://claude.ai/code/session_01UuPU9abc\n'), 'session_01UuPU9abc');
     assert.strictEqual(M.sejaIzSporocila('brez'), null);
 

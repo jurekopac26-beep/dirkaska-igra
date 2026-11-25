@@ -74,9 +74,12 @@ export function lastnikIzOpisa(body) {
   let racun = null;
   let vir = null;
   for (const vr of String(body || '').split('\n')) {
-    const cist = vr.replace(/[*_#>`]/g, '').trim();
-    const l = /^Lastnik\s*:?\s*(\S+?)[\s,]/i.exec(cist + ' ');
-    if (l && !racun && RACUNI.includes(l[1].toLowerCase())) { racun = l[1].toLowerCase(); vir = 'lastnik'; }
+    const cist = vr.replace(/^[\s>#]+/, '').replace(/[*_`]/g, '').trim();   // citat in naslov na začetku; » >« v »->« ostane
+    const l = /^Lastnik\b\s*:?\s*(.*)$/i.exec(cist);
+    if (l && !racun) {
+      const r = racuniV(l[1])[0];   // prvi račun v vrstici; ločila (».«, »;«, »(«) ne motijo
+      if (r) { racun = r; vir = 'lastnik'; }
+    }
     const p = /^Predaja\b.*?(?:→|->)\s*(.*)$/i.exec(cist);
     if (p) {
       const r = racuniV(p[1]);
