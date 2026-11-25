@@ -213,7 +213,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Mavricij | Chamarel (rezerva uporabnika 13. 11. 2026; veja `proga/chamarel`) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata); kartica na strani Odločitve potrdi pot in zanimivosti; prva proga države |
 | Bosna in Hercegovina | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Ciper | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
-| Bolgarija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026; med njimi Šipka, rezerva uporabnika 8. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Bolgarija | Šipka (predlog A na strani Odločitve, 25. 11. 2026; B Trigrad, C Melnik) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/sipka`, podatki A; čaka »ok«; prva proga države |
 | Armenija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Grčija | nova proga (rezervacija 25. 11. 2026; stara rezerva Meteora iz 8. 11. 2026 je ena od možnosti), veja `proga/<id>` | v delu (partyslo, rezerva croatiadata, od 25. 11. 2026); 2–3 predlogi na strani Odločitve, seznam zanimivosti potrdi uporabnik |
 
