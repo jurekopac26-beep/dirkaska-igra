@@ -1266,7 +1266,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
     const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx;
-    const pf = (k) => F ? (F.cars[k] && F.cars[k].pf ? { pf: F.cars[k].pf } : {}) : { pf: Object.assign({ upg: O.playerUpg || null, setup: O.playerSetup || null, deli: O.playerDeli || null, fm: O.fieldModel ? O.fieldModel.id : null, as: race.player ? Core.ASSISTS.indexOf(race.player.assist) : O.assist }, abWant() ? { ab: 1 } : {}) };
+    const pf = (k) => F ? (F.cars[k] && F.cars[k].pf ? { pf: F.cars[k].pf } : {}) : { pf: Object.assign({ upg: O.playerUpg || null, setup: O.playerSetup || null, deli: O.playerDeli || null, fm: O.fieldModel ? O.fieldModel.id : null, as: race.player ? Core.ASSISTS.indexOf(race.player.assist) : O.assist }, race.abUsed ? { ab: 1 } : {}) };   // (ab: Samodejno zaviranje touched the pedals in this race (abStep), not just switched on at the end
     const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
       cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, lkOf(c), c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {}, c.isPlayer ? pf(k) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
       fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t }))  },
@@ -3529,8 +3529,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function abStep(P) {
     if (!abWant() || phase !== 'racing') return;
     const o = Core.autoBrake(P, race, abO);
-    if (o.thr < P.inThr) P.inThr = o.thr;
-    if (o.brk > P.inBrk) P.inBrk = o.brk;
+    if (o.thr < P.inThr) { P.inThr = o.thr; race.abUsed = true; }
+    if (o.brk > P.inBrk) { P.inBrk = o.brk; race.abUsed = true; }   // (race.abUsed: the replay's pf.ab, on the first touch: on and off again from the pause still marks it)
   }
   function stepRace(dt, inp) { inStep = true; try { raceStep(dt, inp); } finally { inStep = false; } }
   function raceStep(dt, inp) {

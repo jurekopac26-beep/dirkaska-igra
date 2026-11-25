@@ -4,7 +4,7 @@
 // - pomoč je samo vnos: Core.autoBrake ne spremeni avta ne dirke (klic na vsakem koraku, rezultat zavržen: stanje dirke do številke enako)
 // - nič ne da (plin 1, zavora 0) v vzvratni, na stranski cesti, počasi in brez profila hitrosti
 // - igra: privzeto izklopljeno, vrstica v Nastavitvah in prevod; abStep spremeni samo igralčev plin in zavoro (nikoli drugega), ne v lekciji
-//   Zaviranje avtošole, posnetek jo zapiše (pf.ab)
+//   Zaviranje avtošole, posnetek jo zapiše (pf.ab, samo če je pomoč res posegla v pedal: race.abUsed)
 //   node tests/zaviranje.test.js
 'use strict';
 const fs = require('fs');
@@ -83,9 +83,9 @@ const fmt = (r) => `${r.fin ? 'cilj' : 'brez cilja'} ${r.t.toFixed(1)} s, poško
   ok('vrstica v Nastavitvah (Izklop / Vklop) in angleški prevod', /<span class="rlbl">Samodejno zaviranje<\/span><div class="seg" data-set="autoBrake"><button data-v="0">Izklop<\/button><button data-v="1">Vklop<\/button>/.test(html) && /'Samodejno zaviranje': 'Auto braking'/.test(lang));
   const m = g.match(/function abStep\(P\) \{([\s\S]*?)\n  \}/), body = m ? m[1] : '';
   const writes = [...body.matchAll(/\b(P\.\w+)\s*=(?!=)/g)].map(x => x[1]);
-  ok('abStep spremeni samo P.inThr in P.inBrk', m && writes.length && writes.every(w => w === 'P.inThr' || w === 'P.inBrk'), writes.join(', '));
+  ok('abStep spremeni samo P.inThr in P.inBrk (in oznako dirke abUsed)', m && writes.length && writes.every(w => w === 'P.inThr' || w === 'P.inBrk') && [...body.matchAll(/\b(race\.\w+)\s*=(?!=)/g)].every(x => x[1] === 'race.abUsed'), writes.join(', '));
   ok('abStep na igralčevem vnosu pred korakom dirke', /P\.inBrk = inp\.brk; P\.inHand = 0; P\.digitalSteer = inp\.digital; abStep\(P\);/.test(g));
-  ok('ne v lekciji Zaviranje avtošole, posnetek zapiše pf.ab', /school\.L\.id === 'brake'/.test(g.match(/const abWant = [^\n]*/)[0]) && /abWant\(\) \? \{ ab: 1 \} : \{\}/.test(g));
+  ok('ne v lekciji Zaviranje avtošole, posnetek zapiše pf.ab', /school\.L\.id === 'brake'/.test(g.match(/const abWant = [^\n]*/)[0]) && /race\.abUsed \? \{ ab: 1 \} : \{\}/.test(g) && /P\.inBrk = o\.brk; race\.abUsed = true;/.test(body));
 }
 
 let bad = 0;
