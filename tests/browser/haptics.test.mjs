@@ -14,7 +14,7 @@
 // work, the way in and out not felt). The setting as an older build saved it (Izklop / Vklop, 0 / 1): Vklop is Vse now (2, stored so),
 // Izklop stays; Osnovno saved by this build stays Osnovno.
 //   node tests/browser/haptics.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, checker } from './lib.mjs';
 
 const T = checker('pit stop vibrations (Bathurst)');
 const srv = await serve();
@@ -22,10 +22,15 @@ const browser = await launch();
 try {
   const init = () => { window.__vib = []; Object.defineProperty(navigator, 'vibrate', { configurable: true, writable: true, value: (p) => { const g = window.__game; window.__vib.push([Array.isArray(p) ? p.slice() : p, g && g.race ? +g.race.time.toFixed(3) : -1]); return true; } }); };
   // (vibrate 1 with no vibV: Vklop as an older build saved it; length long: four laps, a stop at the end of the first and of the second)
-  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', vibrate: 1, length: 'long' }, { width: 640, height: 360 }, { init });
+  // (the game's test mode, ?proga=bathurst&t=1&seme=…: the race draws its random numbers from its seed and its start is stepped paused
+  // (quickRun), the same race every run, on any machine. Started from the menus its start ran on real frames with the page's Math.random,
+  // another race each run: on a slow machine the car left the lane 0.6 s after the line or never came in at all, CI run 44128443086,
+  // docs/nestabilni-testi.md. HAPTICS_SEME: another race, to try the test on)
+  const seme = +process.env.HAPTICS_SEME || 7;
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=bathurst&t=1&seme=' + seme, { quality: 'normal', shadows: 0, camera: 'chase', vibrate: 1, length: 'long' }, { width: 640, height: 360 }, { init, seed: seme });
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
   const mig = await page.evaluate(() => { const o = JSON.parse(localStorage.getItem('tdgp-settings')); return { S: window.__game.S.vibrate, lv: Input.haptics.level, stored: [o.vibrate, o.vibV], sel: (document.querySelector('[data-set="vibrate"] .sel') || {}).textContent }; });
   T.check('Vibracija as an older build saved it, Vklop (1): Vse now (2, stored so, the button selected), all the patterns', mig.S === 2 && mig.lv === 2 && mig.stored.join() === '2,2' && mig.sel === 'Vse', JSON.stringify(mig));
-  await startTrack(page, 'bathurst');
   await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
   // one stop: coarse steps on the track; on the way in, in the lane and until back on the circuit 0.05 s steps, each with a frame drawn
   // (the crew's work); a sample after each: [race time, in the lane, pitState, the autopilot's part, the crew's guns on the nuts]. pauseIt:
@@ -37,7 +42,7 @@ try {
       const pz = Tk.pitAt(P.q.s), rep = (P.repairN || 0) > s.rep0;
       if (!P.inPit && !rep && !pz && !P.pitG) { P.pitWant = true; if (P.dmg < 0.3) P.dmg = 0.4; }   // (to the pits this lap, damaged)
       const near = !!(pz || P.inPit || P.pitG);
-      if (!near && !rep) { g.sim(0.5, true); continue; }
+      if (!near && !rep) { g.sim(0.5, true); if (!P.finished && (P.stuckT > 3 || P.wrongT > 3)) { g.race.rescue(P); s.rescued = (s.rescued || 0) + 1; } continue; }   // (stuck or turned round off the pits: back on the track, as a player's Na progo; the autopilot has no reverse)
       if (!near) break;
       const in0 = P.inPit;
       let v0 = P.speed;
@@ -61,7 +66,7 @@ try {
   const HAP = await page.evaluate(() => ({ H: Core.HAPTIC, V: Core.PIT_V }));
   const s = A.s, log = A.log, names = log.map(e => e[0]);
   const MAIN = ['pitAP', 'pitLimit', 'pitBox', 'pitStop', 'jackF', 'gunOff', 'jackR', 'wheelsOn', 'gunOn', 'dropR', 'dropF', 'go', 'handBack', 'rejoin'], CHAIN = MAIN.filter(k => !/^jack/.test(k));
-  T.check('Bathurst: one stop on the autopilot, in faster than the lane\'s limit (no fuel: the plain release); Vibracija · Vse: all the patterns', A.rep === 1 && s.vIn > HAP.V + 1 && !A.fuel && s.level === 2 && s.S === 2, JSON.stringify({ rep: A.rep, vIn: s.vIn, pitDur: A.pitDur, fuel: A.fuel, level: s.level }));
+  T.check('Bathurst: one stop on the autopilot, in faster than the lane\'s limit (no fuel: the plain release); Vibracija · Vse: all the patterns', A.rep === 1 && s.vIn > HAP.V + 1 && !A.fuel && s.level === 2 && s.S === 2, JSON.stringify({ rep: A.rep, vIn: s.vIn, pitDur: A.pitDur, fuel: A.fuel, level: s.level, lap: A.lap, rescued: s.rescued || 0, rows: s.rows.length, last: s.rows[s.rows.length - 1] }));
   const main = names.filter(k => MAIN.includes(k)), extra = names.filter(k => !MAIN.includes(k)), ix = (k) => main.indexOf(k);
   T.check('the stop\'s patterns, each once, in order: the autopilot, the limiter, the box, the stop, the guns off, the wheels, the guns on (both jacks up after the stop, before it), the tail and the nose down, the release, VOZIŠ TI!, back on the circuit (besides them only a rival passing, a place lost, the guns\' rattle on a long stop, a knock on the way)',
     MAIN.every(k => main.filter(m => m === k).length === 1) && main.filter(k => CHAIN.includes(k)).join() === CHAIN.join() && ['jackF', 'jackR'].every(k => ix(k) > ix('pitStop') && ix(k) < ix('gunOn')) &&

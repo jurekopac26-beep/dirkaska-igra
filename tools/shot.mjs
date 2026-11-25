@@ -13,6 +13,10 @@
 //   node tools/shot.mjs suzuka --m 0 --cas vecer                        (the time of day: jutro, dan (default), vecer, noc)
 //   node tools/shot.mjs --nabor --pred HEAD^1                           (the set the workflow uses: NABOR and the real tracks the change touches)
 //   node tools/shot.mjs spa --m 400 --avto miska --pred main            (--avto <id>: the player's car, as the quick entry's avto=)
+//   node tools/shot.mjs spa --m 900 --guma 0.8 --velika --pred main    (--guma <0-1>: the rubber laid on a circuit, Race mb.rb, as late in a long
+//                                                                       race: at the start none is laid, so the rubbered-in line and the marbles
+//                                                                       would not show; an open road has no race rubber, there it does nothing.
+//                                                                       --velika: pictures twice the size, 1280 x 720 and 720 x 1280, to show a person)
 //   node tools/shot.mjs livorno --m 270 --q <key>=<value>               (--q <query>: more of the address's parameters, for a build's temporary switch)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,17 +30,19 @@ const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..'
 // the car stands on the line, so the summary's s reads as the lap's length) and in a corner (Eau Rouge; the S curves), and Pikes Peak, a mountain
 // road, in the forest at the W hairpins and in the serpentines under the summit
 const NABOR = { spa: [0, 900], suzuka: [0, 820], pikes: [2850, 5300] };
-const SIZE = { lezece: { width: 640, height: 360 }, pokonci: { width: 360, height: 640 } };
+const SIZE = { lezece: { width: 640, height: 360 }, pokonci: { width: 360, height: 640 } }, BIG = 2;   // (--velika: BIG times the size)
 const CHANGED = 0.5;   // (a picture counts as changed from this share of changed pixels, %: below it a sky's drift or a flag's wave)
 
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
 const CAS = { jutro: 'dawn', dan: 'day', vecer: 'dusk', 'večer': 'dusk', noc: 'night', 'noč': 'night' };
-const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), pred = flag('--pred'), extra = flag('--q'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
-const root = path.resolve(flag('--root') || process.env.GAME_ROOT || REPO), nabor = has('--nabor'), nizka = has('--nizka');   // (--nizka: the graphics detail NIZKA, as perf.test.mjs measures the phone's load)
+const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), pred = flag('--pred'), gumaArg = flag('--guma'), extra = flag('--q'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
+const root = path.resolve(flag('--root') || process.env.GAME_ROOT || REPO), nabor = has('--nabor'), nizka = has('--nizka'), velika = has('--velika');   // (--nizka: the graphics detail NIZKA, as perf.test.mjs measures the phone's load)
 let orient = ['pokonci', 'lezece'].filter(o => has('--' + o)); if (!orient.length) orient = ['pokonci', 'lezece'];
 const ids = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
-if ((!ids.length && !nabor) || bad.length || (vreme && !/^(suho|dez|dež)$/.test(vreme)) || (cas && !CAS[cas])) {
-  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--cas jutro|dan|vecer|noc] [--nizka] [--q <query>] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
+const guma = gumaArg != null ? Number(gumaArg) : null;
+if (velika) for (const o of Object.values(SIZE)) { o.width *= BIG; o.height *= BIG; }
+if ((!ids.length && !nabor) || bad.length || (vreme && !/^(suho|dez|dež)$/.test(vreme)) || (cas && !CAS[cas]) || (guma != null && !(guma >= 0 && guma <= 1))) {
+  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--cas jutro|dan|vecer|noc] [--nizka] [--guma <0-1>] [--velika] [--q <query>] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
     '       node tools/shot.mjs --nabor [--pred <ref|folder>]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
   process.exit(2);
 }
@@ -97,9 +103,12 @@ async function takeAll(browser, gameRoot, tag) {
       if (places === 'thirds') list = await page.evaluate(() => { const T = window.__game.race.track, L = T.open ? T.raceLen : T.len; return [Math.round(L / 3), Math.round(L * 2 / 3)]; });
       for (const m of list || [null]) for (const o of orient) {
         await page.setViewportSize(SIZE[o]);
-        const r = await page.evaluate(async ([m, side]) => {
+        const r = await page.evaluate(async ([m, side, guma]) => {
           const g = window.__game, R = g.race, T = R.track, P = R.player, raf = () => new Promise(r => requestAnimationFrame(r));
           g.pause(); Render.resize();
+          // --guma: the metres driven that lay this much rubber (Race._marbles: rb = 1 - e^(-d / (RUB.n laps))); the race's next step makes the
+          // rubbered-in line and the marbles of it (the cars stand still and the road is dry, so it stays)
+          if (guma != null && R.mb) { R.mb.d = -Math.log(1 - Math.min(guma, 0.999)) * Core.RUB.n * T.len; if (m == null) R.step(1 / 120); }
           let at = null;
           if (m != null) {   // the car on the ideal line at m metres after the start (an open road: up to its finish), everything else held still
             const s = T.open ? Math.min(T.startS + m, T.finishS - 1) : T.startS + m, i = T.idx(((s % T.len) + T.len) % T.len), off = T.rl ? T.rl[i] : 0;
@@ -116,7 +125,7 @@ async function takeAll(browser, gameRoot, tag) {
           for (const v of hid) v.grp.visible = true;
           const k = document.createElement('canvas'); k.width = side.width; k.height = side.height; k.getContext('2d').drawImage(c, 0, 0, k.width, k.height);
           return { src: k.toDataURL('image/png'), at, s: Math.round((((P.q.s - T.startS) % T.len) + T.len) % T.len), name: T.def.name || T.def.id, ver: g.ver };
-        }, [m, SIZE[o]]);
+        }, [m, SIZE[o], guma]);
         const key = `${id}-${m != null ? m + 'm' : 't' + (t != null ? t : 3) + 's'}-${o}`;
         shots[key] = { src: r.src, info: { id, name: r.name, m, s: r.s, o, ver: r.ver } };
       }

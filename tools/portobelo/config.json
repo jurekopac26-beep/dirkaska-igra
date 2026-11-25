@@ -1,0 +1,30 @@
+{
+  "id": "portobelo",
+  "about": "Portobelo, Panama (id portobelo): an open road along the Caribbean coast into the bay of Portobelo, through the old town past the ruins of the Spanish coastal forts, out along the bay to the east (docs/proge/portobelo.md)",
+  "box": [9.535, -79.685, 9.565, -79.640],
+  "closed": false,
+  "dist": {"grid": 500},
+  "route": [
+    [9.54719, -79.67182, "Vía Sabanitas - Portobelo", "start: the coast road from the west, northeast-bound"],
+    [9.54834, -79.67059, null, ""],
+    [9.54968, -79.66907, null, ""],
+    [9.55130, -79.66705, null, ""],
+    [9.55236, -79.66433, null, "along the south shore of the bay"],
+    [9.55269, -79.66254, null, ""],
+    [9.55268, -79.66090, null, ""],
+    [9.55303, -79.65923, null, "past the ruins of the coastal fort (about 45 m)"],
+    [9.55365, -79.65781, null, "through the old town"],
+    [9.55348, -79.65598, null, ""],
+    [9.55311, -79.65421, null, ""],
+    [9.55314, -79.65214, null, "out along the bay to the east"],
+    [9.55345, -79.65066, null, ""],
+    [9.55344, -79.64859, null, "finish on the bay road"]
+  ],
+  "prefer": ["Vía Sabanitas - Portobelo", "Carretera Portobelo - La Guaira"],
+  "geoRoads": ["Vía Sabanitas - Portobelo", "Carretera Portobelo - La Guaira"],
+  "geoWater": [],
+  "marks": [
+    ["Trdnjava", "Fortress", "castle", ["w670927188"]]
+  ],
+  "places": []
+}
