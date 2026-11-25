@@ -6,7 +6,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - Ime »Kraj, Država«; datoteke: `js/tracks/<id>.js`, `js/lang.js`, `README.md`, `docs/proge/`, `docs/igra.md`.
 - **Zamrznjene** (`test: true`, `pending: true`) ne spreminjaj (`--dovoli` samo na izrecno prošnjo); delovati morata Jezero in Toskana.
 - Iz države **ena** nova proga (`docs/proge-po-drzavah.md`, tudi odprti PR); sever: zima, finska Koli.
-- Nova proga: 1–5 km, ovinkasta, zanimivosti do 60 m, seznam potrdi uporabnik; **izletna cona** do ~3 m od asfalta na več kot pol dolžine = se ne začne (izjemi: mestne proge, Kali Gandaki, Musandam, Limalimo, Darvaz). Padec čez rob samo Killarney.
+- Nova proga: 3–10 km (od 25. 11.), ovinkasta, zanimivosti do 60 m, seznam potrdi uporabnik; **izletna cona** do ~3 m od asfalta na več kot pol dolžine = se ne začne (izjemi: mestne proge, Kali Gandaki, Musandam, Limalimo, Darvaz). Padec čez rob samo Killarney.
 - **Verigi prog** (`docs/gorske-proge.md`, `docs/nove-proge.md`): PR na `main` brez vprašanja ob zelenih testih; ustavi »stop«.
 - Cilj 1.0: **70 prog**, **50 avtov**; 70 na `main` do 23. 12. 2026; 15. 1. 2027 kandidat; 1. 2. 2027 izid.
 
