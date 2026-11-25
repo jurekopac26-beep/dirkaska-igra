@@ -537,8 +537,8 @@
     const VP = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; }), VT = [-1, 1].map(side => { const a = new Uint8Array(N); for (let i = 0; i < N; i++) a[i] = vType(i, side); return a; });
     {
       const tileL = 7, grav = [1.2, 1.25, 1.3], pave = [0.84, 0.8, 0.77];   // (grav: the esker's pale, grey-beige sand and gravel over the shared makadam picture)
-      const cols = (i) => { const wi = WA[i], rl = clamp(T.rl[i], -wi + 2.3, wi - 2.3); return [-wi, -wi + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, wi - 0.5, wi]; };
-      const shade = (i, o) => { const a = Math.abs(o - T.rl[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o), wi = WA[i], s = SF[i];
+      const cols = (i) => { const wi = WA[i], rl = clamp((T.gl || T.rl)[i], -wi + 2.3, wi - 2.3); return [-wi, -wi + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, wi - 0.5, wi]; };
+      const shade = (i, o) => { const a = Math.abs(o - (T.gl || T.rl)[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o), wi = WA[i], s = SF[i];
         if (s === 5) { let k = 1.0 - 0.2 * trk + 0.06 * sstep(0.5, 0.2, a);
           const outer = Math.sign(o) === -Math.sign(T.k[i]) ? sstep(1 / 400, 1 / 60, Math.abs(T.k[i])) : 0; k += (0.06 + 0.08 * outer) * sstep(wi - 1.3 - 1.4 * outer, wi - 0.3, ao) * (1 - trk);
           k *= 0.93 + 0.12 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7); return [grav[0] * k, grav[1] * k, grav[2] * k]; }
@@ -1040,6 +1040,10 @@
     }
     crowdFinish(CR, root, out);
     pkSky({ root, tex, out, sStart, gH: hjGround, far: true });
+    if (World.ext && World.ext.goreRob && World.ext.goreRob.hjLC) {   // (the roadside ground for the chase camera: js/world-chase-bt19.js)
+      const e = 1.5, hjSl = (x, z) => Math.hypot(hjGround(x + e, z) - hjGround(x - e, z), hjGround(x, z + e) - hjGround(x, z - e)) / (2 * e);
+      World.ext.goreRob({ excluded, root, out }, 'harju', { gH: hjGround, slope: hjSl, lc: World.ext.goreRob.hjLC(G.gt, gIdx, hjCanopy, (x, z) => onPaved(x, z) || onBld(x, z)), near: hjNear });
+    }
     out.stats = { trees: nTrees, tiles: G.ntx * G.ntz, buildings: nBld, bales: bales.length, cars: nCars, stalls: nStalls, loos: nLoos };   // (read by the tests)
     return out;
   }

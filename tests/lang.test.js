@@ -49,6 +49,21 @@ for (const f of ['js/game.js', 'js/nvmenu.js', 'js/nvheli.js', 'js/nvschool.js',
 }
 check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missing.length, missing.slice(0, 12).map(s => JSON.stringify(s)).join(' | '));
 
+// 1b. every other script of the game that calls tr() (js/missions/*, js/denar.js, js/shramba.js, js/nvride.js, js/cars/*, the world files ...):
+// found by walking js/ (vendor libraries, the dictionary itself, the error tool js/napake.js and the tester js/tester.js left out: they are
+// Slovenian only or speak no text of the game)
+{
+  const done = new Set(['js/game.js', 'js/nvmenu.js', 'js/nvheli.js', 'js/nvschool.js', 'js/missions.js', 'js/garage.js', 'js/garage3d.js', 'js/neskoncna.js'].concat(ZB_FILES));
+  const skip = new Set(['js/lang.js', 'js/napake.js', 'js/tester.js']), files = [], more = [], missing2 = [];
+  const walkJs = (d) => { for (const e of fs.readdirSync(path.join(ROOT, d), { withFileTypes: true })) { const rel = d + '/' + e.name;
+    if (e.isDirectory()) { if (!/^(vendor|node_modules|data)$/.test(e.name)) walkJs(rel); } else if (e.name.endsWith('.js') && !skip.has(rel) && !done.has(rel)) files.push(rel); } };
+  walkJs('js');
+  for (const f of files.sort()) { const src = noComments(read(f)); let used = 0;
+    for (const m of src.matchAll(/\btr\(/g)) for (const s of literals(firstArg(src, m.index + 3))) { if (s === '') continue; used++; keysUsed.add(s); if (!has(s) && !Lang.SAME.has(s)) missing2.push(f + ': ' + JSON.stringify(s)); }
+    if (used) more.push(f); }
+  check(`tr() in the other ${more.length} scripts of js/ (missions, money, storage, ...): every text has its English`, !missing2.length, missing2.slice(0, 10).join(' | '));
+}
+
 // 2. the tables the game turns with tr(TABLE[k]): every text in them
 {
   const src = noComments(read('js/game.js')), miss = [];
@@ -92,7 +107,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const src = noComments(read('js/garage.js'));
   const tableSrc = (name) => { const m = new RegExp('\\b' + name + ' = (?=[\\[{])').exec(src); if (!m) return null; let i = m.index + m[0].length, d = 0, j = i;
     for (; j < src.length; j++) { const ch = src[j]; if (ch === "'" || ch === '"') { j = strAt(src, j)[1] - 1; continue; } if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch) && --d === 0) break; } return src.slice(i, j + 1); };
-  for (const k of ['COLORS', 'GUIDE']) {
+  for (const k of ['COLORS', 'GUIDE', 'STG', 'SAY']) {   // (the colours, the guide, a show's bar: its stages and its sentences)
     const t = tableSrc(k); if (!t) { miss.push('(no table ' + k + ')'); continue; }
     for (const s of literals(t)) if (/[a-zčšž]{2}/.test(s) && !/^(power|grip|weight|drift|clean|body|engine|motor|gume|zavore|aero|paint)$/.test(s) && !has(s) && !Lang.SAME.has(s)) miss.push(k + ': ' + s);
   }
@@ -123,6 +138,14 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const sl = [];
   for (const d of C.TRACKS) if (d.en && /[čšžČŠŽ]/.test((d.en.desc || '').replace(/Vršič/g, '') + (d.en.name || '').replace(/Vršič/g, ''))) sl.push(d.id);
   check('Core: the English descriptions have no Slovenian letters (but the name Vršič)', !sl.length, sl.join(', '));
+  // every real track (not the frozen test and pending ones) has an English name and description of its own: not empty, not the Slovenian
+  // text again (the names that read the same in both languages are listed above)
+  const realBad = [];
+  for (const d of C.TRACKS) { if (d.test || d.pending) continue; const e = d.en || {};
+    if (!e.name || !e.desc) { realBad.push(d.id + ' (missing)'); continue; }
+    if (e.desc === d.desc || /^\s*$/.test(e.desc)) realBad.push(d.id + ' (desc = Slovenian)');
+    if (e.name === d.name && !SAME_NAME.has(d.name) && d.name.split(', ')[1] && /[čšžČŠŽ]|Slovenij|Hrvaška|Avstrija|Nemčija|Italija|Švica|Francija|Španija|Finska|Norveška|Švedska|Danska|Nizozemska|Madžarska|Češka|Poljska|Grčija|Turčija|Maroko|Tunizija|Egipt|Japonska|Kitajska|Južna Koreja|Tajska|Malezija|Filipini|Avstralija|Nova Zelandija|Kanada|Brazilija|Čile|Mehika|Kolumbija|Kenija|Tanzanija|Rusija|Ukrajina|Slovaška|Črna gora|Islandija|Irska|Anglija|Velika Britanija|Združene države|Kostarika|Gvatemala/.test(d.name.split(', ')[1])) realBad.push(d.id + ' (name = Slovenian)'); }
+  check('every real track has its own English name and description (frozen test and pending tracks skipped)', !realBad.length, realBad.slice(0, 10).join(' | '));
 }
 
 // 6. the helpers in both languages: tr() with its slots, of(), numbers, money, places, the place names on the HUD

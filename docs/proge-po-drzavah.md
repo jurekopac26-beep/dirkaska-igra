@@ -6,7 +6,17 @@ Pravilo uporabnika (3. 11. 2026): v prihodnje naredimo iz vsake države samo **e
 
 Viri prog na čakanju: verige iz `docs/nove-proge.md` (veja `nove-proge/balea`), `docs/gorske-proge.md` (kratke proge, veja `gorske-proge/01-norquay`, skupine A–D) in `docs/zavite-proge.md` (veja `ccr-67c8ebdb-8sdz1o`, koraki 1–4); narejene proge na vejah s pull requestom; stare veje iz oktobra (`claude/proga-<id>` in druge), ki niso na `main`. Pregled prog v igri s slikami kamere 1 in zavitostjo: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
-**Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; naprej samo 10 od Hải Vâna do Batangasa (`docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
+**Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; od 12. 11. ob ~19.00 tudi 10 od Hải Vâna do Batangasa (veliko jih bo zamenjanih, predvsem preveč zavite; `docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
+
+**Potrditve 13. 11. 2026 (uporabnik v pogovoru z Matejem):**
+Nove proge niso več ustavljene za te proge; delata jih partyslo in croatiadata (ena proga na državo, vse v enem PR, proge v vrsti zadnje):
+
+- **9 novih prog** (ob ~4.10, »Potrjujem 9 načrtovanih novih prog«): Canaries (Sveta Lucija), Batangas (Filipini), Kanaba (Uganda), Hải Vân (Vietnam), Quezaltepeque (Salvador), Sogeri (Papua Nova Gvineja), Savusavu (Fidži), Koror (Palau) in Vaoala (Samoa). **Odpadejo** Barahona, Chachani, Elmenteita in Viñales.
+- **4 proge s prepadom** (ob ~4.30): Kali Gandaki (Nepal), Musandam (Oman), Limalimo (Etiopija) in Darvaz (Tadžikistan). So izjema od izletne cone; ker je padec čez rob samo na Killarju, imajo ograjo (vidno ali nevidno) na strani prepada.
+- **Ena okrogla proga** (ob ~4.30, »Naredi samo 1 okroglo progo in to je mehika in jo potrjujem«): **Aguascalientes, Mehika** (zamenja Espinazo). Rafaela in Klettwitz odpadeta; Termas de Río Hondo in Nürburg ostaneta.
+- **Proge z ledom** (ob ~4.35, »Potrjujem finska koli in norveska«): **Koli, Finska** (namesto Harju) in **Longyearbyen, Norveška** (od 24. 11. 2026 testna); **Envalira, Andora** je preložena na 1. 12.
+- **Švica** (ob ~4.30): ostane **Furka** (prava proga); Zürich je testna od 7. 11.
+- **Zadnji dve mesti** (ob ~5.00, »Naredi Mujib, Jordanija … Irishtown, Jamajka … ok«): **Mujib, Jordanija** in **Irishtown, Jamajka**. Načrt je s tem 70 od 70; **rezervi** sta Chamarel (Mavricij) in El Castaño (Venezuela).
 
 ## Nove proge za 1.0 (odločitve uporabnika 7. 11. 2026)
 
@@ -25,7 +35,9 @@ Odločitve uporabnika 7. 11. 2026 ob 14.40–14.45, prek Mateja na tabli #382 (k
   - **London je bil izjema od pravila ena proga na državo** (Anglija že ima Crystal Palace, uporabnik pa je London izbral, ko je to vedel); od 8. 11. 2026 ob 22.03 to ni več: **Crystal Palace in London sta oba na odločanju** (`pending: true`, ne test; odločitvi uporabnika 8. 11. 2026 ob ~18.58 in 22.03, prek Mateja, tabla #382, komentar 6727185416). Ko je London v igri, uporabnik izbere, katera od obeh ostane, druga dobi `test: true`. Crystal Palace dobi `pending` s #519, London ga doda seja partyslo (zbirna veja N3 #500, komentar 6727235199); ob spoju Crystal Palace ohrani `pending: true`.
   - Načrt, podatki poti in vrstni red so v `docs/nove-proge-1-0.md`.
 - **Seznam 50 prog, delne odločitve** (uporabnik 8. 11. 2026 ob 14.44, prek Mateja, komentar 6722394383; vprašanje `nove-proge-1-0-50`): **Envalira, Andora** (#430) ostane dolga **0,73 km** (izjema od pravila 1–5 km samo za to progo; uporabnik: »Envalira naj bo dolga 0,73 km.«); rezervi sta **Meteora, Grčija** in **Šipka, Bolgarija**, Buenos Aires odpade; o **12 progah na čakanju** se je uporabnik odločil 8. 11. 2026 ob 15.59 po predstavitvi 16 prog (prek Mateja, komentar 6723046786): na seznam 50 gre **11 prog** — Medeu, Kazahstan; Furka, Švica; Gudauri, Gruzija; Llogara, Albanija; Porto Moniz, Portugalska; Ngorongoro, Tanzanija; Ella, Šrilanka; Santo Antão, Zelenortski otoki; Espinazo del Diablo, Mehika; Seul, Južna Koreja; Dadès, Maroko. **Milford Sound, Nova Zelandija ne gre** (tretjina poti je predor); mesto Nove Zelandije je od 8. 11. 2026 ob 20.05 **Cromwell** (dirkališče, spodaj), Wellington, Crown Range in Coronet Peak odpadejo. Opombe za seje prog: Llogara — najbolj zavit odsek do 5 km (na celi poti 55 % ravnin); Ngorongoro — OSM za večino poti navaja kamnito tlakovanje, ne makadama; Seul je edina mestna proga, brez lasnic. Nove proge so v vrsti še naprej zadnje. Načrt za teh 11 (najbolj zaviti odseki 1–5 km, izletna cona na izbranih odsekih, podatki poti, liniji in skupine N4–N6) je v `docs/nove-proge-1-0.md`, razdelek »Del 2«.
-- **Osem dirkališč izven Evrope** (odločitev uporabnika 8. 11. 2026 ob 20.45, prek Mateja, tabla #382, komentar 6726246790; uporabnik po predstavitvi dirkališč: »Ok vse proge so v redu, začni vse«; ob 20.05 je izbral še Novo Zelandijo: »Nova Zelandija ok naredi tudi«, to je Cromwell): Tuzla, Turčija (5,3 km); Sepang, Malezija (5,5 km); Lombok, Indonezija (4,3 km); Buriram, Tajska (4,6 km, **šele ko je #379 na `main`**: Tajska ima do takrat še Bang Saen, ki gre s #379 v test); Sakhir, Bahrajn (5,4 km); Cromwell, Nova Zelandija (4,1 km); Lusail, Katar (5,4 km); Termas de Río Hondo, Argentina (4,8 km). Vseh osem je iz držav brez prave proge v igri (Tajska po #379). **Dolžina:** proge nad 5 km (Tuzla, Sepang, Sakhir, Lusail) ostanejo v polni dolžini, izjema od pravila 1–5 km kot pri Suzuki (priporočena možnost predstavitve, potrjena z »vse v redu«). **Pravno:** v igri je samo ime kraja; uradna imena dirkališč (nekatera vsebujejo podjetje ali sponzorja) in imena ovinkov po osebah ne nastopajo, ovinki so oštevilčeni ali imajo opisno ime. **Izletna cona:** Tuzla, Sepang, Lombok, Buriram, Sakhir in Lusail imajo ograjo do 3 m od roba na 0–12 % kroga; Cromwell in Termas de Río Hondo nista izmerjena, ker zanju v OSM ni odprte sredinske črte, zato njuna seja najprej preveri pravilo izletne cone na satelitskem posnetku iz odprtega vira (nikoli Google) in progo začne šele, če ograja do 3 m od roba ni na več kot pol dolžine. **Vrstni red:** nove proge ostanejo zadnje; gredo v linijo A v `docs/nove-proge-1-0.md` (razdelek »Del 3«), za Espinazom (A11), po vrstnem redu zgornjega seznama (A12–A19); vsaka proga ima svojo sejo, vejo `nove-proge/<id>` in osnutek PR, PR gredo na konec vrste v zbirnih vejah (od 9. 11. 2026 vse pripravljene proge računa v enem pull requestu). Kateri račun jih gradi, predlaga ponedeljkov tedenski načrt (9. 11. 2026).
+- **Osem dirkališč izven Evrope** (odločitev uporabnika 8. 11. 2026 ob 20.45, prek Mateja, tabla #382, komentar 6726246790; uporabnik po predstavitvi dirkališč: »Ok vse proge so v redu, začni vse«; ob 20.05 je izbral še Novo Zelandijo: »Nova Zelandija ok naredi tudi«, to je Cromwell): Tuzla, Turčija (5,3 km); Sepang, Malezija (5,5 km); Lombok, Indonezija (4,3 km); Buriram, Tajska (4,6 km, **šele ko je #379 na `main`**: Tajska ima do takrat še Bang Saen, ki gre s #379 v test); Sakhir, Bahrajn (5,4 km); Cromwell, Nova Zelandija (4,1 km); Lusail, Katar (5,4 km); Termas de Río Hondo, Argentina (4,8 km). Vseh osem je iz držav brez prave proge v igri (Tajska po #379). **Dolžina:** proge nad 5 km (Tuzla, Sepang, Sakhir, Lusail) ostanejo v polni dolžini, izjema od pravila 1–5 km kot pri Suzuki (priporočena možnost predstavitve, potrjena z »vse v redu«). **Pravno:** v igri je samo ime kraja; uradna imena dirkališč (nekatera vsebujejo podjetje ali sponzorja) in imena ovinkov po osebah ne nastopajo, ovinki so oštevilčeni ali imajo opisno ime. **Izletna cona:** izmerjena za vseh osem (biketraveler, 8. 11. 2026; vseh osem ima v OSM sredinsko črto): pregrada do 3 m od roba je na 8–30 % kroga, največ ob zidu boksov, zato imajo vsa izletno cono (razdelek »Izletna cona«; meritve v `docs/nove-proge-1-0.md`, »Del 3«). **Vrstni red:** nove proge ostanejo zadnje; gredo v linijo A v `docs/nove-proge-1-0.md` (razdelek »Del 3«), za Espinazom (A11), po vrstnem redu zgornjega seznama (A12–A19); vsaka proga ima svojo sejo, vejo `nove-proge/<id>` in osnutek PR, PR gredo na konec vrste v zbirnih vejah (od 9. 11. 2026 vse pripravljene proge računa v enem pull requestu). Kateri račun jih gradi, predlaga ponedeljkov tedenski načrt (9. 11. 2026).
+- **Ovalne proge z nagnjenimi zavoji** (odločitev uporabnika 13. 11. 2026 ob 0.07 v pogovoru z Matejem: »dodaj 2 ovalni progi poleg 9 na seznam«; pred tem: oval kot v Ameriki, »proga naj bo taka kot v resnici«, z nagnjenim zavojem, pravno nesporna, in »nikoli ne predlagaj drzav, v katerih ze imamo progo«). V državah brez proge resničnega ovala z nagnjenimi zavoji ni, zato oval **zamenja progo države**. Ob 0.18 je uporabnik po preizkusu prog izbral Mehiko: »dodaj v plan mehiko«. **Aguascalientes, Mehika:** trikotni oval 1,41 km, 3 zavoji, nagib 16° (javno objavljeni podatki o progi; nagiba ni v OSM ne v višinskih modelih), dirke tam še potekajo; oblika iz OSM. Nagib z `bank` kot pri Nürburgu (`js/tracks/nring.js`); fizika vožnje se ne spreminja. Zid in ograja ob ovalu ostaneta kot v resnici (izjema od izletne cone po izrecni želji uporabnika); padca čez rob ni. V igri samo ime kraja. Oval **zamenja Espinazo del Diablo** (#569): ko je oval na `main`, Espinazo dobi `test: true`. Druga možnost v Mehiki, oval pri Tuxtli Gutiérrez (1,21 km, 12°), je skoraj opuščena. **Druga ovalna proga** odpade (13. 11. 2026 ob ~4.30: »Naredi samo 1 okroglo progo in to je mehika in jo potrjujem«): Rafaela in Klettwitz odpadeta, Termas de Río Hondo in Nürburg ostaneta. Oval se začne skupaj z novimi progami, ko uporabnik potrdi seznam.
+- **Kratke proge z znamenitostjo** (odločitev uporabnika 15. 11. 2026 ob ~3.10, v pogovoru z Matejem, jure.kopac26): »naredi se 3 proge do 1km vse naj imajo razlicne dolzine od 500m - 1000m. proge naj bodo podobne champans peak kjer ovinki niso prevec zaviti in so lepo vodljivi z driftanjem ter ni ravnin in je malce navzgor. ker gre za samo do 1km bodi posebej pozeren da imajo te proge eno zanimivost poleg proge ki jo lahko naredimo podrobno kot v resnici mogoce celo z blenderjem«. Izbral je **Spiš, Slovaška** (vzpon proti gradu), **Tihany, Madžarska** (vzpon s pristanišča proti opatiji) in **Učka, Hrvaška** (vrh z razglednim stolpom). Izjema od 1–5 km samo za te tri (kot Envalira); dolžine 0,5–1 km, vse različne. Vsako seja najprej preveri v OSM (pot, dolžina, zavitost, izletna cona); kar ne ustreza, javi Mateju z drugim odsekom ali drugo državo brez proge. Znamenitost je podrobna samo od zunaj, brez napisov, kipov in umetnin (`docs/realizem.md`, »Pravna ocena po državah«: za Slovaško, Madžarsko in Hrvaško ni preverjeno, zato oblika po resnici, brez prepoznavnih okrasov, dokler ni preverjeno). Naredi jih jure.kopac26 (tri seje, Opus). Dopolnitev ob ~3.25: Spiš ne ustreza (71 % ravnine, najdaljša ravnina 435 m, zadnji del zaprt za avte), zato Slovaška dobi **Krásna Hôrka, Slovaška** (dostopna cesta do gradu, ~0,65 km, najdaljša ravnina 95 m, grad tik nad ciljem); uporabnik: »dodaj se 2 novi progi, 2 novi drzavi, da je zanimivost ob progi«, in nato »izven evrope prosim«. Vietnam (Hải Vân #676, Mã Pí Lèng #538), Jordanija (Wadi Mujib #538) in Madžarska (Mogyoród #547) že imajo proge drugih računov, zato po pregledu vseh vej in table (»ali teh drzav se nimamo«, »vedno preveri druge racune, da si ne delamo dvojno delo«) uporabnik izbere »Opusti Visegrád« (Tihany: ulice z lasnicami in pravimi koti do 37 %) in »Dve novi, res prosti državi«: **Kuba** (Santiago de Cuba, cesta do trdnjave El Morro; Viñales je 13. 11. odpadel) in **Kostarika** (dolina Orosi, ruševine cerkve Ujarrás); skupaj štiri proge, vse različnih dolžin, znamenitost tik ob progi; enaka pravila (OSM najprej, ob neustreznosti predlog druge države brez proge). Dopolnitev ob ~4.15: »opazam da povsod delas da so znamenitosti na koncu proge. znamenitosti naj bodo med dirko da se peljes mimo njih«: znamenitost je **sredi proge** (približno med 25 % in 75 % dolžine, v pasu do ~60 m ob cesti), da se avto pelje mimo nje; ni cilj na koncu. Seja vsake proge izbere odsek ceste mimo znamenitosti (enaka pravila: 0,5–1 km, ovinki, rahlo navzgor); kjer cesta do znamenitosti konča (slepa cesta), javi Mateju možnosti s slikami. Velja tudi za predlog petih prog kot Chapman's Peak. Dopolnitev ob ~4.20: »poporavi to povsod, ce ne mores zamenjaj progo lahko tudi z drugo drzavo samo da je na listi med top20«: kjer znamenitosti ne gre postaviti na sredino, se proga ne gradi naprej in se zamenja s progo iz države s seznama **TOP 20**. Uporabnik ob ~4.25: »seznam top 20, to je 20 najvecjih drzav po povrsini ki se nimajo proge. tako da pokrijemo cimvecjo povrsino zemlje na globusu kjer uporabnik izbera drzavo.« TOP 20 (15. 11., po površini; brez držav s progo v igri, v odprtem PR ali v vrsti): Alžirija, DR Kongo, Sudan, Libija, Iran, Mongolija, Peru, Čad, Niger, Angola, Mali, Mavretanija, Egipt, Nigerija, Venezuela, Namibija, Mozambik, Zambija, Mjanmar, Afganistan; ko se država zasede, pride naslednja (Južni Sudan, Somalija, SAR, Madagaskar, Bocvana, Kenija, Jemen). Zasedene so npr. Kolumbija (#591), Pakistan in Bolivija (#539), Etiopija (#682). Iz TOP 20 sta zamenjavi za Učko in Krásno Hôrko; s tega seznama uporabnik izbere tudi pet prog kot Chapman's Peak.
 - **Potrditev seznama pred delom:** seznam je vprašanje na strani Odločitve partyslo in komentar na tabli #382; nobena proga s seznama ali s čakanja (tudi Medeu) se ne začne pred odgovorom uporabnika. Po potrditvi jih partyslo začne kljub meji 6 odprtih tem (izjema »tema, ki jo uporabnik začne kljub opozorilu«; odločitev uporabnika 7. 11. 2026 ob 15.16, komentar 6708059513), največ 2 seji s kodo hkrati.
 - **Mestne proge po središču velikih mest:** velika mesta (npr. London) dobijo kratko dirko po središču, v spodnjem delu razpona 1–5 km, po širokih glavnih ulicah, nabrežjih in trgih, z ograjami kot na uličnih dirkah; stavbe so generične, brez pravno spornih imen in podob (kot pri Monte Carlu). **Zanje pravilo izletne cone ne velja** (razdelek »Izletna cona«).
 
@@ -40,6 +52,14 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Hakone, Japonska | PR #261 | 0 % (v igri, povprečno 6,7 m od asfalta) | izletna cona je |
 | Medvode, Slovenija | PR #153 | 10 %, obe 3 % (v igri, povprečno 6,1 m; na `main` zdaj 99 %) | izletna cona je (pločniki) |
 | Bâlea, Romunija | na `main` (PR #226, 7. 11. 2026) | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
+| Džebel Hafit, Združeni arabski emirati | PR #695 | večinoma (ograja ob vsej cesti) | izjema po izbiri uporabnika 14. 11. 2026; padca ni (ograja); na odločanju (`pending: true`) od 16. 11. 2026 |
+| Hải Vân, Vietnam | PR #676 | 0 % (v igri, povprečno 7,8 m) | izletna cona je |
+| Kanaba, Uganda | PR #690 (»Vse proge v enem PR«) | 0 % v OpenStreetMap (zidov in ograj ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
+| Sogeri, Papua Nova Gvineja | PR #691 | 0 % v OpenStreetMap (zidov, ograj in hiš ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
+| Savusavu, Fidži | PR #693 | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
+| Koror, Palau | PR #694 | 0 % (v igri, povprečno 5,7 m) | izletna cona je |
+| Irishtown, Jamajka | PR #886 | največ 14 % katerega koli 500-metrskega odseka v OpenStreetMap (hiše zaselkov ob cesti); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
+| Vaoala, Samoa | PR #861 | 17,5 % (v igri) | izletna cona je |
 | Killar, Indija | PR #283 | 99 %, obe 58 % (v igri, povprečno 2,3 m) | brez izletne cone (prepad in stena ob ozki polici); v PR, samo javljeno |
 | Pau, Francija | Nove proge 7 | ulična proga | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026) |
 | Puerto Madero, Argentina | kratke D, Načrtovano | 75 %, obe 38 % (stara veja, v igri) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ulična proga |
@@ -55,7 +75,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Shimla, Indija | zavite 4 | OSM 15 % (hiše vrisane ob 65 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše, bazar in zidovi ob cesti |
 | Darjeeling, Indija | zavite 4 | OSM 6 % (hiše vrisane ob 32 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše in železnica tik ob ozki cesti |
 | Yungas, Bolivija | kratke C1, Nove proge 6 | OSM brez vrisanih ovir | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozka polica v steni, prepad brez ograje (kot Killar) |
-| Medeu, Kazahstan | kratke A, Načrtovano | OSM 12 % (ograje) | izletna cona je |
+| Medeu, Kazahstan | osnutek PR #532 (veja `nove-proge/medeu`, 8. 11. 2026) | 0 % (v igri, povprečno 6,7 m; prej OSM 12 %, ograje) | izletna cona je |
 | Milford Sound, Nova Zelandija | kratke B | OSM 37 %, obe 37 % (predor 1,2 km je tretjina poti, mostovi) | izletna cona je (razen v predoru); odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
 | Ella, Šrilanka | kratke C1 | OSM 2 % | izletna cona je |
 | Santo Antão, Zelenortski otoki | kratke C2 | OSM 6 % | izletna cona je |
@@ -64,15 +84,21 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Auli, Indija | kratke A (odpade, če pride Killar na `main`) | OSM 1 % | izletna cona je |
 | Furka, Švica | Nove proge 2A, Načrtovano | OSM 7 % (mostovi) | izletna cona je |
 | Gudauri, Gruzija | Nove proge 3 | OSM 0 % | izletna cona je |
-| Llogara, Albanija | Nove proge 4 | OSM 1 % (stara cesta čez prelaz, ne novi predor) | izletna cona je |
+| Llogara, Albanija | PR #545 (B9, skupina N5) | OSM 1 % (stara cesta čez prelaz, ne novi predor) | izletna cona je |
 | Porto Moniz, Portugalska | Nove proge 5 | OSM 10 % (hiše) | izletna cona je |
-| Ngorongoro, Tanzanija | Nove proge 8 | travnata pobočja brez hiš in ograj (načrt) | izletna cona je |
+| Ngorongoro, Tanzanija | osnutek PR #533 (veja `nove-proge/ngorongoro`, 8. 11. 2026) | 0 % (v igri, povprečno 5,2 m od asfalta; travnata pobočja brez hiš in ograj) | izletna cona je |
 | Seul, Južna Koreja | zavite 3 | OSM 2 % (cesta skozi park) | izletna cona je |
 | Wellington, Nova Zelandija | zavite 4 | OSM 4 % (hiše vrisane, odmaknjene od ceste) | izletna cona je; odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
 | Longyearbyen, Norveška | proge z ledom | OSM 2 %, obe 0 % (hiše odmaknjene od ceste) | izletna cona je |
 | Envalira, Andora | proge z ledom | OSM 0 % (krog na ledu, okoli sneg) | izletna cona je |
-| Tuzla, Turčija; Sepang, Malezija; Lombok, Indonezija; Buriram, Tajska; Sakhir, Bahrajn; Lusail, Katar | Nove proge za 1.0, linija A (A12–A16, A18) | OSM 0–12 % kroga (ograja, dirkališča) | izletna cona je |
-| Cromwell, Nova Zelandija; Termas de Río Hondo, Argentina | Nove proge za 1.0, linija A (A17, A19) | ni izmerjeno (v OSM ni odprte sredinske črte) | seja proge najprej preveri na satelitskem posnetku iz odprtega vira (nikoli Google); **ne začni**, če je ograja do 3 m od roba na več kot pol dolžine |
+| Tuzla, Turčija | Nove proge za 1.0, linija A (A12) | OSM 0 %; z zidom boksov ~15 % | izletna cona je |
+| Sepang, Malezija | Nove proge za 1.0, linija A (A13) | OSM 16 % (glavna tribuna in zid ob ravnini), obe 2 %; z zidom boksov ~28 % | izletna cona je |
+| Lombok, Indonezija | Nove proge za 1.0, linija A (A14) | OSM 0 %; z zidom boksov ~19 % | izletna cona je |
+| Buriram, Tajska | Nove proge za 1.0, linija A (A15) | OSM 0 %; z zidom boksov ~20 % | izletna cona je |
+| Sakhir, Bahrajn | Nove proge za 1.0, linija A (A16) | OSM 0 % (zidovi za izletnimi conami od 10 m od sredine); z zidom boksov ~13 % | izletna cona je |
+| Cromwell, Nova Zelandija | Nove proge za 1.0, linija A (A17) | OSM 1 % (most); letalski posnetek LINZ 2025 (CC BY 4.0): izletne cone ob vsem krogu, z zidom boksov in podvozom ~8 % | izletna cona je |
+| Lusail, Katar | Nove proge za 1.0, linija A (A18) | OSM 3 % (ograja); z zidom boksov ~30 % | izletna cona je |
+| Termas de Río Hondo, Argentina | Nove proge za 1.0, linija A (A19) | OSM 0 %; z zidom boksov ~14 % | izletna cona je |
 | Koli, Finska | proge z ledom (zimska) | OSM 2 % (stavbe), ograj, zidov in sten ni | izletna cona je |
 
 ## Države s progo v igri: izbira uporabnika
@@ -103,6 +129,18 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test); zamrznjena kot testna (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostane do izbire | London (mestna proga po središču velikega mesta; #492, del N3 #500): tudi na odločanju, `pending: true` doda seja partyslo (od 8. 11. 2026 ob 22.03 ni več izjema od pravila ena proga na državo) | – |
 | Romunija | Bâlea (na `main` od 7. 11. 2026, PR #226) | – | – |
+| Združeni arabski emirati | Džebel Hafit (PR #695) in Abu Dabi (PR #547): obe na odločanju (`pending: true`; odločitev uporabnika 16. 11. 2026 ob ~2.02 prek Mateja, tabla #382: »ubedve progi prestavi v pending«), na `main` ne gresta pred izbiro; po izbiri izbrana postane prava, druga testna | – | – |
+| ZAE | – (nobena še ni na `main`) | Džebel Hafit (#695, jure.kopac26) in Abu Dabi (#547, biketraveler): obe na odločanju (`pending: true`; odločitev uporabnika 16. 11. 2026 ob ~1.55 prek Mateja: »ubedve progi prestavi v pending«, vprašanje `ena-proga-zae`, odgovor 3); oznako doda seja vsake proge; do izbire novih prog iz ZAE ne delamo | – |
+| Indija | Killar (na `main` 3. 11. 2026 po odločitvi uporabnika; prva proga iz Indije) | – | Auli (kratke, A), Shimla in Darjeeling (zavite, 4) |
+| Vietnam | Mã Pí Lèng (Nove proge za 1.0, del 4, K1, s PR #942): prava proga od 22. 11. 2026 (izbira uporabnika ob 1.55, Matej, tabla #382, komentar 7071810014) | – | Hải Vân (PR #676): testna (`test: true`, za izbris) |
+| Filipini | Batangas (PR #684, Nove proge za 1.0, linija A): prava proga od 22. 11. 2026 (izbira uporabnika ob 1.45, Matej, tabla #382, komentarja 7071746772 in 7071767423) | – | Banaue (#538) |
+| Salvador | Quezaltepeque (PR #686, Nove proge za 1.0, linija A) | – | – |
+| Uganda | Kanaba (PR #690, osnutek; na `main` z »Vse proge v enem PR«) | – | – |
+| Papua Nova Gvineja | Tapini (proga za cisterno, s PR #783): prava proga od 22. 11. 2026 (izbira uporabnika ob 1.50, Matej, tabla #382, komentarja 7071746772 in 7071767423) | – | Sogeri (PR #691): testna (`test: true`, za izbris) |
+| Fidži | Savusavu (PR #693) | – | – |
+| Palau | Koror (PR #694) | – | – |
+| Jamajka | Irishtown (PR #886, `pending: true`, zanimivosti potrdi uporabnik) | – | – |
+| Samoa | Vaoala (PR #861, osnutek) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 
@@ -127,27 +165,26 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 
 | Država | Na čakanju | Odločitev |
 |---|---|---|
-| Indija | Auli (kratke, A), Shimla in Darjeeling (zavite, 4); Killar (PR #283) | Killar je v vrsti (PR #283; pregrada ≤3 m na 99 %, javljeno uporabniku 5. 11. 2026): ko pride na `main`, Auli, Shimla in Darjeeling odpadejo; dotlej po vrsti Auli; Shimla in Darjeeling: **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Argentina | Termas de Río Hondo (dirkališče, Nove proge za 1.0, A19); Puerto Madero (kratke, D; narejen tudi na stari veji); stara veja: Siete Lagos (ni v načrtu) | Termas de Río Hondo: po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45; izletno cono najprej preveri njegova seja); Puerto Madero: **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Francija | Pau (Nove proge); stara veja: Montvernier (ni v načrtu) | Pau: **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Nova Zelandija | Cromwell (dirkališče, Nove proge za 1.0, A17); odpadejo Milford Sound (kratke, B), Wellington (zavite, 4), Crown Range in Coronet Peak | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.05; izletno cono najprej preveri njegova seja) |
 | Bolivija | Yungas v dveh verigah (kratke, C1, in Nove proge; ista cesta) | **ne začni** (brez izletne cone, 5. 11. 2026) |
-| Švica | Furka (Nove proge) | po vrsti |
-| Gruzija | Gudauri (Nove proge) | po vrsti |
-| Albanija | Llogara (Nove proge) | po vrsti |
+| Švica | Furka (Nove proge) | po vrsti; Furka ostane prava proga, Zürich je testna od 7. 11. 2026 (potrditev 13. 11. 2026 ob ~4.30) |
+| Gruzija | Gudauri (narejena, PR #523) | po vrsti |
+| Albanija | Llogara (Nove proge) | narejena v PR #545 (B9, skupina N5): na `main` z zbirno vejo N5 |
 | Portugalska | Porto Moniz (Nove proge) | po vrsti |
-| Tanzanija | Ngorongoro (Nove proge) | po vrsti |
+| Tanzanija | Ngorongoro (Nove proge za 1.0, A9; prej Nove proge 8) | narejena: osnutek PR #533 (8. 11. 2026), na `main` s skupino N5 |
 | Saudova Arabija | Diriyah (stara veja `claude/proga-diriyah`, v verigi Nove proge) | **ne začni** (brez izletne cone, 5. 11. 2026) |
-| Kazahstan | Medeu (kratke, A) | po vrsti |
-| Šrilanka | Ella (kratke, C1) | po vrsti |
+| Kazahstan | Medeu (Nove proge za 1.0, B8; prej kratke, A) | narejena: osnutek PR #532 (8. 11. 2026), na `main` s skupino N5 |
+| Šrilanka | Ella (kratke, C1) | narejena (PR #552, nove proge 1.0, del 2, A10; skupina N5), čaka na vrsto za `main` |
 | Zelenortski otoki | Santo Antão (kratke, C2) | po vrsti |
-| Mehika | Espinazo del Diablo (kratke, C2) | po vrsti |
+| Mehika | Aguascalientes (oval, 1,34 km; PR #687, zbirna #762, nato #756), nova proga iz Mehike (uporabnik jo je vodil v seji proge 14. 11. 2026); Espinazo del Diablo (kratke, C2; PR #562, skupina N6) je od 13. 11. 2026 **testna** (`test: true`, odločitev uporabnika prek Mateja: »mehiko prestavi v test, čakamo novo progo iz Mehike«) | v delu (#756) |
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Quito (zavite, 2) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
 | Tajska | nobene na čakanju; Bang Saen je od 5. 11. 2026 testna (`test: true`, za izbris; preveč ravnine; odločitev uporabnika, PR #379), zato Tajska nima prave proge v igri | prva nova proga iz Tajske, ko pride na vrsto: Buriram (dirkališče, Nove proge za 1.0; pogoj »šele ko je #379 na `main`« je izpolnjen z združitvijo #379) |
-| Norveška | Longyearbyen (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti (razdelek »Proge z ledom«); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
-| Andora | Envalira (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti; potrebuje led kot podlago (razdelek »Proge z ledom«) |
+| Norveška | – (Longyearbyen je od 24. 11. 2026 testna, `test: true`, za izbris; odločitev uporabnika, tabla #382, komentar 7121179904: »zbrisi progo norveska, proga je prevec ravna prav tako ni na ledu ampak na asfaltu«) | po vrsti (razdelek »Proge z ledom«); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
+| Andora | Envalira (proge z ledom, izbira uporabnika 6. 11. 2026) | preložena na 1. 12. 2026 (13. 11.); potrebuje led kot podlago (razdelek »Proge z ledom«) |
 | Turčija | Tuzla (dirkališče, Nove proge za 1.0, A12) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
 | Malezija | Sepang (dirkališče, Nove proge za 1.0, A13) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
 | Indonezija | Lombok (dirkališče, Nove proge za 1.0, A14) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
@@ -155,7 +192,30 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Katar | Lusail (dirkališče, Nove proge za 1.0, A18) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | Kågeröd (nove proge 1.0, N1, #478); stara veja: Höljes (ni v načrtu) | Kågeröd po vrsti (N1), Höljes ne pride na vrsto; zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
+| Slovaška | Krásna Hôrka (izbrana; uporabnik 22. 11. 2026 ob 2.05: »naredi da bo daljsa med 3-4km«, PR #943) | podaljšanje na 3–4 km (jure.kopac26) |
+| Hrvaška | — (Učka izbrisana: uporabnik 22. 11. 2026 ob 2.00 »ucke zbrisi«, PR #944 zaprt) | brez proge |
+| Kuba | Santiago de Cuba (El Morro; kratka z znamenitostjo, 15. 11. 2026; kraj potrdi OSM) | v delu (jure.kopac26) |
+| Kostarika | Orosi (Ujarrás; kratka z znamenitostjo, 15. 11. 2026; kraj potrdi OSM) | v delu (jure.kopac26) |
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
+| Angola | Luanda (proge z znamenitostjo, 1) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Zambija | Livingstone (proge z znamenitostjo, 2) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Madagaskar | Isalo (proge z znamenitostjo, 3; zamenjava za Antananarivo) | v delu (jure.kopac26), #722, veja `proge/zamenjava-3` (`docs/proge/isalo.md`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Kenija | Mombasa (proge z znamenitostjo, 4) | pripravljena (#718, veja `proge/mombasa` na `proge/luanda`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Uzbekistan | Hiva (proge z znamenitostjo, 5) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Gana | Elmina (proge z znamenitostjo, 6) | odpade (občutljiv kraj), zamenjava v `docs/proge-z-znamenitostjo.md`; bila v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Kambodža | Bokor (proge z znamenitostjo, 7) | se zamenja z naravno znamenitostjo ali zgradbo (`docs/proge-z-znamenitostjo.md`); bil v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Tunizija | El Jem (proge z znamenitostjo, 8) | v delu (#727, veja `proge/el-jem`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Panama | Portobelo (proge z znamenitostjo, 9) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Butan | Isuna (proge z znamenitostjo, 10; namesto Trongse) | v delu (veja `proge/butan`, PR #728): verižni most čez Paro Chhu ob cesti Chuzom–Paro; Trongsa odpade (delujoč samostan); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Sveta Lucija | Canaries (nove proge, PR #692, `nove-proge/canaries`) | v delu (naloga seje menija 13. 11. 2026); prva proga države |
+| Venezuela | El Castaño (rezerva uporabnika 13. 11. 2026; točno pot in zanimivosti potrdi kartica na strani Odločitve) | v delu (partyslo, od 25. 11. 2026), veja `proga/el-castano`; prva proga države |
+| Poljska | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | v delu (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Mavricij | Chamarel (rezerva uporabnika 13. 11. 2026; veja `proga/chamarel`) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata); kartica na strani Odločitve potrdi pot in zanimivosti; prva proga države |
+| Bosna in Hercegovina | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Ciper | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Bolgarija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026; med njimi Šipka, rezerva uporabnika 8. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Armenija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Grčija | nova proga (rezervacija 25. 11. 2026; stara rezerva Meteora iz 8. 11. 2026 je ena od možnosti), veja `proga/<id>` | v delu (partyslo, rezerva croatiadata, od 25. 11. 2026); 2–3 predlogi na strani Odločitve, seznam zanimivosti potrdi uporabnik |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 
@@ -164,6 +224,7 @@ Pri vprašanju `led-proge` (stran Odločitve 1; odgovor 6. 11. 2026 prek table #
 - **Longyearbyen, Norveška** (Svalbard): ceste OSM `ref` 600 (od letališča), 500 (mesto) in 100 (do Nybyena), skupaj 7,6 km; pozimi steptan sneg. Do 60 m je 163 stavb (ob 57 % dolžine), 27 cevovodov na stebričkih (34 %), 17 lesenih stolpov stare tovorne žičnice (20 %), fjord (31 %) in skalne stene (22 %), skupaj 41,8 predmeta na km.
 - **Envalira, Andora**: krog na ledu, OSM `highway=raceway`, glavni krog je way 330829785 (0,73 km, ~2.370 m, tik pod prelazom Port d'Envalira, 2.408 m). Ime športnega centra ob krogu je blagovna znamka, zato ga v igri ni. Do 60 m so stavbe (ob 51 % dolžine), glavna cesta (95 %), 2 bencinski črpalki, parkirišče in smučišča (16 %), skupaj 21,8 predmeta na km.
 - **Led kot podlaga** v igri še ne obstaja in ga izbira v `docs/dez-sneg.md` ne dodaja. Doda ga prva od teh prog (Longyearbyen, Envalira, Koli); oprijem ledu je 11–23 % oprijema suhega asfalta (`docs/dez-sneg.md`). **Kategorija Ice v meniju** (hitra izbira »Choose a country«, odločitev uporabnika 9. 11. 2026): proga z ledom ima v datoteki proge `ice: true`, tedaj jo meni uvrsti v Ice (`docs/meni-izbira-proge.md`, sklop 8); dokler takih prog ni, filter pove »No ice tracks here.«.
+- **Potrditev 13. 11. 2026 ob ~4.35** (»Potrjujem finska koli in norveska«): Koli (namesto Harju) in Longyearbyen se delata; Envalira je preložena na 1. 12.
 - **Koli, Finska** (izbira uporabnika 8. 11. 2026 ob 22.04, razdelek »Finska: Koli«) gre v isti zimski sklop: nova podlaga zbit sneg in led je skupna z Longyearbyenom in Envaliro.
 - **Nista izbrani:** Vormsi, Estonija (ledena cesta Rohuküla–Vormsi, 9,5 km, OSM way 1467883983; 0,6 predmeta na km) in Jökulsárlón, Islandija (cesta 1 z enopasovnim visečim mostom z razponom 108 m; 2,3 predmeta na km, zanimiv le pri mostu).
 - **Viri** za `README.md` (»Zasluge«) ob izdelavi: OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0).
@@ -173,7 +234,7 @@ Pri vprašanju `led-proge` (stran Odločitve 1; odgovor 6. 11. 2026 prek table #
 Odločitev uporabnika 8. 11. 2026 ob ~21.20 v pogovoru z Matejem (izbire s klikom; tabla #382, komentar 6726783939), dobesedno: »skandinavske države naj imajo proge v snegu«; izbrane vse štiri države.
 
 - **Norveška, Švedska, Danska in Finska:** zima je privzeta. Zasnežena pokrajina in snežni zameti ob cesti; na cestah zbit sneg, na dirkališčih zimski asfalt. Poletje ostane kot izbira vremena. Velja za vsako progo teh držav.
-- **Longyearbyen** (Norveška) je že zimska (razdelek »Proge z ledom«).
+- **Longyearbyen** (Norveška) je bila zimska (razdelek »Proge z ledom«); od 24. 11. 2026 je testna, Norveška nima prave proge.
 - **Silkeborg, Danska** (#469) in **Kågeröd, Švedska** (#478) v N1 (#485) dobita zimo v ločenem PR »Zima na severu«, ko je N1 na `main`; N1 gre na `main` brez sprememb. Kateri račun PR naredi, predlaga ponedeljkov načrt (`docs/vrsta.md`, »Načrtovano«).
 - **Finska:** Ouninpohja je od 8. 11. 2026 testna (uporabnik: »ouninpuhja je premalo zavita skoraj vse lahko spolnim gasom vozis ni zanimivo, naredi novo progo za finsko da bo na sneg«). Finska ni na odločanju; nova proga v snegu je **Koli** (izbira uporabnika 8. 11. 2026 ob 22.04, razdelek »Finska: Koli«), izdelava gre med nove proge (vedno zadnje), v zimski sklop z Longyearbyenom in Envaliro. Harju ostane v igri, dokler Koli ni na `main`, potem gre v test.
 
@@ -189,13 +250,13 @@ Pri vprašanju `finska-zimska-proga` (stran Odločitve jure.kopac26; izbiro je M
 - **Zima privzeto** (razdelek »Sever v snegu«): zasnežena pokrajina, zameti ob cesti, zbit sneg na cesti, poletje kot izbira vremena; javna cesta do hotela in smučišča, pozimi splužena. Nova podlaga zbit sneg in led je skupna z Longyearbyenom in Envaliro (razdelek »Proge z ledom«).
 - **Pravno:** v igri samo zemljepisna imena (Koli, Ylä-Koli, Pielinen), brez imen hotela, centrov in podjetij.
 - **Viri** za `README.md` (»Zasluge«) ob izdelavi: OpenStreetMap (ODbL 1.0, prek Overture Maps), Copernicus DEM GLO-30, Sentinel-2 (Copernicus, zimski posnetek 15. 4. 2025), ESA WorldCover 2021 (CC BY 4.0, delež gozda).
-- **Vrstni red:** med novimi progami, zadnja v vrsti (Matej, 8. 11. 2026); Harju gre v test šele, ko je Koli na `main`.
+- **Vrstni red:** med novimi progami, zadnja v vrsti (Matej, 8. 11. 2026); Harju gre v test šele, ko je Koli na `main`. Potrjena znova 13. 11. 2026 ob ~4.35, namesto Harju.
 
 ## Kaj to pomeni za verige
 
-- **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D) ter od 8. 11. 2026 Milford Sound (B: skupina B odpade, Nova Zelandija dobi Cromwell). Ostanejo Medeu, Auli, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero; Mount Buller je narejena (PR #241), od 5. 11. 2026 testna (odločitev uporabnika). Brez izletne cone (5. 11. 2026) se ne začnejo Yungas, Punta del Este in Puerto Madero: skupina D odpade, v C1 ostane Ella.
-- **Zavite proge** (`docs/zavite-proge.md`): odpadejo Macao (3), Ouro Preto (1, odločitev uporabnika 5. 11. 2026; skupne gradnike, ki jih načrt daje koraku 1, naredi prvi naslednji korak) in Québec (2; odločitev uporabnika 5. 11. 2026: Kanado zastopa samo Montréal). Ostanejo Valparaíso, Quito, Hongkong in Seul. Wellington (4) odpade (8. 11. 2026: Nova Zelandija dobi Cromwell), Shimla in Darjeeling (4) odpadeta, če Indija pred njima dobi progo (Auli ali Killar). Brez izletne cone (5. 11. 2026) se ne začnejo Valparaíso, Quito, Hongkong, Shimla in Darjeeling: ostane Seul.
+- **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1), Green Point (D) in Auli (A: Indija ima Killar) ter od 8. 11. 2026 Milford Sound (B: skupina B odpade, Nova Zelandija dobi Cromwell). Ostanejo Medeu, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero; Mount Buller je narejena (PR #241), od 5. 11. 2026 testna (odločitev uporabnika). Brez izletne cone (5. 11. 2026) se ne začnejo Yungas, Punta del Este in Puerto Madero: skupina D odpade, v C1 ostane Ella.
+- **Zavite proge** (`docs/zavite-proge.md`): odpadejo Macao (3), Ouro Preto (1, odločitev uporabnika 5. 11. 2026; skupne gradnike, ki jih načrt daje koraku 1, naredi prvi naslednji korak) in Québec (2; odločitev uporabnika 5. 11. 2026: Kanado zastopa samo Montréal). Ostanejo Valparaíso, Quito, Hongkong in Seul. Wellington (4) odpade (8. 11. 2026: Nova Zelandija dobi Cromwell), Shimla in Darjeeling (4) odpadeta (Indija ima Killar). Brez izletne cone (5. 11. 2026) se ne začnejo Valparaíso, Quito, Hongkong, Shimla in Darjeeling: ostane Seul.
 - **Nove proge** (`docs/nove-proge.md`): ostanejo Furka, Gudauri, Llogara, Porto Moniz in Ngorongoro; Pau, Yungas in Stelvio se ne začnejo (brez izletne cone, 5. 11. 2026).
-- **Proge z ledom** (razdelek zgoraj): Longyearbyen in Envalira, po vrsti z drugimi novimi progami; prva doda led kot podlago.
+- **Proge z ledom** (razdelek zgoraj): Longyearbyen (od 24. 11. 2026 testna) in Envalira, po vrsti z drugimi novimi progami; prva doda led kot podlago.
 - **Osem dirkališč izven Evrope** (8. 11. 2026, razdelek »Nove proge za 1.0«): Tuzla, Sepang, Lombok, Buriram, Sakhir, Cromwell, Lusail in Termas de Río Hondo so A12–A19 v `docs/nove-proge-1-0.md` (»Del 3«); Cromwell zamenja Wellington, Milford Sound, Crown Range in Coronet Peak.
 - **Stare veje**: Kapelmuur, Stelvio, Diriyah, Puerto Madero in Hong Kong se ne začnejo (brez izletne cone, 5. 11. 2026). Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.

@@ -1,0 +1,17 @@
+{
+  "id": "koror",
+  "about": "Koror, Palau (id koror): ~3.1 km of Main Street from the Babeldaob end of the Koror-Babeldaob Bridge over the bridge, along the shore of Koror island and over the wooded hill east of the town to the edge of Koror, westbound (docs/proge/koror.md)",
+  "box": [7.330, 134.480, 7.378, 134.522],
+  "closed": false,
+  "route": [
+    [7.3631, 134.5066, "Main Street", "start: Main Street at the Babeldaob (Airai) end of the Koror-Babeldaob Bridge, westbound"],
+    [7.3609, 134.5017, "Main Street", "over the bridge to Koror island"],
+    [7.3536, 134.4984, "Main Street", "the shore road, then the bends over the hill"],
+    [7.34455, 134.49476, "Main Street", "finish: the eastern edge of Koror town"]
+  ],
+  "prefer": ["Main Street", "Koror-Babeldaob Bridge"],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}

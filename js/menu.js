@@ -101,12 +101,14 @@
   // every track to measure it would take seconds on a phone
   const lenOf = (d) => (D.lens || {})[d.id] || 0;
   function buildTracks() {
-    const gr = (d) => d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
+    const gr = (d) => d.test ? 'test' : (d.rally || d.descent && d.timeTrial) ? 'rally' : d.open ? 'road' : 'circuit';   // (a descent against the clock alone, Katu-Jaryk: a rally; one with a race and traffic, Sa Calobra, or with rivals, Ngorongoro: an open road)
     TR = G.defs().filter(d => !d.variantOf).map(d => {
       const en = d.en || {}, full = en.name || d.name, k = full.lastIndexOf(', ');
-      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc), group: gr(d), test: !!d.test,
-        modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
+      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc),
+        modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial };
       Object.defineProperties(t, {
+        test: { get() { return !!d.test; } }, group: { get() { return gr(d); } },   // (read as the menu makes a list, as pending: a test may make a test track real for a while)
+        tag: { get() { return ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)]; } },
         km: { get() { if (lenOf(d)) return lenOf(d) / 1000; const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
         corners: { get() { const n = (D.ncorners || {})[d.id]; return n != null ? n : G.track(d.id).corners.length; } },   // (the real tracks': MENU.ncorners, tools/menu-lens.js)
         laps: { get() { return d.open ? 1 : G.lapsOf(d); } },
@@ -195,7 +197,7 @@
         snow = m === 'snow';
         if (entering) { wet = m === 'rain' || snow; a = wet && !calm ? 1 : 0; }
         stage.classList.toggle('rainy', wet && !snow); stage.classList.toggle('snowy', wet && snow);   // (before anything measures the new stage, so the weather already shown does not fade in again)
-        (stage.querySelector('.dio') || stage.querySelector('video')).after(cv); fit();   // (over the picture, under the names: the track screen's diorama or map, the intro's video)
+        const ds = stage.querySelectorAll('.dio'); (ds.length ? ds[ds.length - 1] : stage.querySelector('video')).after(cv); fit();   // (over the picture, under the names: the track screen's diorama or map (the one on top, while one fades in over another), the intro's video)
         if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random' || m === 'change') timer = setInterval(() => show(!wet), m === 'change' ? 4200 : 2600); }
         void stage.offsetWidth;
         show(m === 'rain' || snow ? true : m === 'dry' ? false : wet);
@@ -228,7 +230,8 @@
         ['school', 'school', 'Driving school', 'Four lessons with medals.', G.schoolChip(), I.wheelBig],
         ['stats', 'stats', 'Achievements', 'Your numbers and what you have unlocked.', G.statsChip(), I.starBig],
       ];
-      h += subHead('Career', 'Four ways to play') + '<div class="t-sub four">' + four.map(f => card('cm-' + f[0], 'game:to-' + f[1], false, f[2], f[3], f[4], f[5])).join('') + '</div>';
+      const kv = G.kariera && G.kariera();   // (the path of 1.0, js/kariera.js: its strip above the cards, the hub a tap away; no bridge, no strip)
+      h += subHead('Career', 'Four ways to play') + '<div class="t-sub four">' + (kv ? kStrip(kv) : '') + four.map(f => card('cm-' + f[0], 'game:to-' + f[1], false, f[2], f[3], f[4], f[5])).join('') + '</div>';
     } else {
       h += '<button class="tile t-single" data-act="single"><span class="tx"><b>SINGLE RACE</b><small>' + esc(t.name + ' · ' + md.name) + '</small>' + (best ? '<em class="chip">BEST ' + esc(best) + '</em>' : '<em class="chip gold">NEW TRACKS INSIDE</em>') + '</span>' +
         '<span class="im"><img src="' + trackImg(t, weatherIdx() === 1) + '" alt=""></span></button>';
@@ -266,12 +269,11 @@
     const a = pts[0], b = pts[pts.length - 1], A = M.alt;
     return R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
   }
-  function routeLines(id, pts, rally) {   // the route drawn on, then a glowing point running along it at an even pace (its glow a gradient: cheap to move)
+  function routeLines(id, pts, rally) {   // the route drawn on, its trail (mapTrail), then a glowing point running along it (mapDots moves it; its glow a gradient: cheap to move)
     const d = pathD(pts), c = rally ? ['#fff0dc', '#ffffff'] : ['#ffe07a', '#ffd23a'];
     return '<defs><radialGradient id="rg-' + id + '"><stop offset="0" stop-color="#fff8d0"/><stop offset=".35" stop-color="' + c[0] + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c[1] + '" stop-opacity="0"/></radialGradient></defs>' +
-      '<path class="rt-o" d="' + d + '"/><path class="rt" id="rt-' + id + '" d="' + d + '" pathLength="1"/>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
-      '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g><set attributeName="opacity" to="1" begin="1.6s"/>' +
-      '<animateMotion dur="' + (rally ? 11 : 15) + 's" begin="1.6s" repeatCount="indefinite"><mpath href="#rt-' + id + '"/></animateMotion></g>';
+      '<path class="rt-o" d="' + d + '"/><path class="rt" d="' + d + '" pathLength="1"/><g class="rt-tr"></g>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
+      '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g></g>';
   }
   function splitMarks(pts) {   // a rally stage (a circuit: its sectors): the two split times at a third and two thirds of it
     return [1, 2].map(k => { const p = pts[Math.round((pts.length - 1) * k / 3)]; return '<g class="sp" transform="translate(' + p[0] + ' ' + p[1] + ')"><rect x="-15" y="-15" width="30" height="30" rx="6"/><text y="6" text-anchor="middle">S' + k + '</text></g>'; }).join('');
@@ -465,6 +467,12 @@
         add(y0, [want, at(!right)]); add(y0, by.sort(near)); add(y1, [x - 3 - w, x + f.width + 3].sort(near));
         if (y2 <= fb.height - 2) add(y2, [want, at(!right)].concat(by).sort(near));
       }
+      // last, with none of those (the weather's row right over a finish flag low in a narrow card): just under what lies over its place
+      for (const s of [1, 0.86, 0.74]) {
+        const w = w0 * s, h = h0 * s, want = right ? x + f.width + 3 - w : x - 3, top = f.top - fb.top - 3;
+        K.forEach(k => { const y = k[3] + h + 1; if (k[0] < want + w && k[1] > want && k[3] > top - h && y <= fb.height - 2)
+          [want, right ? x - 3 : x + f.width + 3 - w].forEach(l => { if (l >= 4 && l + w <= W - 4 && !K.some(q => l < q[1] && l + w > q[0] && y - h < q[3] && y > q[2])) out.push([s, l, y, w, h]); }); });
+      }
       return out;
     };
     const rect = (a, m) => [a[1] - m, a[1] + a[3] + m, a[2] - a[4] - m, a[2] + m];   // (a place's box, as keep's: left, right, top, bottom)
@@ -489,24 +497,160 @@
   }
   window.addEventListener('resize', ringFit);   // (on its side: the carousel's scale first, the maps fitted to it after)
   window.addEventListener('resize', fitMaps);
-  // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop
+  /* The point running along the route is one run, whichever of the two views shows it (camera 1 the map, 2 the flyover), as one shot seen from two
+     cameras: a switch between them, or the stage drawn again (a sheet, the weather), goes on from the same moment of the run with the point at
+     the same place, not from the start; another track, or the track screen entered anew, starts a new run. On a track with a flyover the run
+     is the flyover's own (its video is the clock while it plays; R.fly.frames[k][0] is the point's place in frame k, metres along the run), so
+     on the map the point runs as in the flyover: it speeds up from the start, waits at the finish while the flyover's camera rises over it,
+     then goes round again; a flyover made as a loop (R.fly.loop, maketa-menija/orodja/flyover.mjs): at an even speed from its first frame to
+     its last, on a circuit straight on over the start line into the next lap, with no wait and no dip of the picture there. A track with
+     only its map: the run of a loop at the flyovers' own speed (RUN), so the point is as fast on every track: even all the way, at the
+     finish straight on into a new lap (the user's choice 10. 11. 2026, »Da, povsod enako«; the old flyovers stay as they are). Behind the
+     map's point its trail, coloured by the climb as the flyover's is (mapTrail). */
+  const run = { id: '', t: 0, at: 0, on: false };   // the run's time t (s) at the moment at (performance.now()); on: going on from there, else held at t
+  const runNow = () => run.t + (run.on ? (performance.now() - run.at) / 1000 : 0);
+  function runSet(t, on) { run.t = t; run.at = performance.now(); run.on = on; }
+  // the flyovers' speed (maketa-menija/orodja/flyover.mjs CAMERA.speed): 326 m/s, as a loop's: even from the start, no wait at the finish
+  const RUN = { v: 326 };
+  const runGo = (L) => L / RUN.v;   // (the seconds from the start to the finish of a run L m long, at that speed)
+  const runDur = (id) => { const F = RT[id].fly; return F ? F.frames.length / F.fps : runGo(RT[id].len); };
+  // a new run: on the flyover held at its start until the video plays; on the map the route draws itself first (1.6 s), then the point sets off
+  function runFresh(id, fly) { run.id = id; if (fly) runSet(0, false); else runSet(-1.6, true); }
+  // where the point is at the run's time s, as a part of the run (0 the start, 1 the finish)
+  function runAt(id, s) {
+    const R = RT[id]; if (!R.fly) return paceAt(R.len, s);
+    const Dr = runDur(id); s = ((s % Dr) + Dr) % Dr;
+    // (a circuit's loop: after its last frame the point goes on to the start line, where its first frame has it)
+    const F = R.fly.frames, ring = R.fly.loop && !R.open ? 1 : 0, x = Math.min(F.length - 1 + ring, s * R.fly.fps), k = Math.max(0, Math.min(F.length - 2 + ring, Math.floor(x)));
+    return (F[k][0] + ((k + 1 < F.length ? F[k + 1][0] : R.len) - F[k][0]) * (x - k)) / R.len;
+  }
+  // where a run L m long at that speed is at its time s (0..1 of the way): at the finish straight on into a new lap
+  function paceAt(L, s) { const go = runGo(L); return (((s % go) + go) % go) / go; }
+  // that place on the map (its route's points lie evenly along the run, routes.py)
+  function routePt(T, f) {
+    const P = T.route, x = Math.max(0, Math.min(1, f)) * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), u = x - i;
+    return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u];
+  }
+  // a view of the stage that waited for its picture (pend: the video playing at the run's moment, the map's pictures loaded) fades in over the
+  // view shown before it, which then goes (only the views under it now: this one, sent away itself by a quick turn of the cameras, stays under
+  // the next until that one shows)
+  function reveal(box) {
+    if (!box.classList.contains('pend')) return;
+    box.classList.remove('pend');
+    const st = box.parentNode, old = st ? [...st.querySelectorAll('.dio.away')] : [];
+    setTimeout(() => { for (const o of old) if (o.classList.contains('away')) o.remove(); }, 350);
+  }
+  // the map's pictures loaded (or failed), or 1.5 s at most
+  function mapLoaded(box, done) {
+    const ims = [...box.querySelectorAll('image')]; let n = ims.length, fin = false;
+    const end = () => { if (!fin) { fin = true; done(); } }, one = () => { if (--n <= 0) end(); };
+    for (const im of ims) { im.addEventListener('load', one, { once: true }); im.addEventListener('error', one, { once: true }); }
+    if (!n) end(); else setTimeout(end, 1500);
+  }
+  // the stage after a render (prev: the views it had before, the last one on top). The same view of the same track as before (a sheet opened,
+  // the weather changed) is kept as it is: the flyover plays on, the map's point runs on. The other view of the same track (the cameras 1 and 2)
+  // waits for its picture over the one shown, then fades in; the run goes on in it. Another track, or the screen entered anew: a new run.
+  function stageViews(prev, entering) {
+    const st = $('#track-stage', app), box = st && $('.dio', st), t = curTrack();
+    const kind = (b) => b.classList.contains('topmap') ? 1 : b.classList.contains('fly') ? 2 : 0, key = (b) => kind(b) + ':' + (b.dataset.route || b.dataset.map);
+    if (!box || !t || !kind(box)) { run.id = ''; runSet(0, false); return; }   // (a model of the land, or the corner's camera 3: nothing runs on it)
+    prev = prev.filter(b => kind(b) && (b.dataset.route || b.dataset.map) === t.id);   // (this track's views)
+    if (entering || run.id !== t.id || !prev.length) { runFresh(t.id, kind(box) === 2); return; }
+    const pend = prev.find(b => b.classList.contains('pend')), cur = prev.filter(b => b !== pend).pop();
+    if (pend && key(pend) === key(box)) { box.replaceWith(pend); if (cur) { cur.classList.add('away'); pend.before(cur); } return; }   // (asked for again while still on its way)
+    if (cur && key(cur) === key(box)) {   // the same view: kept as it is (the route still drawing itself: on from where it was)
+      box.replaceWith(cur); cur.classList.remove('away');
+      const p = !cur.__drawn && $('path.rt', cur); if (p) p.style.animationDelay = (-Math.max(0, 1.6 + runNow())).toFixed(2) + 's';
+      return;
+    }
+    if (kind(box) === 1) { box.classList.add('drawn'); box.__drawn = 1; }   // (the map comes in with its route drawn, its point where the run is)
+    if (!cur) return;
+    box.classList.add('pend'); cur.classList.add('away'); box.before(cur);
+    if (kind(box) === 1) mapLoaded(box, () => reveal(box));   // (a flyover: flyLabels plays it from the run's moment, then reveals it)
+  }
+  // the map's point, each frame at the run's place (and a flyover still on the stage, going or coming: the run is its video's)
+  let mapRaf = 0;
+  function mapDots() {
+    cancelAnimationFrame(mapRaf); mapRaf = 0;
+    const step = () => {
+      mapRaf = 0;
+      const boxes = app.querySelectorAll('#track-stage .dio.topmap[data-map]'); if (!boxes.length) return;
+      if (!run.on && !$('#track-stage .dio.fly', app)) runSet(run.t, true);   // (the map alone: the run goes on from where the flyover held it)
+      const s = runNow();
+      for (const box of boxes) {
+        const id = box.dataset.map, dot = box.__dot || (box.__dot = $('.rt-dot', box));
+        if (id !== run.id || !dot) continue;
+        if (s < 0) { dot.setAttribute('opacity', '0'); continue; }   // (the route still drawing itself)
+        const f = runAt(id, s), p = routePt(RT[id].top, f);
+        dot.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ')'); dot.setAttribute('opacity', '1');
+        mapTrail(box, id, f, p);
+        if (!box.__drawn) { box.__drawn = 1; box.classList.add('drawn'); }
+      }
+      mapRaf = requestAnimationFrame(step);
+    };
+    if (app) step();
+  }
+  // the trail behind the map's point (the user's wish 10. 11. 2026: the colours the flyover's point leaves behind it): the route behind the
+  // point coloured by the climb (GRADE, as the height graph: climbs) over its gold line, which stays as it was ahead of the point. As the
+  // track's flyover draws it: an old flyover (R.fly without loop) from the start up to the point; a loop, and a track with only its map, its
+  // last TRAIL m (at most 0.6 of the run; on a circuit round the start line), its further half narrowing to nothing. A piece between each
+  // two of the route's points (the point's own one up to the point), 7 px wide on the screen (over the gold 6, inside the dark edge's 11)
+  const TRAIL = 1500;   // (m: the flyovers' own, maketa-menija/orodja/drone_page.js flyInit trail)
+  function mapTrail(box, id, f, p) {
+    const R = RT[id], P = R.top.route, m = P.length;
+    let Z = box.__tr;
+    if (!Z) {
+      const g = $('.rt-tr', box); if (!g) return;
+      const v = climbs(R.prof, R.len), n = v.length, col = [];
+      for (let j = 0; j < m - 1; j++) { const q = (j + 0.5) / (m - 1) * (n - 1), i = Math.min(n - 2, Math.floor(q)); col.push('rgb(' + gradeRgb(v[i] + (v[i + 1] - v[i]) * (q - i)).join(',') + ')'); }
+      g.innerHTML = col.map((c, j) => '<path d="M' + P[j][0] + ' ' + P[j][1] + 'L' + P[j + 1][0] + ' ' + P[j + 1][1] + '" stroke="' + c + '" stroke-width="0"/>').join('') + '<path stroke-width="0"/>';
+      Z = box.__tr = { el: [...g.children], w: [], col, hi: -1, svg: $('svg', box) };
+    }
+    f = Math.min(1, Math.max(0, f));
+    const k = parseFloat(Z.svg.style.getPropertyValue('--k')) || 1, L = R.len, ds = L / (m - 1), d = f * L, i = Math.min(m - 2, Math.floor(f * (m - 1)));
+    const whole = !!R.fly && !R.fly.loop, ring = !R.open && !whole, tl = whole ? Infinity : Math.min(TRAIL, 0.6 * L);
+    const set = (j, w) => { const s = (7 * k * w).toFixed(2); if (Z.w[j] !== s) { Z.w[j] = s; Z.el[j].setAttribute('stroke-width', s); } };
+    for (let j = 0; j < m - 1; j++) {
+      const back = j < i ? d - (j + 0.5) * ds : j > i && ring ? d - (j + 0.5) * ds + L : -1;   // (from the point back to the piece's middle; the last lap's on a circuit)
+      set(j, back < 0 || back >= tl ? 0 : back <= tl / 2 ? 1 : Math.round((tl - back) / (tl / 2) * 20) / 20);
+    }
+    const h = Z.el[m - 1];   // (the point's own piece, at the full width)
+    if (Z.hi !== i) { Z.hi = i; h.setAttribute('stroke', Z.col[i]); }
+    h.setAttribute('d', 'M' + P[i][0] + ' ' + P[i][1] + 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)); set(m - 1, 1);
+  }
+  // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop (a circuit's
+  // flyover made as a loop, R.fly.loop, goes straight on into its next lap: no dip, and the start line's one name stays over it either side)
   let flyRaf = 0;
   function flyLabels() {
     cancelAnimationFrame(flyRaf); flyRaf = 0;
     const box = $('#track-stage .dio.fly', app); if (!box) return;
     const id = box.dataset.route, R = RT[id], F = R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len;
     const K = keepOut(box), foot = K.bottom + 8, top = K.top + 46;   // (no name under the head over the picture, nor under the counter and the cameras at its foot)
-    // the flyover starts at its first frame (the point at the start), not wherever autoplay's clock reached while the video loaded: it is
-    // played only once its first frame is ready (the poster, with the point at the start, shows until then), so the glowing point is at the
-    // start the moment the flyover shows
+    // the flyover plays from the run's moment: on a new run from its first frame (the point at the start), not wherever autoplay's clock
+    // reached while the video loaded (it is played only once that frame is ready; the poster, with the point at the start, shows until then);
+    // after the map from the map's moment (the video is held there until it plays, the map staying over it until then). From then on its time
+    // is the run's
     if (v && !v.__fly) {
       v.__fly = 1;
-      const go = () => { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } const p = v.play(); if (p && p.catch) p.catch(() => {}); };
-      if (v.readyState >= 2) go(); else v.addEventListener('loadeddata', go, { once: true });
+      // (a video the stage has dropped meanwhile, or one a race or another screen stopped while it loaded, stays paused; under the quick list
+      // or the Earth it waits for the screen to wake)
+      const play = () => { if (!v.isConnected || v.__stop) return; if (rested) { v.__due = 1; return; } const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+      const start = () => {
+        if (!v.isConnected) return;
+        const s = Math.max(0, runNow()) % runDur(id);
+        runSet(s, false);
+        if (s > 0.05) { v.addEventListener('seeked', play, { once: true }); try { v.currentTime = s; } catch (_) { play(); } }
+        else if (v.readyState >= 2) { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } play(); }
+        else v.addEventListener('loadeddata', () => { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } play(); }, { once: true });
+      };
+      v.addEventListener('playing', () => { if (!v.isConnected) { v.pause(); return; } v.__live = 1; reveal(box); });
+      const fail = () => { if (!v.__live && box.classList.contains('pend')) reveal(box); };   // (no video, or none yet: its poster after all)
+      v.addEventListener('error', fail, { once: true }); setTimeout(fail, 5000);
+      if (v.readyState >= 1) start(); else v.addEventListener('loadedmetadata', start, { once: true });
     }
     const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
     const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
-    const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
+    const loop = !R.open, ring = !!F.loop && loop, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
     lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>');
     const els = [...lab.children];
     let last = 0, looped = false;
@@ -514,12 +658,13 @@
       if (!v.isConnected) return;
       // a short dip at the loop: the end fades out, the start fades back in (not the very first start: the poster shows there)
       const t = v.currentTime || 0, dur = v.duration; if (t < last - 1) looped = true; last = t;
-      const op = isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
+      if (v.__live && run.id === id) runSet(t, !v.paused);   // (the video playing is the run's clock)
+      const op = !ring && isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
       v.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
       const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
       const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y > top && y < H - foot; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
       const d = f[0];
-      put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
+      put(els[0], f[1], d < L * 0.12 || (ring && d > L * 0.8)); put(els[1], f[2], !ring && d > L * 0.8);
       flyRaf = requestAnimationFrame(step);
     };
     flyRaf = requestAnimationFrame(step);
@@ -532,13 +677,18 @@
      the frame's bottom edge (at least 120 m of height in the frame, so a flat circuit stays low), the lowest height over it at the left, the
      highest at the right. Every track: the heights of routes.js (R.prof; the real ones by routeMaps, else from the start's height in geo.js),
      else of the menu's table (MENU.profs, tools/menu-lens.js). The climb is the game's own heights over its own distances (a shortened road,
-     Pikes Peak, keeps its real gradients so). The point goes with the flyover's video, with the map's running point, or (the model of the
-     land, the corner's camera) along the run at the map's pace */
+     Pikes Peak, keeps its real gradients so). The point is the run's (run: the flyover's video, the map's running point), or (the model of the
+     land, the corner's camera) along the run at the same pace (RUN) from when the graph came */
   const GRADE = [[0.01, [47, 191, 74]], [0.03, [154, 209, 58]], [0.05, [255, 210, 58]], [0.07, [255, 138, 42]], [0.09, [232, 52, 42]], [0.12, [158, 20, 32]]];
   function gradeRgb(v) {
     if (v <= GRADE[0][0]) return GRADE[0][1];
     for (let i = 1; i < GRADE.length; i++) if (v <= GRADE[i][0]) { const a = GRADE[i - 1], b = GRADE[i], k = (v - a[0]) / (b[0] - a[0]); return a[1].map((c, j) => Math.round(c + (b[1][j] - c) * k)); }
     return GRADE[GRADE.length - 1][1];
+  }
+  // the climb at each of the heights G along a run L m long (over about two of its steps, evened out a little): the graph's colours, the map's trail's
+  function climbs(G, L) {
+    const n = G.length, step = L / (n - 1), g = G.map((_, i) => { const a0 = Math.max(0, i - 1), b0 = Math.min(n - 1, i + 1); return (G[b0] - G[a0]) / ((b0 - a0) * step); });
+    return g.map((_, i) => (g[Math.max(0, i - 1)] + 2 * g[i] + g[Math.min(n - 1, i + 1)]) / 4);
   }
   // a track's heights along its run: L (m), G the game's heights (its climb), H the heights shown (above the sea where known: real; where the
   // menu's data has none, from the start's height in geo.js)
@@ -553,13 +703,12 @@
   // the graph in a frame W × Hh px: its svg, and where on it a fraction f of the run is
   function graphOf(t, W, Hh) {
     const P = heightsOf(t); if (!P || W < 40 || Hh < 20) return null;
-    const H = P.H, G = P.G, n = H.length, lo = Math.min(...H), hi = Math.max(...H), step = P.L / (n - 1), span = Math.max(hi - lo, 120), yT = 18;
+    const H = P.H, n = H.length, lo = Math.min(...H), hi = Math.max(...H), span = Math.max(hi - lo, 120), yT = 18;
     const x = (f) => f * W, y = (h) => Hh - (h - lo) / span * (Hh - yT);
     const hAt = (f) => { const q = Math.min(n - 1, Math.max(0, f * (n - 1))), i = Math.min(n - 2, Math.floor(q)); return H[i] + (H[i + 1] - H[i]) * (q - i); };
     const line = 'M' + H.map((h, i) => x(i / (n - 1)).toFixed(1) + ' ' + y(h).toFixed(1)).join('L'), area = line + 'L' + W + ' ' + Hh + 'L0 ' + Hh + 'z';
-    // the climb at each height (over about two of its steps, evened out a little) as its colour, a stop of the line's gradient
-    const g = G.map((_, i) => { const a0 = Math.max(0, i - 1), b0 = Math.min(n - 1, i + 1); return (G[b0] - G[a0]) / ((b0 - a0) * step); });
-    const stops = g.map((_, i) => { const v = (g[Math.max(0, i - 1)] + 2 * g[i] + g[Math.min(n - 1, i + 1)]) / 4; return '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + gradeRgb(v).join(',') + ')"/>'; }).join('');
+    // the climb at each height as its colour, a stop of the line's gradient
+    const stops = climbs(P.G, P.L).map((v, i) => '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + gradeRgb(v).join(',') + ')"/>').join('');
     const lab = (h) => num(Math.round(h)) + ' m';
     const svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '" aria-hidden="true"><defs>' +
       '<linearGradient id="hgc" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + stops + '</linearGradient>' +
@@ -576,17 +725,15 @@
     cancelAnimationFrame(graphRaf); graphRaf = 0;
     const box = app && $('#track-stage .hgraph', app); if (!box) return;
     const t = trackById(box.dataset.graph), W = box.clientWidth, Hh = box.clientHeight - (parseFloat(getComputedStyle(box).paddingTop) || 0); if (!t || !W) return;
-    if (!box.__g || box.__g.W !== W || box.__g.H !== Hh) { const o = graphOf(t, W, Hh); if (!o) return; box.innerHTML = o.svg; box.__g = { W, H: Hh, at: o.at, t0: box.__g ? box.__g.t0 : performance.now() }; }
-    const svg = $('svg', box), clip = $('#hgk rect', svg), pt = $('.pt', svg), R = RT[t.id], stage = box.parentNode, rally = t.group === 'rally';
+    if (!box.__g || box.__g.W !== W || box.__g.H !== Hh) { const o = graphOf(t, W, Hh); if (!o) return; box.innerHTML = o.svg; box.__g = { W, H: Hh, at: o.at, t0: box.__g ? box.__g.t0 : performance.now(), L: heightsOf(t).L }; }
+    const svg = $('svg', box), clip = $('#hgk rect', svg), pt = $('.pt', svg);
     let last = -1;
     const frame = () => {
       if (!box.isConnected) { graphRaf = 0; return; }
-      // how far along the run: the flyover's frame, the map's running point (its clock: 1.6 s before it shows, then once round in 15 s;
-      // a rally stage 11 s), the model and the corner's camera the same from when the graph came
-      const v = $('.dio.fly video', stage), map = $('.dio.topmap svg.mapsvg', stage), dur = rally ? 11 : 15;
-      let f = 0;
-      if (v && R && R.fly) { const F = R.fly, fr = F.frames[Math.min(F.frames.length - 1, Math.floor((v.currentTime || 0) * F.fps))]; f = fr ? fr[0] / R.len : 0; }
-      else { const s = map && map.getCurrentTime ? map.getCurrentTime() : (performance.now() - box.__g.t0) / 1000; f = s < 1.6 ? 0 : ((s - 1.6) % dur) / dur; }
+      // how far along the run: the run's place (the flyover's frame, the map's running point; nothing yet while the map draws its route),
+      // the model of the land and the corner's camera the same pace from when the graph came (1.6 s later, as a map's point sets off)
+      const s = run.id === t.id ? runNow() : (performance.now() - box.__g.t0) / 1000 - 1.6;
+      let f = s < 0 ? 0 : run.id === t.id ? runAt(t.id, s) : paceAt(box.__g.L, s);
       f = Math.min(1, Math.max(0, f));
       if (Math.abs(f - last) > 0.0005) { last = f; const p = box.__g.at(f); clip.setAttribute('width', p[0].toFixed(1)); pt.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ')'); }
       graphRaf = requestAnimationFrame(frame);
@@ -639,7 +786,7 @@
   const GRID = '<svg class="grid" viewBox="0 0 18 17" aria-hidden="true">' + [[2, 1, 1], [11, 3.6, 1], [2, 6.2, .75], [11, 8.8, .75], [2, 11.4, .5], [11, 14, .5]].map(r => '<rect x="' + r[0] + '" y="' + r[1] + '" width="7" height="4" rx="1.6" fill="#9fb0c8" opacity="' + r[2] + '"/>').join('') + '</svg>';
   const DBL = (dir) => '<svg viewBox="0 0 28 20" aria-hidden="true"><path d="' + (dir < 0 ? 'M13 3 6 10l7 7M22 3l-7 7 7 7' : 'M6 3l7 7-7 7M15 3l7 7-7 7') + '" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // the flags of the countries (assets/flags, drawn to their official rules); a track in another country has none
-  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'japan', 'china', 'thailand', 'russia', 'romania'];
+  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'algeria', 'japan', 'china', 'thailand', 'russia', 'romania', 'india', 'denmark', 'sweden', 'czechia', 'wales', 'ireland', 'spain', 'montenegro', 'latvia', 'netherlands', 'switzerland', 'cape-verde', 'georgia', 'tanzania', 'kazakhstan', 'sri-lanka', 'albania', 'portugal', 'south-korea', 'mexico', 'turkey', 'malaysia', 'indonesia', 'bahrain', 'qatar', 'argentina', 'angola', 'costa-rica', 'peru', 'kenya', 'madagascar', 'panama', 'tunisia', 'bhutan', 'uzbekistan', 'vietnam', 'philippines', 'el-salvador', 'uganda', 'papua-new-guinea', 'saint-lucia', 'fiji', 'palau', 'norway', 'jamaica', 'samoa', 'slovakia', 'united-arab-emirates'];
   const flagUrl = (c) => { const f = String(c || '').toLowerCase().replace(/\s+/g, '-'); return FLAG_FILES.includes(f) ? 'assets/flags/' + f + '.svg' : ''; };
   // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
   // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready
@@ -874,7 +1021,8 @@
     if (screen === 'track' && app && !rested) ringStop();   // (the carousel: a turn done at once, a finger's let go)
     const s = screen === 'track' && app && $('#s-track', app); if (!s || rested) return;
     rested = [...app.querySelectorAll('video')].filter(v => !v.paused);
-    if (MV()) MV().rest(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); graphRaf = 0; if (window.MenuCar) MenuCar.detach();
+    if (MV()) MV().rest(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf); mapRaf = 0; cancelAnimationFrame(graphRaf); graphRaf = 0; if (window.MenuCar) MenuCar.detach();
+    if (run.on) runSet(runNow(), false);   // (the run held where it is: the map's point goes on from there, mapDots; a flyover's video is its clock again once it plays)
     for (const v of rested) v.pause();
     s.classList.add('rested');
   }
@@ -883,8 +1031,35 @@
     rested = null;
     const s = screen === 'track' && shown === 'track' && app && $('#s-track', app); if (!s) return;
     s.classList.remove('rested');
-    flyLabels(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
+    flyLabels(); mapDots(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+    for (const v of s.querySelectorAll('video')) if (v.__due) { v.__due = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }   // (a flyover that was ready only while the screen rested)
+  }
+  /* the career's valley (js/kariera-dolina.js, MenuDolina: the Atlas career's stages and events in 3D, over the title): opened from the
+     career's strip (kpot), and again after an event's race with its result (G.karieraIzid, showNow). One layer in the phone's Back
+     (MenuIzbor.nazaj, 'dolina'): Back closes it, its own close takes the step out, an event started clears the history. No valley (its
+     file, WebGL or the bridge's atlas missing): the path's hub, karieraSheet */
+  const DO = () => window.MenuDolina || null;
+  const dolOpen = () => !!(DO() && DO().isOpen());
+  const NZ = () => window.MenuIzbor ? MenuIzbor.nazaj : null;
+  let dolQuiet = false;   // (closed by the menu itself, hide/showNow: no new screen drawn under it)
+  const dolShut = () => { dolQuiet = true; try { DO().close(true); } finally { dolQuiet = false; } };
+  const dolCan = () => { const v = DO() && G.kariera && G.kariera(); return v && v.atlas ? v : null; };
+  function dolina(izid) {
+    const D = DO(), v = dolCan(); if (!D || !v || !app) return false;
+    if (izOpen()) IZ().close(true);
+    if (zemOpen()) ZE().close(true);
+    sheet = null;
+    let started = false;
+    const ok = D.open({
+      root: app, view: v, izid: izid || null, from: () => $('.k-strip', app),
+      start: (id) => { if (!G.karieraStart(id)) return false; started = true; if (NZ()) NZ().clear(); return true; },   // (refused: the game's toast says why, the valley stays)
+      close: () => { if (!started && NZ()) NZ().drop('dolina'); if (!dolQuiet && app && app.isConnected && screen === 'title') render(true); },
+    });
+    if (ok === false) return false;
+    if (izid && G.karieraIzid) G.karieraIzid(true);   // (shown once)
+    if (NZ()) NZ().push('dolina', () => { if (dolOpen()) DO().close(true); });
+    return true;
   }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
     const L = TRACKS(), i = L.findIndex(t => t.id === id); if (i < 0) return false;
@@ -1090,8 +1265,8 @@
     const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', d = t.def, pg = IZ() && G.progress ? G.progress(d) : null;
     const cell = (lbl, val, cls) => '<div class="' + (cls || '') + '"><small>' + esc(lbl) + '</small><b>' + esc(val) + '</b></div>';
     // the row of numbers (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026): the flag, the best (NEW or the time), the rating,
-    // the mode, the difficulty and the opponents. A tap on one of the last five: its window from the foot up to the row (twSheet), the cell
-    // framed gold while it is open (twOn)
+    // the mode, the difficulty and the opponents. A tap on the best, the rating or the opponents: its window from the foot up to the row
+    // (twSheet), the cell framed gold while it is open (twOn); on the mode or the difficulty: the next one, no window (the user, 16. 11. 2026)
     const twOn = (k) => sheet === twSheet && tw === k ? ' tw-on' : '';
     const twB = (k, lbl, inner) => '<button data-act="' + (k === 'riv' ? 'riv' : 'tw:' + k) + '" aria-haspopup="dialog" aria-label="' + esc(lbl) + '">' + inner + '</button>';
     // the last cell: the opponents' number by the grid (its name for the readers), a race's a button (its window: how many, 0..100);
@@ -1112,10 +1287,11 @@
     // the rating: the number alone (the player's own until the world's server), as the best's time; none yet: a dash
     const rt = rateOf(t.id), rate = '<div class="rate' + twOn('rate') + '">' + twB('rate', 'Rating: ' + (rt ? rt.v.toFixed(1) : 'none yet') + '. Rate the track', '<small>Rating</small><b class="tm">' + (rt ? rt.v.toFixed(1) : '—') + '</b>') + '</div>';
     // the difficulty: its name (two words on two lines) over 4 dashes, as many lit as the level, in the level's colour
-    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0)), dif = '<div class="dif' + twOn('diff') + '">' + twB('diff', 'Difficulty: ' + DIFFS[dv][0] + '. Choose', '<b>' + two(DIFFS[dv][0]) + '</b>' + dashes(dv + 1, 'd' + dv)) + '</div>';
+    const nxt = (act, lbl, inner) => '<button data-act="' + act + '" aria-label="' + esc(lbl) + '">' + inner + '</button>';
+    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0)), dif = '<div class="dif">' + nxt('diff-next', 'Difficulty: ' + DIFFS[dv] + '. Change', '<b>' + two(DIFFS[dv]) + '</b>' + dashes(dv + 1, 'd' + dv)) + '</div>';
     // the mode: its full name on two lines, 4 grey dashes, the chosen mode's green (Classic race the first, Endless traffic the last)
     const mi = ROW_MODES.findIndex(m => m[0] === mode), mname = mi >= 0 ? ROW_MODES[mi][1] : modeOf(mode).name;
-    const md = '<div class="md' + twOn('mode') + '">' + twB('mode', 'Mode: ' + mname + '. Choose', '<b>' + two(mname) + '</b>' + dashes(mi, 'm', true)) + '</div>';
+    const md = '<div class="md">' + nxt('rmode-next', 'Mode: ' + mname + '. Change', '<b>' + two(mname) + '</b>' + dashes(mi, 'm', true)) + '</div>';
     h += '<div class="trow">' + flagB + best + rate + md + dif + last + '</div>';   // (the mode before the difficulty: the user, 12. 11. 2026)
     // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; no name over it (the user, 12. 11. 2026:
@@ -1149,6 +1325,43 @@
   }
 
   /* ---------------- overlays: sheets ---------------- */
+  /* ---------------- the career's path of 1.0 (js/kariera.js, part C): the strip in the Career panel, the hub in a sheet. Only through the
+     bridge: G.kariera() its plain view, G.karieraStart(id) a cup (false: not now, the game's toast says why) ---------------- */
+  let kStage = 0;   // (the hub's stage tab; 0: the highest open one)
+  const kStName = (v, n) => { const s = v.stopnje[n - 1]; return s ? s.en.name : ''; };
+  const kPct = (a, b) => b > 0 ? Math.max(0, Math.min(100, Math.round(a / b * 100))) : 100;
+  function kNext(v) {   // what the bar under the stage means
+    const p = v.napredek;   // (the Atlas career: the path's stars against the next stage's threshold)
+    if (v.atlas) return p.need ? num(p.done) + ' / ' + num(p.need) + '★ · opens ' + kStName(v, v.stopnja + 1) : num(p.done) + ' / ' + num(v.atlas.max) + '★ · every stage is open';
+    return p.need ? p.done + ' of ' + p.need + ' cups in the top three · opens ' + kStName(v, v.stopnja + 1) : 'Every stage is open';
+  }
+  function kStrip(v) {
+    const p = v.napredek, a = v.atlas;   // (the Atlas career: its stars instead of the path's progress, the valley a tap away)
+    const bar = kPct(p.done, p.need), chip = a ? '<em class="chip gold ks-st">★ ' + num(a.zvezdice) + ' / ' + num(a.max) + '</em>' : '<em class="chip gold">PATH</em>';
+    return '<button class="k-strip' + (a ? ' atlas' : '') + '" data-act="kpot" aria-haspopup="dialog"><span class="ks-tx"><b>STAGE ' + v.stopnja + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><small>' + esc(kNext(v)) + '</small></span>' +
+      '<span class="bar"><b style="width:' + bar + '%"></b></span>' + chip + '</button>';
+  }
+  function kCupRow(c) {
+    const names = c.tracks.map(id => { const t = trackById(id); return t ? t.name : id; });
+    const chip = c.stanje === 'zaklenjen' ? '<em class="chip lk">' + I.lock('currentColor') + 'LOCKED</em>' : c.stanje === 'osvojen' ? '<em class="chip gold">BEST P' + c.best + '</em>' : c.best ? '<em class="chip">BEST P' + c.best + '</em>' : '<em class="chip">OPEN</em>';
+    const meta = c.tracks.length + (c.tracks.length === 1 ? ' race' : ' races') + (c.km ? ' · ' + num(Math.round(c.km)) + ' km' : '') + (c.vrsta === 'tt' ? ' · time trials' : '');
+    return '<button class="k-cup ' + c.stanje + '" data-act="kcup:' + esc(c.id) + '"' + (c.stanje === 'zaklenjen' ? ' aria-disabled="true"' : '') + '><span class="kc-tx"><b>' + esc(c.en.name) + '</b><small>' + esc(meta) + '</small><span class="kc-tr">' + esc(names.join(' · ')) + '</span></span>' + chip + '</button>';
+  }
+  function kClassRow(r) {
+    const goals = r.cilji.map(g => '<span class="kg' + (g.done ? ' done' : '') + '">' + (g.done ? I.check : '') + (g.need > 1 && !g.done ? num(g.progress) + ' / ' : '') + esc(g.en) + '</span>').join('');
+    return '<div class="k-cls">' + kCupRow(r) + '<div class="kg-row">' + (r.stanje === 'zaklenjen' ? '<span class="kg lk">Buy a car of this class</span>' : goals) + '</div></div>';
+  }
+  function karieraSheet() {
+    const v = G.kariera && G.kariera(); if (!v) return '';
+    const n = Math.min(kStage || v.stopnja, v.stopnje.length), st = v.stopnje[n - 1], p = v.napredek;
+    let h = '<div class="sheet-bg" data-act="close-sheet"><div class="sheet kpot" role="dialog" aria-label="Career path"><h2>Career path' + moneyPill() + '</h2>';
+    h += '<div class="kp-prog"><b>STAGE ' + v.stopnja + ' OF ' + v.stopenj + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><span class="bar"><b style="width:' + kPct(p.done, p.need) + '%"></b></span><small>' + esc(kNext(v)) + '</small></div>';
+    h += '<div class="kp-tabs" role="tablist">' + v.stopnje.map(s => '<button role="tab" aria-selected="' + (s.n === n) + '" class="' + (s.odprta ? '' : 'lk') + '" data-act="kstage:' + s.n + '">' + (s.odprta ? '<i>' + s.n + '</i>' : I.lock('currentColor')) + '<span>' + esc(s.en.name) + '</span></button>').join('') + '</div>';
+    h += '<div class="kp-list">' + (st.odprta ? '' : '<p class="kp-note">Finish ' + (p.need || 3) + ' cups of ' + esc(kStName(v, n - 1)) + ' in the top three to open this stage.</p>') + st.pokali.map(kCupRow).join('') + '</div>';
+    h += '<h3>Class cups</h3><p class="kp-note">One cup for each class of car, in a car of that class.</p><div class="kp-list">' + v.razredi.map(kClassRow).join('') + '</div>';
+    h += '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
+    return h;
+  }
   function creditsSheet() {   // where the menu's pictures of the Earth and its land come from, as their licences ask
     return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet credits" role="dialog" aria-label="Credits"><h2>Credits</h2><dl>' +
       D.credits.map(c => '<dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd>').join('') + '</dl><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
@@ -1193,9 +1406,9 @@
      A tap on a cell of the row: its window from the foot of the screen up to the row (on its side: from the head down to the row, as wide
      as it), all of them as big, Close in the middle at their foot; the row stays bright over the dim, its cell framed gold, and a tap on
      another of its cells is that one's window (twPlace: the dim with a hole where the row is). The best (the track's best times), the
-     rating, the difficulty, the mode and the opponents */
+     rating and the opponents */
   let tw = null, btab = 'friends';
-  const TW = { best: bestSheet, rate: rateSheet, diff: diffSheet, mode: modeSheet, riv: rivSheet };
+  const TW = { best: bestSheet, rate: rateSheet, riv: rivSheet };
   const twSheet = () => tw && TW[tw] ? TW[tw]() : '';
   const twFrame = (cls, title, body) => '<div class="sheet-bg tw" data-act="close-sheet"><div class="sheet twin ' + cls + '" role="dialog" aria-label="' + esc(title) + '"><h2>' + title + '</h2><div class="twb">' + body + '</div>' +
     '<div class="row"><button class="go" data-act="close-sheet">Close</button></div></div></div>';
@@ -1216,31 +1429,19 @@
   const dashes = (n, cls, one) => '<span class="dsh ' + cls + '" aria-hidden="true">' + [0, 1, 2, 3].map(i => '<i' + ((one ? i === n : i < n) ? ' class="on"' : '') + '></i>').join('') + '</span>';
   // (in a span: the name's box two lines high whatever its words, so the dashes under Classic race and under Medium are as high: the user, 13. 11. 2026)
   const two = (s) => { const i = s.indexOf(' '); return '<span>' + (i < 0 ? esc(s) : esc(s.slice(0, i)) + '<br>' + esc(s.slice(i + 1))) + '</span>'; };
-  const opt = (act, on, inner, dis) => '<button class="twopt' + (on ? ' on' : '') + '" data-act="' + act + '" aria-pressed="' + on + '"' + (dis ? ' disabled' : '') + '>' + inner + (on ? '<span class="ck">' + I.check + '</span>' : '') + '</button>';
 
   // the difficulty: the game's own (Settings' Difficulty, S.difficulty 0..3); Super hard is the police's, a race takes it as Hard (game.js raceDiff)
-  const DIFFS = [['Easy', 'Gentle rivals and police. Room to learn the road.', '#ffd23f'], ['Medium', 'Rivals who fight back, a police that keeps up.', '#ffad5c'],
-    ['Hard', 'Quick rivals, little room for a mistake.', '#ff7a1a'], ['Super hard', 'The police at their toughest. A race takes it as Hard.', '#ff3b3b']];
-  function diffSheet() {
-    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0));
-    return twFrame('dif', 'Difficulty', DIFFS.map((x, i) => opt('diff:' + i, i === dv, '<span class="tx"><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></span>' + dashes(i + 1, 'd' + i))).join(''));
-  }
-  // the mode: the four of the row (the game's race, traffic, police, endless; one the track has not: not here); the police chase, its side:
-  // the getaway (the game's police mode) or the police (not yet)
-  const MI = (p) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
-  const ROW_MODES = [['race', 'Classic race', 'Closed road, a full grid of rivals.', MI('<path d="M5 3v18" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M6 4h13v9H6z" fill="#fff"/><path d="M6 4h3.3v3h3.2V4h3.2v3H19v3h-3.3v3h-3.2v-3H9.3v3H6v-3h3.3V7H6z" fill="#1b2230"/>')],
-    ['duel', 'Street race', 'Open road, real traffic, one rival.', MI('<path d="M4 15.5 6 10h12l2 5.5V19h-2.5v-1.6h-11V19H4z" fill="#fff"/><path d="M7.2 11.3h9.6l1 3H6.2z" fill="#1b2230"/><circle cx="7.4" cy="16.3" r="1.2" fill="#1b2230"/><circle cx="16.6" cy="16.3" r="1.2" fill="#1b2230"/><path d="M8 7.5h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>')],
-    ['chase', 'Police chase', 'Pick your side.', MI('<path d="M7 18v-6a5 5 0 0 1 10 0v6z" fill="#ff4d4d"/><path d="M4.5 18.5h15v2.5h-15z" fill="#fff"/><path d="M12 2v3M4 6l2 2M20 6l-2 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>')],
-    ['endless', 'Endless traffic', 'Ever denser traffic. Close passes add time.', MI('<path d="M12 12c-2.2-3-3.6-4-5.4-4a4 4 0 0 0 0 8c1.8 0 3.2-1 5.4-4s3.6-4 5.4-4a4 4 0 0 1 0 8c-1.8 0-3.2-1-5.4-4z" fill="none" stroke="#fff" stroke-width="2.4"/>')]];
-  function modeSheet() {
-    const t = curTrack(), has = (m) => !t || t.modes.includes(GAME_MODE[m]);
-    return twFrame('mod', 'Mode', ROW_MODES.map((m, i) => {
-      const on = m[0] === mode, ok = has(m[0]);
-      let h = opt('rmode:' + m[0], on, '<span class="mi">' + m[3] + '</span><span class="tx"><b>' + esc(m[1]) + '</b><small>' + esc(ok ? m[2] : 'Open roads only') + '</small></span>' + dashes(i, 'm', true), !ok);
-      if (m[0] === 'chase' && on) h += '<div class="side" role="group" aria-label="Your side"><button class="on" aria-pressed="true" data-act="side:run">Getaway<small>You run, they chase</small></button>' +
-        '<button disabled aria-pressed="false">Police<small>Soon</small></button></div>';
-      return h;
-    }).join(''));
+  const DIFFS = ['Easy', 'Medium', 'Hard', 'Super hard'];
+  // the mode: the four of the row (the game's race, traffic, police, endless), in the order its dashes show
+  const ROW_MODES = [['race', 'Classic race'], ['duel', 'Street race'], ['chase', 'Police chase'], ['endless', 'Endless traffic']];
+  // a tap on the row's mode: the next of the four the track has (after Endless traffic the first again); none other: as it was
+  function rowNext() {
+    const t = curTrack(); if (!t) return;
+    const i = ROW_MODES.findIndex(m => m[0] === mode);
+    for (let k = 1; k <= ROW_MODES.length; k++) {
+      const m = ROW_MODES[(i + k + ROW_MODES.length) % ROW_MODES.length][0];
+      if (m !== mode && t.modes.includes(GAME_MODE[m])) { rowMode(m); return; }
+    }
   }
   // a mode of the row: the same track in it (its place in the new list), the game's mode with it
   function rowMode(m) {
@@ -1327,11 +1528,12 @@
   let preT = 0;   // (the track shown: its land on the globe loaded after a moment)
   function render(keepScroll) {
     if (!app) return;
-    const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
+    const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0, prev = [...app.querySelectorAll('#track-stage .dio')];   // (the stage's views: kept or faded over, stageViews)
     for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro') && !n.classList.contains('izb') && !n.classList.contains('zem') && !n.classList.contains('wxl')) n.remove();   // (the intro, if there is one, stays over everything; the quick list and the Earth over the screen; the weather's canvases: js/menu-vreme.js)
     rested = null;
     app.classList.toggle('on-title', screen === 'title');
     app.insertAdjacentHTML('afterbegin', VIEWS[screen]());
+    if (screen === 'track') stageViews(prev, shown !== 'track');
     if (keepScroll && shown === screen) $('.scr', app).classList.add('still');   // an update in place (a choice, a sheet): no slide-in again
     if (keepScroll) { const n = $('.scroll', app); if (n) n.scrollTop = top; }
     if (screen === 'title') { const pn = $('.title-panel', app); if (!titleSub) panelH = pn.offsetHeight; else if (panelH) pn.style.minHeight = panelH + 'px'; }   // (Single race and Career open in the same frame, as tall)
@@ -1342,7 +1544,7 @@
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
     if (screen === 'track') ringFit();   // (on its side: the carousel's scale before anything measures the screen)
-    fitWhere(); signOn(); flyLabels(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
+    fitWhere(); signOn(); flyLabels(); mapDots(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
     const M = MV(), ts = M && screen === 'track' && $('#s-track', app);   // (the weather over the screen, after the car: its outline)
     if (ts) M.on(ts, wxLook(), { entering: shown !== 'track', tap: wxTap, app }); else if (M) M.off();
     wxTap = null;
@@ -1362,7 +1564,7 @@
   let ixRaf = 0;
   // the settings the intro reads, as the mockup's lists had them: 0 is the first choice (Sound/Music: On; Race intro: Full)
   const setting = (id) => id === 'intro' ? (G.S.intro | 0) : id === 'music' ? (G.S.music ? 0 : 1) : id === 'sound' ? (G.S.sound ? 0 : 1) : 0;
-  const heliCache = {}, hasFlight = (id) => !(XI[id] && XI[id].flight === false);   // (a track leaving the game before its release has no helicopter flight)
+  const heliCache = {}, hasFlight = (id) => !!XI[id] && XI[id].flight !== false;   // (only a track with its intro data has a helicopter flight; one leaving the game before its release has flight: false)
   const heliData = (id) => heliCache[id] || (heliCache[id] = fetch('assets/maps/heli-' + id + '.json').then(r => r.ok ? r.json() : null).catch(() => null).then(j => { if (!j) delete heliCache[id]; return j; }));   // (a failure is not kept: the next intro asks again)
   const MUSIC_DROP = 20.0, MUSIC_LEVEL = 4.5;   // (the music's drop is 20 s into its file; it falls where the helicopter levels out, 4.5 s into its video)
   // where the track screen's stage is (the intro's video goes exactly there), or where it would be
@@ -1513,35 +1715,23 @@
     return '<svg viewBox="0 0 24 24" width="' + w + '" height="' + w + '" style="overflow:visible" aria-hidden="true">' + g + '</svg>';
   }
   const WK_WATCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="8" fill="none" stroke="#ffc629" stroke-width="2"/><path d="M12 14V9.4M9.4 2.6h5.2M12 2.6v3.2M18.6 6.4l1.6-1.6" stroke="#ffc629" stroke-width="2" stroke-linecap="round"/></svg>';
-  function weekend(R, go) {
-    const t = R.track, X = D.weekend, W = G.weekend(t.def), sky = weekendSky(t, R.wet), country = countryOf(t), S = G.S;
-    const fly = !!RT[t.id] && hasFlight(t.id), time = WK_TIME[S.tod] || '14:00', n = W.cars;
-    const el = document.createElement('div'); el.className = 'intro wk' + (S.quali ? ' on' : '') + (fly ? '' : ' model'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', X.kick);
-    const page = (k, d) => {
-      const q = k === 'q';
-      return '<div class="wk-pg wk-' + k + '"><div class="wk-hd">' + esc((q ? X.sat : X.sun).toUpperCase()) + '</div>' +
-        '<div class="wk-dw"><div class="wk-row">' + skyIcon(d.k, 52) + '<span class="wk-tmp">' + d.t + '<sup>°</sup></span></div><span class="wk-wd"><em>' + esc(X.sky[d.k]) + '</em> · ' + d.wind + ' km/h</span></div>' +
-        '<div class="wk-ses"><b class="wk-t">' + time + '</b><span class="wk-line"><span class="wk-sname">' + esc(q ? X.quali : X.race) + '</span> <span class="wk-sdet">' + wkMin(q ? W.quali : W.race) + '</span></span></div>' +
-        (q ? '<div class="wk-ft"><button class="wk-sw" data-wk="q" role="switch" aria-checked="' + !!S.quali + '" aria-label="' + esc(X.switch) + '"><i></i></button></div><span class="wk-stamp" data-off>' + esc(X.skipped.toUpperCase()) + '</span>'
-          : '<div class="wk-ft"><span class="wk-gl">' + esc(X.grid.toUpperCase()) + '</span><span class="wk-pos" data-off>P' + n + '<u>/' + n + '</u></span><span class="wk-pos" data-on>P1–' + n + '</span></div>') + '</div>';
-    };
-    const sun = sky[1], wet = (R.wet && sun.k !== 'change') || sun.k === 'storm';   // (Changing: its own sky, may change, wet at the start or not)
-    el.innerHTML = '<div class="wk-bg" aria-hidden="true"><div class="wk-pic"><img src="' + (fly ? 'assets/maps/heli-' + t.id + '.webp' : trackImg(t, R.wet)) + '" alt=""><div class="wk-pin"></div></div></div>' +
-      '<div class="wk-head"><button class="sq" data-wk="back" aria-label="' + esc(X.back) + '">' + I.back + '</button><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div></div>' +
-      '<span class="wk-wx' + (wet ? ' wet' : '') + '">' + (wet ? I.rain : skyIcon(sun.k === 'change' ? 'part' : sun.k, 20)) + esc(X.sky[sun.k].toUpperCase()) + '<small>· ' + esc(wet ? X.track.wet : sun.k === 'change' ? X.track.change : X.track.dry) + '</small></span>' +
-      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b>' + esc(X.mode) + '</b> · ' + esc(G.car().name) + ' · ' + laps(W.laps) + ' · ' + n + ' cars</p></div>' +
-        '<div class="wk-cal">' + page('q', sky[0]) + page('r', sky[1]) + '</div>' +
-        '<p class="wk-note" data-off>' + WK_WATCH + esc(X.hint) + '</p><p class="wk-note" data-on>' + esc(X.onNote) + '</p>' +
-        '<button class="go wk-go" data-wk="go" data-off>' + esc(X.go) + '<small>' + esc(X.goSub.toUpperCase()) + '</small></button><button class="go gold wk-go" data-wk="go" data-on>' + esc(X.goQ) + '<small>' + esc(X.goQSub.toUpperCase()) + '</small></button></div>';
+  // the frame of the race weekend and of the police chase's side: the track from afar behind (the first frame of its helicopter's flight, the
+  // start · finish marked on it; else its model), the head (Back, the track's name), over it `inner` (the panel at the foot upright, at the
+  // right on its side; the picture in the room it leaves). The track is loaded under it; close() takes it away
+  function wkShell(t, wet, cls, label, inner) {
+    const fly = !!RT[t.id] && hasFlight(t.id), country = countryOf(t);
+    const el = document.createElement('div'); el.className = 'intro wk' + cls + (fly ? '' : ' model'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', label);
+    el.innerHTML = '<div class="wk-bg" aria-hidden="true"><div class="wk-pic"><img src="' + (fly ? 'assets/maps/heli-' + t.id + '.webp' : trackImg(t, wet)) + '" alt=""><div class="wk-pin"></div></div></div>' +
+      '<div class="wk-head"><button class="sq" data-wk="back" aria-label="' + esc(D.weekend.back) + '">' + I.back + '</button><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div></div>' + inner;
     app.appendChild(el);
-    // the picture in the room the calendar leaves (above it upright, left of it on its side): the helicopter's frame covers it, a model fits in it
+    // the picture in the room the panel leaves (above it upright, left of it on its side): the helicopter's frame covers it, a model fits in it
     const pic = $('.wk-pic', el);
     const fit = () => {
       if (!el.isConnected) { removeEventListener('resize', fit); return; }
       const A = app.getBoundingClientRect(), P = $('.wk-pnl', el).getBoundingClientRect(), side = A.width > A.height;
       const w = side ? Math.max(120, P.left - A.left) : A.width, h = side ? A.height : Math.max(120, P.top - A.top + 24);
       const pw = fly ? Math.max(w, h * 1.5) : w, ph = fly ? pw / 1.5 : h;
-      el.style.setProperty('--wk-y', Math.round(P.top - A.top) + 'px'); el.style.setProperty('--wk-x', Math.round(P.left - A.left) + 'px');   // (where the calendar begins: the picture darkens into it)
+      el.style.setProperty('--wk-y', Math.round(P.top - A.top) + 'px'); el.style.setProperty('--wk-x', Math.round(P.left - A.left) + 'px');   // (where the panel begins: the picture darkens into it)
       Object.assign(pic.style, { left: (w / 2 - pw / 2).toFixed(1) + 'px', top: (h / 2 - ph / 2 + (side || !fly ? 0 : 10)).toFixed(1) + 'px', width: pw.toFixed(1) + 'px', height: ph.toFixed(1) + 'px' });
     };
     fit(); addEventListener('resize', fit);
@@ -1553,7 +1743,25 @@
       const pin = $('.wk-pin', el); pin.style.left = ((pv3.x + 1) / 2 * 100).toFixed(2) + '%'; pin.style.top = ((1 - pv3.y) / 2 * 100).toFixed(2) + '%';
       pin.innerHTML = '<span><b>' + esc(m[0].toUpperCase()) + '</b></span><i></i>'; pin.classList.add('on');
     });
-    const close = () => { removeEventListener('resize', fit); el.remove(); };
+    return { el, close() { removeEventListener('resize', fit); el.remove(); } };
+  }
+  function weekend(R, go) {
+    const t = R.track, X = D.weekend, W = G.weekend(t.def), sky = weekendSky(t, R.wet), S = G.S;
+    const time = WK_TIME[S.tod] || '14:00', n = W.cars;
+    const page = (k, d) => {
+      const q = k === 'q';
+      return '<div class="wk-pg wk-' + k + '"><div class="wk-hd">' + esc((q ? X.sat : X.sun).toUpperCase()) + '</div>' +
+        '<div class="wk-dw"><div class="wk-row">' + skyIcon(d.k, 52) + '<span class="wk-tmp">' + d.t + '<sup>°</sup></span></div><span class="wk-wd"><em>' + esc(X.sky[d.k]) + '</em> · ' + d.wind + ' km/h</span></div>' +
+        '<div class="wk-ses"><b class="wk-t">' + time + '</b><span class="wk-line"><span class="wk-sname">' + esc(q ? X.quali : X.race) + '</span> <span class="wk-sdet">' + wkMin(q ? W.quali : W.race) + '</span></span></div>' +
+        (q ? '<div class="wk-ft"><button class="wk-sw" data-wk="q" role="switch" aria-checked="' + !!S.quali + '" aria-label="' + esc(X.switch) + '"><i></i></button></div><span class="wk-stamp" data-off>' + esc(X.skipped.toUpperCase()) + '</span>'
+          : '<div class="wk-ft"><span class="wk-gl">' + esc(X.grid.toUpperCase()) + '</span><span class="wk-pos" data-off>P' + n + '<u>/' + n + '</u></span><span class="wk-pos" data-on>P1–' + n + '</span></div>') + '</div>';
+    };
+    const sun = sky[1], wet = (R.wet && sun.k !== 'change') || sun.k === 'storm';   // (Changing: its own sky, may change, wet at the start or not)
+    const { el, close } = wkShell(t, R.wet, S.quali ? ' on' : '', X.kick, '<span class="wk-wx' + (wet ? ' wet' : '') + '">' + (wet ? I.rain : skyIcon(sun.k === 'change' ? 'part' : sun.k, 20)) + esc(X.sky[sun.k].toUpperCase()) + '<small>· ' + esc(wet ? X.track.wet : sun.k === 'change' ? X.track.change : X.track.dry) + '</small></span>' +
+      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b>' + esc(X.mode) + '</b> · ' + esc(G.car().name) + ' · ' + laps(W.laps) + ' · ' + n + ' cars</p></div>' +
+        '<div class="wk-cal">' + page('q', sky[0]) + page('r', sky[1]) + '</div>' +
+        '<p class="wk-note" data-off>' + WK_WATCH + esc(X.hint) + '</p><p class="wk-note" data-on>' + esc(X.onNote) + '</p>' +
+        '<button class="go wk-go" data-wk="go" data-off>' + esc(X.go) + '<small>' + esc(X.goSub.toUpperCase()) + '</small></button><button class="go gold wk-go" data-wk="go" data-on>' + esc(X.goQ) + '<small>' + esc(X.goQSub.toUpperCase()) + '</small></button></div>');
     const ctl = el.__wk = {
       back() { close(); render(); },
       go() { close(); go(); },
@@ -1567,14 +1775,49 @@
       G.click(); ({ back: ctl.back, go: ctl.go, q: ctl.quali })[b.dataset.wk]();
     });
   }
+  /* the police chase's side before the race (the user, 16. 11. 2026): the race weekend's frame, its two pages the sides, the one chosen
+     upright and framed red, the other turned aside and grey; a tap on a page (the pad's LB and RB) chooses it, remembered for the next time.
+     The getaway: the game's police mode (the police chase the player); the police: the game's pursuit (js/zabava/lov.js, the player's patrol
+     car chases a getaway car). Race! goes on to the intro as ever; Back to the track screen */
+  const SIDE_IC = {
+    run: '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><path d="M7 31l4-10.5h22l5 10.5v6h-4.5v-3h-22v3H7z" fill="#d81f2a"/><path d="M13.4 22.6h17.8l2.6 6.2H11z" fill="#1b2230"/><circle cx="13.5" cy="33" r="2.6" fill="#1b2230"/><circle cx="30.5" cy="33" r="2.6" fill="#1b2230"/><path d="M2 24h4M1 29h4M3 34h3" stroke="#6b7384" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    cop: '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><path d="M7 31l4-10.5h26l4 10.5v6h-4.5v-3h-25v3H7z" fill="#1f4fa8"/><path d="M13.4 22.6h21.2l2.4 6.2H11z" fill="#1b2230"/><circle cx="14" cy="33" r="2.6" fill="#1b2230"/><circle cx="34" cy="33" r="2.6" fill="#1b2230"/><path d="M18 17h5.5v3.5H18z" fill="#d81f2a"/><path d="M24.5 17H30v3.5h-5.5z" fill="#3fa0ff"/></svg>',
+  };
+  let chSide = 'run';   // (the side chosen last, for the next time)
+  function chaseSide(R, go) {
+    const t = R.track, X = D.side, can = t.modes.includes('lov'), K = ['cop', 'run'];
+    if (!can) chSide = 'run';
+    const page = (k) => '<div class="wk-pg sd-' + k + '" data-wk="side" data-s="' + k + '" role="button" tabindex="0"' + (k === 'cop' && !can ? ' aria-disabled="true"' : '') + '><div class="wk-hd">' + esc(X[k].name.toUpperCase()) + '</div>' +
+      '<div class="wk-dw">' + SIDE_IC[k] + '</div><div class="wk-ses"><span class="wk-line"><span class="wk-sname">' + esc(X[k].role) + '</span></span><span class="wk-sdet">' + esc(X[k].what) + '</span></div>' +
+      '<div class="wk-ft"><span class="wk-gl">' + esc(X[k].goal.toUpperCase()) + '</span></div></div>';
+    const { el, close } = wkShell(t, R.wet, ' sd', X.title,
+      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b class="sd-name"></b> · ' + esc(G.car().name) + '</p></div>' +
+        '<div class="wk-cal">' + K.map(page).join('') + '</div><p class="wk-note">' + esc(X.hint) + '</p>' +
+        '<button class="go wk-go" data-wk="go">' + esc(X.go) + '<small class="sd-sub"></small></button></div>');
+    // the side shown: its page upright and framed (as Sunday's), the other turned aside and grey (as Saturday's when qualifying is off)
+    const show = () => {
+      for (const k of K) { const p = $('.sd-' + k, el); p.classList.toggle('wk-r', k === chSide); p.classList.toggle('wk-q', k !== chSide); p.setAttribute('aria-pressed', k === chSide); }
+      $('.sd-name', el).textContent = X[chSide].name; $('.sd-sub', el).textContent = X[chSide].goSub.toUpperCase();
+    };
+    show();
+    const ctl = el.__wk = {
+      back() { close(); render(); },
+      // (the police: the same track in the pursuit; the track is the one loaded, the mode is read at the start)
+      go() { close(); if (chSide === 'cop') G.select(t.id, 'lov'); go(); },
+      side(k) { k = k || (chSide === 'cop' ? 'run' : 'cop'); if (k === 'cop' && !can) return; chSide = k; show(); },
+    };
+    el.addEventListener('click', (e) => { const b = e.target.closest('[data-wk]'); if (!b) return; G.click(); ctl[b.dataset.wk](b.dataset.s); });
+    el.addEventListener('keydown', (e) => { const b = e.target.closest('[data-wk="side"]'); if (b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ctl.side(b.dataset.s); } });
+  }
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
-    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf);
+    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) { under.pause(); under.__stop = 1; } cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf); cancelAnimationFrame(graphRaf);
     if (window.MenuCar) MenuCar.rest();   // (the car's canvas: its buffers freed for the race)
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
     const off = setting('intro') === 2, rect = stageRect();
     wx.detach(); if (MV()) MV().off();
     if (R.kind === 'single' && weekendOn(t, R.mode)) { weekend(R, go); return; }   // (Circuit race: the race weekend's calendar is the intro)
+    if (R.kind === 'single' && R.mode === 'chase' && !R.side) { chaseSide(R, () => beforeRace(Object.assign({}, R, { side: 'run' }), go)); return; }   // (Police chase: the side first)
     const el = document.createElement('div'); el.className = 'intro ix2'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
     const finishIntro = (e) => { if (e.isConnected) e.remove(); go(); };   // (the race is loaded: on to its start lights)
@@ -1790,6 +2033,7 @@
   }
 
   function back() {
+    if (dolOpen()) { DO().back(); return; }
     if (zemOpen()) { ZE().back(); return; }
     if (izOpen()) { IZ().back(); return; }
     if (sheet) { sheet = null; render(true); return; }
@@ -1822,12 +2066,14 @@
       case 'zemlja': zemlja(); break;   // (the globe in the head: the Earth, js/menu-zemlja.js)   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back and its Izberi progo: this step again, game.js garageBack)
       case 'credits': sheet = creditsSheet; render(true); break;
+      case 'kpot': if (dolina()) break; kStage = 0; sheet = karieraSheet; render(true); break;   // (the career's path: the valley, else the hub, js/kariera.js)
+      case 'kstage': kStage = +v || 0; render(true); { const l = $('.sheet.kpot', app); if (l) l.scrollTop = 0; } break;
+      case 'kcup': if (el.getAttribute('aria-disabled') === 'true') { G.karieraStart(v); break; } if (G.karieraStart(v)) { sheet = null; render(true); } break;   // (locked: the game's toast says why; started: the race)
       case 'riv': case 'tw': tw = k === 'riv' ? 'riv' : v; if (tw === 'riv' && !rivOf((curTrack() || {}).def || {})) break; sheet = twSheet; render(true); break;   // (the row's cells: their windows; Opponents: how many, 0..100)
-      case 'diff': G.setOption('difficulty', +v); render(true); break;
-      case 'rmode': rowMode(v); break;
+      case 'diff-next': G.setOption('difficulty', ((G.S.difficulty | 0) + 1) % 4); render(true); break;
+      case 'rmode-next': rowNext(); break;
       case 'rate': { const t = curTrack(); if (t && t.rec[1] !== '—') { rateSet(t.id, +v); render(true); } break; }
       case 'btab': btab = v; render(true); break;
-      case 'side': break;   // (the police chase's side: the getaway only, the police's side not yet)
       case 'riv-n': rivSet(+v); break;
       case 'dark-tip': sheet = darkSheet; render(true); break;
       case 'dark-never': try { localStorage.setItem('tdgp-darktip', 'off'); } catch (_) { /* private mode: it shows again next time */ } sheet = null; render(true); break;
@@ -1851,14 +2097,14 @@
   // the game's gamepad on the menu (game.js padFrame: the highlight and A are the game's, over the buttons of this shadow root): where it looks
   // (the intro, else an open sheet, else the screen), and the keys that are the menu's own: B back, Start on, LB and RB the track; in the
   // intro any of A, B and Start skips it
-  const padRoot = () => app ? $('.intro', app) || (zemOpen() && ZE().root()) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
+  const padRoot = () => app ? $('.intro', app) || (dolOpen() && DO().root && DO().root()) || (zemOpen() && ZE().root()) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
   function padKey(k) {
     if (!app || !G || !G.visible()) return false;
     const wk = $('.intro.wk', app);   // (the race weekend: B back to the tracks, Start the button's choice, A the highlighted button)
-    if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } return false; }
+    if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } if ((k === 'lb' || k === 'rb') && wk.__wk.side) { G.click(); wk.__wk.side(k === 'lb' ? 'cop' : 'run'); return true; } return false; }
     if ($('.intro', app)) { if (k === 'a' || k === 'b' || k === 'start') { const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return true; }
     if (k === 'b') { G.click(); back(); return true; }
-    if (izOpen() || zemOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)
+    if (izOpen() || zemOpen() || dolOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)
     if (sheet) return false;
     if (screen === 'track' && (k === 'lb' || k === 'rb')) { G.click(); act('track:' + (k === 'lb' ? -1 : 1)); return true; }
     if (k === 'start') {
@@ -1881,7 +2127,7 @@
       if (!G || !G.visible()) return;
       const wk = $('.intro.wk', app); if (wk) { if (e.key === 'Escape') { e.preventDefault(); wk.__wk.back(); } return; }   // (Esc: the race weekend back to the tracks)
       if ($('.intro', app)) { if (e.key === 'Escape') { e.preventDefault(); const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return; }   // (Esc skips the intro)
-      if (e.key === 'Escape') { if (zemOpen() || izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
+      if (e.key === 'Escape') { if (dolOpen() || zemOpen() || izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
       if (screen === 'track' && !sheet && !izOpen() && !zemOpen() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
     });
     window.addEventListener('resize', () => wx.resize());
@@ -1936,6 +2182,9 @@
     if (!ready) { want = name; return; }
     if (izOpen()) IZ().close(true);
     if (zemOpen()) ZE().close(true);
+    if (dolOpen()) dolShut();
+    const izid = G.karieraIzid ? G.karieraIzid() : null;   // (after an event's race: back in the valley with its result)
+    if (izid && dolCan()) name = 'title';
     if (carFrom && name === 'title' && screen === 'track') name = 'track';   // (Back from the car screen: the step it was opened from)
     carFrom = false;
     if (name === 'title') {
@@ -1949,18 +2198,21 @@
       if (cur && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else enterTrack();
     }
     cam = G.S.menuCam || 1;   // (back on the track step: the camera it had)
+    if (izid && name === 'title' && dolCan()) { titleSub = 'career'; sheet = null; }
     render();
+    if (izid && name === 'title') dolina(izid);
   }
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
     want = null;
     if (!app) return;
-    wx.detach(); if (MV()) MV().off(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
+    wx.detach(); if (MV()) MV().off(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
     if (rg) { cancelAnimationFrame(rg.raf); rg = null; } if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; } arriveDone();   // (the carousel: drawn anew when the menu is up again)
     if (izOpen()) IZ().close(true);   // (the quick list and its steps in the history gone)
     if (zemOpen()) ZE().close(true);   // (the Earth too)
+    if (dolOpen()) dolShut();   // (the career's valley too)
     rested = null; globe.reset();
     if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
-    for (const v of app.querySelectorAll('video')) v.pause();
+    for (const v of app.querySelectorAll('video')) { v.pause(); v.__stop = 1; }   // (a flyover still loading: not played under the game later)
     shown = '';
   }
   // the menu could not start (its style did not load, or something in it failed): the game's old title and track screens take over, so there
@@ -1992,5 +2244,5 @@
   const COLUMN = window.matchMedia ? matchMedia('(min-width: 640px) and (orientation: portrait)') : null;
   const covers = () => ready && !!app && shown === 'track' && !(COLUMN && COLUMN.matches);
   // fromTrack: the garage was opened from the track step (game.js garageOpen keeps it for the way back: garageBack, straight to this step)
-  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, nu: nuOn, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state(), ring: { on: isLand(), turning: !!(rg && !rg.drag), held: !!(rg && rg.drag), p: rg ? +rg.p.toFixed(3) : 0, k: +ringK.toFixed(4), fading: !!ringGone }, arrive: arrive.length }) };
+  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, nu: nuOn, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state(), ring: { on: isLand(), turning: !!(rg && !rg.drag), held: !!(rg && rg.drag), p: rg ? +rg.p.toFixed(3) : 0, k: +ringK.toFixed(4), fading: !!ringGone }, arrive: arrive.length, run: { id: run.id, t: runNow(), on: run.on } }) };
 })();

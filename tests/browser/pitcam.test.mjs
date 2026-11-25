@@ -165,7 +165,7 @@ try {
 
   // every circuit with pits
   let ids = await page.evaluate(() => Core.TRACKS.filter(d => d.pit && !d.open && !d.test).map(d => d.id));
-  T.check('5 circuits with pits (the test tracks left out)', ids.length === 5, ids.join(', '));   // (5: Toronto, Bang Saen and Trois-Rivières are test tracks since 5. 11. 2026, Longford, Newcastle and Townsville since 6. 11. 2026)
+  T.check('the circuits with pits (the test tracks left out): the five of the first version and those of the new tracks', ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal'].every(id => ids.includes(id)), `${ids.length}: ${ids.join(', ')}`);   // (the five of the first version: Toronto, Bang Saen and Trois-Rivières are test tracks since 5. 11. 2026, Longford, Newcastle and Townsville since 6. 11. 2026; the new tracks N1-N8 add twelve, 11. 11. 2026)
   if (ONLY) ids = ids.filter(id => ONLY.includes(id));
   for (const id of ids) {
     if (id === 'bathurst') continue;

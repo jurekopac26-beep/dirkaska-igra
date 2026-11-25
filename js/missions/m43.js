@@ -12,8 +12,9 @@
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s);
   const dec = (s) => (typeof Lang !== 'undefined' && Lang.dec ? Lang.dec(s) : String(s).replace('.', ','));
-  const K = { S0: 4050, END: 900, VG: [22, 34, 48, 64, 82], EB: [2.3, 1.6, 1.05, 0.65, 0.35], G0: 3, RUN: 88, GONE: 1.2, BACK: 0.6, HIT: 9,
-    RAMPS: [[3390, 3480], [2240, 2330], [1560, 1650]], SAND: 4.0, RD: -0.4, HEAT: 0.022, GX: 1.3, LAT: 5.5 };
+  // (the same places on the road as before, within a metre: Rio do Rastro's start line moved 782 m on to a straight, #698, 15. 11. 2026; S0 a metre short, so the readout at the start stays 3,1 km)
+  const K = { S0: 3267, END: 118, VG: [22, 34, 48, 64, 82], EB: [2.3, 1.6, 1.05, 0.65, 0.35], G0: 3, RUN: 88, GONE: 1.2, BACK: 0.6, HIT: 9,
+    RAMPS: [[2608, 2698], [1458, 1548], [778, 868]], SAND: 4.0, RD: -0.4, HEAT: 0.022, GX: 1.3, LAT: 5.5 };
   const CAB = 0x2a6fb8, BOX = 0xe6e8ea, GLS = 0x1d2733, BLK = 0x1b1d21, GRY = 0x9aa1a8;
 
   // the truck: a cab-over in front, the box body behind it, three axles (x forward, y up, z to the side)
