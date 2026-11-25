@@ -2,7 +2,7 @@
 // <link rel="x-lazy-script" data-lazy="proga-<id>">, Core.loadTrack). A head is the track's small fields as its file gives them (each
 // field but functions and those over HEAD_MAX bytes of JSON: the road, the heights, the scenery), with `head: true` and `hd`, what the
 // game reads of a built track without building it (the menus, a championship's km, the race weekend's estimate): hd.len (Track.len,
-// m), hd.race (Track.raceLen), hd.qb (Track.qualiBack(), m), hd.nc (its corners, Track.corners.length); TRACK_ORDER is the
+// m), hd.race (Track.raceLen), hd.qb (Track.qualiBack(), m), hd.nc (its corners, Track.corners.length), hd.km (Kariera.km of the full file: the career's cups, js/kariera.js); TRACK_ORDER is the
 // order of every track in the menu (index.html's track scripts and lazy links, as they stand), which Core.TRACKS keeps.
 // Frozen tracks (CLAUDE.md »Testne proge«: the test ones, those being decided and the ones frozen before their mark) keep their
 // <script> and get no head. Run after a lazy track's file changed or a track was added; tests/glave-prog.test.js checks the file.
@@ -44,8 +44,8 @@ function headOf(d) {
 }
 // what a built track gives (the game's Track, Core from tests/lib/core.js with every track file)
 function hdOf(C, id) {
-  const T = new C.Track(C.TRACKS.find(d => d.id === id)), r = (x) => Math.round(x * 1000) / 1000;
-  return { len: r(T.len), race: r(T.raceLen), qb: r(T.qualiBack()), nc: T.corners.length };
+  const d = C.TRACKS.find(x => x.id === id), T = new C.Track(d), r = (x) => Math.round(x * 1000) / 1000;
+  return { len: r(T.len), race: r(T.raceLen), qb: r(T.qualiBack()), nc: T.corners.length, km: require('../js/kariera.js').km(d) };
 }
 function build(root) {
   const { defs } = defsOf(root), fz = frozen(root), seen = new Set(), order = [];

@@ -36,6 +36,9 @@ for (const h of heads) {
   if (h.hd.len !== r(T.len) || h.hd.race !== r(T.raceLen) || h.hd.qb !== r(T.qualiBack()) || h.hd.nc !== T.corners.length) hdWrong.push(h.id + '.hd');
 }
 check('a full file merged over its head is one full def; hd is what its built track gives', !hdWrong.length, hdWrong.join(', '));
+// the career's path (js/kariera.js, Kariera.pot: the cups by the tracks' km) is the same from the heads as from the full files (hd.km)
+const K = require('../js/kariera.js'), byHead = new Map(heads.map(h => [h.id, h]));
+check('Kariera.pot from the heads (hd.km) is the one from the full files', JSON.stringify(K.pot(defs.map(d => byHead.get(d.id) || d), C.CATS)) === JSON.stringify(K.pot(defs, C.CATS)));
 check('Core.TRACKS keeps the order of TRACK_ORDER', C.TRACKS.map(d => d.id).join() === order.filter(id => C.TRACKS.some(d => d.id === id)).join());
 
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
