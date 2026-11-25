@@ -64,8 +64,9 @@ Kar ni potrjeno, je označeno z »ni vira« in **ne gre v kodo**, dokler vira ni
 
 [30] fieldguides.com/triplists/jam18c.html; en.wikipedia.org/wiki/Blue_and_John_Crow_Mountains_National_Park · [31] svalbardmuseum.no/en/birds; lifeinnorway.net/winter-wildlife-of-svalbard · [32] datazone.birdlife.org/site/factsheet/mussulo-iba-angola; fieldguides.com/triplists/ang23.html
 [33] osme.org/trip-reports/kirgtrip1 · [34] koreascience.kr/article/JAKO202108148753837.page · [35] madacamp.com/Isalo; planetscott.com/site/863/isalo-national-park · [36] fieldguides.com/triplists/png25TRIPLIST.pdf
+[37] datazone.birdlife.org/site/factsheet/serra-do-pico-da-antónia-iba-cape-verde/text · [38] journal.univ-eloued.dz/index.php/ajb/article/download/49/39/76
 
-Viri [19]–[36] so povzeti iz izpisov spletnega iskanja 24. 11. (strani niso bile prebrane v celoti); pred vnosom v kodo vsako številko preveri na strani.
+Viri [19]–[38] so povzeti iz izpisov spletnega iskanja 24. 11. (strani niso bile prebrane v celoti); pred vnosom v kodo vsako številko preveri na strani.
 
 ## Države s pravimi progami: predlog vrste (še ni potrjeno, razen kjer piše)
 
@@ -95,7 +96,9 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 | Rumenonogi galeb, ohlapna jata | Italija, Črna gora, Albanija, Španija, Portugalska (Madeira), Turčija | kraji potrjeni [14] [15]; število in formacija manjkata |
 | Azijski odprtokljuni štrk | Tajska (Buriram) | potrjeno [16]; število manjka |
 | Kravja čaplja | Filipini, Indonezija, Šrilanka, Malezija | potrjena Šrilanka [17]; formacija manjka |
-| Še brez raziskave | Zelenortski otoki, Alžirija, Kitajska | vrsta še ni izbrana |
+| Brez potrjene vrste (iskanje 25. 11.) | Zelenortski otoki (Santo Antão) | ni seznama vrst za otok; ujede so tam redke (črni škarnik, kanja) [37]; ostane sedanja ptica |
+| Brez potrjene vrste (iskanje 25. 11.) | Alžirija (Ghoufi) | pri Ghoufiju zapisana le magrebska sraka (marec 2019) [38], brez podatka o jatah; ostane sedanja ptica |
+| Brez potrjene vrste (iskanje 25. 11.) | Kitajska (Tianmen) | vir z vrstami ni najden; ostane sedanja ptica |
 
 ## Narejeno v kodi (24. 11.)
 
@@ -121,7 +124,7 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 ## Predaja (naslednja seja)
 
 1. Podrobnost ptic je končana (C, glej zgoraj); ostane samo raziskava vrst.
-2. Raziskava: manjkajo države »še brez raziskave« in številke jat v letu; `en.wikipedia.org` in `hww.ca` iz okolja nista dosegljiva.
+2. Raziskava: za Zelenortske otoke, Alžirijo in Kitajsko vrsta ni potrjena (ostane sedanja ptica); manjkajo številke jat v letu; `en.wikipedia.org` in `hww.ca` iz okolja nista dosegljiva.
    Dovolj potrjeno za kodo (kraj + formacija + let): žerjav (Nemčija, Švedska, Finska; klin), črni jastreb (jadranje), andski kondor (Čile; jadranje),
    škorec (Združeno kraljestvo, Italija; gosta jata). Številke v jati so potrjene le za žerjava in škorca.
 3. Vrsta po državi: polje v datoteki proge (npr. `ptice: { vrsta, n: [min, max], formacija, let }`), samo za potrjene vrstice; sicer sedanja ptica.
