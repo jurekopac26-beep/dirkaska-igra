@@ -28,6 +28,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - Pred združitvijo: svež `main`, povezani testi, zelena zadnji krog `main` in nočni; rdeč `main` najprej popravi; po združitvi obvesti seje iz `cakanje`.
 - Popravki uporabnika: čez dan Mateju, do 5.00 zbirka, ob 5.00 en sveženj. **Najprej odločitev, nato koda** (stran Odločitve).
 - **Vprašanja uporabniku vedno s klikom na oštevilčene možnosti** (AskUserQuestion; na strani Odločitve oštevilčene možnosti; pri grafiki in meniju s slikami). **Vsak račun vsak dan do 23.00 vsa vprašanja in vse ok-je na svojo stran Odločitve, s slikami, klikom in komentarjem** (`docs/vprasanja.md`). Stranske ceste samo tam, kjer so v OSM.
+- **Brez dvojnega dela** (25. 11., deset točk, `docs/odlocitve.md`): ena tema en račun (stolpec »Račun« v `docs/vrsta.md`); seja najprej rezervira vrstico na `main`, ob sporu vzame drugo temo; prva vrstica PR »Lastnik: račun, od datuma«, prenos samo s predajo; države prog rezervirane v `docs/proge-po-drzavah.md`; `js/core.js`, fizika trkov in `golden` ena veja naenkrat; nove teme samo prek Mateja; pred zagonom `tools/prekrivanje.mjs`; ime seje »#PR tema (račun)«.
 
 ## Seje
 - **Nov Matej vsak dan** ob 5.00 s predajo; ob 5.00 seznam PR, po »ok« jih pripelje Združevanje. Ena tema na sejo; vprašanja na stran Odločitve (`docs/vprasanja.md`); ure ljubljanske.
