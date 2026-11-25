@@ -4,9 +4,10 @@
 //  2. A fresh profile opens it: Lisica's time kept as sent, the offer to send its own back; the nickname asked first (the default
 //     name is no one's): Turbo Tina. The link back carries Tina's packet and Lisica's, exactly as Lisica signed it. The track step on
 //     Spa in the Friends view (the fourth camera), upright (360 × 640) and on its side (640 × 360): every row in sight, the times
-//     and gaps whole, nothing over the edge, Tina's row lit, the place's badge 2/2 by the best lap.
+//     and gaps whole, nothing over the edge, Tina's row lit; the row's best (tw:best): its window on the Friends tab, Tina 2nd and lit
+//     (the place among the friends by the best lap; the badge over the track step went with the row's windows, #667).
 //  3. Lisica opens Tina's link in the game's open tab (only the address's #... changed: hashchange): Tina new, Lisica's own packet
-//     in it not taken; the Friends view 1/2; the Leaderboard's friends by Spa,
+//     in it not taken; the Friends view and the best's window: Lisica 1st; the Leaderboard's friends by Spa,
 //     Prijatelji, Odstrani (asked first): gone and hidden; the same link again asks before it takes the times back (no: nothing
 //     taken; yes: back).
 //  4. Lisica's new lap on Jezero, sent again: Tina's game (the old menus) takes it; Tina's qualifying lap on Jezero: the results say
@@ -32,14 +33,26 @@ const lpScreen = (p) => p.evaluate(() => ({ screen: window.__game.screen, msg: d
   nick: !document.getElementById('lp-nick-w').classList.contains('off'), go: document.getElementById('lp-go').textContent }));
 const friends = (p) => p.evaluate(() => { const S = window.__game.lp.store; return { F: Object.keys(S.friends).map(id => ({ id, name: S.friends[id].name, t: S.friends[id].t })), hidden: S.hidden.slice() }; });
 const toast = (p) => p.evaluate(() => document.getElementById('toast').textContent);
-// the track step's Friends view: its rows (the cells' texts), how many in sight, the player's row, the badge, the pressed camera,
+// the track step's Friends view: its rows (the cells' texts), how many in sight, the player's row, the pressed camera,
 // anything over the edge, a time or a gap cut short
 const view = (p) => ev(p, `const t = root.querySelector('.ftab'), rs = t ? [...t.querySelectorAll('tbody tr')] : [], tb = t && t.getBoundingClientRect(), W = innerWidth, H = innerHeight;
   const pr = root.querySelector('.cams [aria-pressed="true"]');
   return { rows: rs.map(r => [...r.children].map(c => c.textContent)), seen: rs.filter(r => { const b = r.getBoundingClientRect(); return b.top >= tb.top - 0.5 && b.bottom <= tb.bottom + 0.5; }).length,
-    me: rs.findIndex(r => r.classList.contains('me')), send: (root.querySelector('.fsend') || {}).textContent || '', badge: (root.querySelector('.fbadge') || {}).textContent || '', pressed: pr ? pr.dataset.act : '',
-    over: [...root.querySelectorAll('.dio.friends, .dio.friends *, .trow, .fbadge')].filter(e => { const b = e.getBoundingClientRect(); return b.width && (b.right > W + 0.5 || b.left < -0.5 || b.bottom > H + 0.5 || b.top < -0.5); }).map(e => e.className),
+    me: rs.findIndex(r => r.classList.contains('me')), send: (root.querySelector('.fsend') || {}).textContent || '', pressed: pr ? pr.dataset.act : '',
+    over: [...root.querySelectorAll('.dio.friends, .dio.friends *, .trow')].filter(e => { const b = e.getBoundingClientRect(); return b.width && (b.right > W + 0.5 || b.left < -0.5 || b.bottom > H + 0.5 || b.top < -0.5); }).map(e => e.className),
     cut: rs.some(r => [...r.children].slice(3).some(c => c.scrollWidth > c.clientWidth + 1)), track: __game.S.track, cam: __game.S.menuCam };`);
+// the row's best (tw:best): its window's tabs (the chosen one), its list (place, nickname, time), the player's row, anything over the
+// edge; then Close
+const best = async (p) => {
+  await ev(p, 'root.querySelector(\'.trow [data-act="tw:best"]\').click();');
+  await p.waitForFunction(() => { const sh = document.getElementById('menu-host').shadowRoot.querySelector('.sheet.twin.bst'); return sh && !sh.getAnimations({ subtree: true }).some(a => a.playState === 'running'); }, null, { timeout: 10000 }).catch(() => null);   // (the window slides up: measured once it is still)
+  const b = await ev(p, `const sh = root.querySelector('.sheet.twin.bst'), W = innerWidth, H = innerHeight; if (!sh) return null;
+    const ls = [...sh.querySelectorAll('.blist li:not(.dots)')];
+    return { h: sh.querySelector('h2').textContent, tab: (sh.querySelector('[role="tab"][aria-selected="true"]') || {}).textContent || '', rows: ls.map(l => [...l.children].map(c => c.textContent)),
+      me: ls.findIndex(l => l.classList.contains('me')), over: [sh, ...sh.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > W + 0.5 || r.left < -0.5 || r.bottom > H + 0.5 || r.top < -0.5); }).map(e => e.className) };`);
+  await ev(p, 'root.querySelector(\'.sheet.twin button.go[data-act="close-sheet"]\').click();'); await p.waitForTimeout(300);
+  return b;
+};
 try {
   // 1. Lisica's times as a link
   const A = await openGame(browser, srv.base + '/index.html', { name: 'Lisica', track: 'spa', mode: 'race' }, { width: 360, height: 640 }, { menu: true, init: recs({ 'spa@cs': { bestLap: 136.8 } }) });
@@ -64,19 +77,24 @@ try {
     return { link: g.lpLink, name: g.S.name, screen: g.screen, p: L && L.packets.map(p => [p.name, p.t]), fwd: raw.length === 2 && raw[1][0] === a[0] && raw[1][1] === a[1] }; }, z1);
   T.check('the nickname kept as the driver\'s name; the link back: Tina\'s packet first, then Lisica\'s exactly as Lisica signed it; then the track step on Spa',
     b3.name === 'Turbo Tina' && b3.screen === 'track' && J(b3.p) === J([['Turbo Tina', { 'spa@cs': [137570, 0, null] }], ['Lisica', { 'spa@cs': [136800, 0, null] }]]) && b3.fwd, J(b3));
-  const ROWS = J([['1', 'Lisica', '–', '2:16.800', ''], ['2', 'Turbo Tina', '–', '2:17.570', '+0.770']]);
+  const ROWS = J([['1', 'Lisica', '–', '2:16.800', ''], ['2', 'Turbo Tina', '–', '2:17.570', '+0.770']]), BEST = J([['1', 'Lisica', '2:16.800'], ['2', 'Turbo Tina', '2:17.570']]);
   for (const [w, h, how] of [[360, 640, 'upright'], [640, 360, 'on its side']]) {
     await pb.setViewportSize({ width: w, height: h }); await pb.waitForTimeout(700);
     const v = await view(pb);
-    T.check(`the Friends view ${how} (${w} × ${h}): the fourth camera lit, Lisica 1st, Tina 2nd and lit, the gap +0.770; every row in sight, the times whole, nothing over the edge; Send my times; the badge 2/2`,
-      v.track === 'spa' && v.cam === 4 && v.pressed === 'cam:4' && J(v.rows) === ROWS && v.seen === 2 && v.me === 1 && !v.cut && !v.over.length && v.send === 'Send my times' && v.badge === '2/2', J(v));
+    T.check(`the Friends view ${how} (${w} × ${h}): the fourth camera lit, Lisica 1st, Tina 2nd and lit, the gap +0.770; every row in sight, the times whole, nothing over the edge; Send my times`,
+      v.track === 'spa' && v.cam === 4 && v.pressed === 'cam:4' && J(v.rows) === ROWS && v.seen === 2 && v.me === 1 && !v.cut && !v.over.length && v.send === 'Send my times', J(v));
+    const b = await best(pb);
+    T.check(`the row's best ${how}: its window "Best times · Spa" on the Friends tab, Lisica 1st, Tina 2nd and lit (the place among the friends by the best lap), nothing over the edge`,
+      b && b.h === 'Best times · Spa' && b.tab === 'Friends' && J(b.rows) === BEST && b.me === 1 && !b.over.length, J(b));
   }
   await pb.setViewportSize({ width: 360, height: 640 });
   await ev(pb, 'root.querySelector(\'[data-act="cam:1"]\').click();'); await pb.waitForTimeout(400);
   const v1 = await view(pb);
-  await ev(pb, 'root.querySelector(\'.fbadge\').click();'); await pb.waitForTimeout(400);
+  const b1m = await best(pb);
+  await ev(pb, 'root.querySelector(\'[data-act="cam:4"]\').click();'); await pb.waitForTimeout(400);
   const v2 = await view(pb);
-  T.check('the map (camera 1) keeps the badge 2/2 by the best lap; a tap on it opens the Friends view', v1.pressed === 'cam:1' && !v1.rows.length && v1.badge === '2/2' && v2.pressed === 'cam:4' && v2.rows.length === 2, J({ v1, v2 }));
+  T.check('on the map (camera 1) the row\'s best still has the friends\' times (Tina 2nd and lit); the fourth camera opens the Friends view again',
+    v1.pressed === 'cam:1' && !v1.rows.length && b1m && b1m.tab === 'Friends' && J(b1m.rows) === BEST && b1m.me === 1 && v2.pressed === 'cam:4' && v2.rows.length === 2, J({ v1, b1m, v2 }));
 
   // 3. Lisica opens Tina's link; the Leaderboard; Odstrani; the link again
   await pa.goto(b3.link); await pa.waitForFunction(() => window.__game && window.__game.screen === 'lp', null, { timeout: 120000 });
@@ -86,8 +104,9 @@ try {
     a3.msg === 'Nov prijatelj na lestvici: Turbo Tina. Časov: 1, boljših od tvojih: 0. Pošlješ svoje nazaj?' && !a3.more && fa3.F.length === 1 && fa3.F[0].name === 'Turbo Tina' && tId !== aId, J({ a3, fa3 }));
   await pa.click('[data-act="lp-later"]');
   await pa.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.dio.friends'), null, { timeout: 60000 });
-  const va = await view(pa);
-  T.check('Pozneje: the track step on Spa in the Friends view, Lisica 1st and lit, the badge 1/2', va.track === 'spa' && va.me === 0 && va.rows.length === 2 && va.rows[1][1] === 'Turbo Tina' && va.badge === '1/2', J(va));
+  const va = await view(pa), ba = await best(pa);
+  T.check('Pozneje: the track step on Spa in the Friends view, Lisica 1st and lit; the row\'s best: Lisica 1st and lit on the Friends tab',
+    va.track === 'spa' && va.me === 0 && va.rows.length === 2 && va.rows[1][1] === 'Turbo Tina' && ba && ba.tab === 'Friends' && J(ba.rows) === BEST && ba.me === 0, J({ va, ba }));
   await pa.evaluate(() => window.__game.onAction('to-board')); await pa.waitForTimeout(400);
   const bd = await pa.evaluate(() => { const box = document.querySelector('#board-body .lp-box'); return box && { h: box.querySelector('.ltab-h').textContent, head: [...box.querySelectorAll('thead th')].map(e => e.textContent), rows: [...box.querySelectorAll('tbody tr')].map(r => [...r.children].map(c => c.textContent)), acts: [...box.querySelectorAll('[data-act]')].map(b => b.dataset.act + ':' + b.textContent) }; });
   T.check('the Leaderboard by Spa: the friends\' table (#, Voznik, Avto, Čas, Zaostanek, Datum), Pošlji svoje čase and Prijatelji (1)',
