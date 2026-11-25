@@ -30,6 +30,11 @@
 #hud.zb-line #h-gap { display: block; margin-top: 3px; font: 700 clamp(9px, 2.5vh, 12px)/1.2 var(--f-ui, Roboto, sans-serif); color: #ffd34d; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
 #hud.zb-line #h-gap.zb-red { color: #ff6b6b; }
 #hud.zb-line #h-gap.zb-ok { color: #9fe07a; }
+/* Ti loviš: the meter under the line (js/zabava/lov.js): the arrest filling, green; the fugitive out of reach, red, the time it has left */
+#h-lovm { display: none; }
+#hud.zb-lovm #h-lovm { display: block; width: clamp(80px, 22vh, 130px); height: 5px; margin: 3px auto 0; background: rgba(0, 0, 0, 0.45); border-radius: 3px; overflow: hidden; }
+#h-lovm i { display: block; width: 0; height: 100%; background: #9fe07a; transition: width 0.2s linear; }
+#h-lovm.zb-red i { background: #ff6b6b; }
 
 /* the drag race (js/zabava/drag.js): the HUD shows only what the run needs; the panel under the time (the shift light, the gear, the revs
    with the green band, the strip with both cars, the shift's word); the PRESTAVA button on the left above the steering (the left thumb

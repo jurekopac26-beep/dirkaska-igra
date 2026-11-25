@@ -309,6 +309,29 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   const e3 = lov.over(r);
   check('the 3:00 up: got away (the time)', e3 && !e3.ok && e3.why === 'time', JSON.stringify(e3));
   check('the meter drains when it is far again (half full: 20 s to empty)', (() => { r = mkR(); P = r.player; lov.begin(r); o = lov.st.o; r.time = 10; lov.st.m = 0.5; o.dist = P.dist + 100; P.x = o.x + 100; lov.step(r, 1); return Math.abs(lov.st.m - 0.45) < 1e-6; })());
+  // Police chase, the side Police (docs/police-chase.md): the rules by the difficulty, the traffic as in the run, the white patrol car
+  const kv = (k) => [k.head, k.near, k.fill, k.farT, k.far, k.limit].join(' ');
+  const K0 = kv(lov.K), mkD = (d) => { const r = new C.Race(T, Object.assign({ playerGrid: 2, laps: 1, phys: 'cs', seed: 4, playerModel: C.MODELS[4], assist: 2, difficulty: d, chars: true }, lov.opts(ctx))); lov.made(r, ctx); return r; };
+  check('the rules by the difficulty: Normal as before (K), Easy closer and longer, Hard and Super hard stricter, the 3:00 and the 400 m the same',
+    kv(lov.kOf(1)) === K0 && kv(lov.kOf(0)) === '120 18 4 13 400 180' && kv(lov.kOf(2)) === '170 13 6 8 400 180' && kv(lov.kOf(3)) === '190 12 7.5 7 400 180' &&
+    kv(lov.kOf(undefined)) === K0 && kv(lov.kOf(9)) === kv(lov.kOf(3)) && kv(lov.kOf(-1)) === kv(lov.kOf(0)) && K0 === '150 15 5 10 400 180',
+    [0, 1, 2, 3].map(d => kv(lov.kOf(d))).join(' / '));
+  r = mkD(0); P = r.player; lov.begin(r); o = lov.st.o;
+  check('Easy: the fugitive 120 m up the road', Math.abs(o.dist - P.dist - 120) < 1, (o.dist - P.dist).toFixed(1));
+  r = mkD(3); P = r.player; lov.begin(r); o = lov.st.o;
+  check('Super hard: the fugitive 190 m up the road', Math.abs(o.dist - P.dist - 190) < 1, (o.dist - P.dist).toFixed(1));
+  const catchT = (d, gap) => { r = mkD(d); P = r.player; lov.begin(r); o = lov.st.o; r.time = 10; let t = 0; while (!lov.st.end && t < 20) { P.x = o.x - gap; P.z = o.z; r.time += 0.1; t += 0.1; lov.step(r, 0.1); } const e = lov.over(r); return e && e.ok ? +t.toFixed(1) : -1; };
+  const cE = catchT(0, 16), cN = catchT(1, 16), cS = catchT(3, 8);
+  check('caught: Easy within 18 m in 4 s (16 m does not count on Normal), Super hard 7.5 s', Math.abs(cE - 4) <= 0.15 && cN === -1 && Math.abs(cS - 7.5) <= 0.15, [cE, cN, cS].join(' '));
+  r = mkD(2); P = r.player; lov.begin(r); o = lov.st.o; r.time = 10; o.dist = P.dist + 450;
+  for (let k = 0; k < 75; k++) { r.time += 0.1; lov.step(r, 0.1); }
+  const eH0 = lov.st.end; for (let k = 0; k < 8; k++) { r.time += 0.1; lov.step(r, 0.1); } const eH = lov.over(r);
+  check('Hard: 8 s more than 400 m ahead and it got away (not yet at 7.5 s)', !eH0 && eH && !eH.ok && eH.why === 'far', JSON.stringify(eH));
+  const rT = mkD(1), nT = rT.tf.veh.length, o1 = Object.assign({ playerGrid: 2, laps: 1, phys: 'cs', seed: 4, playerModel: C.MODELS[4], assist: 2, difficulty: 1, chars: true }, lov.opts(ctx)); delete o1.tfDens;
+  const n1 = new C.Race(T, o1).tf.veh.length;
+  check('the traffic as thin as in the run from the police (tfDens 0.85): fewer vehicles than in the duel in the traffic', lov.opts(ctx).tfDens === 0.85 && nT > 0 && nT < n1, nT + ' / ' + n1);
+  check('the patrol car white, as the ones in the run from the police', rT.player.color === 0xf2f4f6 && rT.player.police);
+  check('the online pursuit keeps its rules (beg.js copies lov.K: unchanged)', K0 === kv(lov.K) && kv(beg.K || lov.K) === K0, kv(beg.K || {}));
   lov.stop();
 }
 
