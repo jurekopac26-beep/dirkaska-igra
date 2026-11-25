@@ -285,6 +285,8 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
   9. **Števec 1.0:** Matej ob 5.00 v svežnju ena vrstica: proge na `main`/70, avti/50, dni do 23. 12.
   10. **Tedenski preizkus:** ob nedeljah v svežnju ob 5.00 uporabnik dobi 10-minutni seznam (Jezero, Toskana, en trk, meni, dež); napake gredo v zbirko popravkov.
 
+- **Rezervni načrt, ko račun obstane (odločitev uporabnika 25. 11. 2026 ob ~19.40; tabla #382):** vsaka vrstica v `docs/vrsta.md` ima poleg stolpca »Račun« še »Rezerva« (drug račun, vpiše ga Matej ali koordinacija lastnika). Ko račun obstane (poraba pred resetom, ni sej, ustavitev), Matej na #382 objavi »<račun> stoji do <čas>« in teme preda rezervi s predajo (prva vrstica PR »Lastnik: rezerva, od datuma«); po resetu se lastnik vrne samo s predajo. Brez vpisane rezerve prevzame račun, ki je najbolj pod ciljem porabe. Trki #608: rezerva partyslo.
+
 ### Seje
 - **Nov Matej vsak dan** ob 5.00 s kratko predajo (stari se ustavi; model in napor ostaneta). Velike izpise (`list_sessions`, stanje PR) bere majhen pomočnik in vrne do 5 vrstic; ob 5.00 uporabnik dobi seznam PR s povezavami, po njegovem »ok« PR do `main` pripelje seja Združevanje (`docs/varcevanje.md`, »Manj sklopov 2. del«).
 - Ena tema na sejo, samostojno; vprašanja na stran Odločitve (`docs/vprasanja.md`), v pogovoru samo če uporabnik piše v sejo. Ure po ljubljanskem času.
