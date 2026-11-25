@@ -19,7 +19,8 @@
 # run-length coded: 0 grass, 1 trees, 2 shrubs, 3 built-up, 4 bare ground and rock, 5 water, 6 wetland; ESA WorldCover 2021), the crater
 # beyond the corridor (farDem: the model on a 300 m grid ~15 km round the crater's middle, lo + v / 2 metres, Lake Magadi its wet nodes (lake:
 # runs), the land cover of each node (cls: run-length coded as lc, 7 fields), read by js/world-ngorongoro.js ngFar) and the scenery
-# (OpenStreetMap: the viewpoint and the lay-by, the gate, its fence and huts, the paths, the boma's huts, the cliff, the streams).
+# (OpenStreetMap: the viewpoint and the lay-by, the gate, its fence and huts, the paths, the boma's huts, the cliff, the streams, the side roads
+# that meet the road at the start: roads, drawn by js/world-ngorongoro.js on the terrain, graphics only).
 import base64, importlib.util, json, math, os, sys
 import numpy as np
 from PIL import Image, ImageDraw
@@ -316,6 +317,10 @@ def scenery(X, Z, ox, oz):
     out['paths'] = [sh(p) for p in E['paths']]
     out['cliffs'] = [sh(c) for c in J['cliffs']]
     out['streams'] = [sh(w[3]) for w in J['water'] if w[0] == 'stream']
+    # the side roads that meet the road at the start (OpenStreetMap: the rim road going on north past the start, compacted, 2 lanes; the link
+    # road to the north, compacted; the gravel drive into the lay-by): [width m (by the road's class: OpenStreetMap gives none), 0 compacted /
+    # 1 gravel, x, z, ...]
+    out['roads'] = [[{'primary': 6.5, 'unclassified': 4.5, 'service': 3.5}[r[0]], 1 if r[5] == 'gravel' else 0] + sh(r[-1]) for r in J['roads'] if r[0] in ('primary', 'unclassified', 'service')]
     return out
 
 def jsval(v): return json.dumps(v, ensure_ascii=False, separators=(',', ':'))
@@ -364,7 +369,7 @@ def main():
             'cps': cps, 'curves': curves, 'dem': terrain(X, Z, ox, oz, base), 'lc': landcover(X, Z, ox, oz), 'farDem': fd, 'far': {'lake': lake}}
     data.update(scenery(X, Z, ox, oz))
     data['points'] = pts
-    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'far', 'views', 'gates', 'bld', 'huts', 'fences', 'parks', 'steps', 'paths', 'cliffs', 'streams', 'points']
+    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'far', 'views', 'gates', 'bld', 'huts', 'fences', 'parks', 'steps', 'paths', 'roads', 'cliffs', 'streams', 'points']
     A, B = '    // ---- podatki (tools/ngorongoro/build.py) ----\n', '    // ---- konec podatkov ----\n'
     blk = A + ''.join('    %s: %s,\n' % (k_, jsval(data[k_])) for k_ in keys) + B
     src = open(TRACK).read(); i, j = src.index(A), src.index(B) + len(B); src = src[:i] + blk + src[j:]
