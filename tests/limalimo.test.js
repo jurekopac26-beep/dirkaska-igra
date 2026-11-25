@@ -27,7 +27,7 @@ check('track: an open road with four ways to drive it (def.modes: race, time tri
 check('track: from ~1684 m up to the top of the escarpment (~1972 m), 3.9-4.2 km', Math.abs(def.alt[0] - 1684) < 15 && Math.abs(def.alt[1] - 1972) < 10 && T.raceLen > 3900 && T.raceLen <= 4200 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1 && Math.abs(def.realKm - T.raceLen / 1000) < 0.1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('limalimo'));
-check('track: no drop to fall into (falling over the edge is Killar\'s alone: the guardrail and the wall stop every car)', !def.dropAt && !T.def.dropAt);
+check('track: no drop to fall into (falling over the edge is Killar\'s alone: the guardrail and the wall stop every car)', !def.drops && !T.dropAt);
 
 // 2. the three hairpins: in order up the road, each a real bend of the line the way its sign says (130 degrees and more round its apex; the
 // first two are a tight pair, so each is measured only up to halfway to its neighbour), each sign's altitude the road's own; the HUD knows them,
