@@ -358,7 +358,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
 | izoard | Izoard, Francija | izoard | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.izoard`: macesnov gozd s cemprini `forest: 'larch'`, daljnovod `def.power`/`def.poles`, obelisk na prelazu `def.obelisk`, francoske table, grmovje samo do 120 m od ceste `shrubR`) |
 | isuna | Isuna, Butan | isuna | `js/world-isuna.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
-| katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
+| katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) in `js/world-katu-obcestje.js` (pešpoti in prha iz OSM prek `keepOut` in `extra`, v obstoječih kosih okolice, samo grafika) |
 | krasnahorka | Krásna Hôrka, Slovaška | krasnahorka | `js/world-krasnahorka.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | killar | Killar, Indija | killar | `js/world-killar.js` (kopija `buildUncompahgre` s podobo Killarja: `UNK`; hiše `klHouse`, molilne zastavice `klFlags`, table `KL_BOARDS`, lesena ograja levo `T.fence`, pregrada proti kamenju in mreža po pobočju `ukNetMat`, travnik do roba ceste brez bankine in jarka `mead`, senčenje hrbtov in kotanj na vozišču `uk` po `def.roadBase`) |
 | koli | Koli, Finska | koli | `js/world-koli.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
@@ -375,7 +375,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | portobelo | Portobelo, Panama | portobelo | `js/world-portobelo.js` (`buildPortobelo`; podatki `js/data/portobelo.js` in proga iz `tools/portobelo/build.py track`; obalna trdnjava na terasi ob cesti z jaso: model iz Blenderja prek `World.znamenitost`, nadomestek v datoteki) |
 | eljem | El Jem, Tunizija | eljem | `js/world-eljem.js` (podatki `js/data/eljem.js` in proga iz `tools/eljem/build.py`; amfiteater: model iz Blenderja prek `World.znamenitost`, ravna terasa pod njim in nadomestek v datoteki; ograje brez zank v ostrih ovinkih; stranske ulice iz OSM, samo grafika: `js/world-eljem-obcestje.js`) |
 | hiva | Hiva, Uzbekistan | hiva | `js/world-hiva.js` (`World.ext.hiva`; podatki `js/data/hiva.js` in proga iz `tools/hiva/build.py track world`; obzidje Ičan Kale (zidovi, stolpi in vrata iz OSM, `tools/hiva/obzidje.py`) in minareta: gradnik v datoteki, model iz Blenderja prek `World.znamenitost`, `tools/znamenitost/hiva.py`, nadomestek v datoteki) |
-| quezaltepeque | Quezaltepeque, Salvador | quezaltepeque | `js/world-quezaltepeque.js` na `js/world-rbring.js` (`API.rbLook.quezaltepeque`: tribune, table krajev, zastave, stara lava `sk.lava`, travniki s suhimi lisami) |
+| quezaltepeque | Quezaltepeque, Salvador | quezaltepeque | `js/world-quezaltepeque.js` na `js/world-rbring.js` (`API.rbLook.quezaltepeque`: tribune, table krajev, zastave, stara lava `sk.lava`, travniki s suhimi lisami) in `js/world-quezaltepeque-obcestje.js` (ograje, zidovi, vrata, drevesa, tribune in stranišča iz OSM prek `qzExtra`, samo grafika) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |

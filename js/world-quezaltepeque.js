@@ -129,6 +129,7 @@
       exclPush(x, z, Math.hypot(L, W) / 2 + 2); CR.avoid(x, z, Math.hypot(L, W) / 2 + 1); st.buildings++;
     }
     if (API.T.def.far && API.rsFar) { out.dyn.far = API.rsFar(root, API.T.def.far, 'summer', 6, qzFarCol); st.far = 1; }   // (World.update: no car, back where it was built)
+    if (World.quezaltepequeObcestje) st.obcestje = World.quezaltepequeObcestje(o);   // (js/world-quezaltepeque-obcestje.js: fences, walls, gates, trees, tables, bleachers, toilets from OSM)
     return st;
   }
 
