@@ -28,7 +28,7 @@ testov in brez manj preverjanj**. Pull request #321. Opis delovanja za uporabo j
    commita razen `.md`; `KODA_MD` = `.md`, ki ga test bere kot podatke: `docs/gorske-proge.md`). Posel Zapis po krogu, v katerem so uspeli
    vsi težki posli, shrani artefakt `koda-<odtis>` (30 dni). Krog z odtisom, ki ima artefakt iz teka tega repozitorija (ne iz forka), težke
    posle preskoči in požene samo posel Dokumenti (`node tests/run.js --dokumenti`: testi `MD_TESTS`, ki berejo `.md`, ne da bi jih
-   imenovali: imena znamk v vseh datotekah, zamrznjene datoteke testnih prog, tudi `docs/proge/<id>.md`). »Igra v brskalniku« je v tem
+   imenovali: imena znamk v vseh datotekah, zamrznjene datoteke testnih prog, tudi `docs/proge/<id>.md`, viri prog v »Zaslugah« korenskega `.md`, `viri.test.js`; 25. 11. 2026). »Igra v brskalniku« je v tem
    primeru zelen (preskočeni posli štejejo kot uspešni).
    - Odpade: krog na `main` po združitvi pull requesta, če se je `main` po njegovem zadnjem krogu spremenil samo v `.md`; krog po potisku
      samo dokumentov (pull request ali `main`); krog drobnega pull requesta samo z `docs/vrsta.md`.
