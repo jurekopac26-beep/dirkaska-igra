@@ -78,6 +78,8 @@ Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 3
 - Poskus na treh avtih (TIGER GT, MEDVED 4x4, SUPERKOMBI) za slike prej/potem naredi jure.kopac26 (uporabnik ob ~02.45: »naredi slike kako bodo avti zgledali potem ko bodo posodobljeni«): koda na veji `avti-kolibri/pilot`, slike na `slike/avti-kolibri`, brez PR. Kodo prevzame biketraveler; teh treh avtov medtem ne dela nihče drug.
 
 ## Predaja
+- **30 avtov, 25. 11. (partyslo, veja `avti-kolibri/trideset`, osnutek #1077)**: #480 (`avti-kolibri/starejsi`) spreminja vseh 30 avtov tega seznama in `js/render.js`, `js/deli.js`, `tests/fleet.test.js`, vsebuje pilot (`avti-kolibri/pilot`) in je pripravljen za Združevanje (odgovor seje #480, 25. 11.). Zato ta tema začne **po združitvi #480**, na svežem `main`: najprej seznam, kaj od notranjosti, Visokih in videza razbijanja kateremu od 30 avtov še manjka (primerjava s KOLIBRIJEM), nato skupine po 4–5 avtov.
+  - Fizike vožnje ne spreminjaj; `knockK`, `roof0`, `spinK` so fizika trkov (pravilo »Trki« v `CLAUDE.md`). Barve brez črnih in zelo temnih. Slike pred/po enkrat na skupino na stran Odločitve, »ok« pred `main`.
 
 | Skupina | Stanje | Kaj sledi |
 |---|---|---|
