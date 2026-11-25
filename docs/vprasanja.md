@@ -47,9 +47,9 @@ Ob odgovoru stran zapiše `stanje` `odgovorjeno`, `odgovor` (`k`), `odgovor_opis
 
 ### Odgovor: seja ga prebere sama
 
-- Po zapisu vprašanja seja pokliče `send_later` z `at` ob prvem naslednjem 10.50, 14.50 ali 23.20 (npr. `2026-11-03T14:50:00[Europe/Ljubljana]`; 20 minut po obvestilu, da uporabnik utegne odgovoriti) in sporočilom »Preberi odgovor na vprašanje `<id>` s strani Odločitve (docs/vprasanja.md, razdelek Odgovor).«
+- Po zapisu vprašanja seja pokliče `send_later` z `at` ob naslednjem 23.20 (od 22. 11. 2026 enkrat na dan, `zetoni-5`; prej 10.50, 14.50 ali 23.20) (npr. `2026-11-03T23:20:00[Europe/Ljubljana]`; 20 minut po obvestilu, da uporabnik utegne odgovoriti) in sporočilom »Preberi odgovor na vprašanje `<id>` s strani Odločitve (docs/vprasanja.md, razdelek Odgovor).«
 - Ob bujenju prebere dokument (`ArtifactData` `get`, `vprasanja`/`<id>`). Če je `stanje` `odgovorjeno` ali `posredovano`, so `odgovor`, `odgovor_opis` in `opomba` uporabnikova izbira (tapnil jo je sam na svoji strani): seja jo izvede in zapiše `prebrano` (`update` z `if_version`). Z `popravek` uporabnik spreminja prejšnji odgovor: velja novi.
-- Če odgovora še ni, si nastavi naslednje bujenje (največ trikrat), nato konča korak in počaka na sporočilo zbiranja.
+- Če odgovora še ni, si nastavi naslednje bujenje (največ dvakrat; od 22. 11. 2026, prej trikrat), nato konča korak in počaka na sporočilo zbiranja.
 - Sporočilo seje zbiranja (»Na strani Odločitve te čaka odgovor …«) ni odgovor sam: seja odgovor prebere s strani in ravna enako.
 
 ### Slike (grafična vprašanja)
@@ -104,6 +104,17 @@ Na računu, kjer zbiranja še ni (`list_triggers` nima »Zbiranje vprašanj …�
 Besedila opravil: kot na računu strani 1 (tam jih prebere `get_trigger`), s stranjo tega računa. Obvestili dobita po `create_trigger` še `update_trigger` z `model` `claude-haiku-5-5`. Opravilo zbiranja napoti sejo na razdelek Zbiranje tega dokumenta z `main`; besedilo obvestila je samostojno (nova seja nima repozitorija): prebere stran, prešteje odprta vprašanja, `novih` in `zadnje` iz `zbiranje/stanje` in konča z enim stavkom za telefon.
 
 Seja zbiranja s časom nabira kontekst (meritev 3. 11. 2026: 250 tisoč žetonov v 11 urah), zato pregled sej dela podagent, sejo pa po koraku 9 razdelka Zbiranje zamenja nova. Besedilo njenih opravil lahko spremeni samo ona (`update_trigger` iz drugih sej zavrne spremembo besedila), zato je postopek v tem dokumentu, ne v besedilu opravil.
+
+## Besedila vprašanj grafike (za stran Odločitve)
+
+### `chase-skupina-82`
+
+Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgnanec v žlebu ob robniku, redke krpe novejšega asfalta, v mestu rešetke odtokov, plošče pločnika in pokrovi do ~60 m, na tratah svetlejše in temnejše pokošene zaplate in uhojena prst; brez novih klicev risanja) in Pikes Peak na makadamu (rožnat gramoz in kamenje v kratkih progah ob robu, za ograjo do ~60 m granitne skale, nizki bori, iglice, blazine tundre, suhi šopi in grušč na strminah; +13 klicev, 146 od 300). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Pikes Peak manj (pol gostote za ograjo), Seul tako.
+3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
+4. Ne, odstrani skupino 82.
 
 ## Preklic
 
