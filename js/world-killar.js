@@ -1213,6 +1213,7 @@
     if (UNK && World.killarObcestje) World.killarObcestje.extra({ root, T, ground: unGround, blds, pads: P.pads }, tex);   // (their meshes)
     crowdFinish(CR, root, out);
     let dropM = 0; if (T.dropAt) for (let i = 0; i < N; i++) dropM += (T.dropAt[0][i] | T.dropAt[1][i]) * T.ds;
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'killar', { gH: unGround, slope: unSlope });   // (the roadside ground for the chase camera: js/world-chase-bt13.js)
     out.stats = { trees: nTrees, nets: nNet, snowFences: nFence, snags: nSnag, shrubs: nShrub, logs: nLog, tufts: nTufts, flowers: nFlowers, animals: nBeast, turnouts: pulls.length, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, mines: nMine, posts: nPost, creeks: nCreek, galleries: GAL.length, drops: Math.round(dropM), sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
