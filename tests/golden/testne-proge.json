@@ -16,6 +16,7 @@
   "iroha",
   "jezero",
   "longford",
+  "longyearbyen",
   "maunakea",
   "moki",
   "monaco",
@@ -388,6 +389,8 @@
   "assets/tracks/jezero.webp": "506ffffd2a9d8e02",
   "assets/tracks/longford-rain.webp": "17eeaf22903f0e6e",
   "assets/tracks/longford.webp": "1bbbe1a8e4db2779",
+  "assets/tracks/longyearbyen-rain.webp": "0ae5c4a07930c170",
+  "assets/tracks/longyearbyen.webp": "a2df6bd8f8d7d61b",
   "assets/tracks/maunakea-rain.webp": "d235a891dfb1eea0",
   "assets/tracks/maunakea.webp": "4ac5baeb8c2e4f7b",
   "assets/tracks/moki-rain.webp": "5e657995570bb02f",
@@ -441,6 +444,7 @@
   "docs/proge/hotham.md": "284c06ee14cb8a2b",
   "docs/proge/iroha.md": "6a862a1476d0df3b",
   "docs/proge/longford.md": "95cefe891af8166c",
+  "docs/proge/longyearbyen.md": "a3569c493ec86657",
   "docs/proge/maunakea.md": "33366d4f471bfe3e",
   "docs/proge/moki.md": "3bec1d9cce43253d",
   "docs/proge/monterey.md": "d73389fb5cea3ba9",
@@ -477,6 +481,7 @@
   "js/tracks/iroha.js": "e18730752263a93f",
   "js/tracks/jezero.js": "16733742a2d9e030",
   "js/tracks/longford.js": "1d8b13cec3558571",
+  "js/tracks/longyearbyen.js": "e6fe1a673f077779",
   "js/tracks/maunakea.js": "1efc11e1b529b6be",
   "js/tracks/moki.js": "6b10a3b806ac37df",
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
@@ -509,6 +514,7 @@
   "js/world-hotham.js": "c053ec888780a564",
   "js/world-iroha.js": "b156bbd92d09f32e",
   "js/world-longford.js": "a172c6b86f144a2b",
+  "js/world-longyearbyen.js": "f441c9bd97b733a1",
   "js/world-maunakea.js": "5998d618684893c7",
   "js/world-moki.js": "9d0b27c9a65a8ebf",
   "js/world-monterey.js": "daeac3332ff8a5bd",
@@ -637,6 +643,7 @@
   "tests/hotham.test.js": "9c35161f67af97c4",
   "tests/iroha.test.js": "b9f650777b47df1b",
   "tests/longford.test.js": "f69a4eb30e3a682a",
+  "tests/longyearbyen.test.js": "610c15bd1d96396f",
   "tests/maunakea.test.js": "163732532460a886",
   "tests/moki.test.js": "2c7b2631ef3bebad",
   "tests/monterey.test.js": "138fd6ad199a9504",
@@ -954,6 +961,11 @@
    "datum": "2026-11-22",
    "proga": "haivan",
    "razlog": "izbira uporabnika 22. 11. ob 1.55"
+  },
+  {
+   "datum": "2026-11-24",
+   "proga": "longyearbyen",
+   "razlog": "zbrisi progo norveska, proga je prevec ravna, ni na ledu ampak na asfaltu (tabla #382, komentar 7121179904, 24. 11. 2026)"
   }
  ]
 }
