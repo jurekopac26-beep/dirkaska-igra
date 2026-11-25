@@ -337,14 +337,19 @@ try {
     T.check('another tab (DVOJNI TURBO): its four tiles, the last one chosen (12.000 🪙)', d2.tabs[3][2] && d2.tiles[3].sel && /12\.000 🪙/.test(d2.buy), JSON.stringify(d2));
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r = await run();
     const u = await ui(), mk2 = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted, menu: !!__garage.menu, dim: Garage3D._dbg.dim }));
+    // (the muscle car draws its dual exhaust itself (js/cars/stari.js, the profile's 'Dual'): no tips in the engine's group, its vents and scoop)
     T.check('bought and fitted: 12.000 🪙 paid, the menu closed (no marks, nothing seen through), the engine\'s level 3 (twin turbo +25 %, the dual exhaust +1,5 %), its show played (its parts on the car), the table still',
-      m0 - u.S.money === 12000 && !mk2.menu && mk2.marks === 0 && !mk2.ghost && !mk2.dim && u.info.upg.motor === 3 && u.info.parts.motor >= 6 && r.table === 0 && r.ang === 0 && JSON.stringify(u.S.cars.muscle.parts.turbo) === '[3,3]', JSON.stringify({ paid: m0 - u.S.money, upg: u.info.upg, parts: u.info.parts, mk2 }));
+      m0 - u.S.money === 12000 && !mk2.menu && mk2.marks === 0 && !mk2.ghost && !mk2.dim && u.info.upg.motor === 3 && u.info.parts.motor >= 3 && r.table === 0 && r.ang === 0 && JSON.stringify(u.S.cars.muscle.parts.turbo) === '[3,3]', JSON.stringify({ paid: m0 - u.S.money, upg: u.info.upg, parts: u.info.parts, mk2 }));
     const ch = await page.evaluate(() => ({ c: __garage.chip, kw: Core.MODELS.find(m => m.id === 'muscle').kw, html: document.getElementById('g-chip').innerHTML }));
     T.check('its chip over the car: MOČ with the bolt before it, both numbers with their unit (stock kW → kW with the twin turbo, +25 %)', ch.c && ch.c.small === 'MOČ' && ch.c.icon === 'power' && /<small><i><svg/.test(ch.html)
       && ch.c.big === Math.round(ch.kw) + ' kW → ' + Math.round(ch.kw * 1.25) + ' kW', JSON.stringify(ch));
+    // (since the KOLIBRI level the VIHAR draws its bonnet and its turbo bay (js/cars/stari.js, mountsMuscle: m.hauba, m.turbo): the twin turbo
+    // by the turbo's plate (an_turbo) as on the KOZOROG, off the trolley; the bonnet's edge out of roka 1's reach as it turns (lg false): the
+    // bonnet up by itself; the stock V8 has no turbo: nothing old to take off)
     const f0 = await fitOf();
-    T.check('the twin turbo (on neither the regal nor in a drawer: sklop 8) came on the trolley: the near arm\'s gripper put it on at the bonnet, the old one onto the trolley and off with it; the engine\'s show at the end (MOČ, no KONČANO); the arms parked',
-      f0.log === 'plan,cart.in,cart.parked,grab,swap,put,cart.out' && !f0.plan.regal && !f0.plan.drawer && f0.plan.arm === 0 && f0.plan.tool === 'gripper' && f0.plan.side === 1 && f0.plan.el === 'turbo' && f0.put === 'cart' && f0.cart && !f0.cart.on && f0.cart.load === 0 && f0.parked && /MOČ/.test(f0.chip) && !/KONČANO/.test(f0.chip), JSON.stringify(f0));
+    T.check('the twin turbo (on neither the regal nor in a drawer: sklop 8) came on the trolley, by the turbo\'s plate: the bonnet up by itself, roka 2 brings it off the trolley onto the engine, its screws, its hoses, the bonnet down; no old one (the stock V8 has none); the engine\'s show at the end (MOČ, no KONČANO); the arms parked',
+      f0.log === 'plan,bonnet.up,cart.in,cart.parked,grab,swap,screws,hoses,bonnet.down,cart.out,revs' && !f0.plan.regal && !f0.plan.drawer && f0.plan.arm === 1 && f0.plan.tool === 'reach' && f0.plan.el === 'turbo' && f0.plan.lid && f0.plan.lg === false
+      && f0.old === 'none' && !f0.puts && f0.cart && !f0.cart.on && f0.cart.load === 0 && f0.parked && /MOČ/.test(f0.chip) && !/KONČANO/.test(f0.chip), JSON.stringify(f0));
     await tap('rgl:TURBO'); await page.evaluate(() => { document.querySelector('#g-menu [data-tab="3"]').click(); document.querySelector('#g-menu [data-tile="3,3"]').click(); }); const d3 = await menuDom();
     T.check('the turbo again (the regal\'s turbo chosen; on the twin turbo\'s tab): the fitted option ticked, chosen: FITTED, nothing to buy; ↺ SERIJSKO offered', d3.tiles[3].fit && d3.tiles[3].sel && !d3.can && /NAMEŠČENO/.test(d3.buy) && d3.stock, JSON.stringify(d3));
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="stock"]').click()); await run();
@@ -359,11 +364,12 @@ try {
     T.check('the track slicks (on offer: 1.600 🪙 -> 1.300 🪙) bought: the tyres\' level 3 (DIRKALNE, from PREMIUM), the car up on the lift (>= 0.4 m) and down, the table still', d5.tabs[3][2] && d5.tabs[3][1] === '1.300–6.000 🪙' && d5.tiles[0].old && u2.S.money - u3.S.money === 1300 && u3.info.upg.gume === 3 && r2.lift >= 0.4 && u3.info.lift === 0 && r2.table === 0, JSON.stringify({ paid: u2.S.money - u3.S.money, upg: u3.info.upg, r2, d5 }));
     // the arms at the work by the tyres' plate (an_gume; all four wheels): the bridge turns to each wheel in turn; arm 1 (the bridge's
     // + half) takes the old tyre off and puts it into the regal's place just emptied, arm 2 (the − half) takes the new one from the regal
-    // and fits it; the rear wheels (the VIHAR draws them with its body) the same; KONČANO, the arms parked, within 13 s. The gravel tyres
+    // and fits it; the rear wheels the same (since the KOLIBRI level all four of the VIHAR's wheels are its own, none drawn with its body:
+    // no virtual job); KONČANO, the arms parked, within 13 s. The gravel tyres
     // (not on the regal) come on two trolleys, one to each side; the slicks again: the car's own (tvoj), NAMESTI, free, off the regal again
     const f1 = await fitOf();
     T.check('the slicks on all four wheels by the plate (' + r2.t + ' s): the bridge to each wheel; arm 1 the old tyre off and into the regal\'s place just emptied, arm 2 the new one from the regal onto the wheel, four times; no trolley; KONČANO; the arms parked after',
-      /^plan,/.test(f1.log) && /,done$/.test(f1.log) && f1.plan.regal && f1.plan.n === 4 && f1.plan.arm === 1 && f1.plan.tool === 'reach' && f1.plan.side === 1 && f1.jobs === '0+1:regal:swap,0+1:regal:swap:virt,0+1:regal:swap,0+1:regal:swap:virt'
+      /^plan,/.test(f1.log) && /,done$/.test(f1.log) && f1.plan.regal && f1.plan.n === 4 && f1.plan.arm === 1 && f1.plan.tool === 'reach' && f1.plan.side === 1 && f1.jobs === '0+1:regal:swap,0+1:regal:swap,0+1:regal:swap,0+1:regal:swap'
       && f1.rgl === 0 && f1.swaps === 4 && f1.offs === 4 && f1.puts === 'regal,regal,regal,regal' && f1.ret === 4 && (!f1.cart || !f1.cart.on) && !f1.stay && f1.parked && /KONČANO/.test(f1.chip) && r2.t <= 13, JSON.stringify(f1));
     // (this one with PRESKOČI: the steps' bar under the picture once its first step runs; a tap on PRESKOČI and the show at its end at once, the same end (below))
     const bar = () => page.evaluate(() => { const e = document.getElementById('g-steps'); return { on: e.classList.contains('on'), l: e.querySelector('.l').textContent, d: e.querySelectorAll('.d i').length }; });
@@ -371,9 +377,9 @@ try {
     const sb0 = await bar(); await page.evaluate(() => document.querySelector('#g-steps .sk').click()); const sr = await run(), sb1 = await bar();
     T.check('the steps\' bar during a fit (' + JSON.stringify(sb0) + '); PRESKOČI: the rest of the show in ' + sr.t + ' s, the bar gone after', sb0.on && sb0.l.length > 2 && sb0.d >= 1 && sr.t <= 4 && !sb1.on, JSON.stringify({ sb0, sr, sb1 }));
     const f2 = await fitOf(), u5 = await ui(), pg = await page.evaluate(() => __garage.price('gume', 1, 1));
-    T.check('the gravel tyres bought (' + pg + ' 🪙): on two trolleys, one to each side; the near arm\'s gripper and the far one\'s reach put them on all four wheels, the old ones onto the trolleys and off with them; the arms parked',
-      /^plan,/.test(f2.log) && /,done,cart\.out,cart\.out$/.test(f2.log) && !f2.plan.regal && f2.plan.n === 4 && f2.plan.arm === 0 && f2.plan.tool === 'gripper' && f2.plan.side === 1 && f2.jobs === '1:cart:off,1:cart:press:virt,0:cart:off,0:cart:press:virt'
-      && f2.swaps === 4 && f2.offs === 2 && f2.puts === 'cart,cart,cart,cart' && f2.cart && !f2.cart.on && f2.cart.load === 0 && f2.cartB && !f2.cartB.on && f2.cartB.load === 0 && f2.parked
+    T.check('the gravel tyres bought (' + pg + ' 🪙): on two trolleys, one to each side; the near arm\'s gripper and the far one\'s reach put them on all four wheels (each old one off: no virtual job), the old ones onto the trolleys and off with them; the arms parked',
+      /^plan,/.test(f2.log) && /,done,cart\.out,cart\.out$/.test(f2.log) && !f2.plan.regal && f2.plan.n === 4 && f2.plan.arm === 0 && f2.plan.tool === 'gripper' && f2.plan.side === 1 && f2.jobs === '1:cart:off,1:cart:off,0:cart:off,0:cart:off'
+      && f2.swaps === 4 && f2.offs === 4 && f2.puts === 'cart,cart,cart,cart' && f2.cart && !f2.cart.on && f2.cart.load === 0 && f2.cartB && !f2.cartB.on && f2.cartB.load === 0 && f2.parked
       && u3.S.money - u5.S.money === pg && u5.S.cars.muscle.parts.gume.join() === '1,1', JSON.stringify({ f2, paid: u3.S.money - u5.S.money }));
     await page.evaluate(() => __garage.openMenu({ el: 'gume', key: null, sel: __garage.findOpt('gume', 'Track Slick') })); const d6 = await menuDom();
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); await run(); const f3 = await fitOf(), u6 = await ui();
@@ -410,18 +416,21 @@ try {
     await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); const dR = await menuDom();
     T.check('the aero kits\' menu on its RACING tab: its tiles locked (nothing to buy)', dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy), JSON.stringify(dR));
     await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const ra = await run();
-    const u4 = await ui(), fa = await fitOf(), pa = await page.evaluate(() => Garage3D._dbg.FIT.log.filter(q => q.step === 'plan').map(q => ({ el: q.el, exact: !!q.exact, real: !!q.real, hop: q.hop || 0, caps: q.caps || 0 })));
+    const u4 = await ui(), fa = await fitOf(), pa = await page.evaluate(() => Garage3D._dbg.FIT.log.filter(q => q.step === 'plan').map(q => ({ el: q.el, kind: q.kind, sill: !!q.sill, exact: !!q.exact, real: !!q.real, hop: q.hop || 0, caps: q.caps || 0 })));
     const cpb = await page.evaluate(() => { const C = Garage3D._dbg.CART, a = C.root.children[0].geometry.attributes.color, n = a.itemSize, [v0, v1] = C.pv, o = { b: !!C.b2, yl: 0, cy: 0, nv: 0 };
       for (let v = v0; v < v1; v++) { const r = a.array[v * n], g = a.array[v * n + 1], bl = a.array[v * n + 2]; if (r > 0.8 && g > 0.6 && bl < 0.2) o.yl++; else if (g > 1.2) o.cy++; else if (r < 0.15 && bl > 0.2 && bl < 0.3) o.nv++; } return o; });
     T.check('the aero kit\'s trolley in its own paint (the plate an_aero, colour b: yellow, its band dark blue)', cpb.b && cpb.yl > 0 && cpb.nv > 0 && !cpb.cy, JSON.stringify(cpb));
     T.check('the SPORT kit bought (2.600 🪙): the aero level from it', uw2.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: uw2.S.money - u4.S.money, upg: u4.info.upg }));
-    // (the kit by its plan's plate (aero): the trolley brings its lip and its wing lying along its deck; the near arm's gripper takes the lip
+    // (the kit by its plan's plate (aero): the trolley brings its lip, its near sill and its wing lying along its deck; the arm takes the lip
     // by its front edge and pushes it in under the front bumper exactly where the car draws it (the click: no case, no hop; no old part on
-    // a car with none); the trolley on along the car, the wing onto the bare lid as the wing's own show (two caps off, the snap); the
-    // level's parts on with them (no show of the level after), KONČANO: within 17 s)
-    T.check('the SPORT kit by its plan\'s plate: its lip in under the front bumper by the arm (the car\'s own piece, exactly, no hop), then its wing onto the bare lid (two caps off, the snap), the trolley off, KONČANO (' + ra.t + ' s: within 17); the arms parked',
-      fa.log === 'plan,cart.in,cart.parked,grab,swap,plan,grab,snap,swap,cart.out' && pa.length === 2 && pa[0].el === 'aero' && pa[0].real && pa[0].exact && !pa[0].hop && pa[1].el === 'krilo' && pa[1].real && pa[1].caps === 2 && !pa[1].hop
-      && fa.old === 'none' && fa.cart && !fa.cart.on && fa.parked && /KONČANO/.test(fa.chip) && u4.info.parts.aero >= 2 && ra.t <= 17, JSON.stringify({ fa, pa, t: ra.t, parts: u4.info.parts }));
+    // a car with none); since the KOLIBRI level the VIHAR draws its kit (js/cars/stari.js, K.deli), so the SPORT kit's near sill comes next
+    // (its own pass, paket Sport: an_aero_plosca's pragova), a long piece the arm cannot press on exactly there: by a hop; the trolley on
+    // along the car, the wing onto the bare lid as the wing's own show (two caps off, the snap); the level's lips not added over the car's
+    // own kit (deliOn), no show of the level after; KONČANO: within 21 s)
+    T.check('the SPORT kit by its plan\'s plate: its lip in under the front bumper by the arm (the car\'s own piece, exactly, no hop), its near sill next (by a hop), then its wing onto the bare lid (two caps off, the snap), the trolley off, KONČANO (' + ra.t + ' s: within 21); the arms parked',
+      fa.log === 'plan,cart.in,cart.parked,grab,swap,plan,grab,hop,swap,plan,grab,snap,swap,cart.out' && pa.length === 3 && pa[0].el === 'aero' && pa[0].kind === 'lip' && !pa[0].sill && pa[0].real && pa[0].exact && !pa[0].hop
+      && pa[1].el === 'aero' && pa[1].kind === 'skirt' && pa[1].sill && pa[1].real && pa[1].hop > 0 && pa[2].el === 'krilo' && pa[2].real && pa[2].caps === 2 && !pa[2].hop
+      && fa.old === 'none' && fa.cart && !fa.cart.on && fa.parked && /KONČANO/.test(fa.chip) && u4.info.parts.aero >= 1 && ra.t <= 21, JSON.stringify({ fa, pa, t: ra.t, parts: u4.info.parts }));
     await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); await page.waitForTimeout(100); const dR2 = await menuDom();
     await page.evaluate(() => { const b = Garage3D.box('mq0'); __garage.onTap(5, b.y - 120); });
     const shut = await page.evaluate(() => ({ menu: !!__garage.menu, marks: Garage3D._dbg.marks, on: document.getElementById('g-menu').classList.contains('on'), low: !document.getElementById('g-low').classList.contains('hide') }));
@@ -452,26 +461,31 @@ try {
     // at the clamp under the bumper (two bursts of sparks), roka 1 swaps it for the gripper and draws the old pipe out, roka 2 lifts the
     // new one off the regal, the bridge's half turn (the old one to the regal, the new one to the car), roka 1 puts the old one onto the
     // empty place (STOCK), roka 2 pushes the new one in under the bumper and tightens the clamp with its wrench (one burst); the car down,
-    // two revs, KONČANO (the plate's 7 s; ~8 s); no part is put on without the arm, the arms never cross)
-    const exOf = () => page.evaluate(() => ({ lift: Garage3D.info.lift, wr: Garage3D._dbg.FIT.log.filter(q => q.step === 'wrench').map(q => q.n).join('+'), plain: Garage3D._dbg.FIT.log.find(q => q.step === 'plain') || null }));
+    // two revs, KONČANO (the plate's 7 s; ~8 s); no part is put on without the arm, the arms never cross; since the KOLIBRI level the
+    // VIHAR draws its own twin pipes, ending 7 cm in from its tail (js/cars/stari.js, m.auspuh): the clamp ~2,2 m back, not ~2,36 m)
+    const exOf =() => page.evaluate(() => ({ lift: Garage3D.info.lift, wr: Garage3D._dbg.FIT.log.filter(q => q.step === 'wrench').map(q => q.n).join('+'), plain: Garage3D._dbg.FIT.log.find(q => q.step === 'plain') || null }));
     const exLog = (f) => /^plan,wrench,off,grab,pass,put,swap,wrench,down,revs$/.test(f.log) && f.plan.two === true && f.plan.hop === 0;
     await page.evaluate(() => { __garage.openMenu({ el: 'auspuh', key: 'rgl:SPORT', sel: __garage.findOpt('auspuh', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rx = await run();
     const fx = await fitOf(), ex = await exOf(), ux = ex.plain;
     T.check('a long car\'s exhaust off the regal by its plate (the muscle car): the car up on the lift, roka 1\'s wrench at the clamp (two bursts), roka 1 draws the old one out, roka 2 the new one off the regal, the bridge\'s half turn, the old one onto the regal, the new one in under the bumper, roka 2\'s wrench (one burst); the car down, the revs, KONČANO (' + rx.t + ' s: within 11); not put on without the arm; the arms parked',
-      exLog(fx) && !ux && fx.plan.regal && fx.plan.arm === 1 && fx.plan.el === 'auspuh' && fx.plan.lift === 0.55 && fx.plan.wrench && ex.wr === '2+1' && rx.lift > 0.5 && ex.lift === 0 && fx.plan.at[0] < -2.2 && fx.plan.side === 1 && fx.offs === 1 && fx.put === 'regal' && fx.ret >= 1 && !fx.stay && fx.parked && /KONČANO/.test(fx.chip) && rx.t <= 11,
+      exLog(fx) && !ux && fx.plan.regal && fx.plan.arm === 1 && fx.plan.el === 'auspuh' && fx.plan.lift === 0.55 && fx.plan.wrench && ex.wr === '2+1' && rx.lift > 0.5 && ex.lift === 0 && fx.plan.at[0] < -2.1 && fx.plan.side === 1 && fx.offs === 1 && fx.put === 'regal' && fx.ret >= 1 && !fx.stay && fx.parked && /KONČANO/.test(fx.chip) && rx.t <= 11,
       JSON.stringify({ fx, ex, t: rx.t, lift: rx.lift }));
     // (an exhaust that lifts the engine's level: a Stage 1 map in the car's parts (+6 %), the straight pipe off the regal (+2,5 %): level 1;
-    // the same fitting, then the engine's short show at the car's rear instead of the two revs: its parts on, MOČ with both numbers)
+    // the same fitting, then the engine's short show at the car's rear instead of the two revs, MOČ with both numbers; level 1's parts are
+    // only its pipe tips, and since the KOLIBRI level the VIHAR draws the fitted straight pipe itself (K.deli('auspuh')): no level tips
+    // over it (deliOn), the pipe in the car's parts)
     await page.evaluate(() => { const S = __garage.S; S.cars.muscle.parts.cip = __garage.findOpt('cip', 'Stage 1 map'); __garage.openMenu({ el: 'auspuh', key: 'rgl:STRAIGHT', sel: __garage.findOpt('auspuh', 'Straight') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rx2 = await run();
     const fx2 = await fitOf(), ex2 = await exOf(), ux2 = await ui();
-    T.check('an exhaust that lifts the engine\'s level (a Stage 1 map and the straight pipe: +8,5 %, level 1): the same fitting on the lift with the wrench, then the engine\'s short show (its parts on, MOČ with both numbers, no KONČANO) (' + rx2.t + ' s: within 15); the arms parked',
-      exLog(fx2) && !ex2.plain && fx2.plan.lift === 0.55 && fx2.plan.wrench && ex2.wr === '2+1' && rx2.lift > 0.5 && ex2.lift === 0 && fx2.put === 'regal' && !fx2.stay && fx2.parked && /MOČ/.test(fx2.chip) && /kW → /.test(fx2.chip) && !/KONČANO/.test(fx2.chip) && ux2.info.upg.motor === 1 && ux2.info.parts.motor >= 1 && rx2.t <= 15,
+    T.check('an exhaust that lifts the engine\'s level (a Stage 1 map and the straight pipe: +8,5 %, level 1): the same fitting on the lift with the wrench, then the engine\'s short show (MOČ with both numbers, no KONČANO; the car draws the straight pipe itself: no level tips over it) (' + rx2.t + ' s: within 15); the arms parked',
+      exLog(fx2) && !ex2.plain && fx2.plan.lift === 0.55 && fx2.plan.wrench && ex2.wr === '2+1' && rx2.lift > 0.5 && ex2.lift === 0 && fx2.put === 'regal' && !fx2.stay && fx2.parked && /MOČ/.test(fx2.chip) && /kW → /.test(fx2.chip) && !/KONČANO/.test(fx2.chip) && ux2.info.upg.motor === 1 && ux2.info.parts.motor === 0 && !!ux2.S.cars.muscle.parts.auspuh && rx2.t <= 15,
       JSON.stringify({ fx2, ex2, t: rx2.t, upg: ux2.info.upg, parts: ux2.info.parts }));
-    // (the GT wing again, the car's own now (NAMESTI): the SPORT kit's wing stands on the lid: no caps there, the snap, the old part back onto the regal)
+    // (the GT wing again, the car's own now (NAMESTI): the aero kit's wing (the RACE one by now) stands on the lid, and since the KOLIBRI level
+    // the VIHAR draws it (K.deli): by both arms as on the Merjasec below (an_common): roka 1 takes the old one off as the car drew it, roka 2
+    // the GT wing off the regal, the bridge's half turn, the old one onto the regal, the snap (no caps there))
     await page.evaluate(() => { __garage.openMenu({ el: 'krilo', key: 'rgl:GT WING', sel: __garage.findOpt('krilo', 'GT wing') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rw3 = await run();
     const fw3 = await fitOf(), uw3 = await ui();
-    T.check('the GT wing again with the SPORT kit\'s wing on the lid: no caps, the snap, the old part back onto the regal, KONČANO (' + rw3.t + ' s: within 12.5); the arms parked',
-      fw3.log === 'plan,grab,snap,swap,put' && fw3.plan.caps === 0 && fw3.old === 'regal' && fw3.put === 'regal' && fw3.ret >= 1 && !fw3.stay && fw3.parked && /KONČANO/.test(fw3.chip) && rw3.t <= 12.5 && uw3.info.upg.aero >= 2 && !!uw3.S.cars.muscle.parts.krilo,
+    T.check('the GT wing again with the kit\'s wing on the lid, by both arms: roka 1 the old one off (as the car drew it), roka 2 the GT wing off the regal, the bridge\'s half turn, the old one onto the regal, the snap (no caps), KONČANO (' + rw3.t + ' s: within 12.5); the arms parked',
+      fw3.log === 'plan,off,grab,pass,put,snap,swap' && fw3.plan.two === true && fw3.plan.caps === 0 && fw3.old === 'regal' && fw3.put === 'regal' && fw3.ret >= 1 && !fw3.stay && fw3.parked && /KONČANO/.test(fw3.chip) && rw3.t <= 12.5 && uw3.info.upg.aero >= 2 && !!uw3.S.cars.muscle.parts.krilo,
       JSON.stringify({ fw3, rw3, upg: uw3.info.upg }));
     // (the GT wing for a ducktail on a car that draws its wing (a kit's, K.deli: the Merjasec): by both arms (an_common) roka 1 takes the old
     // one off as the car drew it, roka 2 the new one off the regal, the bridge's half turn, the old one onto the regal, the new one down to
@@ -486,8 +500,7 @@ try {
     // (the side skirts and the diffuser (DODATKI): the trolley brings the piece, the near arm's gripper puts it on where the car draws it:
     // the skirts along the sill from the side (on a car with no sill its rear corner lips), the diffuser under the rear bumper from behind;
     // the car's own piece, exactly, no hop; KONČANO within 13.5 s)
-    // (on the KOZOROG, which draws its kit (the muscle car does not: its kits come as the plain front piece), lent for these two and
-    // given back after: the muscle car on the table again)
+    // (on the KOZOROG, which draws its kit, lent for these two and given back after: the muscle car on the table again)
     const kz0 = await page.evaluate(() => { const S = __garage.S, k = JSON.stringify(S.cars.kozorog); S.cars.kozorog.own = true; __garage.pickCar('kozorog'); return k; }); await run();
     for (const [nm, rear] of [['Side skirts', false], ['Diffuser', true]]) {
       await page.evaluate(n => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', n) }); document.querySelector('#g-menu [data-mact="buy"]').click(); }, nm); const rs = await run();

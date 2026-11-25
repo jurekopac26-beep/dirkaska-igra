@@ -114,7 +114,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 3. Kamera in meni (#650), jure.kopac26, ~13. 11. po »ok«
 4. (združeno v 2.)
 6. Najboljše vožnje, jure.kopac26, ~14. 11.
-7. Mesta za dele (#480 + #626) in 30 avtov KOLIBRI, partyslo (od 17. 11.), ~25. 11.
+7. Mesta za dele na 21 avtih (#480; #626 se zapre) in 30 avtov KOLIBRI, partyslo (od 17. 11.), ~25. 11.
 8. (združeno v 7.)
 9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
 10. Proge v dveh delih: #569 + #494 popravljene ~17.–20. 11.; nove proge potrjene 13. 11. (19 prog do 70), partyslo in croatiadata
@@ -128,6 +128,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 7 | #480 | Mesta za dele iz garaže na 21 avtih in 30 avtov KOLIBRI (#661, #662 spojena): 10 starejših (KAZE RS, VORTEX 4WD, PICO TURBO, STREGA MR, VIHAR V8, BURJA R7, SAMUM 4x4, STRELA EV, FORMULA ORKAN, TAIFUN LM) in 11 iz #460; serijski avti trikotnik za trikotnikom enaki, fizika vožnje ista | partyslo (prevzem od biketravelerja, odločitev uporabnika prek Mateja 17. 11. 2026, tabla #382, komentarja 6935582938 in 6937084140) | pripravljen; svež `main` spojen 25. 11.; grafika odobrena (Matej: »ok, vseh 27 avtov tako na main«, tabla #382, komentar 7165510143); **pred #608** (spor v `js/cars/medved.js`, vrata `door2`, razreši #608); vodi seja Združevanje partyslo; brez rezervnega kolesa na nobenem avtu (odločitev uporabnika 12. 11. 2026 ob ~3.10 prek Mateja, tabla #382, komentar 6812399354), #626 se zapre |
 | 10.14 | #755 Meni: gumba načina in težavnosti brez okna; Police chase: izbira strani | partyslo | 24. 11.: svež main spojen, menu.test lokalno zelen (tudi 640 × 360); pripravljen, združi seja Združevanje (odločitev Mateja 24. 11.). |
 | 10.14 | #821 Zbirna grafika (chase) biketraveler | Kamera za avtom, tla ob cesti: #815 (9 prog), #820 (7 prog), #826 (5 prog), vse POTEM (odločitev uporabnika 20. 11.); #824 čaka končni »ok« | biketraveler | povezani testi zeleni (20. 11.); osnutek do vrste, združi seja Združevanje |
 | 10.14 | #965 Predogled do 12 | `MAX` 8 → 12, da izbira prog ne da 404 (majhen, brez konfliktov) | jure.kopac26 | osnutek, testi zeleni |

@@ -7009,10 +7009,10 @@ const Core = (function () {
   const _fbQ = {}, _fbF = {}, _fbK = {}, _fbL = {}, _fbE = {}, _fbG = {}, _fbO = [0, 0, 0], _fbHull = new WeakMap();
   // the hull of a model, in the car's own axes (x forward, y up, z to the right) from its centre of mass: P its points (the first nW on its floor).
   // As tall as the model says (M.ht; a kit vehicle as it is drawn: def.look.body.roofY, else def.parts.ht), else as its body is (FALL.ht); its
-  // centre of mass M.hcg up, else FALL.hcK of its height (never under 0.35 m, never over half its height)
+  // centre of mass M.hcg up, else FALL.hcK of its height (never under 0.35 m, or 0.45 of its height on a hull lower than 0.78 m: the formula; never over 0.45 of its height)
   function fallHull(M) {
     let G = _fbHull.get(M); if (G) return G;
-    const D = M.def, L = M.len, W = M.wid, H = M.ht || (D && ((D.look && D.look.body && D.look.body.roofY) || (D.parts && D.parts.ht))) || FALL.ht[M.body] || 1.32, hc = clamp(M.hcg || FALL.hcK * H, 0.35, 0.5 * H), hl = L / 2, hw = W / 2, P = [];
+    const D = M.def, L = M.len, W = M.wid, H = M.ht || (D && ((D.look && D.look.body && D.look.body.roofY) || (D.parts && D.parts.ht))) || FALL.ht[M.body] || 1.32, hc = clamp(M.hcg || FALL.hcK * H, Math.min(0.35, 0.45 * H), 0.45 * H), hl = L / 2, hw = W / 2, P = [];
     for (const fx of [-1, -0.5, 0, 0.5, 1]) for (const fz of [-1, -0.5, 0, 0.5, 1]) P.push(fx * hl, -hc, fz * hw);   // (its floor: 25, dense enough for the platform's edge under it)
     const yb = 0.58 * H - hc; for (const [fx, fz] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1], [1, 0], [-1, 0]]) P.push(fx * hl, yb, fz * hw);   // (the belt line: bonnet, boot, the widest part)
     const yr = H - hc, x0 = -0.3 * L, x1 = 0.08 * L, zr = 0.36 * W; for (const [x, z] of [[x0, zr], [x0, -zr], [x1, zr], [x1, -zr], [(x0 + x1) / 2, 0]]) P.push(x, yr, z);   // (the roof)
