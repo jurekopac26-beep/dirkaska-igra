@@ -136,6 +136,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 10.0 | #1098 Harju, Finska: zamrznitev | `test: true` v `js/tracks/harju.js` (odločitev 25. 11. ob 23.40, f6be96e9f); majhen PR | partyslo | osnutek, testi tečejo; združi seja Združevanje. |
 | 10.14 | #755 Meni: gumba načina in težavnosti brez okna; Police chase: izbira strani | partyslo | 24. 11.: svež main spojen, menu.test lokalno zelen (tudi 640 × 360); pripravljen, združi seja Združevanje (odločitev Mateja 24. 11.). |
 | 10.14 | #821 Zbirna grafika (chase) biketraveler | Kamera za avtom, tla ob cesti: #815 (9 prog), #820 (7 prog), #826 (5 prog), vse POTEM (odločitev uporabnika 20. 11.); #824 čaka končni »ok« | biketraveler | povezani testi zeleni (20. 11.); osnutek do vrste, združi seja Združevanje |
 | 10.14 | #965 Predogled do 12 | `MAX` 8 → 12, da izbira prog ne da 404 (majhen, brez konfliktov) | jure.kopac26 | osnutek, testi zeleni |
