@@ -1,0 +1,13 @@
+nan 0
+psi=0 (nos v smeri gibanja) {"prizorov":180,"cv6Vsota":12.354,"cv1Vsota":11.766,"mainVsota":11.766,"razmerjeMediana":1,"razmerje90":1.284,"razmerjeNajvec":2.209,"najdaljsiNiz6":3,"najdaljsiNiz1":2,"cv6Nad2xCv1":0,"cv6Poln":0,"cv1Poln":0,"brezSunkaPrizorov":0,"brezSunkaSkoda":0,"cv6NadEnkrat2x":0}
+zdrs (psi!=0) {"prizorov":684,"cv6Vsota":56.638,"cv1Vsota":53.349,"mainVsota":53.346,"razmerjeMediana":1,"razmerje90":1.307,"razmerjeNajvec":2.605,"najdaljsiNiz6":3,"najdaljsiNiz1":2,"cv6Nad2xCv1":1,"cv6Poln":0,"cv1Poln":0,"brezSunkaPrizorov":0,"brezSunkaSkoda":0,"cv6NadEnkrat2x":0}
+najvecja razlika cv6 - cv1:
+  {"id":"rally","th":10,"kmh":140,"psi":10,"w0":-3,"cv6":0.512,"cv1":0.222,"main":0.222,"kor6":5,"kor1":2,"niz6":3,"niz1":2,"dot6":3,"enkrat6":0.478,"bs6":0,"bsD6":0,"hit6":11.258,"hit1":9.999}
+  {"id":"rally","th":10,"kmh":140,"psi":5,"w0":-1.8,"cv6":0.358,"cv1":0.184,"main":0.184,"kor6":4,"kor1":2,"niz6":1,"niz1":1,"dot6":4,"enkrat6":0.358,"bs6":0,"bsD6":0,"hit6":8.642,"hit1":6.848}
+  {"id":"rally","th":0,"kmh":140,"psi":-10,"w0":-3,"cv6":0.477,"cv1":0.338,"main":0.338,"kor6":2,"kor1":1,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.477,"bs6":0,"bsD6":0,"hit6":14.574,"hit1":14.574}
+  {"id":"formula","th":0,"kmh":140,"psi":5,"w0":-3,"cv6":0.304,"cv1":0.17,"main":0.17,"kor6":3,"kor1":2,"niz6":1,"niz1":1,"dot6":3,"enkrat6":0.304,"bs6":0,"bsD6":0,"hit6":8.116,"hit1":8.081}
+  {"id":"formula","th":2,"kmh":140,"psi":-10,"w0":-1.8,"cv6":0.291,"cv1":0.158,"main":0.158,"kor6":2,"kor1":1,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.291,"bs6":0,"bsD6":0,"hit6":8.139,"hit1":8.139}
+  {"id":"formula","th":2,"kmh":100,"psi":-10,"w0":-3,"cv6":0.31,"cv1":0.186,"main":0.186,"kor6":3,"kor1":2,"niz6":1,"niz1":1,"dot6":3,"enkrat6":0.31,"bs6":0,"bsD6":0,"hit6":6.736,"hit1":6.157}
+  {"id":"formula","th":0,"kmh":140,"psi":10,"w0":-3,"cv6":0.36,"cv1":0.251,"main":0.251,"kor6":2,"kor1":2,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.36,"bs6":0,"bsD6":0,"hit6":9.234,"hit1":8.619}
+  {"id":"formula","th":0,"kmh":140,"psi":-10,"w0":-1.8,"cv6":0.364,"cv1":0.257,"main":0.257,"kor6":2,"kor1":2,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.364,"bs6":0,"bsD6":0,"hit6":9.135,"hit1":8.852}
+tabela dokumenta (psi 0, rally):

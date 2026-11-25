@@ -1,0 +1,4 @@
+{"dirk":130,"udarcevNad2_5":672,"brezSunkaSSkodo":47,"epizod":10,"najdaljsaEpizodaKorakov":14,"skodaDogodekMax":0.0738,"skodaEpizodaMax":0.4436,"skodaSkupaj":1.441,"hitMax":5.1366,"igralec":31}
+primer {"run":"tianmen/formula","k":891,"id":"formula","pl":true,"hit":5.137,"dmg0":0.36,"dmg1":0.434,"v":[-6.088,-6.604],"w":-4.811,"h":-3.875,"premik":0.043}
+epizoda {"run":"mombasa/formula","id":"formula","k0":1331,"korakov":12,"skoda":0.444}
+proge {"tianmen":5,"ghoufi":2,"mombasa":13,"hiva":3,"aguascalientes":2,"kanaba":2,"savusavu":6,"krasnahorka":14}

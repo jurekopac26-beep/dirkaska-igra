@@ -1,0 +1,15 @@
+nan 0
+psi=0 (nos v smeri gibanja) {"prizorov":32,"cv6Vsota":7.302,"cv1Vsota":5.652,"mainVsota":5.653,"razmerjeMediana":1.283,"razmerje90":1.515,"razmerjeNajvec":1.627,"najdaljsiNiz6":1,"najdaljsiNiz1":1,"cv6Nad2xCv1":0,"cv6Poln":1,"cv1Poln":0,"brezSunkaPrizorov":0,"brezSunkaSkoda":0,"cv6NadEnkrat2x":0}
+zdrs (psi!=0) {"prizorov":448,"cv6Vsota":100.035,"cv1Vsota":91.035,"mainVsota":90.898,"razmerjeMediana":1,"razmerje90":1.609,"razmerjeNajvec":5.136,"najdaljsiNiz6":5,"najdaljsiNiz1":2,"cv6Nad2xCv1":14,"cv6Poln":10,"cv1Poln":7,"brezSunkaPrizorov":14,"brezSunkaSkoda":0.472,"cv6NadEnkrat2x":0}
+najvecja razlika cv6 - cv1:
+  {"id":"formula","th":30,"kmh":120,"psi":-45,"cv6":1,"cv1":0.677,"main":0.677,"kor6":3,"kor1":2,"niz6":2,"niz1":1,"dot6":2,"enkrat6":0.993,"bs6":0,"bsD6":0,"hit6":25.161,"hit1":15.294}
+  {"id":"rally","th":15,"kmh":160,"psi":-7.5,"cv6":0.713,"cv1":0.395,"main":0.395,"kor6":4,"kor1":2,"niz6":1,"niz1":1,"dot6":4,"enkrat6":0.713,"bs6":0,"bsD6":0,"hit6":11.366,"hit1":11.224}
+  {"id":"formula","th":15,"kmh":160,"psi":-45,"cv6":0.492,"cv1":0.202,"main":0.202,"kor6":3,"kor1":1,"niz6":2,"niz1":1,"dot6":2,"enkrat6":0.492,"bs6":0,"bsD6":0,"hit6":12.855,"hit1":9.723}
+  {"id":"formula","th":30,"kmh":90,"psi":-45,"cv6":0.662,"cv1":0.374,"main":0.374,"kor6":2,"kor1":2,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.662,"bs6":0,"bsD6":0,"hit6":17.877,"hit1":10.783}
+  {"id":"formula","th":15,"kmh":160,"psi":-30,"cv6":0.573,"cv1":0.29,"main":0.29,"kor6":2,"kor1":2,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.573,"bs6":0,"bsD6":0,"hit6":15.805,"hit1":9.668}
+  {"id":"rally","th":30,"kmh":120,"psi":-20,"cv6":0.918,"cv1":0.636,"main":0.636,"kor6":5,"kor1":2,"niz6":2,"niz1":1,"dot6":4,"enkrat6":0.883,"bs6":0,"bsD6":0,"hit6":16.324,"hit1":16.324}
+  {"id":"formula","th":15,"kmh":120,"psi":-20,"cv6":0.504,"cv1":0.23,"main":0.23,"kor6":4,"kor1":2,"niz6":3,"niz1":1,"dot6":2,"enkrat6":0.39,"bs6":0,"bsD6":0,"hit6":12.452,"hit1":6.724}
+  {"id":"formula","th":30,"kmh":160,"psi":30,"cv6":0.795,"cv1":0.56,"main":0.56,"kor6":2,"kor1":1,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.795,"bs6":0,"bsD6":0,"hit6":22.49,"hit1":22.49}
+tabela dokumenta (psi 0, rally):
+  {"id":"rally","th":15,"kmh":120,"psi":0,"cv6":0.284,"cv1":0.191,"main":0.19,"kor6":2,"kor1":2,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.284,"bs6":0,"bsD6":0,"hit6":8.604,"hit1":8.604}
+  {"id":"rally","th":30,"kmh":120,"psi":0,"cv6":0.581,"cv1":0.453,"main":0.453,"kor6":2,"kor1":2,"niz6":1,"niz1":1,"dot6":2,"enkrat6":0.581,"bs6":0,"bsD6":0,"hit6":16.64,"hit1":16.64}

@@ -1,0 +1,6 @@
+spa/crash f5490310e0ec9c7b enako avtov 13 skoda 0.846817 nan 0
+spa/race 7a0bf301b6a933b7 enako avtov 13 skoda 0 nan 0
+cusco/crash 7531d7d2675b298c enako avtov 13 skoda 0.922913 nan 0
+cusco/race 83c98186cd1679d1 enako avtov 13 skoda 0.437532 nan 0
+kotor/crash cf1ec88a5dd7abb1 enako avtov 13 skoda 1.079895 nan 0
+kotor/race ba5d35b4a44d9f75 enako avtov 13 skoda 0.423025 nan 0

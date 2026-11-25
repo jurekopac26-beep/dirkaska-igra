@@ -1,0 +1,17 @@
+cusco    71  Σ   52.3  P/drugi/ograja 7 / 46 / 0  počez 0.1  udarci 31 max 3.6  izp 0  mimo 12/12  prvi 23.3 zadnji 42.4 Σmimo 394  stoji max 8.2 Σ 31.9 n 6
+   mimo ob: 23.3 27.4 33.4 24.6 26.8 40.7 27.7 36.7 42.4 29.8 39.2 41.7
+cusco    72  Σ  178.6  P/drugi/ograja 0 / 65 / 113  počez 0.0  udarci 39 max 3.0  izp 0  mimo 12/12  prvi 23.6 zadnji 41.4 Σmimo 384  stoji max 5.9 Σ 20.4 n 6
+   mimo ob: 23.6 25.3 26.8 25.6 33.1 27.1 41.4 41 28.8 36.1 35.6 39.5
+hiva     71  Σ   80.1  P/drugi/ograja 1 / 52 / 28  počez 0.5  udarci 25 max 3.8  izp 0  mimo 12/12  prvi 24.2 zadnji 40.8 Σmimo 387  stoji max 6.5 Σ 20.6 n 5
+   mimo ob: 24.2 25.5 26.3 34.2 26.6 29.4 33.7 37.4 40.8 34.8 35.3 38.9
+hiva     72  Σ   55.4  P/drugi/ograja 5 / 50 / 0  počez 2.2  udarci 38 max 4.5  izp 0  mimo 12/12  prvi 24.0 zadnji 44.6 Σmimo 400  stoji max 7.9 Σ 27.4 n 5
+   mimo ob: 24 26.1 32.1 28.1 27.8 37.9 30.6 42.7 32.4 44.6 34.5 39.4
+tianmen  71  Σ    1.7  P/drugi/ograja 0 / 2 / 0  počez 0.0  udarci 18 max 3.2  izp 0  mimo 12/12  prvi 30.2 zadnji 47.3 Σmimo 452  stoji max 3.0 Σ 3.0 n 1
+   mimo ob: 30.2 37.1 34.4 34.7 32.9 37.6 37.9 41.3 38.2 41.8 39 47.3
+tianmen  72  Σ    0.0  P/drugi/ograja 0 / 0 / 0  počez 0.0  udarci 23 max 3.1  izp 0  mimo 10/12  prvi 30.2 zadnji - Σmimo 573  stoji max 5.6 Σ 20.8 n 5
+   mimo ob: 30.2 36.5 36.8 31.8 33.7 41.4 46.4 43.2 45.3  47.2 
+SKUPAJ tekmeci 368.1 %, z avtom počez 370.9 %
+
+real	0m12.507s
+user	0m21.558s
+sys	0m1.995s
