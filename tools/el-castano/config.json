@@ -1,11 +1,11 @@
 {
   "id": "el-castano",
-  "about": "El Castaño, Venezuela (id el-castano): 4 km of the mountain road L-6 Maracay - Choroní above El Castaño, km 6.5-10.5 (the twistiest part, through the cloud forest of the national park, up from ~1185 to ~1495 m); the line from 200 m before the start line (the grid) to 250 m past the finish",
+  "about": "El Castaño, Venezuela (id el-castano): 9 km of the mountain road L-6 Maracay - Choroní above El Castaño, km 1.5-10.5 (the whole twisty climb through the cloud forest of the national park, from ~729 to ~1497 m); the line from 200 m before the start line (the grid) to 250 m past the finish",
   "box": [
-    10.336,
-    -67.623,
-    10.374,
-    -67.576
+    10.315,
+    -67.622,
+    10.372,
+    -67.554
   ],
   "closed": false,
   "dist": {
@@ -13,16 +13,136 @@
   },
   "route": [
     [
-      10.35112,
-      -67.59216,
+      10.32883,
+      -67.56906,
       "Carretera Regional Maracay - Choroní",
       "run-up for the grid, 200 m before the start line"
+    ],
+    [
+      10.33044,
+      -67.5698,
+      "Carretera Regional Maracay - Choroní",
+      "start: L-6 at km 1.5 from El Castaño (end of Avenida Las Delicias), ~729 m"
+    ],
+    [
+      10.33057,
+      -67.57201,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 1750 m from El Castaño"
+    ],
+    [
+      10.33231,
+      -67.57341,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 2000 m from El Castaño"
+    ],
+    [
+      10.33412,
+      -67.5746,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 2250 m from El Castaño"
+    ],
+    [
+      10.33474,
+      -67.5762,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 2500 m from El Castaño"
+    ],
+    [
+      10.33571,
+      -67.57743,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 2750 m from El Castaño"
+    ],
+    [
+      10.33781,
+      -67.5771,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 3000 m from El Castaño"
+    ],
+    [
+      10.33871,
+      -67.57829,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 3250 m from El Castaño"
+    ],
+    [
+      10.33902,
+      -67.58049,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 3500 m from El Castaño"
+    ],
+    [
+      10.34016,
+      -67.58152,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 3750 m from El Castaño"
+    ],
+    [
+      10.34216,
+      -67.58227,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 4000 m from El Castaño"
+    ],
+    [
+      10.34404,
+      -67.58318,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 4250 m from El Castaño"
+    ],
+    [
+      10.34582,
+      -67.58429,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 4500 m from El Castaño"
+    ],
+    [
+      10.34789,
+      -67.58493,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 4750 m from El Castaño"
+    ],
+    [
+      10.34979,
+      -67.58549,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 5000 m from El Castaño"
+    ],
+    [
+      10.35031,
+      -67.58643,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 5250 m from El Castaño"
+    ],
+    [
+      10.34832,
+      -67.58661,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 5500 m from El Castaño"
+    ],
+    [
+      10.34872,
+      -67.58876,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 5750 m from El Castaño"
+    ],
+    [
+      10.34993,
+      -67.59017,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 6000 m from El Castaño"
+    ],
+    [
+      10.35124,
+      -67.59173,
+      "Carretera Regional Maracay - Choroní",
+      "L-6, s 6250 m from El Castaño"
     ],
     [
       10.35231,
       -67.59346,
       "Carretera Regional Maracay - Choroní",
-      "start: L-6 at km 6.5 from El Castaño (end of Avenida Las Delicias), ~1185 m"
+      "L-6, s 6500 m from El Castaño"
     ],
     [
       10.35269,
@@ -118,7 +238,7 @@
       10.35764,
       -67.59813,
       "Carretera Regional Maracay - Choroní",
-      "finish, ~1495 m"
+      "finish, ~1497 m"
     ],
     [
       10.3578,
