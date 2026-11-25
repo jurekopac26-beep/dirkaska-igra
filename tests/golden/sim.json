@@ -6174,39 +6174,39 @@
   }
  },
  "koli/race/cs": {
-  "digest": "a4b0c525e0b40cfacc0694f8",
-  "lead": 2005.1,
+  "digest": "73be9cd037b4b2a8086cf410",
+  "lead": 1906.9,
   "car0": [
-   1073.77,
-   580.8
+   934.57,
+   541.99
   ],
   "cover": {
-   "dmg": 0.13,
+   "dmg": 0.01,
    "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "koli/demo/cs": {
-  "digest": "924180218c0bb0b3206b236e",
-  "lead": 1980.5,
+  "digest": "46a19ed2118db17e1868c7f8",
+  "lead": 1866.2,
   "car0": [
-   142.22,
-   179.01
+   -1.25,
+   -3.36
   ],
   "cover": {
    "dmg": 0,
-   "loose": 4,
+   "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "koli/upg/cs": {
-  "digest": "c000dc042ff6f9c047d8aac8",
-  "lead": 2012.4,
+  "digest": "0cf31792cdc6ab7ceaa3191d",
+  "lead": 1970.8,
   "car0": [
-   1067.27,
-   572.78
+   1038.39,
+   618.4
   ],
   "cover": {
    "dmg": 0,
@@ -6216,58 +6216,58 @@
   }
  },
  "koli/crash/cs": {
-  "digest": "61346ddf9df5f20d897e0b90",
-  "lead": 2003.5,
+  "digest": "1bab9cfa7ca3fb4870fc1f4f",
+  "lead": 1892.3,
   "car0": [
-   1011.3,
-   601.48
+   907.94,
+   477.08
   ],
   "cover": {
-   "dmg": 0.62,
-   "loose": 2,
+   "dmg": 0.38,
+   "loose": 1,
    "rescues": 1,
    "repairs": 0
   }
  },
  "koli/formula/cs": {
-  "digest": "b31aaa44edd8c1c089c914f7",
-  "lead": 2044.6,
+  "digest": "6c1b890cb238a0fd11923aad",
+  "lead": 1831.5,
   "car0": [
-   1037.01,
-   547.36
+   899.83,
+   476.41
   ],
   "cover": {
-   "dmg": 0.89,
-   "loose": 5,
+   "dmg": 0.36,
+   "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "koli/lm/cs": {
-  "digest": "48a0b68d19b1d6dc6bca0a05",
-  "lead": 2041.7,
+  "digest": "7b9bef519af27b744f618874",
+  "lead": 1782.6,
   "car0": [
-   1038.91,
-   549.53
+   891.29,
+   511.99
   ],
   "cover": {
-   "dmg": 0.94,
-   "loose": 3,
+   "dmg": 0.32,
+   "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "koli/car/cs": {
-  "digest": "e20cfe6af2230210ef3bdaf7",
-  "lead": 2003.4,
+  "digest": "75f04e3f47fd215a466a8fe3",
+  "lead": 1892.6,
   "car0": [
-   1014.73,
-   604.22
+   897.01,
+   534.82
   ],
   "cover": {
-   "dmg": 0.87,
-   "loose": 8,
-   "rescues": 0,
+   "dmg": 0.45,
+   "loose": 2,
+   "rescues": 1,
    "repairs": 0
   }
  },
