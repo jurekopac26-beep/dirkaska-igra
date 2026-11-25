@@ -11,5 +11,6 @@
     trees: { kinds: ['fir', 'pine'], forest: 0.4, h: [8, 16] },   // (the boreal forest of the national park: spruce and pine)
     skiers: 50, nets: true, snowbanks: true,
     animals: [],
+    extra: (ctx) => { if (World.ext.goreRob) World.ext.goreRob(ctx, 'koli'); },   // (the roadside ground for the chase camera: js/world-chase-bt19.js)
   });
 })();
