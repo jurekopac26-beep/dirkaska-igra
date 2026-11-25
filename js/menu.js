@@ -1855,6 +1855,7 @@
     // the music: the country's own, its drop where the helicopter levels out; the rotor under the flight (the Sound and Music settings)
     const sound = setting('sound') === 0, mus = XI[t.id] && XI[t.id].music;
     const A = sound && mus ? voice('assets/music/' + mus + '.mp3') : null, Rt = sound ? voice('assets/music/rotor.mp3', true) : null;
+    for (const k in pool) { pool[k].free(); delete pool[k]; }   // (made in a tap for an intro that did not use them: let go too)
     if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
     for (const o of [A, Rt]) if (o) { const p = o.a.play(); if (p && p.then) p.then(() => { if (!o.a.__go) o.a.pause(); }).catch(() => {}); }   // (unlocked silent in the tap itself: later they may start on their own)
     { const p = v.play(); if (p && p.then) p.then(() => { if (!shots) v.pause(); }).catch(() => {}); }   // (the video too: some browsers start one later only so)
@@ -1974,7 +1975,7 @@
         J.done.then((why) => { pinsOn = true; if (why === 'nogl') { if (mapEl) mapEl.remove(); startShots(); } });
       } else startShots();
     };
-    const stopAll = () => { if (!done) quit(); for (const o of [A, Rt]) if (o) { o.a.pause(); o.a.__held = false; o.set(0); } if (ixLive && ixLive.stop === stopAll) ixLive = null; };
+    const stopAll = () => { if (!done) quit(); for (const o of [A, Rt]) if (o) { o.a.__held = false; o.free(); } if (ixLive && ixLive.stop === stopAll) ixLive = null; };
     heliData(t.id).then(begin);
     ixRaf = requestAnimationFrame(step);
     ixLive = { A, Rt, stop: stopAll }; window.__ixDebug = { A: A && A.a, Rt: Rt && Rt.a, v, get J() { return J; }, get Hd() { return Hd; } };   // (for the mockup's own checks)
@@ -1986,13 +1987,18 @@
   let ixLive = null, actx = null;
   const pool = {};   // (sounds made in the tap itself, where a phone lets sound start: kept for the intro that follows the loading)
   function make(url, loop) {
-    const a = new Audio(url); a.preload = 'auto'; a.loop = !!loop; let g = null;
+    const a = new Audio(url); a.preload = 'auto'; a.loop = !!loop; let g = null, src = null;
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) { actx = actx || new AC(); const src = actx.createMediaElementSource(a); g = actx.createGain(); g.gain.value = 0; src.connect(g); g.connect(actx.destination); }
-    } catch (_) { g = null; }
+      if (AC) { actx = actx || new AC(); src = actx.createMediaElementSource(a); g = actx.createGain(); g.gain.value = 0; src.connect(g); g.connect(actx.destination); }
+    } catch (_) { g = null; src = null; }
     if (!g) a.volume = 0;
-    return { a, set(v) { v = Math.max(0, Math.min(1, v)); if (g) g.gain.value = v; else a.volume = v; }, get() { return g ? g.gain.value : a.volume; } };
+    // (free: once the intro's sound is over, its nodes off the context and the file let go; the context held each element and its
+    // nodes for good before, two more each intro: the 22. 11. review)
+    let gone = false;
+    const free = () => { if (gone) return; gone = true; a.pause(); try { if (src) src.disconnect(); if (g) g.disconnect(); } catch (_) { /* already off */ }
+      src = null; a.removeAttribute('src'); try { a.load(); } catch (_) { /* nothing loaded */ } };
+    return { a, free, get gone() { return gone; }, set(v) { v = Math.max(0, Math.min(1, v)); if (gone) return; if (g) g.gain.value = v; else a.volume = v; }, get() { return gone ? 0 : g ? g.gain.value : a.volume; } };
   }
   function voice(url, loop) { const k = url + (loop ? '#l' : ''), o = pool[k]; if (o) { delete pool[k]; return o; } return make(url, loop); }
   function warm(url, loop) {   // in the tap: made, started silent and stopped at once
@@ -2001,8 +2007,8 @@
     const p = o.a.play(); if (p && p.then) p.then(() => { if (!o.a.__go) o.a.pause(); }).catch(() => {});
   }
   function ixFade(o, sec) {
-    if (!o) return; if (o.a.paused) { o.a.__held = false; o.set(0); return; }   // (held in a hidden tab, or never started: it stays silent)
-    const v0 = o.get(), t0 = performance.now(), stop = () => { o.a.pause(); o.a.__held = false; o.set(0); };
+    if (!o) return; if (o.a.paused) { o.a.__held = false; o.free(); return; }   // (held in a hidden tab, or never started: it stays silent)
+    const v0 = o.get(), t0 = performance.now(), stop = () => { o.a.__held = false; o.free(); };
     const f = () => { const k = (performance.now() - t0) / 1000 / sec; if (k >= 1 || o.a.paused) return; o.set(v0 * (1 - k)); requestAnimationFrame(f); };
     requestAnimationFrame(f); setTimeout(stop, sec * 1000 + 30);
   }
