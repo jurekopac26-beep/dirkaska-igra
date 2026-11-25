@@ -290,6 +290,7 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - **partyslo do 20 sej (odločitev uporabnika 25. 11. 2026 ob ~22.25):** izjema od meje 10: partyslo sme do četrtka 26. 11. ob 3.00 imeti do 20 sej s kodo (Opus, Sonnet; brez Fable), da doseže 100 24 h pred resetom; od 3.00 spet do 10.
 - **Nove proge samo s potrjenega seznama (odločitev uporabnika 25. 11. 2026 ob ~22.58; tabla #382):** #1093–#1097 (Kudowa-Zdrój, Meteora, Šipka, Trebević, Tatev) ustavljeni; #1092 Stavrovouni, Ciper, je uporabnik potrdil ob ~23.27 (3–10 km, po #788), ostanejo osnutki brez dela; proge do 70 samo #788 (Kali Gandaki, Musandam, Limalimo, Darvaz, Mujib), rezervi #1090 El Castaño in #1091 Chamarel partyslo dokonča po #788 (uporabnik ob ~23.20, »naj ju dokonča«; skupaj 73 prog).
 - **Grafika prog partyslo počaka na Fable (odločitev uporabnika 25. 11. 2026 ob ~23.15):** dodelava prog do ravni Pikes Peaka pri partyslo šele po resetu v petek 27. 11. ob 3.00, na Fable, samo proge zunaj skupin biketravelerja; prej ne na Opusu.
+- **Harju, Finska, zamrznjen (odločitev uporabnika 25. 11. 2026 ob ~23.40):** `test: true`, ker ostane Koli (»Koli namesto Harju«, 13. 11.); ena proga na državo. Izvede partyslo v majhnem PR; #1038 (opis Harju) odpade za Harju.
 - **Dolžina novih prog 3–10 km (odločitev uporabnika 25. 11. 2026 ob ~23.25, potrdil Matej ob 23.30):** nadomesti 1–5 km; velja za nove proge, obstoječih in zamrznjenih ne spreminja. El Castaño (#1090, pot A ~8 km) je s tem po pravilu.
 
 ### Seje
