@@ -26,7 +26,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
-| Orodje za predajo `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje (odločitev uporabnika prek Mateja, #382 7148056618, točka 10) | partyslo | osnutek PR; predaja za Združevanje partyslo |
 | Kamera za avtom, tla ob cesti, skupina 52 (drugi prehod): Koli, Pikes Peak (makadam) (`js/world-chase-bt52.js`) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 43 (drugi prehod): Luanda, Portobelo (`js/world-chase-bt43.js`, v #821) | biketraveler | PR #884, vprašanje `chase-skupina-43` 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 49 (drugi prehod): Montréal, Spa (barve tal v `js/world-montreal.js`, `js/world-spa.js`, v #821) | biketraveler | PR #890, vprašanje `chase-skupina-49` 21. 11. |
@@ -137,5 +136,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.16 | #943 Krásna Hôrka, Slovaška | nova proga 3,4 km (veja `proga/spis`), testi zeleni; v sporu z `main`, ob združitvi spoji; proge zadnje (Matej, #382 7079559816) | partyslo | osnutek |
 | 10.13 | #704 | Krásna Hôrka, Slovaška (`krasnahorka`, ~0,64 km): kratka proga z znamenitostjo, dovozna cesta v klanec do gradu, grad po obrisu OSM cel kot pred požarom 2012 (odločitev uporabnika prek Mateja 15. 11. 2026); proga, zato na koncu, z naslednjim PR prog | jure.kopac26 | pripravljen, povezani testi lokalno zeleni (15. 11.); osnutek do vrste; predaja v opisu PR |
 | 10.17 | #1057 Longyearbyen med testne | `test: true` za Longyearbyen, Norveška, kotni video iz menija (prošnja uporabnika, #382 7121179904); proga, zato zadnje | partyslo | pripravljen, svež `main`, povezani testi 18/18 (24. 11.); osnutek do vrste; predaja v opisu PR |
+| 10.18 | #1066 Orodje za predajo | `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje, test, kazalo, varčevanje (Matej, #382 7148056618, točka 10); orodje, ne proga | partyslo | osnutek, povezani testi zeleni; predaja za Združevanje partyslo |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
