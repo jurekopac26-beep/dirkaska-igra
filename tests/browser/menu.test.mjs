@@ -94,7 +94,7 @@ try {
       return { kind: map ? 'map' : top && top.querySelector('img') ? 'model' : 'none', files: top ? [...top.querySelectorAll('img, image')].map(e => e.getAttribute('src') || e.getAttribute('href')) : [] };`;
     // a mode's tracks in the menu's order: the real ones; behind NEUPORABNO (nu) the hidden ones, those awaiting the user's choice first, then the test tracks
     const expList = ([gm, nu]) => {
-      const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes(gm) && !!(d.test || d.pending) === nu);
+      const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && Core.ways(d).includes(gm) && !!(d.test || d.pending) === nu);   // (Core.ways: a circuit's time trial too, Kronometer na vseh progah)
       const rk = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real ones, the ones awaiting the user's choice, the test tracks)
       ds.sort((a, b) => (rk(a) - rk(b)) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
       return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent && !d.vehicle).length, lens: ds.every(d => L[d.id] > 0) };
