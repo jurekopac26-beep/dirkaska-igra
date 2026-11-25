@@ -154,9 +154,10 @@ try {
   common(L, 'Bathurst');
   // 5. the buttons
   const op = (t) => { const r = L.reduce((a, r) => Math.abs(r.t - t) < Math.abs(a.t - t) ? r : a, L[0]); return r.op; }, fin = L.slice(0, hb).filter(r => r.t > 0);
+  const auto = fin.filter(r => r.t > 1.05 && r.t < tHB - 3);   // (the frames the autopilot drives: none would make the check prove nothing)
   const inStart = fin.find(r => r.t > 3 && r.op > 0.01), full = fin.find(r => inStart && r.t >= inStart.t && r.op >= 0.999), mono = fin.filter(r => inStart && r.t >= inStart.t).every((r, i, a) => !i || r.op >= a[i - 1].op - 1e-6);
-  T.check('101: the driving buttons fade out over ~1 s from the takeover (half at 0.5 s), gone while the autopilot drives', pre.every(r => r.op === 1) && Math.abs(op(0.5) - 0.5) < 0.1 && op(1.05) === 0 && fin.filter(r => r.t > 1.05 && r.t < tHB - 3).every(r => r.op === 0),
-    JSON.stringify({ at0_5: op(0.5), at1_05: op(1.05) }));
+  T.check('101: the driving buttons fade out over ~1 s from the takeover (half at 0.5 s), gone while the autopilot drives', pre.every(r => r.op === 1) && Math.abs(op(0.5) - 0.5) < 0.1 && op(1.05) === 0 && auto.length >= 30 && auto.every(r => r.op === 0),
+    JSON.stringify({ at0_5: op(0.5), at1_05: op(1.05), auto: auto.length }));
   T.check('101: back in from ~2 s to ~0.5 s before the hand-back (never back down), fully there at it; their place and size the same (opacity only)',
     !!inStart && !!full && tHB - inStart.t <= 2.6 && tHB - inStart.t >= 1.6 && tHB - full.t >= 0.45 && tHB - full.t <= 1 && mono && L[hb].op === 1 && !!R.rect1 && R.rect1 === R.rect0,
     JSON.stringify({ hb: tHB, from: inStart && +(tHB - inStart.t).toFixed(2), full: full && +(tHB - full.t).toFixed(2), rect: R.rect1 === R.rect0 }));

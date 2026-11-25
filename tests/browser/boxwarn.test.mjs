@@ -136,7 +136,7 @@ try {
   const a = await run(page, (g, P, dE) => P.lap >= 2 && /near/.test(document.getElementById('h-box').className) && dE < 300, 3000);
   const on = a.ch.filter(c => c.st.startsWith('on')), first = on[0], near = on.filter(c => /near r/.test(c.st)), due = a.lines.find(l => l.box);
   T.check('no team radio, nothing on the first lap; at the line of the lap the stop is due (the plan there: box, the fuel; no race clock) BOKSI, no arrow yet',
-    !!a.ok && a.ch.filter(c => c.lap === 1).every(c => c.st === '||') && !!due && due.need === 'fuel' && !due.mk && due.lap >= 2 && !!first && first.lap === due.lap && first.dE > a.L / 2 && first.st === 'on|BOKSI|',
+    !!a.ok && !!a.ch[0] && a.ch[0].lap <= 1 && a.ch[0].st === '||' && a.ch.filter(c => c.lap <= 1).every(c => c.st === '||') && !!due && due.need === 'fuel' && !due.mk && due.lap >= 2 && !!first && first.lap === due.lap && first.dE > a.L / 2 && first.st === 'on|BOKSI|',
     JSON.stringify({ lines: a.lines, ch: a.ch.slice(0, 4) }));
   T.check('... the last 400 m before the way in: the arrow to the right (the lane\'s side) and the metres to it in steps of 50, fewer and fewer',
     near.length >= 2 && near[0].dE <= 400 && near[0].dE > 340 && near.every((c, i) => /^on near r\|BOKSI\|\d+0 m$/.test(c.st) && +c.st.split('|')[2].slice(0, -2) % 50 === 0 && (!i || +c.st.split('|')[2].slice(0, -2) < +near[i - 1].st.split('|')[2].slice(0, -2))),
