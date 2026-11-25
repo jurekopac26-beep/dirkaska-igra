@@ -52,6 +52,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Hakone, Japonska | PR #261 | 0 % (v igri, povprečno 6,7 m od asfalta) | izletna cona je |
 | Medvode, Slovenija | PR #153 | 10 %, obe 3 % (v igri, povprečno 6,1 m; na `main` zdaj 99 %) | izletna cona je (pločniki) |
 | Bâlea, Romunija | na `main` (PR #226, 7. 11. 2026) | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
+| Džebel Hafit, Združeni arabski emirati | PR #695 | večinoma (ograja ob vsej cesti) | izjema po izbiri uporabnika 14. 11. 2026; padca ni (ograja); na odločanju (`pending: true`) od 16. 11. 2026 |
 | Hải Vân, Vietnam | PR #676 | 0 % (v igri, povprečno 7,8 m) | izletna cona je |
 | Kanaba, Uganda | PR #690 (»Vse proge v enem PR«) | 0 % v OpenStreetMap (zidov in ograj ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
 | Sogeri, Papua Nova Gvineja | PR #691 | 0 % v OpenStreetMap (zidov, ograj in hiš ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
@@ -128,6 +129,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test); zamrznjena kot testna (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostane do izbire | London (mestna proga po središču velikega mesta; #492, del N3 #500): tudi na odločanju, `pending: true` doda seja partyslo (od 8. 11. 2026 ob 22.03 ni več izjema od pravila ena proga na državo) | – |
 | Romunija | Bâlea (na `main` od 7. 11. 2026, PR #226) | – | – |
+| Združeni arabski emirati | Džebel Hafit (PR #695) in Abu Dabi (PR #547): obe na odločanju (`pending: true`; odločitev uporabnika 16. 11. 2026 ob ~2.02 prek Mateja, tabla #382: »ubedve progi prestavi v pending«), na `main` ne gresta pred izbiro; po izbiri izbrana postane prava, druga testna | – | – |
 | ZAE | – (nobena še ni na `main`) | Džebel Hafit (#695, jure.kopac26) in Abu Dabi (#547, biketraveler): obe na odločanju (`pending: true`; odločitev uporabnika 16. 11. 2026 ob ~1.55 prek Mateja: »ubedve progi prestavi v pending«, vprašanje `ena-proga-zae`, odgovor 3); oznako doda seja vsake proge; do izbire novih prog iz ZAE ne delamo | – |
 | Indija | Killar (na `main` 3. 11. 2026 po odločitvi uporabnika; prva proga iz Indije) | – | Auli (kratke, A), Shimla in Darjeeling (zavite, 4) |
 | Vietnam | Mã Pí Lèng (Nove proge za 1.0, del 4, K1, s PR #942): prava proga od 22. 11. 2026 (izbira uporabnika ob 1.55, Matej, tabla #382, komentar 7071810014) | – | Hải Vân (PR #676): testna (`test: true`, za izbris) |
