@@ -717,6 +717,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: chAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: chAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'chapman', { gH: chGround, slope: chSlope, bad: (x, z) => sea(x, z) || vrLC(x, z) === 4 });   // (the roadside ground for the chase camera: js/world-chase-bt15.js)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, baboons: nBab, kelp: nKelp, boats: nBoat, overhangs: nOver, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }

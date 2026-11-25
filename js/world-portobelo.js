@@ -465,10 +465,11 @@
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
+    const rob = World.ext.portobeloRob ? World.ext.portobeloRob({ scen, excluded, seaD, inFort, inGlade, root, out }) : null;   // (the shore's bank and the forest floor by the road: js/world-realizem-bt.js)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
     return out;
   }
 

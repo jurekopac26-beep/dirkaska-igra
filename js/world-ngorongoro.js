@@ -28,8 +28,9 @@
      soil, the darker shrubs, the rim's forest, the streams' green strips, the steep faces' grey-brown rock, the floor's paler short grass),
      the road of rough grey-brown setts with the red dust in the joints (ngSettTex), the murram of the rim road before the start, the plants
      (ngTreeGeo: the rim's round dark trees, umbrella acacias, candelabra euphorbias, shrubs, tufts of grass), the ranger post (def.gates,
-     def.bld), the lay-by at Windy Gap with the safari vehicles (generic, no names on them), the round huts of the bomas on the slopes
-     outside (def.huts, generic), the crater beyond the corridor and the animals. Only geographic names and plain Swahili words on the boards. */
+     def.bld), the lay-by at Windy Gap with the safari vehicles (generic, no names on them), the side roads that meet the road by the start
+     (def.roads, OpenStreetMap: strips laid on the ground, graphics only), the round huts of the bomas on the slopes outside (def.huts,
+     generic), the crater beyond the corridor and the animals. Only geographic names and plain Swahili words on the boards. */
   const SCOL = [0, 0, 0];
   let PA = null, ST = null, DU = [];   // the footpaths and steps, the streams (hashed polylines: segHash), the dusty plots (discs: [x, z, r])
   function segHash(list, C, pad) {   // polylines [[x, z, ...], ...] -> their points and a hash of their segments by C m cells (pad m round each)
@@ -51,8 +52,8 @@
   }
   function ngCol(x, z, h, ny, dd) {   // ground colour (times the grey grit map): see above
     const P = API.VR, A = h + P.D.base, f = P.n4(x, z), q = P.c2(x, z), m = P.c1(x, z), s5 = P.c5(x * 1.3, z * 1.3);
-    let R = 0.5, G = 0.5, B = 0.27;
-    const dry = sstep(0.45, 0.8, m) * 0.6; R = lerp(R, 0.66, dry); G = lerp(G, 0.58, dry); B = lerp(B, 0.35, dry);   // (straw)
+    let R = 0.56, G = 0.51, B = 0.29;   // (the dry season's tawny grass: docs/proge/ngorongoro.md)
+    const dry = sstep(0.4, 0.8, m) * 0.7; R = lerp(R, 0.66, dry); G = lerp(G, 0.58, dry); B = lerp(B, 0.35, dry);   // (straw)
     const fr = sstep(0.55, 0.85, P.c3(x, z)) * 0.45; R = lerp(R, 0.38, fr); G = lerp(G, 0.48, fr); B = lerp(B, 0.22, fr);   // (fresh green)
     const fl = sstep(1880, 1830, A) * 0.7; R = lerp(R, 0.62, fl); G = lerp(G, 0.59, fl); B = lerp(B, 0.35, fl);   // (the floor's short grass)
     const soil = sstep(0.68, 0.88, q) * 0.4; R = lerp(R, 0.53, soil); G = lerp(G, 0.37, soil); B = lerp(B, 0.25, soil);   // (the red-brown soil)
@@ -67,7 +68,7 @@
       R = lerp(R, lerp(0.45 * k, R, ledge), st); G = lerp(G, lerp(0.4 * k, G, ledge), st); B = lerp(B, lerp(0.34 * k, B, ledge), st); }
     for (let k = 0; k < DU.length; k++) { const u = DU[k], e = Math.hypot(x - u[0], z - u[1]); if (e < u[2]) { const t = sstep(u[2], u[2] * 0.6, e) * 0.8; R = lerp(R, 0.62, t); G = lerp(G, 0.5, t); B = lerp(B, 0.38, t); } }
     const pd = segD(PA, x, z); if (pd < 1.4) { const t = sstep(1.4, 0.4, pd) * 0.75; R = lerp(R, 0.6, t); G = lerp(G, 0.47, t); B = lerp(B, 0.35, t); }
-    if (dd < 1.8) { const t = sstep(1.8, 0.2, dd) * 0.5; R = lerp(R, 0.56, t); G = lerp(G, 0.42, t); B = lerp(B, 0.31, t); }   // (the verge: trodden red dust)
+    if (dd < 2.6) { const t = sstep(2.6, 0.2, dd) * 0.55; R = lerp(R, 0.56, t); G = lerp(G, 0.42, t); B = lerp(B, 0.31, t); }   // (the verge: trodden red dust)
     SCOL[0] = R; SCOL[1] = G; SCOL[2] = B; return SCOL;
   }
   function ngGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (as caGCol, coloured by ngCol)
@@ -638,6 +639,28 @@
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     if (lay) exclPush(lay.x, lay.z, lay.r + 4);
     exclPush(padF.x, padF.z, padF.r + 4);
+    // the side roads that meet the road by the start (def.roads, OpenStreetMap: [width, 1 if gravel, x, z, ...]), each from its end by the road: the
+    // centreline in rows (every ~0.6 m near the road, then ~1.5 m), the side it leaves on, how far past the road's edge, the half-width (flared at
+    // the mouth). Nothing grows or stands on them, no wall or post across them (srGap); drawn with the road (laid on the ground, not cut into it)
+    const srE = w + 0.45, SRD = [];
+    const srAt = (x, z) => { const n = vrNear(x, z); if (n.i < 0) return null; const i = n.i, f = clamp(i + ((x - T.px[i]) * T.tx[i] + (z - T.pz[i]) * T.tz[i]) / T.ds, 0, N - 1), i0 = Math.min(N - 2, Math.floor(f)), i1 = i0 + 1, t = f - i0;
+      return { i0, i1, t, lat: lerp((x - T.px[i0]) * T.nx[i0] + (z - T.pz[i0]) * T.nz[i0], (x - T.px[i1]) * T.nx[i1] + (z - T.pz[i1]) * T.nz[i1], t) }; };
+    for (const r of def.roads || []) {
+      const p = []; for (let k = 2; k + 1 < r.length; k += 2) p.push([r[k], r[k + 1]]); if (p.length < 2) continue;
+      const d0 = vrNear(p[0][0], p[0][1]).d, d1 = vrNear(p[p.length - 1][0], p[p.length - 1][1]).d; if (d1 < d0) p.reverse();
+      const cum = [0]; for (let k = 1; k < p.length; k++) cum.push(cum[k - 1] + Math.hypot(p[k][0] - p[k - 1][0], p[k][1] - p[k - 1][1]));
+      const L = cum[cum.length - 1], at = (t) => { t = clamp(t, 0, L); let k = 0; while (k < p.length - 2 && cum[k + 1] < t) k++; const u = (t - cum[k]) / ((cum[k + 1] - cum[k]) || 1); return [lerp(p[k][0], p[k + 1][0], u), lerp(p[k][1], p[k + 1][1], u)]; };
+      const q8 = at(8), n8 = srAt(q8[0], q8[1]), sd = n8 && n8.lat < 0 ? -1 : 1, hw = r[0] / 2, rows = [];
+      for (let t = 0; ; ) { const c = at(t), a = at(t - 1.5), b = at(t + 1.5), tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, n = srAt(c[0], c[1]), de = n ? n.lat * sd - srE : 99;
+        rows.push({ x: c[0], z: c[1], tx: (b[0] - a[0]) / tl, tz: (b[1] - a[1]) / tl, t, de, hf: hw + 2.5 * sstep(6, 0, de) });
+        if (t >= L) break; t = Math.min(L, t + (de < 14 ? 0.6 : 1.5)); }
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const q of rows) { x0 = Math.min(x0, q.x - q.hf); x1 = Math.max(x1, q.x + q.hf); z0 = Math.min(z0, q.z - q.hf); z1 = Math.max(z1, q.z + q.hf); }
+      SRD.push({ hw, gravel: r[1] === 1, sd, L, rows, bb: [x0 - 2, z0 - 2, x1 + 2, z1 + 2] });
+      for (let k = 0, last = -9; k < rows.length; k++) { const q = rows[k]; if (q.t - last < 2.5 && k < rows.length - 1) continue; last = q.t; exclPush(q.x, q.z, q.hf + 1.5); }
+    }
+    const srGap = (x, z) => { let b = 1e9; for (const rd of SRD) { if (x < rd.bb[0] || x > rd.bb[2] || z < rd.bb[1] || z > rd.bb[3]) continue; const Q = rd.rows;   // (metres from (x, z) to the nearest side road's edge; < 0 on it)
+      for (let k = 0; k + 1 < Q.length; k++) { const A = Q[k], B = Q[k + 1], ux = B.x - A.x, uz = B.z - A.z, t = clamp(((x - A.x) * ux + (z - A.z) * uz) / (ux * ux + uz * uz || 1), 0, 1);
+        b = Math.min(b, Math.hypot(x - A.x - ux * t, z - A.z - uz * t) - lerp(A.hf, B.hf, t)); } } return b; };
     out.marks = {}; if (lay) out.marks.view = [lay.x, lay.z];   // (where the landmarks stand: the tests look for them)
 
     /* ---- terrain tiles ---- */
@@ -700,6 +723,43 @@
       for (const s0 of T.cpS) { const a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.042;
         gw2.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw2, lMat);
+      if (SRD.length) {   // the side roads (SRD): strips laid on the ground, across the verge on a low fill (as over a culvert: no dip into the ditch), never onto
+        // the road (pulled back to its edge); compacted murram or gravel, the ruts darker; their edges, far ends and the drive's end in the lay-by's dust
+        // fade out (vertex alpha: the colour stays the road's, no seam against the ground's own texture). One mesh, drawn over the ground and the verge
+        const gs = new GB(true, true), E = srE;
+        const prof = (i, si, o) => { const q = vp[si][i]; if (o <= q[0][0]) return q[0][1]; if (o >= q[4][0]) return null;   // (the verge's height at o, relative to the road; past it null)
+          for (let k = 0; k < 4; k++) if (o <= q[k + 1][0]) return lerp(q[k][1], q[k + 1][1], (o - q[k][0]) / ((q[k + 1][0] - q[k][0]) || 1)); return null; };
+        const ramp = (i, si, o) => { const q = vp[si][i]; return lerp(q[0][1], q[4][1], clamp((o - q[0][0]) / ((q[4][0] - q[0][0]) || 1), 0, 1)); };   // (the fill: straight from the edge to the ground past the ditch)
+        const vert = (x, z, sd, inner) => {
+          const n = srAt(x, z); let o = 99, cl = false;
+          if (n) { o = n.lat * sd; if (o < E) { const a = Pt(n.i0, sd * E, 0), b = Pt(n.i1, sd * E, 0); x = lerp(a[0], b[0], n.t); z = lerp(a[2], b[2], n.t); o = E; cl = true; } }
+          const g = caGround(x, z); let vis = g, rp = -1e9;   // (what is seen there: the terrain or the verge over it, whichever is higher)
+          if (n) { const si = sd > 0 ? 1 : 0, h0 = prof(n.i0, si, o), h1 = prof(n.i1, si, o);
+            if (h0 !== null && h1 !== null) { vis = Math.max(g, lerp(T.hy[n.i0] + h0, T.hy[n.i1] + h1, n.t)); rp = lerp(T.hy[n.i0] + ramp(n.i0, si, o), T.hy[n.i1] + ramp(n.i1, si, o), n.t); } }
+          return { p: [x, inner ? Math.max(vis, rp) + 0.01 + 0.05 * sstep(E, E + 1.5, o) : vis + 0.03, z], cl };
+        };
+        for (const rd of SRD) {
+          const Q = rd.rows, sd = rd.sd, prim = rd.hw > 3, rr = rd.hw > 2 ? 0.85 : 0.8, base = rd.gravel ? [0.64, 0.57, 0.48] : [0.62, 0.47, 0.35];
+          const U = prim ? [-3.25, -2.8, -2.3, -1.8, -1.25, -0.75, -0.25, 0.25, 0.75, 1.25, 1.8, 2.3, 2.8, 3.25] : [-rd.hw, -rr - 0.55, -rr, -rr + 0.55, rr - 0.55, rr, rr + 0.55, rd.hw];
+          const ruts = prim ? [-2.3, -0.75, 0.75, 2.3] : [-rr, rr];   // (two lanes on the main road, one on the others)
+          let prev = null;
+          for (const q of Q) {
+            const nx = -q.tz, nz = q.tx, sc = q.hf / rd.hw;
+            let f = sstep(rd.L, rd.L - 6, q.t);   // (the far end: into the grass)
+            if (rd.gravel && lay) f = Math.min(f, sstep(lay.r - 4, lay.r + 2, Math.hypot(q.x - lay.x, q.z - lay.z)));   // (the drive's end: into the lay-by's dust)
+            const us = [-(q.hf + 0.6), ...U.map(u => u * sc), q.hf + 0.6], row = []; let allIn = true;
+            for (let m = 0; m < us.length; m++) {
+              const inner = m > 0 && m < us.length - 1, v = vert(q.x + nx * us[m], q.z + nz * us[m], sd, inner); if (!v.cl) allIn = false;
+              const k0 = (0.92 + 0.12 * P.n2(v.p[0] * 0.3, v.p[2] * 0.3)) * (inner && ruts.some(u => Math.abs(us[m] / sc - u) < 0.01) ? 0.89 : 1);
+              row.push({ p: v.p, c: [base[0] * k0, base[1] * k0, base[2] * k0, inner ? f : 0], uv: wuv(v.p) }); }
+            if (prev && !(prev.allIn && allIn) && (prev.f > 0 || f > 0)) for (let m = 0; m + 1 < row.length; m++) { const a = prev.row[m], b = prev.row[m + 1], c = row[m + 1], d = row[m];
+              gs.quadUp(a.p, b.p, c.p, d.p, [a.c, b.c, c.c, d.c], [a.uv, b.uv, c.uv, d.uv]); }
+            prev = { row, f, allIn };
+          }
+        }
+        const sm = addM(gs, new THREE.MeshLambertMaterial({ map: gMat.map, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }));
+        if (sm) { sm.renderOrder = -1; sm.name = 'sideRoads'; }
+      }
     }
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
@@ -841,6 +901,7 @@
         const si = side > 0 ? 1 : 0, nd = need[si], bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
+        for (let i = iS0; i <= iS1; i++) if (nd[i]) { const o = side * (bar[i] + 0.4); if (srGap(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < 1.2) nd[i] = 0; }   // (no wall across a side road)
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
         nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.15 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
@@ -851,7 +912,8 @@
             const a = Q(i, -0.2), b = Q(i + 1, -0.2), c = Q(i + 1, 0.55), d = Q(i, 0.55);
             const a2 = Q(i, -0.6, 0.5), b2 = Q(i + 1, -0.6, 0.5), c2 = Q(i + 1, 0.55, 0.5), d2 = Q(i, 0.55, 0.5), inn = Q(i, 0.2, 0.25);
             g.quadO(a, b, c, d, fc, inn); g.quadO(a2, b2, c2, d2, back, inn); g.quadO(d, c, c2, d2, tc, inn);
-          } else if (!nd[i] && i % 25 === 0 && i > 2 && i < iE - 2) mkPosts.push([i, side]);
+          } else if (!nd[i] && i % 25 === 0 && i > 2 && i < iE - 2) { const o1 = side * (bar[i] + 0.42), o2 = side * (w + 1.4);   // (none on a side road)
+            if (srGap(T.px[i] + T.nx[i] * o1, T.pz[i] + T.nz[i] * o1) > 1.2 && srGap(T.px[i] + T.nx[i] * o2, T.pz[i] + T.nz[i] * o2) > 1.2) mkPosts.push([i, side]); }
         }
       }
       const kp = ngProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;
@@ -954,6 +1016,17 @@
 
     /* ---- the animals by the road (ngLife; out.dyn.ext poses them every frame) ---- */
     const life = ngLife({ root, excluded, onSide, sStart, out });
+
+    /* ---- the roadside ground for the chase camera (js/world-chase-bt20.js): the streams' green margins as class 6, nothing in their beds
+       nor on the animals' places (each group's ground with 8 m to spare and, for a crossing herd, the far side it walks to) ---- */
+    if (World.ext && World.ext.goreRob) {
+      const zA = [];
+      for (const g of life.L.groups) { const ms = [[g.x, g.z, 0]], A = life.L.A.slice(g.a0, g.a1);
+        if (g.kind === 'cross' && A.length) { let bx = 0, bz = 0; for (const a of A) { bx += a.bx; bz += a.bz; } ms.push([bx / A.length, bz / A.length, 1]); }
+        for (const [cx, cz, far] of ms) { let r = 0; for (const a of A) r = Math.max(r, far ? Math.hypot(a.bx - cx, a.bz - cz) : Math.hypot(a.hx - cx, a.hz - cz)); zA.push([cx, cz, r + 8]); } }
+      World.ext.goreRob({ excluded, root, out }, 'ngorongoro', { gH: caGround, slope: caSlope, near: vrNear, lc: (x, z) => segD(ST, x, z) < 8 ? 6 : vrLC(x, z),
+        bad: (x, z) => segD(ST, x, z) < 2.5 || segD(PA, x, z) < 1.4 || zA.some(e => (x - e[0]) * (x - e[0]) + (z - e[1]) * (z - e[1]) < e[2] * e[2]) });
+    }
 
     /* ---- the view beyond the corridor (ngFar; World.update moves it with the camera); finish the meshes ---- */
     const FAR = ngFar(def); if (FAR) { FAR.mesh.visible = false; FAR.upd = ngFarUpdate; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; moved by its own ngFarUpdate)
