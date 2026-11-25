@@ -13,3 +13,9 @@ Kratko dirkališče v gozdu ob reki Vege å zahodno od Kågeröda (občina Sval�
 - **Obcestje** (`js/world-kagerod-obcestje.js`, 23. 11. 2026): gozdna ograja iz pocinkanih stebričkov s tremi žicami (OSM w401177299), štiri odprta vrata (vozlišča OSM) in 25 gozdnih poti (makadam, asfalt); bližje kot 15 m od proge se poti ne rišejo, da ostanejo peščene ubežne cone. Višina ograje (2,1 m) in število žic sta ocenjena.
 - **Viri:** © OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021, višina krošenj Meta in WRI (glej »Zasluge« v `README.md`). Orodji: `tools/proga-podatki.py` (nastavitve `tools/kagerod/config.json`) in `tools/kagerod/build.py`.
 - **Test:** `tests/kagerod.test.js` (ime, dolžina, smer in zavitost, ovinki po vrsti in smeri, višine in strmine, boksi, izletne cone, okolica, reka ob ciljni ravnini in pod progo, dirka v suhem in v dežju).
+
+## Sneg pozimi
+
+Pravilo »Sever v snegu« (`docs/proge-po-drzavah.md`, `docs/realizem.md` točka 7), PR #1087. Pozimi se svet zgradi znova (`zima` v videzu proge, skupni graditelj `js/world-rbring.js`): snežna odeja na pokrajini, bankinah in peskolovih, splužen zamet pred ograjami (0,45–0,9 m, ne ob boksih), asfalt očiščen (dirkališče: zimski asfalt, fizika vožnje nespremenjena). Nastavitvi: `thin` (koliko suhe trave gleda iz tanke odeje) in `bank` (višina zametov).
+
+Odprto: debelina odeje in višina zametov še nista podprti s podnebnim virom za Kågeröd (javne normale državne meteorološke službe: dnevi s snežno odejo, povprečna debelina); do takrat velja uporabnikova odločitev 8. 11. (zasnežena pokrajina, zameti).
