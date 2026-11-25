@@ -141,6 +141,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.18 | #1026 Zbirka obcestje 23. 11. b | grafika ob progi za 8 prog (Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro), odločitve uporabnika izvedene; predaja v opisu PR | partyslo | svež `main` (25. 11.), zlate vrednosti 8 prog; osnutek do vrste |
 | 10.18 | #1066 Orodje za predajo | `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje, test, kazalo, varčevanje (Matej, #382 7148056618, točka 10); orodje, ne proga | partyslo | osnutek, povezani testi zeleni; predaja za Združevanje partyslo |
 | 10.19 | #1011 Realizem (#862 pregled) | Eljem in Isalo brez stop črt, realizem9 mrtva koda; spoji se v zbirno #862 | biketraveler | svež `main` spojen 25. 11., povezani testi lokalno; osnutek do vrste, združi seja Združevanje |
-| 10.17 | #976 Realizem 2–15 dodatek | zbirka osnutkov realizma 15 prog na #862; svež `main` spojen 23. 11. #952 čaka odločitev, #917/#933 zunaj (spori v kodi). | partyslo | osnutek |
+| 10.17 | #976 Realizem 2–15 dodatek | zbirka realizma 15 prog na #862 z #1011; svež `main` spojen 25. 11., povezani testi 89/89 zeleni. #952 čaka odločitev, #917/#933 v #1079. | partyslo | Ready for review, združi seja Združevanje |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
