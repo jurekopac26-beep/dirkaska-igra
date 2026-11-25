@@ -7,7 +7,7 @@
 const Najboljse = (function () {
   'use strict';
   const tr = (s, ...a) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s, ...a) : s.replace(/\{(\d+)\}/g, (m, k) => (a[+k] != null ? String(a[+k]) : '')));
-  const MAX = 10, DB = 'rra-najboljse', ST = 'voznje';
+  const MAX = 10, DB = 'rra-najboljse', ST = 'voznje', IME = 'Igralec';   // (IME: the player's name in every run kept, cilj)
   // the rules of a valid run: tools/voznja.mjs RULES (tests/najboljse.test.js compares them)
   const RULES = { spinDeg: 75, spinV: 5, spinT: 0.15, revV: 1, revT: 0.3, offM: 1, offLong: 3, hitA: 50, wetIn: 40, dryIn: 240 };
   const VREME = ['suho', 'mokro', 'suho·zima', 'mokro·zima'], FIZ = ['cs', 'nova'];
@@ -106,6 +106,7 @@ const Najboljse = (function () {
       done.add(rec);
       const H = Object.assign({}, r.H, { date: Date.now(), phys: G.phys() }), F = r.frames.slice();
       for (const k of ['dev', 'devIme', 'dn', 'file']) delete H[k];   // (no device and no log in a file to share; js/game.js rrpOf has none)
+      H.cars = H.cars.map((c) => (c.pl ? Object.assign({}, c, { name: IME }) : c));   // (no player's own name in a file to share: the profile's, S.name)
       Q = Q.then(() => shrani(T, def, H, F)).catch(() => { });
     } catch (_) { }
   }
@@ -120,8 +121,9 @@ const Najboljse = (function () {
     const o = { id: 'nv-' + H.date + '-' + Math.random().toString(36).slice(2, 7), proga: def.id, rid, vreme: v.vreme, fiz, cas: v.cas, date: H.date, m,
       avto: (G.carName && G.carName(m)) || String(m), bytes: z.length, blob: new Blob([z], { type: 'application/octet-stream' }) };
     try { await nar('readwrite', (s) => s.put(o)); } catch (_) { return null; }   // (the disk full: the run is not kept)
-    const all = await vse();   // (the list's 11th out; the runs of an older road of this track, def.recId changed, too)
-    for (const x of all.filter((x) => x.proga === def.id && x.rid !== rid).concat(all.filter(ista).sort(red).slice(MAX))) await brisi(x.id);
+    const all = await vse();   // (the list's 11th out; the runs of an older road of this track, def.recId changed, and every run that no longer
+    // counts, velja: its track gone, now a test track or one being decided, or another road; these the list hides, the browser keeps them no more)
+    for (const x of all.filter((x) => (x.proga === def.id && x.rid !== rid) || !velja(x)).concat(all.filter(ista).sort(red).slice(MAX))) await brisi(x.id);
     osvezi();
     return o;
   }

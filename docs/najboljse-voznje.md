@@ -23,12 +23,12 @@ Odločitev uporabnika (11. 11. 2026 ob ~10.50, prek Mateja; `docs/vrsta.md`, »N
   `tests/najboljse.test.js` primerja pravila z orodjem, pri vsaki napaki pa razlog, metre in čas.
 - **Skupine.** Vsaka skupina je določena s progo, cesto (`recId`), vremenom (suho, mokro; zima posebej) in fiziko vožnje (klasična, nova). V vsaki skupini ostane 10 najhitrejših; pri enakem času je prej starejša vožnja.
   - Vožnje s stare ceste (spremenjen `recId`) se ne kažejo in ne delijo. Izbrišejo se ob naslednji vožnji iste proge.
-  - Vožnje prog, ki niso več prave, se ne kažejo in ne delijo.
+  - Vožnje prog, ki niso več prave (proga izbrisana, testna ali na odločanju), se ne kažejo in ne delijo. Izbrišejo se ob naslednji shranjeni vožnji katere koli proge.
 - **Shramba** je IndexedDB `rra-najboljse`, shramba `voznje` (`Napake.shramba`, kot Zadnji posnetki z `rra-posnetki`).
   - Vsak zapis ima posnetek (gzip `.rrp`; Bâlea ~35 KB), progo, cesto, vreme, fiziko, čas, datum in avto.
   - Preverjanje in pakiranje počakata, dokler se dirka vozi (`Napake.pocakaj`).
   - Če je disk poln, se vožnja ne shrani.
-- **Glava posnetka** nima podatkov o napravi in dnevniku (`dev`, `devIme`, `dn`, `file` se izbrišejo), ker je datoteka namenjena deljenju.
+- **Glava posnetka** nima podatkov o napravi in dnevniku (`dev`, `devIme`, `dn`, `file` se izbrišejo), ker je datoteka namenjena deljenju. Ime igralca (ime profila) se zamenja z »Igralec«; nastavitve avta (`pf`) ostanejo.
 
 ## Nastavitve → Najboljše vožnje
 

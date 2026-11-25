@@ -522,7 +522,8 @@ export function measure(files, opts = {}) {
   for (const f of files) {
     let all = null; try { all = readRrpAll(N, f); } catch (_) { }
     if (all && all.length > 1) all.forEach((rec, i) => runs.push(scanFile(C, N, f, tc, paces, { rec, name: path.basename(f) + ' #' + (i + 1) })));   // (Najboljše vožnje: a track's runs)
-    else runs.push(scanFile(C, N, f, tc, paces));   // (one recording, or none to read: as ever)
+    else if (all && all.length === 1) runs.push(scanFile(C, N, f, tc, paces, { rec: all[0], name: path.basename(f) }));   // (one recording: read once)
+    else runs.push(scanFile(C, N, f, tc, paces));   // (none to read: as ever, its reason)
   }
   const groups = new Map();
   // (a profile: one track, one weather, one class of cars, classOf)

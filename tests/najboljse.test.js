@@ -168,6 +168,9 @@ const near = (a, b, e) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a
     const same = r.frames.length === NF && r.frames.every((f, j) => f.length === F0[j].length && f.every((x, i) => Object.is(x, F0[j][i])));
     check('posnetek vožnje: brez naprave in dnevnika napak, s fiziko vožnje, vzorci brez izgube', !['dev', 'devIme', 'dn', 'file'].some(k => k in Hk) && Hk.phys === 'cs' && Hk.date === o1.date && same,
       Object.keys(Hk).join(','));
+    const pk = Hk.cars.findIndex(c => c.pl);
+    check('posnetek vožnje: brez imena igralca (»Igralec« namesto imena profila)', pk >= 0 && Hk.cars[pk].name === 'Igralec' && clean.H.cars[pk].name !== 'Igralec' && Hk.cars[pk].m === clean.H.cars[pk].m,
+      pk >= 0 ? Hk.cars[pk].name + ' (profil: ' + clean.H.cars[pk].name + ')' : 'ni igralca');
   }
   NB.cilj(); await NB.cakaj();   // (the same race over again: rec the same)
   check('ista dirka se shrani enkrat', (await NB.vse()).length === 1);
@@ -197,6 +200,7 @@ const near = (a, b, e) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a
   // a run of an older road of this track (def.recId changed since): out of the list, and out of the store with the next run kept
   await NB.test.put(Object.assign({}, o1, { id: 'nv-star', rid: rid + '-stara', cas: 1 }));
   await NB.test.put(Object.assign({}, o1, { id: 'nv-testna', proga: testDef.id, rid: testDef.recId || testDef.id, cas: 1 }));
+  await NB.test.put(Object.assign({}, o1, { id: 'nv-izbrisana', proga: 'proga-ki-je-ni', rid: 'proga-ki-je-ni', cas: 1 }));
   all = await NB.vse();
   const iz = NB.izbor(all, 'balea');
   check('seznam proge: skupine po vrsti (suho, nova fizika, mokro), najboljša prva; brez stare ceste', iz.length === 12 && !iz.some(o => o.id === 'nv-star') && NB.izbor(all, testDef.id).length === 0 &&
@@ -205,6 +209,8 @@ const near = (a, b, e) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a
   await run({ H: withFt(-0.1) });
   all = await NB.vse();
   check('vožnja stare ceste gre iz shrambe z naslednjo shranjeno', !all.some(o => o.id === 'nv-star') && all.filter(o => o.proga === 'balea').length === 12);
+  check('vožnje testne in izbrisane proge gredo iz shrambe z naslednjo shranjeno (katere koli proge)', !all.some(o => o.id === 'nv-testna' || o.id === 'nv-izbrisana') && all.length === 12,
+    all.map(o => o.id).filter(id => !/^nv-\d/.test(id)).join(','));
 
   // 5. Deli 10 najboljših: one file, the runs one after another; the tool reads each
   const f = await NB.deli('balea');
