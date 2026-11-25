@@ -209,6 +209,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Butan | Isuna (proge z znamenitostjo, 10; namesto Trongse) | v delu (veja `proge/butan`, PR #728): verižni most čez Paro Chhu ob cesti Chuzom–Paro; Trongsa odpade (delujoč samostan); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Sveta Lucija | Canaries (nove proge, PR #692, `nove-proge/canaries`) | v delu (naloga seje menija 13. 11. 2026); prva proga države |
 | Venezuela | El Castaño (rezerva uporabnika 13. 11. 2026; točno pot in zanimivosti potrdi kartica na strani Odločitve) | v delu (partyslo, od 25. 11. 2026), veja `proga/el-castano`; prva proga države |
+| Poljska | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | v delu (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 
