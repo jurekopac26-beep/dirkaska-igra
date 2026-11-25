@@ -114,12 +114,16 @@ try {
 
   // 6. tools/posnetek.mjs: the summary, its JSON, a picture at a time
   const tout = path.join(OUT, 'orodje');
-  const res = await new Promise(r => execFile(process.execPath, [path.join(REPO, 'tools', 'posnetek.mjs'), file, '--t', '20', '--lezece', '--out', tout], { cwd: REPO, timeout: 600000 }, (err, so, se) => r({ code: err ? err.code || 1 : 0, out: so + se })));
+  const res = await new Promise(r => execFile(process.execPath, [path.join(REPO, 'tools', 'posnetek.mjs'), file, '--t', '20', '--lezece', '--zatikanje', '--korak', '5', '--out', tout], { cwd: REPO, timeout: 600000 }, (err, so, se) => r({ code: err ? err.code || 1 : 0, out: so + se })));
   const js = fs.existsSync(path.join(tout, 'povzetek.json')) ? JSON.parse(fs.readFileSync(path.join(tout, 'povzetek.json'), 'utf8')) : null;
   const pics = fs.existsSync(tout) ? fs.readdirSync(tout).filter(f => f.endsWith('.png')) : [];
   T.check('tools/posnetek.mjs: the summary (Bathurst, 22 cars, the flag), povzetek.json with the report and the tool\'s own flags, a picture at 20 s',
     res.code === 0 && /bathurst/.test(res.out) && js && js.glava.track === 'bathurst' && js.glava.n === 22 && js.zastavice.length === 1 && Array.isArray(js.samodejne) && /^RRA-NAPAKE/.test(js.porocilo) && pics.some(f => /^20\.0s-ti-lezece\.png$/.test(f)),
     JSON.stringify({ code: res.code, pics, out: res.out.split('\n').slice(0, 12) }));
+  const zt = js && js.zatikanje, zv = zt ? zt.vzorci : [];
+  T.check('tools/posnetek.mjs --zatikanje: the replay walked every 5 s, a frame\'s draw calls, vertices and time at each, the heaviest moments in zatikanje.txt',
+    zt && zv.length >= 4 && zv.every(r => r.calls > 20 && r.kverts > 20 && r.ms > 0 && r.s != null) && zt.najvec.calls >= zt.mediana.calls && Array.isArray(zt.naprava) && /najtežji trenutki:/.test(res.out) && fs.existsSync(path.join(tout, 'zatikanje.txt')),
+    JSON.stringify(zt ? { n: zv.length, mediana: zt.mediana, najvec: zt.najvec, nad: zt.nad, first: zv[0] } : res.out.split('\n').slice(-6)));
   // 7. tools/voznja.mjs (AI po tvoji liniji) on the game's own file: read, the player found, the 25 s of lap 1 no whole lap (tests/voznja.test.js: whole races)
   const vout = path.join(OUT, 'voznja', 'profil.json');
   const vz = await new Promise(r => execFile(process.execPath, [path.join(REPO, 'tools', 'voznja.mjs'), file, '--out', vout], { cwd: REPO, timeout: 600000 }, (err, so, se) => r({ code: err ? err.code || 1 : 0, out: so + se })));
