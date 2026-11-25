@@ -7361,7 +7361,7 @@ const Render = (function () {
        (emitFx); the marshals' refit (c.wreck.fix changes) puts them back (kitRefit); a pit repair undoes it all bit by bit (repairStep),
        then builds the car afresh
      Its random numbers: the renderer's own (rRnd). */
-  const KIT_LOOSE = { hood: ['lid', 55], trunk: ['lid', 70], tailgate: ['lid', 70], cover: ['lid', 55], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 62], doorR: ['door', 62],   // (a loose bonnet, boot lid, door: wide open, as on the showroom's stills of the open car, carShot's o.open)
+  const KIT_LOOSE = { hood: ['lid', 55], trunk: ['lid', 70], tailgate: ['lid', 70], cover: ['lid', 55], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 28], doorR: ['door', 28],   // (a loose bonnet, boot lid: wide open, as on the showroom's stills of the open car, carShot's o.open; the doors as on main: their opening is #608's)
     fenderL: ['side', 12], fenderR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
   const KIT_WHEEL = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
   function kitParts(v, c, x, y, z, h) {
@@ -7472,7 +7472,7 @@ const Render = (function () {
     const pref = (kind === 'lid' ? [Nn, [0, 1, 0]] : kind === 'door' || kind === 'side' ? [out, Nn] : kind === 'bumper' || kind === 'drop' ? [end, down] : [down, out, Nn]).filter(Boolean);
     let sg = 1; for (const Q of pref) { const d = m[0] * Q[0] + m[1] * Q[1] + m[2] * Q[2]; if (Math.abs(d) > 0.2 * ml) { sg = Math.sign(d); break; } }
     // how far: the table's angle; a bumper's free end 16 cm, a wing's 12 cm (a short one at most 30 / 17 degrees)
-    let th = (deg != null ? deg : T[1]) * Math.PI / 180;   // (deg: the Kolibri's table, a spoiler hanging, carShot's o.open)
+    let th = (deg != null ? deg : XC.body && kind === 'door' ? 62 : T[1]) * Math.PI / 180;   // (deg: the Kolibri's table, a spoiler hanging, carShot's o.open)
     if (kind === 'bumper' || kind === 'wing') th = Math.asin(Math.min(kind === 'wing' ? 0.3 : 0.5, (kind === 'wing' ? 0.12 : 0.16) / Math.max(0.05, rm)));
     else if (XC.body && kind === 'drop' && deg == null) th = Math.min(th, Math.asin(Math.min(0.5, 0.12 / Math.max(0.05, rm))));   // (Razbijanje · nov način: a long part at an end (a roof rack) drops its free end 12 cm at most, never through the roof)
     th *= sg;
