@@ -197,6 +197,16 @@
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  // the tree crowns by the road (def.ch: tools/santoantao/krosnje.py, from the canopy height model of Meta and World Resources Institute, CC BY 4.0;
+  // 8 m cells within 280 m of the line): per cell its top height (m: 4-26, the model's 90th percentile of 3 m and more) and its cover's level
+  // (1 under 35 %, 2 under 65 %, 3 more; 0 none: under 10 % or under 3 m); rle as tools/silkeborg/build.py's (c < 36 a cell with crowns, else
+  // c - 35 cells without)
+  function saCrowns(def) {
+    const ch = def.ch; if (!ch) return null;
+    const n = ch.nx * ch.nz, top = new Uint8Array(n), cov = new Uint8Array(n), A = API.NR_A64; let k = 0;
+    for (let i = 0; i < ch.rle.length && k < n; i++) { const c = A.indexOf(ch.rle[i]); if (c < 36) { top[k] = 4 + 2 * (c % 12); cov[k] = 1 + ((c / 12) | 0); k++; } else k += c - 35; }
+    return { ch, top, cov, at(x, z) { const i = Math.floor((x - ch.x0) / ch.cell), j = Math.floor((z - ch.z0) / ch.cell); return i < 0 || j < 0 || i >= ch.nx || j >= ch.nz ? -1 : j * ch.nx + i; } };
+  }
   // the knockable roadside posts: white with a red top
   function saProps(out, spots, prof) {
     out.propR = 150;
@@ -521,10 +531,12 @@
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);
 
     /* ---- the plants (instanced per 96 m chunk): on the grassy slopes tufts of grass near the road, shrubs and agaves; in the shrubland the shrubs,
-       agaves and a few acacias; the trees (cypresses, eucalyptus, acacias) where the map has trees; a few by the fields; none on the bare rock ---- */
+       agaves and a few acacias; the trees (cypresses, eucalyptus, acacias) where the canopy height model has crowns (def.ch: saCrowns), at their
+       heights; where it has none (by the road it covers all) the land cover's trees are shrubs; a few by the fields; none on the bare rock ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const tk = [0, 1, 2, 3, 4, 5].map(k => new IChunks(saTreeGeo(k), tMatT, 96));
-    let nTrees = 0, nShrubs = 0;
+    const KR = saCrowns(def);
+    let nTrees = 0, nShrubs = 0, nCrowns = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(4841), SP = 4 / Math.sqrt(dens);
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
@@ -538,8 +550,9 @@
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.4) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.3) continue;
           if (excluded(x, z) || pathD(x, z) < 1.2) continue;
           const sl = caSlope(x, z); if (sl > 1.25 || (sl > 0.7 && r2 < (sl - 0.7) / 0.55)) continue;
-          const sp = c === 1 ? (r3 < 0.3 ? 0 : r3 < 0.58 ? 1 : r3 < 0.86 ? 2 : 3) : c === 2 ? (r3 < 0.5 ? 3 : r3 < 0.75 ? 4 : r3 < 0.88 ? 2 : 5)
+          let sp = c === 1 ? (r3 < 0.3 ? 0 : r3 < 0.58 ? 1 : r3 < 0.86 ? 2 : 3) : c === 2 ? (r3 < 0.5 ? 3 : r3 < 0.75 ? 4 : r3 < 0.88 ? 2 : 5)
             : c === 0 ? (r3 < 0.62 ? 5 : r3 < 0.8 ? 3 : r3 < 0.95 ? 4 : 2) : c === 6 ? (r3 < 0.5 ? 4 : r3 < 0.8 ? 2 : 1) : (r3 < 0.5 ? 3 : 2);
+          if (KR && sp < 3 && KR.at(x, z) >= 0) sp = 3;   // (the trees from the crowns below; under 3 m the model's are shrubs)
           if ((sp === 5 && hd > LOD.radius(70)) || (sp === 4 && hd > LOD.radius(140))) continue;
           let hgt, wid, col;
           if (sp === 0) { hgt = 9 + r4 * 7; wid = hgt * 0.9; col = [0.95 + r2 * 0.1, 1, 0.95]; }
@@ -550,6 +563,25 @@
           else { hgt = 0.35 + r4 * 0.35; wid = 0.6 + r2 * 0.5; col = [0.92 + r3 * 0.18, 0.95 + r4 * 0.1, 0.9]; nShrubs++; }
           tk[sp].add(x, caGround(x, z) - 0.1, z, r1 * 70, wid, hgt, col);
           if (++nTrees >= maxT) break grid;
+        }
+      }
+      if (KR) {   // the trees where the canopy height model has crowns: in each of its 8 m cells up to four (spots of 4 m), as many as its cover, about
+        // as high as its top (the model's 90th percentile); the tallest eucalyptus and cypresses, the lower ones mostly acacias
+        const ch = KR.ch, RC = rng(4842), h2 = ch.cell / 2, PC = [0, 0.22, 0.5, 0.9];
+        for (let j = 0; j < ch.nz; j++) for (let i = 0; i < ch.nx; i++) {
+          const k = j * ch.nx + i, lv = KR.cov[k]; if (!lv) continue;
+          const top = KR.top[k];
+          for (let q = 0; q < 4; q++) {
+            const x = ch.x0 + i * ch.cell + ((q & 1) + 0.15 + RC() * 0.7) * h2, z = ch.z0 + j * ch.cell + ((q >> 1) + 0.15 + RC() * 0.7) * h2;
+            const r1 = RC(), r2 = RC(), r3 = RC(), r4 = RC();
+            if (r1 > PC[lv] * Math.min(1, dens) || vrDist(x, z) > LOD.radius(260)) continue;
+            const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.4) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.3) continue;
+            if (excluded(x, z) || pathD(x, z) < 1.2 || caSlope(x, z) > 1.25) continue;
+            const sp = top >= 13 ? (r3 < 0.6 ? 1 : 0) : top >= 7 ? (r3 < 0.5 ? 0 : r3 < 0.8 ? 2 : 1) : (r3 < 0.85 ? 2 : 0);
+            const hgt = top * (0.78 + r4 * 0.22), wid = hgt * (sp === 0 ? 0.9 : sp === 1 ? 0.95 : 1.15);
+            tk[sp].add(x, caGround(x, z) - 0.1, z, r2 * 70, wid, hgt, [0.94 + r2 * 0.12, 1, 0.95]);
+            nTrees++; nCrowns++;
+          }
         }
       }
       for (const [x, z] of def.trees || []) { if (excluded(x, z) || vrNear(x, z).dd < 3) continue; tk[2].add(x, caGround(x, z) - 0.1, z, 1.3, 8, 7, [1, 1, 0.95]); nTrees++; }   // (the map's lone tree: an old acacia)
@@ -601,7 +633,8 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: saAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: saAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, views: views.length, far: !!FAR, sideRoads: out.stubStats.n };   // (read by the tests)
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'santoantao', { gH: caGround, slope: caSlope });   // (the roadside ground for the chase camera: js/world-chase-bt12.js)
+    out.stats = { trees: nTrees, shrubs: nShrubs, crowns: nCrowns, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, views: views.length, far: !!FAR, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
 

@@ -552,6 +552,7 @@
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
+    if (World.ext.seoulRob) World.ext.seoulRob({ scen, noTree, nearCross, out });   // (the forest floor by the road: js/world-realizem-bt.js)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
