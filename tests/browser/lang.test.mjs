@@ -75,7 +75,7 @@ try {
   const h5 = await champCards(), sh = await slovene();
   await act('to-champ-nu'); await page.waitForTimeout(250);   // (the cups of the test tracks: behind NEUPORABNO)
   const h5n = await champCards(), shn = await slovene();
-  T.check('championship in English: Legends / Grand Championship (behind NEUPORABNO Home Cup / Short tracks, "3 races"), Start the championship', h5.cards === 'Legends/Grand Championship' && /^\d+ races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length &&
+  T.check('championship in English: Short Championship / Legends / Grand Championship (behind NEUPORABNO Home Cup / Short tracks, "3 races"), Start the championship', h5.cards === 'Short Championship/Legends/Grand Championship' && /^\d+ races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length &&
     h5n.cards === 'Home Cup/Short tracks' && /^3 races · \d+ km$/.test(h5n.meta) && !shn.length, JSON.stringify({ h5, h5n, sh, shn }));
   await act('to-career'); await page.waitForTimeout(200);
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,

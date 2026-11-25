@@ -203,6 +203,17 @@ Pri vsakem vprašanju je prva možnost priporočena. Uporabnik je odgovoril 20. 
    2. Vseh 24 dirkališč (do 70 prog več).
    3. Igralec sam izbere 6–12 dirkališč.
 
+## Kratko prvenstvo v karieri (predlog, 25. 11.)
+Odločitev Mateja 25. 11. (#382, točka 2): »Kratko prvenstvo. 5 prog zapored s točkami.« Zunaj kariere je serija `kratko` v `Core.CHAMPS` (meni Prvenstvo, docs/igra.md »Prvenstvo«): Kildare, Hiva, Bathurst, Termas de Río Hondo, Aguascalientes (5 pravih prog s 5 celin, ~45 km), točke 25, 18, 15, 12, 10, 8, 6, 4, 2, 1. Stopnje in dogodki v `js/kariera.js` so nespremenjeni; kam gre v kariero, odloči Matej (vprašanje `kratko-prvenstvo-kariera` spodaj, besedilo tudi v `docs/vprasanja.md`).
+- **Predlog**: pokal poti v stopnji 3 (`vrsta: 'krog'`, iste proge in točke kot zunaj kariere), prvi pokal s petimi dirkami, priprava na Legende v stopnji 4; zvezdice in kovanci kot pri pokalu (3, 2, 1 za prva tri mesta).
+- Bathurst je tudi v Legendah: če se Matej odloči za stopnjo 3, ga pot v kratkem prvenstvu lahko zamenja z drugim pravim dirkališčem iz Oceanije, ko ga igra dobi.
+
+8. **`kratko-prvenstvo-kariera` · Kratko prvenstvo v karieri** (odprto)
+   1. Pokal poti v stopnji 3, pred Legendami v stopnji 4 (priporočeno).
+   2. Pokal poti v stopnji 2.
+   3. Dogodek finala: namesto ali pred Velikim prvenstvom v stopnji 5.
+   4. Samo zunaj kariere (meni Prvenstvo), v karieri ne.
+
 ## Predaja
 - **Stanje 22. 11.**: A, B, C, testi in D (#792, #796, #797, #807) so v zbirni veji `kariera-1-0` na svežem `main`; nanjo gre Atlas Career (dolina, dogodki, zvezdice, kovanci).
 - **Atlas 22. 11. (narejeno)**: logika, igra, dolina, meni in testi so v zbirni veji (`js/kariera.js`, `js/game.js`, `js/kariera-dolina.js`, `css/menu.css`, `js/menu.js`, `tests/browser/*.mjs`; Esc zapre dolino), posnetki dolina, dogodek, izid in napredek (pokonci, ležeče) v `docs/kariera/`, izid povezanih testov v PR #792 (osnutek). **Naprej**: »Ready for review« po vrsti v `docs/vrsta.md`, nato seja Združevanje do `main`.

@@ -33,13 +33,13 @@ try {
   });
   const PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
-  // 1. the choice of a series: the cups of version 1.0, their hidden tracks left out; behind NEUPORABNO the two of the test tracks
+  // 1. the choice of a series: the cups of version 1.0 (Kratko prvenstvo first), their hidden tracks left out; behind NEUPORABNO the two of the test tracks
   const cards = () => page.evaluate(() => ({ screen: window.__game.screen, cards: [...document.querySelectorAll('[data-champ]')].map(b => b.dataset.champ + (b.classList.contains('sel') ? '*' : '')),
     go: document.getElementById('ch-go').textContent, quit: document.getElementById('ch-quit').classList.contains('off'),
     hid: [...document.querySelectorAll('[data-champ] .ttracks')].flatMap(e => e.textContent.split(' · ')).filter(n => Core.TRACKS.some(d => (d.test || d.pending) && Lang.of(d, 'name') === n)) }));
   await act('to-champ'); await page.waitForTimeout(300);
   const pick = await cards();
-  T.check('Prvenstvo: the series to choose from (the first one chosen), not Domači pokal nor Kratke proge, no hidden track in a series; no "Opusti" before one starts', pick.screen === 'champ' && pick.cards.length >= 2 && pick.cards[0].endsWith('*') &&
+  T.check('Prvenstvo: the series to choose from (the first one chosen), not Domači pokal nor Kratke proge, no hidden track in a series; no "Opusti" before one starts', pick.screen === 'champ' && pick.cards.length >= 3 && pick.cards[0] === 'kratko*' &&
     !pick.cards.some(c => /^(domaci|superstars)\b/.test(c)) && !pick.hid.length && pick.go === 'Začni prvenstvo' && pick.quit, JSON.stringify(pick));
   await act('to-title'); await act('to-champ-nu'); await page.waitForTimeout(300);
   const nu = await cards();
@@ -103,6 +103,22 @@ try {
   await act('champ-go'); await page.waitForTimeout(200);
   const fresh = await page.evaluate(() => ({ saved: localStorage.getItem('tdgp-champ'), go: document.getElementById('ch-go').textContent }));
   T.check('"Novo prvenstvo": the finished one cleared, the choice of a series', fresh.saved === null && fresh.go === 'Začni prvenstvo', JSON.stringify(fresh));
+  // 8. Kratko prvenstvo (Matej, #382): the first series of Prvenstvo, five real circuits; four rounds driven (the player 1st, 2nd, 1st, 3rd):
+  // the standings with round 5 next; then the fifth one kept as well: the final standings with the champion (108 points)
+  await page.evaluate(() => {
+    const K = Core.champKeys(19), ord = (p) => { const o = K.slice(1); o.splice(p - 1, 0, Core.PLAYER_KEY); return o; }, tr = Core.CHAMPS.find(c => c.id === 'kratko').tracks;
+    localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'kratko', diff: 1, n: 19, rounds: [1, 2, 1, 3].map((p, i) => ({ track: tr[i], order: ord(p) })) }));
+  });
+  await page.reload(); await page.waitForFunction(() => !!(window.__game && window.__game.screen === 'title'), null, { timeout: 30000 }); await page.waitForTimeout(500);
+  const kTitle = await page.evaluate(() => document.getElementById('btn-champ').textContent);
+  await act('to-champ'); await page.waitForTimeout(300);
+  const k4 = await standings();
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('tdgp-champ')), K = Core.champKeys(19); s.rounds.push({ track: 'aguascalientes', order: K.slice() }); localStorage.setItem('tdgp-champ', JSON.stringify(s)); });
+  await page.reload(); await page.waitForFunction(() => !!(window.__game && window.__game.screen === 'title'), null, { timeout: 30000 }); await page.waitForTimeout(500);
+  await act('to-champ'); await page.waitForTimeout(300);
+  const k5 = await standings(), k5top = await page.evaluate(() => { const r = document.querySelector('#ch-body tbody tr'); return r ? r.children[1].textContent + ':' + r.children[3].textContent : null; });
+  T.check('Kratko prvenstvo: 4 of 5 rounds driven ("Prvenstvo · 5/5", 83 points, Aguascalientes next); after the fifth: the final standings, the player champion with 108 points', kTitle === 'Prvenstvo · 5/5' && k4.me === 'Ana:83' && k4.rows === 20 && k4.tag === 'dirka 5/5' &&
+    /^Naslednja dirka: Aguascalientes/.test(k4.go) && k4.chips === 'done,done,done,done,next' && k5.final && k5.tag === 'končano' && k5.me === 'Ana:108' && k5top === 'Ana:108' && k5.go === 'Novo prvenstvo', JSON.stringify({ kTitle, k4, k5, k5top }));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('the test ran to the end', false, String(e && e.message || e).split('\n')[0]);
