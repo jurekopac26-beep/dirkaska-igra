@@ -1927,23 +1927,23 @@
   }
  },
  "kaligandaki": {
-  "meshes": 1483,
-  "verts": 696012,
+  "meshes": 1484,
+  "verts": 696084,
   "instances": 31605,
   "props": 62,
   "crowd": 133,
-  "world": "1edf6c99",
+  "world": "e66b4a8",
   "propsHash": "c42673e5",
   "floor": "43ea14a1/6804",
   "groups": {
-   "-:MeshLambertMaterial": "ca3282a5",
+   "-:MeshLambertMaterial": "db46cdff",
    "-:MeshPhongMaterial": "386fa2f3",
    "-:MeshBasicMaterial": "6629ad0e",
    "irFar:MeshLambertMaterial": "43e155eb",
    "crowd:MeshLambertMaterial": "8ff2fa8e",
    "ao:MeshBasicMaterial": "32122d6a",
-   "tyremarks:MeshBasicMaterial": "2d13527a",
-   "roadwear:MeshLambertMaterial": "ccc6f0ab"
+   "tyremarks:MeshBasicMaterial": "8404fcf0",
+   "roadwear:MeshLambertMaterial": "c8f45e91"
   }
  }
 }
