@@ -39,7 +39,7 @@
   "maxCalls": 277,
   "kverts": 549,
   "maxKverts": 716,
-  "jsMs": 1.5
+  "jsMs": 2.07
  },
  "caracoles": {
   "calls": 180,
@@ -50,24 +50,24 @@
  },
  "katu": {
   "calls": 168,
-  "maxCalls": 198,
-  "kverts": 560,
-  "maxKverts": 747,
-  "jsMs": 0.63
+  "maxCalls": 197,
+  "kverts": 553,
+  "maxKverts": 736,
+  "jsMs": 0.92
  },
  "harju": {
   "calls": 193,
   "maxCalls": 235,
   "kverts": 574,
   "maxKverts": 834,
-  "jsMs": 0.43
+  "jsMs": 0.39
  },
  "bathurst": {
   "calls": 185,
   "maxCalls": 261,
   "kverts": 558,
   "maxKverts": 660,
-  "jsMs": 1.26
+  "jsMs": 1.46
  },
  "chapman": {
   "calls": 169,
@@ -294,11 +294,11 @@
   "jsMs": 1.15
  },
  "hakone": {
-  "calls": 199,
-  "maxCalls": 220,
-  "kverts": 305,
-  "maxKverts": 345,
-  "jsMs": 3.67
+  "calls": 200,
+  "maxCalls": 219,
+  "kverts": 308,
+  "maxKverts": 348,
+  "jsMs": 3.88
  },
  "killar": {
   "calls": 155,
@@ -392,11 +392,11 @@
   "jsMs": 1.37
  },
  "quezaltepeque": {
-  "calls": 249,
-  "maxCalls": 280,
-  "kverts": 740,
-  "maxKverts": 863,
-  "jsMs": 0.95
+  "calls": 250,
+  "maxCalls": 282,
+  "kverts": 764,
+  "maxKverts": 895,
+  "jsMs": 1.39
  },
  "aguascalientes": {
   "calls": 194,
@@ -406,11 +406,11 @@
   "jsMs": 1.09
  },
  "koli": {
-  "calls": 181,
-  "maxCalls": 290,
-  "kverts": 632,
-  "maxKverts": 748,
-  "jsMs": 0.79
+  "calls": 131,
+  "maxCalls": 163,
+  "kverts": 586,
+  "maxKverts": 663,
+  "jsMs": 1.17
  },
  "kanaba": {
   "calls": 208,
