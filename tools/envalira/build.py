@@ -1,5 +1,6 @@
 # Envalira, Andora: the game's track file from the track data (tools/envalira/envalira.json and its PNG grids, made by tools/proga-podatki.py).
 #   python3 -I tools/envalira/build.py   -> js/tracks/envalira.js (centre line, heights, names, terrain, land cover, buildings)
+#   Round the ring (def.sk road/park/pist/pow/can/side): tools/envalira/osm-okolica.json, the OSM API's map call of 24. 11. 2026 (ODbL).
 # Edit the names and the text here, not in the generated file. The track: docs/proge/envalira.md; on ice (def.ice): docs/dez-sneg.md.
 import base64, json, math, os
 import numpy as np
@@ -100,7 +101,79 @@ def scenery():
         x, z, l, w, ang, hgt, kind, s, d = b
         hh = hgt if hgt > 0 else 7.0 if l * w > 300 else 4.5 if l * w > 100 else 3.2
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), hh]
-    return D, LC, dict(bld=bld)
+    ok, more = okolica()   # (the fuel stations' roofs: on their columns (sk.can), not boxes)
+    bld = [v for k in range(0, len(bld), 6) for v in bld[k:k + 6] if all(math.hypot(bld[k] - c[0], bld[k + 1] - c[1]) > 3 for c in ok['can'])]
+    return D, LC, dict(bld=bld + more, **ok)
+
+# ---- by the ring (sk.road, sk.park, sk.pist, sk.pow, sk.can, sk.side; more of sk.bld): OpenStreetMap through its API (tools/envalira/osm-okolica.json,
+#      24. 11. 2026), the same projection as the track data (lat0, lon0) ----
+OK = json.load(open(os.path.join(HERE, 'osm-okolica.json')))['elements']
+ON = {e['id']: e for e in OK if e['type'] == 'node'}; OW = {e['id']: e for e in OK if e['type'] == 'way'}
+CX, CZ = float(P[:, 0].mean()), float(P[:, 1].mean())   # (the ring's middle)
+
+def oxy(n):
+    e = ON[n]; return (e['lon'] - J['lon0']) * 111320 * math.cos(math.radians(J['lat0'])), -(e['lat'] - J['lat0']) * 110574
+
+def opts(w): return [oxy(n) for n in OW[w]['nodes']]
+
+def ring_d(x, z): return float(np.hypot(P[:, 0] - x, P[:, 1] - z).min())
+
+def clip(pts, R):   # the runs of a line within R m of the ring's middle (the points just past it kept, so a run reaches its edge)
+    runs, cur = [], []
+    for k, (x, z) in enumerate(pts):
+        inside = math.hypot(x - CX, z - CZ) < R
+        nb = any(math.hypot(q[0] - CX, q[1] - CZ) < R for q in pts[max(0, k - 1):k + 2])
+        if inside or nb: cur.append((x, z))
+        elif cur: runs.append(cur); cur = []
+    if cur: runs.append(cur)
+    return [r for r in runs if len(r) > 1]
+
+def flat(pts): return [round(v, 1) for p in pts for v in p]
+
+def obb(pts):   # the outline's smallest box: [x, z, length, width, angle (deg)]
+    a = np.array(pts[:-1] if pts[0] == pts[-1] else pts); best = None
+    for i in range(len(a)):
+        d = a[(i + 1) % len(a)] - a[i]; t = math.atan2(d[1], d[0]); c, s = math.cos(t), math.sin(t)
+        u = a[:, 0] * c + a[:, 1] * s; v = -a[:, 0] * s + a[:, 1] * c; ar = (u.max() - u.min()) * (v.max() - v.min())
+        if best is None or ar < best[0]:
+            um, vm = (u.max() + u.min()) / 2, (v.max() + v.min()) / 2
+            best = (ar, [um * c - vm * s, um * s + vm * c, u.max() - u.min(), v.max() - v.min(), math.degrees(t)])
+    return [round(v, 1) for v in best[1][:4]] + [round(best[1][4])]
+
+# the pass road (CG-2: 3 lanes, 2 below the pass; 3.5 m a lane), the service roads and the driveways (5 m, 3.5 m): [kind, width (dm), x, z, ...]
+ROADS = [(779308403, 0), (779306646, 0), (250003483, 0), (28833924, 0), (28833927, 0), (330829779, 1), (330829784, 1), (1102353379, 1), (669899510, 1),
+         (275123428, 2), (779304309, 2), (779304308, 2)]
+PARKS = [330829776, 381187215]   # the car parks (amenity=parking): ploughed
+PISTES = [143736262, 758397020, 758397024, 758404116, 758404117, 758404119, 758404120, 758404121, 779303231]   # the pistes (piste:type=downhill)
+POWER = [(1479410052, 0), (174888964, 1), (174888985, 1), (174888986, 1)]   # the 110 kV line (3 cables) and the lighter lines by the pass
+CANOPY = [240501145, 240501143]   # the fuel stations' roofs over the pumps (building=roof; layer 1 over the covered driveways)
+MORE_BLD = [240501142, 240501144, 240501146, 240501147]   # the buildings by the pass road past the 60 m of the track data
+SIDE = [330829780, 330829786, 330829783, 330829781, 330829782]   # the ring's other ways (its modular layouts): under snow, closed off
+
+def okolica():
+    road = []
+    for w, kind in ROADS:
+        t = OW[w]['tags']; wd = 35 * int(t.get('lanes', 2)) if kind == 0 else 50 if kind == 1 else 35
+        for r in clip(opts(w), 520): road.append([kind, wd] + flat(r))
+    park = [flat(opts(w)[:-1]) for w in PARKS]
+    DIF = {'novice': 0, 'easy': 1, 'intermediate': 2, 'advanced': 3, 'expert': 3}
+    pist = []
+    for w in PISTES:
+        t = OW[w]['tags']; area = t.get('area') == 'yes' or OW[w]['nodes'][0] == OW[w]['nodes'][-1]
+        for r in clip(opts(w), 330): pist.append([DIF.get(t.get('piste:difficulty'), 1), 1 if area else 0] + flat(r))
+    pw = []
+    for w, kind in POWER:
+        tw = [oxy(n) for n in OW[w]['nodes'] if ON[n].get('tags', {}).get('power') in ('tower', 'pole')] or opts(w)
+        for r in clip(tw, 1000 if kind == 0 else 450): pw.append([kind] + flat(r))
+    can = [obb(opts(w)) for w in CANOPY]
+    more = []
+    for w in MORE_BLD:
+        b = obb(opts(w)); more += b + [4.5]
+    side = []
+    for w in SIDE:
+        pts = [p for p in opts(w) if ring_d(*p) > 8.0]
+        if len(pts) > 1: side.append(flat(pts))
+    return dict(road=road, park=park, pist=pist, pow=pw, can=can, side=side), more
 
 def build_track():
     hk = H[::2]; skh = ','.join(str(int(round((v - H0) * 10))) for v in hk)   # every 10 m from the start line, decimetres above it
