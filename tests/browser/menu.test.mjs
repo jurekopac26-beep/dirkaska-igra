@@ -969,7 +969,7 @@ try {
     await click(page, 'single'); await click(page, 'mode:trial');
     const n0 = await page.evaluate(() => Menu.debug().list.length);
     for (let k = 0; k < n0; k++) { const n = await ev(page, 'return root.querySelector(".where .w2").textContent;'); if (n === 'Harju') break; await click(page, 'track:1'); }
-    const info = await ev(page, 'return { name: root.querySelector(".where .w2").textContent, gold: /^Gold time\\d+:\\d\\d\\.\\d\\d$/.test(root.querySelector(".trow .gt").textContent), opp: !!root.querySelector(".trow .opp") };');
+    const info = await ev(page, 'const tr = root.querySelector(".trow"); return { name: root.querySelector(".where .w2").textContent, gold: /^Gold time\\d+:\\d\\d\\.\\d\\d$/.test(tr.querySelector(".gt").textContent), opp: !!tr.querySelector(".opp") };');   // (Harju's own row, the first: the neighbour's, a circuit's time trial with no medal times, has its opponents, Kronometer na vseh progah)
     T.check('Time trial: Harju, its Gold time first in the row (no opponents)', info.name === 'Harju' && info.gold && !info.opp, JSON.stringify(info));
     await click(page, 'race-single');
     await raceOn(page, 'harju').catch(() => null);
