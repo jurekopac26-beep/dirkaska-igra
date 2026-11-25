@@ -72,9 +72,9 @@
  "chapman": {
   "calls": 169,
   "maxCalls": 211,
-  "kverts": 515,
-  "maxKverts": 586,
-  "jsMs": 1.05
+  "kverts": 514,
+  "maxKverts": 588,
+  "jsMs": 0.95
  },
  "tianmen": {
   "calls": 189,

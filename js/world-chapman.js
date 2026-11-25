@@ -220,6 +220,7 @@
       const sd = si ? 1 : -1, l = H.lim[si][j], u = sd * (T.stubHw(S, j * ds, sd) + S.lim + l / 2); exclPush(S.x[j] - S.tz[j] * u, S.z[j] + S.tx[j] * u, l / 2 + 1.1); } }
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const v of views) exclPush(v.x, v.z, v.r + 2);
+    for (const q of def.picnic || []) exclPush(q[0], q[1], q[2] ? 1.2 : 2.2);   // (the picnic tables, benches and bins: nothing grows on them)
     const sea = (x, z) => chGround(x, z) < seaY + 0.3;
 
     /* ---- terrain tiles, the sea (one plane at height 0: turquoise over the sand near the shore, deep blue farther out) ---- */
@@ -384,6 +385,17 @@
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = chGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
         if (b.kind === 3) { const mc = vary([0.8, 0.78, 0.74], RB, 0.1); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.8, b.W, b.ang, mc, null, true); }
+        else if (b.kind === 4) {   // the East Fort's ruins (OpenStreetMap building=ruins): no roof, low walls of rough grey-brown stone round the footprint, broken
+          // down to a stub here and there, a gap where a door was (each wall in ~1.5 m pieces of their own height); rubble at their foot
+          const RR = rng(3077 + Math.round(b.x * 7 + b.z)), t = 0.55;
+          for (const [u0, v0, u1, v1] of [[-b.L / 2, -b.W / 2, b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2, b.L / 2, b.W / 2], [b.L / 2, b.W / 2, -b.L / 2, b.W / 2], [-b.L / 2, b.W / 2, -b.L / 2, -b.W / 2]]) {
+            const len = Math.hypot(u1 - u0, v1 - v0), n = Math.max(1, Math.round(len / 1.5)), wa = b.ang + Math.atan2(v1 - v0, u1 - u0), gap = Math.floor(RR() * n * 3);
+            for (let k = 0; k < n; k++) { if (k === gap) continue; const f = (k + 0.5) / n, u = u0 + (u1 - u0) * f, v = v0 + (v1 - v0) * f, px = b.x + c * u - s * v, pz = b.z + s * u + c * v, y = chGround(px, pz), nn = vrNear(px, pz);
+              if ((nn.i >= 0 && nn.dd < 2.5) || hillIn(nn)) continue;
+              const hh = RR() < 0.25 ? 0.3 + RR() * 0.3 : 0.9 + RR() * 1.3; box(g, px, y - 0.3, pz, len / n + 0.05, hh + 0.3, t, -wa, vary([0.56, 0.5, 0.42], RB, 0.08), [0.5, 0.47, 0.38], true);
+              if (RR() < 0.3) box(g, px + (RR() - 0.5) * 1.2, y - 0.15, pz + (RR() - 0.5) * 1.2, 0.5, 0.35, 0.4, RR() * 3, vary([0.52, 0.47, 0.4], RB, 0.08)); }
+          }
+        }
         else { const fl = b.hgt > 6.5 || b.L * b.W > 260 ? 2 : 1;
           vrHouse(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall: walls[Math.floor(RB() * walls.length)], wood: woods[Math.floor(RB() * 2)], roof: vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1) }); }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
@@ -453,6 +465,24 @@
         { const g = scen.get(v.x, v.z); for (let u = -v.r; u < v.r; u += 2) { const px = v.x + c * u + nx * (v.r - 0.6), pz = v.z + sn * u + nz * (v.r - 0.6); box(g, px, chGround(px, pz) - 0.2, pz, 2.0, 0.85, 0.55, hh, vary([0.6, 0.52, 0.42], RV, 0.1), [0.66, 0.6, 0.5], true); } }   // the wall at the drop
         { const px = v.x + nx * (v.r - 2), pz = v.z + nz * (v.r - 2), g = scen.get(px, pz), py = chGround(px, pz); box(g, px, py + 0.4, pz, 1.8, 0.08, 0.45, hh, [0.5, 0.36, 0.22]); for (const u of [-0.7, 0.7]) box(g, px + c * u, py, pz + sn * u, 0.1, 0.45, 0.4, hh, [0.3, 0.3, 0.32]); }   // a bench
         for (let k = 0; k < 4; k++) { const u = (RV() - 0.5) * v.r * 1.4, px = v.x + c * u + nx * (v.r - 1.6), pz = v.z + sn * u + nz * (v.r - 1.6); if (vrNear(px, pz).dd < 1) continue; person(px, pz, Math.atan2(nz, nx) - PI / 2); }
+      }
+    }
+
+    /* ---- the picnic sites' and lay-bys' furniture where OpenStreetMap has it (def.picnic): picnic tables (planks, or cast concrete), benches, litter
+       bins (a dark bin on a post, or a concrete drum); not where the cars drive (a hill's soft limit, Track.hill, the road's own edge) ---- */
+    let nPic = 0;
+    {
+      const RP = rng(3041), wd = [0.5, 0.36, 0.22], cc = [0.7, 0.68, 0.64];
+      for (const [x, z, k, m] of def.picnic || []) {
+        const nn = vrNear(x, z); if ((nn.i >= 0 && nn.dd < 1.2) || hillIn(nn) || sea(x, z)) continue;
+        const g = scen.get(x, z), y = chGround(x, z), a = nn.i >= 0 ? T.hd[nn.i] + (RP() - 0.5) * 0.5 : RP() * TAU, c = Math.cos(a), sn = Math.sin(a), col = m ? cc : vary(wd, RP, 0.08);
+        if (k === 0) {   // a table and two benches along it, on legs (concrete: solid slabs)
+          box(g, x, y + 0.72, z, 1.9, 0.06, 0.8, a, col);
+          for (const sd of [-1, 1]) { box(g, x - sn * sd * 0.72, y + 0.42, z + c * sd * 0.72, 1.9, 0.05, 0.3, a, col); for (const u of [-0.75, 0.75]) box(g, x + c * u, y - 0.1, z + sn * u, m ? 0.18 : 0.08, 0.82, m ? 1.7 : 1.6, a, m ? cc : [0.4, 0.29, 0.18]); }
+        } else if (k === 1) { box(g, x, y + 0.42, z, 1.8, 0.06, 0.42, a, col); box(g, x - sn * 0.2, y + 0.45, z + c * 0.2, 1.8, 0.4, 0.05, a, col); for (const u of [-0.7, 0.7]) box(g, x + c * u, y - 0.1, z + sn * u, 0.08, 0.52, 0.4, a, [0.3, 0.3, 0.32]); }
+        else if (m) cyl(g, x, y - 0.05, z, 0.32, 0.85, 10, cc, [0.64, 0.62, 0.58]);
+        else { box(g, x, y - 0.1, z, 0.08, 1.0, 0.08, 0, [0.3, 0.3, 0.32]); cyl(g, x + c * 0.2, y + 0.35, z + sn * 0.2, 0.18, 0.55, 8, [0.2, 0.26, 0.22], [0.12, 0.14, 0.12], 0.2); }
+        nPic++;
       }
     }
 
@@ -718,7 +748,7 @@
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: chAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'chapman', { gH: chGround, slope: chSlope, bad: (x, z) => sea(x, z) || vrLC(x, z) === 4 });   // (the roadside ground for the chase camera: js/world-chase-bt15.js)
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, baboons: nBab, kelp: nKelp, boats: nBoat, overhangs: nOver, sideRoads: out.stubStats.n };   // (read by the tests)
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, picnic: nPic, baboons: nBab, kelp: nKelp, boats: nBoat, overhangs: nOver, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
 
