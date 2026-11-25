@@ -25,14 +25,14 @@
   "maxCalls": 223,
   "kverts": 415,
   "maxKverts": 437,
-  "jsMs": 2.65
+  "jsMs": 2.8
  },
  "spa": {
   "calls": 197,
   "maxCalls": 238,
   "kverts": 511,
   "maxKverts": 631,
-  "jsMs": 1.13
+  "jsMs": 1.7
  },
  "rbring": {
   "calls": 228,
@@ -91,25 +91,25 @@
   "jsMs": 1
  },
  "montreal": {
-  "calls": 209,
-  "maxCalls": 272,
-  "kverts": 552,
-  "maxKverts": 682,
-  "jsMs": 1.22
+  "calls": 207,
+  "maxCalls": 273,
+  "kverts": 534,
+  "maxKverts": 667,
+  "jsMs": 1.41
  },
  "livorno": {
   "calls": 159,
   "maxCalls": 195,
   "kverts": 380,
   "maxKverts": 480,
-  "jsMs": 2.34
+  "jsMs": 2.67
  },
  "balea": {
-  "calls": 166,
+  "calls": 167,
   "maxCalls": 175,
-  "kverts": 396,
-  "maxKverts": 448,
-  "jsMs": 0.94
+  "kverts": 395,
+  "maxKverts": 446,
+  "jsMs": 1.13
  },
  "silkeborg": {
   "calls": 246,
