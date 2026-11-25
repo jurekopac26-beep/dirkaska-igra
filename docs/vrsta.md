@@ -88,7 +88,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Prvi zagon z angleškim menijem (I2), samo preizkus (#673) | jure.kopac26, croatiadata | po tedenskem načrtu |
 | Najboljše vožnje: 10 najboljših `.rrp` na progo, gumb »Deli 10 najboljših« | jure.kopac26 | po #650; ~14. 11. |
 | Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
-| **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
+| **Police chase, stran Police** (`docs/meni-izbira-proge.md`, `docs/police-chase.md`) | croatiadata | v delu (croatiadata, PR #…) |
 | Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
 | 10 novih prog z znamenitostjo ob cesti (model iz Blenderja, skupni nalagalnik `.glb`; odločitev uporabnika 15. 11. 2026 ob ~4.40 prek Mateja: »namesto 5 novih prog naredi 10 novih prog, vse naj imajo uporabo blenderja«): proga 1 Luanda in skupna pot (#711), proge 2–7 jure.kopac26 na veji `proge/luanda`, 8–10 biketraveler | jure.kopac26, biketraveler | v delu (#711) |
 | Odprte ceste: predaja na začetku ravnine, tik za tekmecem (popravek uporabnika 14. 11. ob ~16.45; Chapman's Peak, Bâlea, Tianmen in Rio do Rastro dobijo start na začetku ravnine, proge krajše) | jure.kopac26 | v delu (15. 11., `popravki/2026-11-15`) |
