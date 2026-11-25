@@ -46,7 +46,7 @@ const Denar = (function () {
       history.replaceState(history.state, '', location.pathname + (rest.length ? '?' + rest.join('&') : '') + location.hash); } catch (_) { }
     if (Number.isNaN(money)) { toast('Testni denar: neveljaven znesek »' + raw + '« (denar je ostal, kot je bil).', true); return null; }
     let c = null; try { c = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { c = null; }
-    const had = !!(c && typeof c === 'object' && !Array.isArray(c) && c.v === 1);
+    const had = !!(c && typeof c === 'object' && !Array.isArray(c) && (c.v === 1 || c.v === 2));   // (v 2: with the path of 1.0, career.pot, kept)
     const prev = had ? (Number.isFinite(c.money) ? Math.max(0, Math.floor(c.money)) : 0) : null;
     if (!had) { const car0 = Core.CAREER.car0, upg = {}; for (const u of Core.UPG) upg[u.id] = 0;
       c = { v: 1, on: true, money: Core.CAREER.start, cars: [car0], upg: { [car0]: upg }, earned: 0, races: 0, wins: 0 }; }   // (as js/game.js careerNew)
