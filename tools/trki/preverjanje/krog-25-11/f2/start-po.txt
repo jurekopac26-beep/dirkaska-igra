@@ -1,0 +1,2 @@
+prog 60 z oviro pred prvim dotikom 0 nabor race
+

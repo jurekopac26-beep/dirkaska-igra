@@ -1,0 +1,45 @@
+modelov 56 voženj 448 napak 22
+ 45 dmg 1 eno rule false nL0 1 nL 1 over false dnf false
+ 11 dmg 1 eno rule false nL0 null nL 0 over false dnf false
+ 45 dmg 1 stiri rule false nL0 4 nL 4 over false dnf false
+ 11 dmg 1 stiri rule false nL0 null nL 0 over false dnf false
+ 45 dmg 1 udarec rule false nL0 0 nL 0 over false dnf false
+ 11 dmg 1 udarec rule false nL0 null nL 0 over false dnf false
+ 45 dmg 1 wreck rule false nL0 0 nL 0 over false dnf false
+ 11 dmg 1 wreck rule false nL0 null nL 0 over false dnf false
+ 33 dmg 2 eno rule true nL0 1 nL 1 over true dnf true
+  3 dmg 2 eno rule true nL0 1 nL 2 over true dnf true
+ 19 dmg 2 eno rule true nL0 1 nL 3 over true dnf true
+  1 dmg 2 eno rule true nL0 1 nL 4 over true dnf true
+ 45 dmg 2 stiri rule true nL0 4 nL 4 over true dnf true
+ 11 dmg 2 stiri rule true nL0 null nL 2 over false dnf false
+  2 dmg 2 udarec rule true nL0 1 nL 1 over true dnf true
+  3 dmg 2 udarec rule true nL0 1 nL 2 over true dnf true
+  2 dmg 2 udarec rule true nL0 1 nL 3 over true dnf true
+ 16 dmg 2 udarec rule true nL0 2 nL 2 over true dnf true
+ 23 dmg 2 udarec rule true nL0 2 nL 3 over true dnf true
+ 10 dmg 2 udarec rule true nL0 2 nL 4 over true dnf true
+ 11 dmg 2 wreck rule true nL0 0 nL 2 over true dnf true
+ 45 dmg 2 wreck rule true nL0 4 nL 4 over true dnf true
+NAPAKA kaze dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 43 tStop null tOver null finished false speed 42.6 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA kaze dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 43 tStop null tOver null finished false speed 42.6 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA vortex dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 46 tStop null tOver null finished false speed 46.3 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA vortex dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 46 tStop null tOver null finished false speed 46.3 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA pico dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 45 tStop null tOver null finished false speed 44.6 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA pico dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 45 tStop null tOver null finished false speed 44.6 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA strega dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 44 tStop null tOver null finished false speed 44.3 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA strega dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 44 tStop null tOver null finished false speed 44.3 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA rally dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 49 tStop null tOver null finished false speed 49.1 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA rally dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 49 tStop null tOver null finished false speed 49.1 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA p206 dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 46 tStop null tOver null finished false speed 46.2 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA p206 dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 46 tStop null tOver null finished false speed 46.2 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA formula dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 55 tStop null tOver null finished false speed 54.7 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA formula dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 55 tStop null tOver null finished false speed 54.7 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA lm dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 56 tStop null tOver null finished false speed 55.9 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA lm dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 56 tStop null tOver null finished false speed 55.9 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA muscle dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 44 tStop null tOver null finished false speed 43.9 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA muscle dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 44 tStop null tOver null finished false speed 43.9 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA ev dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 52 tStop null tOver null finished false speed 52.2 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA ev dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 52 tStop null tOver null finished false speed 52.2 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA truck dmg 2 stiri: rule true nL takoj null konec 2 over false dnf false v0 45 tStop null tOver null finished false speed 45.3 IZJEMA Cannot read properties of undefined (reading 'df')
+NAPAKA truck dmg 1 stiri: rule false nL takoj null konec 0 over false dnf false v0 45 tStop null tOver null finished false speed 45.3 IZJEMA Cannot read properties of undefined (reading 'df')
