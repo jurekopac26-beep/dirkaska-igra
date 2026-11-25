@@ -63,7 +63,8 @@ for (const track of ids) {
     await page.addScriptTag({ url: '/__proto/drone_page.js' });
     if (process.env.CFG) await page.evaluate((c) => { window.DR_CFG = c; }, JSON.parse(process.env.CFG));
     const farP = path.join(RAW, 'geo', track + '-far.json'), far = Object.assign(fs.existsSync(farP) ? JSON.parse(fs.readFileSync(farP, 'utf8')) : { synth: true }, J.snow ? { snow: J.snow } : {});
-    if (Hc.sea) far.sea = true;
+    if (Hc.sea) { far.sea = true; if (Hc.seaHouses === false) far.seaHouses = false; }
+    if (Hc.ownFar === false) far.ownFar = false;
     const lcF0 = 'raw/geo/' + track + '-far-lc.png';
     const info = await page.evaluate((o) => window.DR.setup(Object.assign(o, { theme: o.theme || (window.__game && (window.__game.race || window.__game.demo).track.def.theme) })), { mode: J.mode, fps, extra: J.extra || 0, far, lc: fs.existsSync(path.join(HERE, lcF0)) ? lcF0 : null, edgeTint: Hc.edgeTint ? Object.assign({ margin: 300 }, Hc.edgeTint === true ? {} : Hc.edgeTint) : null, feather: Hc.feather || 0 });
     // the flight: higher the faster it has to go (the whole run in `fly` s), behind the point it looks at by about as much as it is high

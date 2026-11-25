@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<title>Bhutan</title>
+<path d="M0,0 H900 L0,600 Z" fill="#FFD520"/>
+<path d="M900,0 V600 H0 Z" fill="#FF4E12"/>
+<g fill="none" stroke="#FFF" stroke-linecap="round" stroke-linejoin="round">
+<path d="M175,470 C235,430 250,500 315,455 C380,410 340,350 410,330 C480,310 500,380 565,340 C620,305 600,250 640,220" stroke-width="58"/>
+<path d="M175,470 C150,488 130,470 120,455" stroke-width="26"/>
+<path d="M275,470 L250,535 M265,520 L235,548 M265,520 L272,556" stroke-width="18"/>
+<path d="M360,400 L350,470 M352,455 L322,488 M352,455 L366,494" stroke-width="18"/>
+<path d="M470,345 L500,270 M494,286 L470,245 M494,286 L530,258" stroke-width="18"/>
+<path d="M585,320 L640,330 M628,328 L660,305 M628,328 L668,350" stroke-width="18"/>
+<path d="M300,450 C290,400 330,385 320,350 M430,320 C440,280 420,265 440,235 M540,345 C560,300 540,290 560,265" stroke-width="12"/>
+</g>
+<g fill="#FFF">
+<path d="M610,250 C620,190 660,160 715,165 C745,168 770,180 780,195 L745,205 L775,222 C755,240 715,250 690,248 C665,262 640,268 610,250 Z"/>
+<path d="M690,172 C700,140 690,120 670,105 M712,170 C735,140 760,135 785,140" stroke="#FFF" stroke-width="10" fill="none" stroke-linecap="round"/>
+<circle cx="268" cy="550" r="17"/><circle cx="356" cy="492" r="17"/><circle cx="528" cy="250" r="17"/><circle cx="672" cy="352" r="17"/>
+</g>
+<circle cx="725" cy="190" r="6" fill="#B03010"/>
+</svg>

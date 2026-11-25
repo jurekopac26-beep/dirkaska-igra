@@ -53,6 +53,14 @@
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
     'Avstralija':   { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
     'Nepal':        { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false },   // (white, a broken centre line, solid through the bends)
+    'Vietnam':      { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (QCVN 41:2019: the line between the two directions yellow, a dash to its gap 1 : 3; double solid where overtaking is forbidden)
+    'Uganda':       { rob: 'rumena', sred: 'bela', crta: [3, 6], dvojna: false },   // (white centre line, yellow edges as on East Africa's trunk roads, not checked against photos: docs/proge/kanaba.md, »Negotovo«)
+    'Papua Nova Gvineja': { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (the Australian-style markings of the country's sealed roads: white both, not checked against photos: docs/proge/sogeri.md, »Negotovo«)
+    'Sveta Lucija': { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (white lines as in Britain: a broken centre line, solid through the bends)
+    'Fidži':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (left-hand traffic, the markings of the Commonwealth's roads as Australia's: all white, double solid where overtaking is forbidden)   // (QCVN 41:2019: the line between the two directions yellow, a dash to its gap 1 : 3; double solid where overtaking is forbidden)
+    'Jamajka':      { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (left-hand traffic, white lines as on the Commonwealth's roads; not checked against photos, the mountain roads often unmarked: docs/proge/irishtown.md, »Negotovo«)
+    'Samoa':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (left-hand traffic since 2009; no source on the markings: white lines, a dash to its gap 1 : 3, single solid before blind bends)
+    'Palau':        { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (the US markings, as the country's roads follow them: a yellow centre line, white edges)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
@@ -122,7 +130,15 @@
     tianmen:   P(CESTA, { prah: [0.50, 0.50, 0.41], rob: 0.22, robV: 0.55, kRobV: 0.3 }),   // (a show road, well kept)
     rastro:    P(CESTA, { prah: [0.58, 0.46, 0.36], barva: 0.6 }),   // (the serra's red soil)
     chapman:   P(CESTA, { prah: [0.66, 0.60, 0.49], sPrah: 0.95, kOdsek: 0.055, barva: 0.5, kRobV: 0.3 }),   // (sand off the sandstone cliffs)
+    canaries:  P(CESTA, { prah: [0.56, 0.44, 0.34], kPrah: 0.55, kOdsek: 0.07, odsek: [50, 240], barva: 0.6, kRobV: 0.75 }),   // (the island's red earth washed onto the road by the rains, many patches, the edges broken)
     balea:     P(CESTA, { prah: [0.58, 0.57, 0.52], kPrah: 0.6, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.7, kRobV: 0.85 }),   // (grit after every winter, the frost's patches)
+    savusavu:  P(CESTA, { prah: [0.56, 0.48, 0.38], kPrah: 0.45, sPrah: 0.95, kOdsek: 0.07, odsek: [50, 240], barva: 0.68, kRobV: 0.75 }),   // (the island's red-brown volcanic soil washed onto the edges by the rains; patched tarmac)
+    haivan:    P(CESTA, { prah: [0.6, 0.5, 0.4], kPrah: 0.5, sPrah: 1.0, kOdsek: 0.06, odsek: [60, 280], barva: 0.72, kRobV: 0.8 }),   // (red-brown laterite dust from the cuttings, the tarmac patched)
+    kanaba:    P(CESTA, { prah: [0.6, 0.42, 0.32], kPrah: 0.8, sPrah: 1.1, kOdsek: 0.07, odsek: [60, 300], barva: 0.65, kRobV: 0.85 }),   // (the red soil of the terraces washed onto the road, the lorries' patches)
+    sogeri:    P(CESTA, { prah: [0.6, 0.48, 0.36], kPrah: 0.7, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.68, kRobV: 0.9 }),   // (red earth and grit off the gorge's walls, the patched tarmac and broken edges)
+    koror:     P(CESTA, { prah: [0.56, 0.54, 0.48], kPrah: 0.45, sPrah: 1.0, kOdsek: 0.1, odsek: [50, 240], barva: 0.75, kRobV: 0.8 }),   // (the sun and the salt on the causeways: patched, faded asphalt)
+    irishtown: P(CESTA, { prah: [0.56, 0.46, 0.36], kPrah: 0.6, sPrah: 1.0, kOdsek: 0.08, odsek: [50, 240], barva: 0.7, kRobV: 0.85 }),   // (red-brown earth washed off the cuttings by the rains, the patched tarmac and broken edges of the mountain road)
+    vaoala:    P(CESTA, { prah: [0.54, 0.44, 0.34], kPrah: 0.6, sPrah: 1.0, kOdsek: 0.08, odsek: [50, 240], barva: 0.7, kRobV: 0.85 }),   // (the ridge's rains wash the red-brown soil onto the edges; the steep tarmac patched)
     caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1, kRobV: 0.8 }),   // (the dry Andes: dust everywhere; the lorries' road over the pass, its edges broken)
     kaligandaki: P(CESTA, { prah: [0.66, 0.58, 0.46], kPrah: 0.68, sPrah: 1.15, kOdsek: 0.1, odsek: [50, 240], barva: 0.68, rob: 0.3, kRobV: 0.85 }),   // (the arid gorge: dust and rockfall grit; the jeep road's patched, broken edges)
     pikes:     P(CESTA, { prah: [0.62, 0.53, 0.45], kPrah: 0.5, kOdsek: 0.05, kOlje: 0.08, kKol: 0, barva: 0, rob: 0.25, robV: 0.6, kRobV: 0.4 }),   // (the builder's own wheel tracks, patches and faded paint, all in the road's mesh; the granite's pink grit)
@@ -176,7 +192,7 @@
       s += L;
     }
     for (let k = 0; k < NP; k++) {
-      const i = at(Math.round((k + 0.5) / NP * len / ds)), rl = T.rl ? T.rl[i] : 0;
+      const i = at(Math.round((k + 0.5) / NP * len / ds)), GL = T.gl || T.rl, rl = GL ? GL[i] : 0;   // (the rubber's line: the player's where the track has it, Track.voznjaLinija)
       D[k * 4] = Math.round(clamp(rl / (2 * RLMAX) + 0.5, 0, 1) * 255); D[k * 4 + 1] = Math.round(brk[i] * 255);
       D[k * 4 + 2] = tone[0][k] * 16 + tone[1][k]; D[k * 4 + 3] = Math.round(clamp(T.wAt(i) / WMAX, 0, 1) * 255);
     }
