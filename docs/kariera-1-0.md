@@ -28,13 +28,13 @@ Odločitev Mateja 22. 11.: »kariero hitreje, pred Realizem G«, »Atlas Career 
   - Vleka premika pogled vzdolž ceste. Dotik zatiča odpre kartico dogodka (pokonci od spodaj, ležeče z desne).
   - Po dirki dolina pokaže izid (mesto, zvezdice, kovanci), ob novi stopnji še napredek.
   - Meja: do ~25 klicev risanja in ~60 tisoč oglišč (`MenuDolina._R()`); riše samo, ko se kaj premika.
-- **Dogodki**: 44 v 5 stopnjah (`VELIKOST` 7, 8, 9, 10, 10). Najprej pokali poti in pokali razredov, preostanek so posamični dogodki po vrsti: dirka, kronometer (samo kjer ima proga medalje), dvoboj. Finale je zadnji.
+- **Dogodki**: najmanj `VELIKOST` (7, 8, 9, 10, 10) na stopnjo, vsaka stopnja ima prostor za tri posamične dogodke (46 pri 65 progah, 48 pri 82). Najprej pokali poti in pokali razredov, preostanek so posamični dogodki po vrsti: dirka, kronometer (samo kjer ima proga medalje), dvoboj. Finale je zadnji.
 - **Zvezdice** po najboljšem mestu (`ZVEZDICE`):
   - pokal, pokal razreda in finale: 3, 2, 1 za prva tri mesta;
   - dirka: 3 za 1., 2 za 2.–3., 1 za 4.–6. mesto;
   - dvoboj: 3 za zmago;
   - kronometer: po medalji (zlata 3, srebrna 2, bronasta 1).
-- **Odklepanje**: stopnja se odpre z zvezdicami vseh dogodkov. Pragovi so 0, 9, 21, 36 in 54 od 132 (`PRAG`), sorazmerno z največjim številom zvezdic poti. Odprta stopnja ostane odprta (`pot.stopnja`).
+- **Odklepanje**: stopnja se odpre z zvezdicami vseh dogodkov. Pragovi so 0, 9, 21, 36 in 54 od 132 (`PRAG`), sorazmerno z največjim številom zvezdic poti (2. stopnja vedno pri 9). Odprta stopnja ostane odprta (`pot.stopnja`).
 - **Darila stopenj** se plačajo od shranjene stopnje naprej (`pot.stopnja`), vsako enkrat; pri nenavadnem shranjenem stanju manjkajoča ob naslednjem dogodku.
 - **Pokali razredov** so v stopnjah po ceni najcenejšega avta razreda. Igra poda cene (`KP_CENE` iz `Core.CAREER.car`); brez cen velja vrstni red `RAZRED_RED`.
 - **Kovanci** (`kariera-5`, »hitro«):
@@ -45,8 +45,9 @@ Odločitev Mateja 22. 11.: »kariero hitreje, pred Realizem G«, »Atlas Career 
 ## Kariera raste s progami (25. 11. 2026)
 Odločitev Mateja `proge3-kariera`, možnost 2 (tabla #382, komentar 7164268738): pri 83 progah (#788) pot ne sme izgubiti kronometra in dvoboja, ekonomija pa ne sme ostati pri ~120 zmagah.
 - **Stopnja dobi prostor** za dirko, kronometer in dvoboj: velikost stopnje je `VELIKOST` ali več, kolikor potrebujejo njeni pokali, pokali razredov in trije posamični dogodki.
-- **Ekonomija po dolžini poti**: nagrade poti se pomnožijo s faktorjem, ki ga da število dirk na poti; vsi avti so kupljeni ob ~koncu poti.
-- **Testa** `kariera` in `kariera-pot` merita dogodke in zmage glede na število prog, ne s stalnimi 44 in 110–130.
+- **Ekonomija po dolžini poti**: vse nagrade poti (`P.nagrade`) se pomnožijo z `DIRK_REF / dirke na poti` (`DIRK_REF` 124 = dirke pri 65 progah; največ 1, zaokroženo na 500). Simulacija: zadnji avto pri 110 od 124 dirk (65 prog) in pri 124 od 141 (82 prog), obakrat ~88 % poti.
+- **Prag 2. stopnje** ostane 9★ (1. stopnja ne raste); drugi pragovi so sorazmerni z zvezdicami poti.
+- **Testa** `kariera` in `kariera-pot`: velikost stopnje `max(VELIKOST, pokali + pokali razredov + 3)`, dvoboj v vsaki stopnji, zadnji avto pri 80–105 % dirk poti, avto naslednje stopnje vsakih 4–16 dirk (krat dirke poti / 124), zneski iz `P.nagrade`.
 
 ## Kaj kariera ima zdaj
 - **Stanje** (`js/game.js`):
