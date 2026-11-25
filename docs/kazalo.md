@@ -342,6 +342,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 |---|---|---|---|
 | aguascalientes | Aguascalientes, Mehika | aguascalientes | `js/world-rbring.js` (`buildRbring`) in `js/world-aguascalientes.js` (videz v `RB_LOOK` prek `API.rbLook`: napisi krajev, zastavica `mx`, suha trava `colMod`; obzorje `def.far` prek `API.rsFar` iz `js/world-riverside.js` v ovoju `World.ext.aguascalientes`) |
 | balea | Bâlea, Romunija | balea | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.balea`: portal predora, žičnica, jezero, ovce) |
+| hafit | Džebel Hafit, Združeni arabski emirati | hafit | `js/world-hafit.js` (`PL_LOOK.hafit` za `buildPrelaz`: cestne svetilke ob ločilnem pasu, hiše z ravnimi strehami, akacije, razgledišče; rumena leva robna črta `edgeL` v `js/world-prelaz.js`) |
 | gudauri | Gudauri, Gruzija | gudauri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.gudauri`: hoteli in apartmajski bloki (`hotels`), sedežnice s sedeži (`chairs`), daljnovod, plazovna galerija (`portal: 2`), ovce) |
 | kanaba | Kanaba, Uganda | kanaba | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kanaba`: zelena polja na rdeči prsti, pločevinaste strehe, drobnica; vožnja po levi) |
 | canaries | Canaries, Sveta Lucija | canaries | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.canaries`: tropski gozd `trop`, morje, hiše; `CESTE.canaries` v `js/world-cesta.js`) |

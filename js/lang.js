@@ -535,6 +535,7 @@
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Iz kanjona Mujib': 'Up out of the Mujib canyon',   // (Wadi Mujib: the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Bolnišnica': 'Hospital', 'Pod daljnovodom': 'Under the Power Line', 'Pogled na jezero': 'Lake View',   // (Atitlán: the HUD; the town keeps its name, the hairpins by the rules above, the results of an escape as Bâlea)
+    'Apnenčasta stena': 'Limestone Wall', 'Nad puščavo': 'Above the Desert',   // (Jebel Hafeet: the HUD; Prva lasnica, Serpentine, Razgledišče, Vrh vzpona above)
     'Do prelaza Mã Pí Lèng': 'To the Mã Pí Lèng pass',   // (Mã Pí Lèng: the results of an escape; Spomenik, Serpentina N and the heights by the rules of Lang.place)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
     'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
@@ -1136,7 +1137,7 @@
     'Ta dogodek je še zaklenjen.': 'This event is still locked.', 'V dolino': 'To the valley',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
+  const SAME = new Set(['MOCKUP', 'CR', 'LAVA', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
