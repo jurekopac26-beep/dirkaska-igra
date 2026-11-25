@@ -1,9 +1,10 @@
 /* =========================================================================
    WORLD — Gudauri, Gruzija: the furniture beside the road (docs/proge/gudauri.md, »Ob cesti«), on top of the pass's own world (js/world-prelaz.js,
-   PL_LOOK.gudauri; its hooks LK.pre and LK.extra wrapped, a base hook's own work done first where there is one): the side streets, the service
-   roads, the paths and the steps from the road out to ~60 m (asphalt, concrete, gravel or dirt as the map has them; over the verge's ditch a
-   little fill on a culvert), the two marked crossings, the bus platform beside the road, the two benches, the guidepost with blank boards, the
-   lift gate across a side street and the mobile phone mast (TOWER_B: (a) false a lattice tower, (b) true a tubular one). Places, kinds, widths
+   PL_LOOK.gudauri; its hooks LK.pre and LK.extra wrapped, a base hook's own work done first where there is one): the paths and the steps from
+   the road out to ~60 m (dirt, the steps concrete; over the verge's ditch a little fill on a culvert), the two marked crossings, the bus platform
+   beside the road, the two benches, the guidepost with blank boards and the mobile phone mast (TOWER_B: (a) false a lattice tower, (b) true a
+   tubular one). The map's streets and service roads that meet the road are not laid here: package E's connectors with the posts are their
+   picture (def.stranske, World.cesta.stranske in js/world-prelaz.js; the user's choice 24. 11. 2026: only those). Places, kinds, widths
    and surfaces from OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0, read through the OpenStreetMap API 22. 11. 2026; README.md »Zasluge«;
    the ids by each list); all generic: no names, letters or signs. Graphics only, into the scenery's chunks (no draw call of its own), nothing
    knockable; no def.zebras, no def.sideRoads (the traffic's and the walkers' AI keep to the road as it was); the driving, physics and def.hills
@@ -20,34 +21,12 @@
 
   const TOWER_B = false;   // (a) false: a lattice tower; (b) true: a tubular one (the user's choice in the PR)
 
-  // the ways from the road (the junction's end first is found here): [OSM way, kind (0 street, 1 service road, 3 path, 4 steps), surface
-  // (0 asphalt, 1 concrete, 3 gravel, 4 dirt), width (dm), x, z, ...], from the junction out to ~60 m from the road (the rest left out). The
-  // map's own: highway=secondary w104266907; unclassified w104266996, w104268305, w104267450 (this one surface=asphalt, the lift gate on it);
-  // residential w104268328, w616789327, w170360726, w1314797452, w170360902, w278018986, w668794696, w474387388 (this one surface=unpaved: gravel); service
-  // w104267129, w171224635, w205388854, w934868457 (both its ends on the road), w1458960622, w104267296, w170360756, w104267152, w104266991;
-  // path w1322573247 (surface=dirt), w171224637, w205547597; steps w205388851. Widths and the other surfaces are not on the map: by the kind
+  // the footways from the road (the junction's end first is found here): [OSM way, kind (3 path, 4 steps), surface (1 concrete, 4 dirt),
+  // width (dm), x, z, ...], from the junction out to ~60 m from the road (the rest left out): path w1322573247 (surface=dirt), w171224637,
+  // w205547597; steps w205388851. Widths and the other surfaces are not on the map: by the kind. The map's roads that meet this one (its
+  // streets and service roads) are not laid here: they are package E's connectors with the posts (def.stranske, World.cesta.stranske; the
+  // user's choice 24. 11. 2026: only those), and the lift gate that stood on one of them (n1203100412 on w104267450) went with it
   const WAYS = [
-    [104266996, 0, 0, 50, -303.7, -413.4, -299, -418.1, -289.2, -426.2, -283.7, -429.9, -273.9, -429.9, -264.9, -425.8, -259.8, -416.3, -253.3, -381.1, -250.8, -352.2, -246.6, -336.5, -242.1, -323, -229.5, -309.8, -204.5, -297.4, -183.8, -282.4],
-    [104268305, 0, 0, 50, -188.5, -51.7, -187.4, -17.4, -185.4, 16.8],
-    [104268328, 0, 0, 45, -394.4, -511.6, -398.6, -510.2, -411.1, -512.3, -429.3, -510.3, -437.3, -511.1, -444, -513.4, -453.1, -522.3, -471.7, -553.6, -501.2, -586.4, -507.7, -590.1],
-    [616789327, 0, 0, 45, -366.3, -578.3, -367.3, -568.9, -363.9, -556.4, -369.9, -539.7, -387.3, -516.3],
-    [104266907, 0, 0, 65, -127.3, -1151.1, -126.2, -1134.2, -122.6, -1112.3, -118.2, -1104.7, -111.3, -1097.6],
-    [170360726, 0, 0, 45, -655.7, -1906.1, -639, -1930.1, -627.7, -1940.2, -609.2, -1947.7, -605.9, -1948.7],
-    [1314797452, 0, 0, 45, -765.2, -2041.2, -755.1, -2020.8, -752.4, -2003.8, -750.4, -1973.7, -752.8, -1965.2],
-    [170360902, 0, 0, 45, -364.8, -1699.5, -375.5, -1701.4, -402.8, -1719.1, -420.9, -1723.2, -447.2, -1726.2, -466.1, -1725.6, -479.8, -1722, -481.8, -1720.6],
-    [278018986, 0, 0, 45, -420.9, -1723.2, -413, -1708.7, -406.9, -1694.4, -402.2, -1676.7, -340.5, -1638.2, -318.8, -1630.7, -308.5, -1624.7, -292.5, -1612],
-    [474387388, 0, 3, 45, -264.1, -1559, -255.6, -1555.2, -235.8, -1540.2, -211.1, -1513.8, -195.6, -1498, -184.2, -1494.1, -181.9, -1495.9],
-    [668794696, 0, 0, 45, -245.5, -1505.1, -228, -1496.2, -212.1, -1466.3, -201, -1463.7, -192.2, -1470.7],
-    [104267450, 0, 0, 50, -345.4, -1072.5, -329.6, -1072.3, -312.1, -1076.4, -294.3, -1078, -289.9, -1077],
-    [104267129, 1, 0, 35, -478.7, -653.7, -471.9, -656.3, -460.1, -658.1, -452.4, -656.3, -444.3, -650.4, -435.4, -643.2, -413.8, -622.6, -400.4, -630.3],
-    [171224635, 1, 0, 35, -322.3, -491.4, -317.2, -482.4, -311.8, -474.9, -310.2, -471, -311.9, -467.7, -317.2, -468.2, -322.9, -474.8, -330.7, -482.6, -340.8, -487.8, -353.3, -487.9, -360.3, -484.3],
-    [205388854, 1, 0, 35, -462.1, -639.3, -461.6, -642.6, -458.9, -644.3, -456, -643.9, -453.3, -641.1, -442.9, -628.2, -416.4, -590.1, -410.2, -568.6],
-    [934868457, 1, 0, 35, -289, -380.4, -291.6, -376.4, -292.4, -366.9, -289.1, -348, -287.6, -345.5, -283.2, -342.7, -280.3, -341.7],
-    [1458960622, 1, 0, 35, -411.8, -1375.5, -409.1, -1363.9, -374.7, -1341.2, -346.7, -1327, -320.4, -1321.8, -269.3, -1296.1, -257.8, -1277.9, -239, -1257.6, -220.3, -1250, -204.2, -1245.5, -203.1, -1237.8, -208.3, -1232.5],
-    [104267296, 1, 0, 35, -333.3, -1684.9, -320.5, -1686, -308, -1682, -295.3, -1673, -275, -1650.5, -268.9, -1646],
-    [170360756, 1, 0, 35, -618.5, -1892.9, -634.4, -1889.7, -662.8, -1887.4, -720.1, -1887.7],
-    [104267152, 1, 0, 35, -180.3, -752.1, -170.6, -742.1, -144.1, -730.9, -127.8, -726.3],
-    [104266991, 1, 0, 35, 78.1, 41.7, 82.9, 36.2, 89.8, 30.2, 102.1, 20.6, 117.7, 15.1],
     [1322573247, 3, 4, 12, -484.6, -1343.4, -498.5, -1399.3],
     [171224637, 3, 4, 12, -316.5, -770.6, -308.5, -758.8, -300.4, -749.5, -289.8, -745, -269.9, -720.6, -265.8, -712.1],
     [205547597, 3, 4, 12, -155, -222.8, -212.7, -220.4],
@@ -58,7 +37,6 @@
   const PLATFORM = [-339.4, -430.8];   // (public_transport=platform, bus=yes, n2153320608)
   const BENCH = [[-393.7, -502.5], [-393.3, -503.8]];   // (amenity=bench, n2153508513, n2153508514; their direction not on the map: facing the road)
   const GUIDE = [-298.0, -411.8];   // (tourism=information, information=guidepost, bicycle=yes, mtb=yes, n2153553615)
-  const GATE = [-312.1, -1076.4], GATE_WAY = 104267450;   // (barrier=lift_gate, n1203100412, on w104267450)
   const MAST = [-689.7, -1918.9];   // (man_made=tower, tower:type=communication, communication:mobile_phone=yes, n13382152660; its height not on the map)
   const MAST_H = 24, MAST_HALF = 1.9;
 
@@ -130,7 +108,7 @@
   }
 
   function spots() {
-    const S = { plat: null, bench: [], guide: null, gate: null, mast: null };
+    const S = { plat: null, bench: [], guide: null, mast: null };
     { const n = near(PLATFORM[0], PLATFORM[1]); if (n) S.plat = n; }
     // the benches: together, out past the verge's ditch (bar + 2.45 m), clear of the street beside them and of the hotel behind them
     { const n0 = near(BENCH[0][0], BENCH[0][1]), n1 = near(BENCH[1][0], BENCH[1][1]);
@@ -143,9 +121,6 @@
       for (const [dx, dz] of C) { const x = GUIDE[0] + dx, z = GUIDE[1] + dz, n = near(x, z);
         if (n && Math.abs(n.lat) >= wAt(n.i) + 1.2 && clearOfWays(x, z, 0.6) && !inHouse(x, z, 0.5)) { S.guide = { x, z, n, moved: Math.hypot(dx, dz) }; break; } }
       if (!S.guide) S.guide = { x: GUIDE[0], z: GUIDE[1], n: near(GUIDE[0], GUIDE[1]), moved: 0 }; }
-    { const pa = PATHS.find((p) => p.id === GATE_WAY); if (pa) { let jb = 0, db = 1e9; pa.P.forEach((p, j) => { const d = Math.hypot(p[0] - GATE[0], p[1] - GATE[1]); if (d < db) { db = d; jb = j; } });
-      const a = pa.P[Math.max(0, jb - 2)], b = pa.P[Math.min(pa.P.length - 1, jb + 2)], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-      S.gate = { x: pa.P[jb][0], z: pa.P[jb][1], tx: (b[0] - a[0]) / L, tz: (b[1] - a[1]) / L, W: pa.W }; } }
     S.mast = spot(MAST[0], MAST[1], 1.9 + MAST_HALF + 0.3, MAST_HALF + 0.5, MAST_HALF + 1.6);
     return S;
   }
@@ -175,7 +150,6 @@
       if (blds && pa.P.some((p) => blds.some((b) => inBld(b, p[0], p[1])))) BLD.push(pa.id); }
     for (const b of SPOT.bench) keep(exclPush, b.x, b.z, 1.3);
     keep(exclPush, SPOT.guide.x, SPOT.guide.z, 1);
-    if (SPOT.gate) keep(exclPush, SPOT.gate.x, SPOT.gate.z, 3.5);
     keep(exclPush, SPOT.mast.x, SPOT.mast.z, 6);
     return r;
   };
@@ -231,7 +205,7 @@
   }
 
   function lay({ scen, P }) {
-    const st = { ways: 0, ribbon: 0, cells: 0, skirts: 0, cut: [], pads: 0, bld: BLD.slice(), bldCells: 0, steps: 0, zebras: 0, platform: 0, benches: 0, guide: 0, gate: 0, mast: 0, verts: 0,
+    const st = { ways: 0, ribbon: 0, cells: 0, skirts: 0, cut: [], pads: 0, bld: BLD.slice(), bldCells: 0, steps: 0, zebras: 0, platform: 0, benches: 0, guide: 0, mast: 0, verts: 0,
       at: { bench: SPOT.bench.map((b) => +b.moved.toFixed(2)), guide: +SPOT.guide.moved.toFixed(2), mast: +SPOT.mast.moved.toFixed(2) },
       stuck: [...SPOT.bench.filter((b) => b.stuck).map(() => 'bench'), ...(SPOT.mast.stuck ? ['mast'] : [])] };
     let v0 = 0; for (const g of scen.map.values()) v0 += g.P.length / 3;
@@ -313,15 +287,6 @@
       box(g, p.x + Math.cos(hw) * 0.38, y + 1.9, p.z + Math.sin(hw) * 0.38, 0.85, 0.2, 0.03, hw, PALE);
       st.guide = 1; }
 
-    // the lift gate: its post with the counterweight on one side, the rest post on the other, the arm across, red and white, lowered
-    if (SPOT.gate) { const G = SPOT.gate, cx = -G.tz, cz = G.tx, h = G.W / 2 + 0.3, rot = Math.atan2(cz, cx), g = scen.get(G.x, G.z);
-      const ax = G.x + cx * h, az = G.z + cz * h, bx = G.x - cx * h, bz = G.z - cz * h, ya = caGround(ax, az), yb = caGround(bx, bz), yArm = Math.max(ya, yb) + 0.98;
-      box(g, ax, ya - 0.2, az, 0.25, yArm - ya + 0.35, 0.25, rot, [0.7, 0.7, 0.68]);
-      box(g, ax + cx * 0.45, yArm - 0.12, az + cz * 0.45, 0.6, 0.24, 0.2, rot, [0.66, 0.66, 0.64]);
-      box(g, bx, yb - 0.2, bz, 0.12, yArm - yb + 0.18, 0.12, rot, [0.7, 0.7, 0.68]);
-      const L = 2 * h, nSeg = 8; for (let k = 0; k < nSeg; k++) { const u = h - L * (k + 0.5) / nSeg; box(g, G.x + cx * u, yArm - 0.05, G.z + cz * u, L / nSeg, 0.1, 0.08, rot, k % 2 ? WHITE : RED); }
-      st.gate = 1; }
-
     // the mast: a concrete base, (a) a lattice tower (four legs drawing in, a ring and crossed braces in each panel) or (b) a tubular one, the
     // antennas' three panels near the top on a platform, the cabinet beside it; out past the verge's ditch
     { const p = SPOT.mast, n = p.n, g = scen.get(p.x, p.z), rot = n ? Math.atan2(T.tz[n.i], T.tx[n.i]) : 0, ca = Math.cos(rot), sa = Math.sin(rot), H = MAST_H;
@@ -343,7 +308,7 @@
       cyl(g, p.x, y0 + H, p.z, 0.05, 1.6, 5, STEEL, STEEL, 0.02);
       st.mast = TOWER_B ? 2 : 1; }
 
-    st.inHouse = [['guide', SPOT.guide], ['mast', SPOT.mast], ...SPOT.bench.map((q) => ['bench', q]), ...(SPOT.gate ? [['gate', SPOT.gate]] : [])].filter(([, q]) => inB(q.x, q.z)).map(([k]) => k);
+    st.inHouse = [['guide', SPOT.guide], ['mast', SPOT.mast], ...SPOT.bench.map((q) => ['bench', q])].filter(([, q]) => inB(q.x, q.z)).map(([k]) => k);
     for (const g of scen.map.values()) st.verts += g.P.length / 3; st.verts -= v0;
     return st;
   }

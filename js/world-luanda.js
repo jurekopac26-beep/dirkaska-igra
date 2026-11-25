@@ -74,8 +74,9 @@
     const W1 = [1, 1, 1];
     // what keeps the trees and the blocks off (the buildings, the fortress, the crowds, the start), hashed circles
     const eh = new Map(), EHC = 32;
-    const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
-    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
+    const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } return e; };
+    const excluded = (x, z, own) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if (!(own && e.sc) && (x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
+    const inSR = (x, z, m) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; m = m || 0; for (const e of Lc) if (e.sc && (x - e.x) ** 2 + (z - e.z) ** 2 < (e.r + m) * (e.r + m)) return true; return false; };
 
     // ---- the fortress on the hill (LD.marks 'castle'): its outline, centre and reach; the ground inside it (and 12 m round) as the heights are,
     //      without the far terrain's noise, so that the model (built on the same heights) stands on it ----
@@ -126,7 +127,6 @@
       if (sd > -22 && h < 3.0) { const t = sstep(-22, -6, sd) * sstep(3.0, 1.2, h); r = lerp(r, 1.1, t); g = lerp(g, 1.0, t); b = lerp(b, 0.82, t); }
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.86, t); g = lerp(g, 0.8, t); b = lerp(b, 0.72, t); }
       o[0] = r; o[1] = g; o[2] = b; return o; };
-    const OB = World.ext.luandaOb ? World.ext.luandaOb({ exclPush, seaD, inFort, root, tex, T }) : null;   // the side roads (js/world-luanda-obcestje.js): before the fill houses and the trees
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(luGroundTex()), vertexColors: true });
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
@@ -148,16 +148,36 @@
     };
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 37) * 70), t = 0.9 + crH(k, 5, 37) * 0.15; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
+    /* ---- the verges between the asphalt, the barriers and the terrain (lifted onto the ground where it rises) ---- */
+    const vergeRow = (i, side) => {
+      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
+      return [[w, 0.0], [w + 0.8, -0.04], lift(Math.max(w + 1.2, bar - 0.3), -0.08), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
+    };
+    /* ---- the side roads (look only, from OSM: def.stranske): their strips, shoulders and posts; the walls and the edge lines open at their mouths ---- */
+    const WL = [0.9, 0.9, 0.86], bar = (i, side) => (side > 0 ? T.br[i] : T.bl[i]);
+    const vergeAt = (i, side, d) => { const pr = vergeRow(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const naKopnem = (c) => {   // (a side road ends 6 m short of the sea where the map's line and the game's shore part; it fades out there)
+      const xy = c[6], o = [xy[0], xy[1]];
+      for (let k = 2; k < xy.length; k += 2) { const x0 = xy[k - 2], z0 = xy[k - 1], dx = xy[k] - x0, dz = xy[k + 1] - z0, n = Math.max(1, Math.ceil(Math.hypot(dx, dz)));
+        for (let j = 1; j <= n; j++) if (seaD(x0 + dx * j / n, z0 + dz * j / n) > -6) { if (j > 1) o.push(x0 + dx * (j - 1) / n, z0 + dz * (j - 1) / n); return c.slice(0, 5).concat([0, o]); }
+        o.push(xy[k], xy[k + 1]); }
+      return c; };
+    const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske.map(naKopnem), { tla: nrGround, rob: vergeAt, ton: (i) => 0.84 * secT[i] - 0.04, odprta: true, drzava: 'Angola' }) : null;
+    const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
+    const fr = (f) => { const a = clamp(Math.floor(f), 0, N - 1); return [a, Math.min(N - 1, a + 1), clamp(f - a, 0, 1)]; };
+    const PtF = (f, o, y) => { const [i, j, t] = fr(f), p = Pt(i, o, y); if (t < 1e-6) return p; const q = Pt(j, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };
+    const wAtF = (f) => { const [i, j, t] = fr(f); return lerp(T.wAt(i), T.wAt(j), t); };
+    const barF = (f, side) => { const [i, j, t] = fr(f); return lerp(bar(i, side), bar(j, side), t); };
+    if (SC) { out.cestaRob = SC.ustja.slice(); for (const k of SC.krogi) exclPush(k[0], k[1], k[2]).sc = 1; out.stranske = SC.n; }
     for (let c0 = 0; c0 < N - 1; c0 += RC) {
       const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1, pc = 0;
       for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
         const w = T.wAt(i), offs = [-w, -w / 2, 0, w / 2, w], v = i * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o, w)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, 4); pr = r;
-        const wl = [0.9, 0.9, 0.86], cl = CL ? CL[i] : 0, lp = [Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)];
-        if (cl) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));
-        const l = gl.row(lp, lp.map(() => wl));
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
+        const cl = CL ? CL[i] : 0;
+        if (cl) { const l = gl.row([Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034)], [WL, WL]); if (pc) gl.link(pl, l, 0, 1); pl = l; } pc = cl;
       }
+      for (const si of [0, 1]) for (const run of tek(si, 2, c0, Math.min(c0 + RC, N - 1))) { let pq = -1; for (const f of run) { const w = wAtF(f), l = gl.row(si ? [PtF(f, w - 0.38, 0.034), PtF(f, w - 0.22, 0.034)] : [PtF(f, -w + 0.22, 0.034), PtF(f, -w + 0.38, 0.034)], [WL, WL]); if (pq >= 0) gl.link(pq, l, 0, 1); pq = l; } }   // (the edge lines, open at the side roads' mouths)
       for (const q of xk.get(c0 / RC) || []) layX(gl, q);
       addM(gr, aMat); addM(gl, lMat);
     }
@@ -177,22 +197,25 @@
     const kindAt = (i) => (startArea(i) ? 1 : 0);   // 0 concrete, 1 white wall and fence
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const conc = [0.84, 0.82, 0.78], concD = [0.64, 0.62, 0.58], concT = [0.9, 0.88, 0.84], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72];
-    const wallRow = (gr, i, side, k) => {
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 0.85, tone = 0.94 + crH(i >> 3, side, 71) * 0.1;
+    const wallRow = (gr, f, side, k) => {
+      const b = barF(f, side), o = side * (b + 0.1), o2 = side * (b + 0.5), h = k === 1 ? 1.15 : 0.85, tone = 0.94 + crH(f >> 3, side, 71) * 0.1;
       const c0 = k === 1 ? whD : concD.map(v => v * tone), c1 = k === 1 ? wh : conc.map(v => v * tone), c2 = k === 0 ? concT : wh;
-      let p = [Pt(i, o, -0.5), Pt(i, o, h - 0.08), Pt(i, o, h), Pt(i, o2, h)], c = [c0, c1, c2, c2];
+      let p = [PtF(f, o, -0.5), PtF(f, o, h - 0.08), PtF(f, o, h), PtF(f, o2, h)], c = [c0, c1, c2, c2];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
       return gr.row(p, c);
     };
+    const capW = (gr, f, side, k) => { const b = barF(f, side), o0 = side * (b + 0.1), o1 = side * (b + 0.5), h = k === 1 ? 1.15 : 0.85, tone = 0.94 + crH(f >> 3, side, 71) * 0.1, cc = k === 1 ? whD : concD.map(v => v * tone); gr.link(gr.row([PtF(f, o0, -0.5), PtF(f, o1, -0.5)], [cc, cc]), gr.row([PtF(f, o0, h), PtF(f, o1, h)], [cc, cc]), 0, 1); };   // (the end of a cut barrier)
     for (let c0 = 0; c0 < N - 1; c0 += RC) {
       const gr = new RB();
-      for (const side of [-1, 1]) {
+      for (const side of [-1, 1]) for (const run of tek(side > 0 ? 1 : 0, 1, c0, Math.min(c0 + RC, N - 1))) {
         let prev = -1, pk = -1;
-        for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
-          const k = kindAt(i);
-          if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, i, side, pk), 0, 3); prev = -1; }
-          const r = wallRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
+        for (const f of run) {
+          const k = kindAt(f);
+          if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, f, side, pk), 0, 3); prev = -1; }
+          const r = wallRow(gr, f, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
         }
+        if (run.z0) capW(gr, run[0], side, kindAt(run[0]));
+        if (run.z1) capW(gr, run[run.length - 1], side, kindAt(run[run.length - 1]));
       }
       addM(gr, rMat, true);
     }
@@ -204,21 +227,15 @@
     {   // the catch fence along the white walls at the start and the finish
       const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), gf = new RB(true);
       for (const [d0, d1] of [[-110, 140], [dFin - 100, L - sStart - 2]]) for (const side of [-1, 1]) { let pr = -1, acc = 0;
-        for (let d = d0; d <= d1; d += 2) { const i = T.idx(sAt(d)), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.15);
+        for (let d = d0; d <= d1; d += 2) { const i = T.idx(sAt(d)), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.15); if (SC && (SC.rez[side > 0 ? 1 : 0][i] & 1)) { pr = -1; acc += 2; continue; }
           let p = [Pt(i, o, 1.1), Pt(i, o, 3.8)]; if (side < 0) p = p.reverse();
           const r = gf.row(p, [W1, W1], [[acc / 3, 0], [acc / 3, 1]]); if (pr >= 0) gf.link(pr, r, 0, 1); pr = r; acc += 2; } }
       addM(gf, fMat);
     }
 
-    /* ---- the verges between the asphalt, the barriers and the terrain (lifted onto the ground where it rises) ---- */
-    const vergeRow = (i, side) => {
-      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
-      return [[w, 0.0], [w + 0.8, -0.04], lift(Math.max(w + 1.2, bar - 0.3), -0.08), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
-    };
-
     /* ---- the spectators' context ---- */
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
-    let nBld = 0, nFill = 0, nStone = 0;
+    let nBld = 0, nFill = 0, nStone = 0, nPost = 0;
 
     /* ---- the fortress on the hill: the simple one (one mesh) until the model of assets/landmarks/luanda.glb has loaded (World.znamenitost):
        its walls along the outline, battered, ochre, a white cordon under the parapet, the parapet's merlons, a sentry box on each bastion's
@@ -258,6 +275,7 @@
       if (flat) box(g, bx, y0 + hh, bz, Lb, 0.6, Wb, ang, wc.map(v => v * 0.92), [0.7, 0.64, 0.58]);
       else gable(g, bx, y0 + hh, bz, Lb + 0.6, Wb + 0.6, Math.min(2.4, Wb * 0.22), ang, ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], wc);
     };
+    const off = new GB();   // (what stands on a side road: drawn here and never shown, so that R runs on as before)
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
       if (inFort(bx, bz, 4)) continue;   // (the fortress's own buildings are its model's)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
@@ -267,10 +285,11 @@
       const nu = Math.ceil(Lb / 4), nv = Math.ceil(Wb / 4);
       for (let u = 0; u <= nu && !clash; u++) for (let v = 0; v <= nv; v++) { const a = (u / nu - 0.5) * Lb, b = (v / nv - 0.5) * Wb, n = nrNear(bx + ca * a - sa * b, bz + sa * a + ca * b); if (n.i >= 0 && n.dd < 1.2) { clash = true; break; } }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
-      const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
+      let srHit = false; { const u2 = Math.ceil(Lb / 4), v2 = Math.ceil(Wb / 4); for (let u = 0; u <= u2 && !srHit; u++) for (let v = 0; v <= v2; v++) { const a = (u / u2 - 0.5) * Lb, b = (v / v2 - 0.5) * Wb; if (inSR(bx + ca * a - sa * b, bz + sa * a + ca * b, -1.8)) { srHit = true; break; } } }
+      const g = srHit ? off : scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
       const hh = Hb || (big ? (3 + Math.floor(hk * 2)) * 3.1 : area < 45 || k0 === 4 ? 3 + hk : 6.2 + hk * 1.4);
       house(g, bx, bz, Lb, Wb, ang, y0, hh, big || crH(bx, bz, 15) < 0.7, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
-      nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
+      if (!srHit) nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
     }
     // more of the city where the land cover says it is built up and OpenStreetMap has no footprints (15-55 m from the road, square to it)
     {
@@ -282,17 +301,16 @@
           if (crH(xx, zz, 40) > 0.55) continue;
           const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
           if (rd < 15 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
-          const Lb0 = 9 + crH(x, z, 43) * 7, Wb0 = 8 + crH(x, z, 44) * 6;
-          if (rd < 0.6 * Math.hypot(Lb0, Wb0) + 9 || excluded(x, z) || seaD(x, z) > -8 || inFort(x, z, 18)) continue;
+          const Lb = 9 + crH(x, z, 43) * 7, Wb = 8 + crH(x, z, 44) * 6;
+          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z, 1) || seaD(x, z) > -8 || inFort(x, z, 18)) continue;
           const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
-          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang), fit = OB ? OB.fit(x, z, Lb0, Wb0, ang) : 1;   // (by a side road smaller, or none: js/world-luanda-obcestje.js)
-          if (!fit) continue;
-          const Lb = Lb0 * fit, Wb = Wb0 * fit;
+          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang);
           let lo = 1e9, hi = -1e9; for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]]) { const h = nrGround(x + ca * a - sa * b, z + sa * a + ca * b); lo = Math.min(lo, h); hi = Math.max(hi, h); }
           if (hi - lo > 4) continue;
+          const sr = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2], [0, 0]].some(([a, b]) => inSR(x + ca * a - sa * b, z + sa * a + ca * b));
           const fl = 2 + Math.floor(crH(x, z, 45) * 4);
-          house(scen.get(x, z), x, z, Lb, Wb, ang, lo, fl * 3.1, crH(x, z, 46) < 0.85, vary(WALL[Math.floor(crH(x, z, 47) * WALL.length)], R, 0.05));
-          nFill++; CR.block(x, z, Lb, Wb, ang); exclPush(x, z, Math.max(Lb, Wb) / 2 + 2);
+          house(sr ? off : scen.get(x, z), x, z, Lb, Wb, ang, lo, fl * 3.1, crH(x, z, 46) < 0.85, vary(WALL[Math.floor(crH(x, z, 47) * WALL.length)], R, 0.05));
+          if (!sr) nFill++; CR.block(x, z, Lb, Wb, ang); exclPush(x, z, Math.max(Lb, Wb) / 2 + 2);
         }
       }
     }
@@ -309,11 +327,10 @@
       const FL = [[0.8, 0.12, 0.12], [0.1, 0.1, 0.1], [0.95, 0.78, 0.15], [0.95, 0.95, 0.93], [0.2, 0.4, 0.7]];
       for (let d = -100; d < 130; d += 18) for (const side of [-1, 1]) {
         const ii = T.idx(sAt(d)), o = side * ((side > 0 ? T.br[ii] : T.bl[ii]) + 1.6), px = T.px[ii] + T.nx[ii] * o, pz = T.pz[ii] + T.nz[ii] * o, py = nrGround(px, pz), gg = scen.get(px, pz);
-        if (seaD(px, pz) > -1) continue; CR.avoid(px, pz, 0.45);
+        if (seaD(px, pz) > -1 || inSR(px, pz)) continue; CR.avoid(px, pz, 0.45);
         cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [FL[Math.floor(crH(d, side, 5) * FL.length)]], 1.2, 0.8);   // (waving: js/world-zastave.js)
       }
     }
-    if (OB) OB.open(CR);   // (the spectators off the side roads)
     let nFans = 0;
     {   // few spectators (fewFans): at the start, under the fortress, at the finish
       const runs = [[-100, 120, 2, 0.4], [dFin - 90, dFin + 20, 2, 0.35]];
@@ -383,7 +400,8 @@
       for (let q = 0; q + 3 < fl.length; q += 2) {
         const ax = fl[q], az = fl[q + 1], bx = fl[q + 2], bz = fl[q + 3], len = Math.hypot(bx - ax, bz - az); if (len < 0.6) continue;
         const mx = (ax + bx) / 2, mz = (az + bz) / 2, nn = nrNear(mx, mz); if (nn.i >= 0 && nn.dd < 0.8) continue;
-        const y = nrGround(mx, mz), ang = Math.atan2(bz - az, bx - ax), g = scen.get(mx, mz);
+        let sr = false; { const ns = Math.max(1, Math.ceil(len / 2)); for (let u = 0; u <= ns && !sr; u++) sr = inSR(ax + (bx - ax) * u / ns, az + (bz - az) * u / ns, -1.8); }
+        const y = nrGround(mx, mz), ang = Math.atan2(bz - az, bx - ax), g = sr ? off : scen.get(mx, mz);
         if (k === 2) box(g, mx, y - 0.2, mz, len + 0.3, 1.6, 1.1, ang, vary([0.28, 0.4, 0.2], R, 0.08), [0.32, 0.44, 0.22], true);
         else box(g, mx, y - 0.4, mz, len + 0.2, k === 1 ? 1.8 : 1.5, 0.35, ang, vary([0.94, 0.92, 0.88], R, 0.04), [0.9, 0.88, 0.84], true);
       }
@@ -397,7 +415,7 @@
         for (let t = 0; t < len; t += 3.5) {
           const x = ax + (bx - ax) * t / len, z = az + (bz - az) * t / len; if (nrDist(x, z) > 75 || crH(x, z, 31) > 0.5) continue;
           const r0 = 1.2 + crH(x, z, 32) * 2.2, y = Math.max(SEA - 0.6, nrGround(x, z) - r0 * 0.35);
-          nrLump(scen.get(x, z), x, y, z, r0, 0.62, vary(rk, R, 0.1), R, 0.25); nR++;
+          { const sr = inSR(x, z); nrLump(sr ? off : scen.get(x, z), x, y, z, r0, 0.62, vary(rk, R, 0.1), R, 0.25); if (!sr) nR++; }
         }
       }
       out.rocks = nR;
@@ -448,7 +466,13 @@
             if (pv[si] >= 0) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
           }
         }
+        if (SC) SC.robovi(gv, c0, Math.min(c0 + RC, N - 1), API.nrGCol);   // (the side roads' shoulders out to the ground)
         addM(gv, gMat);
+      }
+      if (SC) {   // (the side roads' strips and the posts across their openings; no paint without a row of the country's markings in CRTE)
+        const sMat = aMat.clone();
+        for (const g of SC.asfalt(RB, API.nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
+        nPost = SC.predmeti(World.cesta.CRTE['Angola'] ? (x, z) => scen.get(x, z) : (x, z) => { const g = scen.get(x, z); return { quadO: (...a) => g.quadO(...a), triO: (...a) => g.triO(...a), quadUp() {}, triUp() {} }; }); out.stebricki = SC.stebricki;
       }
       G.col = G.cov = P.edge = null;   // (build only)
     }
@@ -458,6 +482,7 @@
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
+    if (SC) Object.assign(out.stats, { stranske: SC.n, stebricki: nPost });
     return out;
   }
 

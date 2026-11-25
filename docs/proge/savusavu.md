@@ -25,15 +25,13 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 
 ## Ob cesti
 
-Stranske ulice in dovozi, ki se priključijo na glavno cesto (`js/world-savusavu-obcestje.js`, potek in razred iz OpenStreetMap, slike prej in potem v `docs/slike/savusavu/`):
+Priključki stranskih ulic in dovozov, samo za videz (paket E: `stranske` v `js/tracks/savusavu.js`, `World.cesta.stranske`, `tools/cesta/izvoz.py`, `docs/realizem/paket-e.md`; potek in razred iz OpenStreetMap):
 
-- **Katere**: 14 poti med startom in ciljem, od roba asfalta v igri navzven, največ 70 m od ceste (120 m po poti). Terciarna 42164592 (49 m za startom); stanovanjske 401685120 (132 m), 401685119 in 996474499 (189 m, druga nasproti drugi), 401684811 (524 m), 401684810 (654 m), 1101650713 (812 m), 223938129 (1855 m) in 401622110 (2423 m); servisna 401683563 (1534 m); neklasificirana 401683564, stanovanjska 223937585 in dovoz 1065339441 v enem križišču (1618 m, dovoz se od neklasificirane odcepi 9 m od ceste); dovoz 223937775 (1697 m).
-- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`, ki bi poti naredil prevozne). Pot se konča, kjer se začne morje, voda iz OpenStreetMap ali hiša, ki jo igra riše; na njej ni palm, dreves, skal ali gledalcev.
-- **Ob ustju**: jeklena ograja na zunanji strani ovinka se čez ustje odpre (1,5 m od robov poti, brez ostanka, krajšega od 12 m), pri 401683563, 223937585 in 223938129. Štirje beli smerniki, ki bi stali sredi ustja, so odstranjeni.
-- **Površina**: oznako `surface=unpaved` ima 7 poti, preostalih 7 nima oznake `surface` (vse označene ob tej cesti so neasfaltirane). Narisane so kot makadam v teksturi in barvi makadamske bankine glavne ceste (želja uporabnika 2. 11. 2026, `docs/igra.md`, »Makadam«), kolesnice malo svetlejše; v dežju so temnejše kot bankina.
-- **Predpostavke** (OpenStreetMap tu nima širin): širina po razredu (terciarna 5,5 m, neklasificirana 5 m, stanovanjska 4,5 m, servisna 3,5 m, dovoz 3 m), ustje 2,5 m širše, ki se zoži v prvih 6 m za asfaltom; čez jarek ob cesti gre pot po nasipu (cev pod njim ni narisana). Cesta v igri je širša od prave, zato se pot začne na robu asfalta v igri.
-- **Ni narisano**: poti za ciljem (kraka križišča na koncu mesta) in za startom (steza in ploščadi letališča, zunaj pogleda kamere za avtom); nobenih imen.
-- **Odprto vprašanje**: (a) vseh 14 poti kot makadam (`savusavu-177m-po.webp`) ali (b) samo 7 z oznako `unpaved` (`savusavu-177m-b-samo-oznacene.webp`).
-- **Zmogljivost**: makadam je v mreži bankine glavne ceste, brežine ob robovih v kosih okolice: brez lastnih klicev risanja. Na telefonu 171 klicev na sliko (največ 210, prej 170 in 209), 405 tisoč oglišč (največ 493 tisoč, prej 398 in 491 tisoč).
+- **Kateri**: 8 priključkov med startom in ciljem: 2 dovoza (3,6 m) in 6 ulic (5,2 m), vsak trak 64 m od roba asfalta po poteku s karte; 4 na levi strani. Širina gre po razredu, ker OpenStreetMap tu nima širin.
+- **Ob ustju**: ograja in robna črta glavne ceste sta čez ustje prekinjeni, čez odprtino stoji vrsta oranžnih stebričkov (količkov), konec traku zbledi v tla.
+- **Površina**: ulice so v tonu asfalta glavne ceste, dovoza sta svetel makadam (predpostavka po razredu; oznake `surface=unpaved` s karte, ki jo ima 7 od 14 poti ob tej cesti, priključki ne upoštevajo).
+- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`); priključki niso vozni.
+- **Odločitev uporabnika 24. 11. 2026**: samo priključki s količki. Ulic in dovozov v celi dolžini kot makadam (14 poti iz OSM, prej v ločeni datoteki obcestja) ni več.
+- **Zmogljivost**: na telefonu 172 klicev risanja na sliko (največ 209) in 411 tisoč oglišč (največ 503 tisoč) (`tests/golden/perf.json`); z ulicami v celi dolžini 172 klicev (največ 210) in 418 tisoč oglišč (največ 516 tisoč). Svet ima 1636 mrež kot prej in 32 tisoč oglišč manj (733 tisoč).
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py savusavu --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.

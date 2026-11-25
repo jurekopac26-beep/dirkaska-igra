@@ -85,17 +85,18 @@
   // the service roads round the circuit (def.sk.svc, sk.trk: OSM's highway=service and =track): plain asphalt 5 m wide (and compacted
   // earth 3.5 m wide) on the ground, three points across every 4 m (the terrain under it), 8 cm over it and drawn over
   // it; not inside the barriers nor within 4 m past them (the run-offs are the builder's), the trees and the people off them
-  function qzWays({ root, exclPush, CR }, S, HW, col, map, name, st) {
-    const rb = new RB(true);
+  function qzWays({ root, exclPush, CR, naCesti }, S, HW, col, map, name, st) {
+    const rb = new RB(true), na = (p) => !!naCesti && naCesti(p[0], p[1], -1.8);   // (on a side road's asphalt: World.cesta's, def.stranske)
     for (let k = 0; k < S.length;) {
       const n = S[k], p = []; for (let q = 0; q < n; q++) p.push([S[k + 1 + q * 2], S[k + 2 + q * 2]]); k += 1 + n * 2;
       const pts = []; for (let q = 0; q + 1 < n; q++) { const [ax, az] = p[q], [bx, bz] = p[q + 1], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4)); for (let t = 0; t < m; t++) pts.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); }
       pts.push(p[n - 1]);
-      let prev = -1, along = 0;
+      let prev = -1, along = 0; const on = naCesti ? pts.map(na) : null;
       for (let q = 0; q < pts.length; q++) {
         const [x, z] = pts[q], a = pts[Math.max(0, q - 1)], b = pts[Math.min(pts.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
         if (q) along += Math.hypot(x - pts[q - 1][0], z - pts[q - 1][1]);
         const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4 + HW) { prev = -1; continue; }
+        if (on && on[q] && on[Math.max(0, q - 1)] && on[Math.min(pts.length - 1, q + 1)]) { prev = -1; continue; }   // (the side road is drawn there already; one step over its end, no gap)
         const nx = -dz / dl, nz = dx / dl, row = [-HW, 0, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; });   // (left to right in the way's direction: (nx, nz) its right)
         const r = rb.row(row, [col, col, col], row.map((e, j) => [j * HW / 4, along / 4]));
         if (prev >= 0) rb.link(prev, r, 0, 2); prev = r;
