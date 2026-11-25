@@ -993,6 +993,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: ktAtlas(cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: ktAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'katu', { gH: ktGround, slope: ktSlope, lc: ktLC, near: ktNear, bad: (x, z) => ktRiv(x, z) > -4 });   // (the roadside ground for the chase camera: js/world-chase-bt14.js)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), foam: nFoam, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }

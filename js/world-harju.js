@@ -1183,6 +1183,10 @@
     }
     crowdFinish(CR, root, out);
     pkSky({ root, tex, out, sStart, gH: hjGround, far: true });
+    if (World.ext && World.ext.goreRob && World.ext.goreRob.hjLC) {   // (the roadside ground for the chase camera: js/world-chase-bt19.js)
+      const e = 1.5, hjSl = (x, z) => Math.hypot(hjGround(x + e, z) - hjGround(x - e, z), hjGround(x, z + e) - hjGround(x, z - e)) / (2 * e);
+      World.ext.goreRob({ excluded, root, out }, 'harju', { gH: hjGround, slope: hjSl, lc: World.ext.goreRob.hjLC(G.gt, gIdx, hjCanopy, (x, z) => onPaved(x, z) || onBld(x, z)), near: hjNear });
+    }
     out.stats = { trees: nTrees, tiles: G.ntx * G.ntz, buildings: nBld, bales: bales.length, cars: nCars, stalls: nStalls, loos: nLoos };   // (read by the tests)
     return out;
   }

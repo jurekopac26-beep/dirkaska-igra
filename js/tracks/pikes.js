@@ -1,7 +1,7 @@
 /* Track definition 'pikes'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Pikes Peak International Hill Climb (Colorado): a POINT-TO-POINT time trial from the start at 2862 m to the summit at 4301 m.
+  // The climb up Pikes Peak (Colorado): a POINT-TO-POINT time trial from the start at 2862 m to the summit at 4301 m.
   // The real road is 19.99 km with 156 turns; this is a scaled version (~6.2 km, ~440 m of climb, average grade ~7%) that keeps
   // its character: forest S-bends, two ladders of hairpins (the "W's"), a fast ridge and the Boulder Park switchbacks below the summit.
   // Game axes: x east, z south (north = up on the minimap). The road is OPEN: points[0] is the bottom end, the last point the top end.
@@ -19,7 +19,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'pikes', name: 'Pikes Peak, ZDA', theme: 'pikes', open: true, timeTrial: true, modes: ['tt', 'race'], laps: 1, halfWidth: 7,
     maxRivals: 28,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the summit's ~85 m of road past the line: two rows a side of 28 cars at most, the longest vehicles' (6.3 m) clear of each other
     desc: 'Vzpon na Pikes Peak od starta na 2862 m do vrha na 4301 m: kronometer proti uri ali dirka z 21 tekmeci. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom.',
-    en: { name: 'Pikes Peak, USA', desc: 'The climb up Pikes Peak from the start at 2862 m to the summit at 4301 m: a time trial against the clock or a race against 21 rivals. Forest bends, the “W” hairpins, a fast ridge and switchbacks below the snowy summit.' },   // (the English page: Jezik · Language)
+    en: { name: 'Pikes Peak, USA', desc: 'The climb up Pikes Peak from the start at 2,862 m to the summit at 4,301 m: a time trial against the clock or a race against 21 rivals. Forest bends, the “W” hairpins, a fast ridge and switchbacks below the snowy summit.' },   // (the English page: Jezik · Language)
     realKm: 19.99, alt: [2862, 4301],
     // the commentator's own lines for the race up it (Comm; the time trial keeps the hill climb's: introTT, goTT ...)
     comm: {

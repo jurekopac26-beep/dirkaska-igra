@@ -4655,6 +4655,7 @@
 
     pkMoving(K);
 
+    if (World.ext && World.ext.goreRob && World.ext.goreRob.pkLC) World.ext.goreRob({ excluded, root, out }, 'pikes', { gH: pkGround, slope: pkSlope, lc: World.ext.goreRob.pkLC(pkGround, pkSlope, pkTreeline), near: pkNear });   // (the roadside ground for the chase camera: js/world-chase-bt16.js)
     P.G.lzb = P.G.lz; if (typeof window !== 'undefined' && window.__pkTerenOff) P.G.mb = P.G.h.map(v => v === v ? 1 : 0);   // (the vertices the build computed itself, not from def.teren: tools/pikes-teren.mjs, tests/browser/world.test.mjs)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
