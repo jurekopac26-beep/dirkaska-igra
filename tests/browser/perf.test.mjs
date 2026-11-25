@@ -12,7 +12,7 @@
 // game's one camera), as 'newmap'.
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
-//   PERF_ONLY=newmap,toskana node tests/browser/perf.test.mjs [--update]   only these (--update: the others' values kept)
+//   PERF_ONLY=newmap,toskana node tests/browser/perf.test.mjs [--update]   only these (--update: the others' values kept; gneca: the big fields, below)
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker, tapNewVersion } from './lib.mjs';
@@ -64,6 +64,55 @@ async function newMap() {
     T.check('newmap (NEW VERSION · TEST 1): within the phone budget', !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
   }
   T.check('newmap: no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+  await ctx.close();
+}
+// Gneča (the user's, 25. 11. 2026: a field of 100 ran badly, the game stuttered in the dust of all its cars): the biggest field the menu's
+// Opponents gives (rivals: 100; a track that takes fewer, def.maxRivals: its most) on GNECA's tracks, the player at the back of it on the
+// autopilot. The race is stepped and drawn 60 times a second from 3 s before each of four moments of the first half minute (so the smoke and
+// dust in the air are what a player has there), and at each the frame's draw calls and vertices are counted as above, and how much of the
+// screen the live puffs of smoke and dust cover, in screens (Render.fxStats().fill: the see-through sprites over each other are what the
+// phone's graphics chip pays for). As 'gneca-<id>' in perf.json: the busiest moment within +10 % +5 draw calls, +10 % +20k vertices, the
+// budget of CLAUDE.md on a real track, and the cover within +25 % +2 screens of its reference.
+//   PERF_ONLY=gneca node tests/browser/perf.test.mjs [--update]   only these
+const GNECA = ['nring', 'spa', 'killar'], GNECA_T = [6, 12, 20, 30];
+async function gneca() {
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, rivals: 100, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345 });
+  await page.evaluate(() => {
+    window.__gl = { calls: 0, verts: 0 };
+    const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
+    const P = Object.getPrototypeOf(gl), wrap = (name, count) => { const f = P[name]; if (!f) return; P[name] = function (...a) { window.__gl.calls++; window.__gl.verts += count(a); return f.apply(this, a); }; };
+    wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
+  });
+  for (const id of GNECA) {
+    await startTrack(page, id);
+    const r = await page.evaluate(async (T) => {
+      if (Render.world.landmarkLoad) await Render.world.landmarkLoad;
+      const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      g.onAction('restart'); g.pause();
+      const P = g.race.player, s = []; let t = 0, ms = 0, nf = 0;
+      for (const at of T) {
+        Render.scene.visible = false;
+        while (t < at) { g.sim(1 / 60, true); t += 1 / 60; if (t > at - 3) { const t0 = performance.now(); Render.frame(1 / 60, 1, P, g.S.camera, {}); ms += performance.now() - t0; nf++; } }
+        Render.scene.visible = true;
+        const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, g.S.camera, {}); s.push([__gl.calls - c0, __gl.verts - v0, Render.fxStats().fill]);
+      }
+      const c = s.map(x => x[0]), v = s.map(x => x[1]), f = s.map(x => x[2]);
+      return { cars: g.race.cars.length, calls: Math.round(c.reduce((a, b) => a + b) / c.length), maxCalls: Math.max(...c), kverts: Math.round(v.reduce((a, b) => a + b) / v.length / 1000), maxKverts: Math.round(Math.max(...v) / 1000),
+        fill: +(f.reduce((a, b) => a + b) / f.length).toFixed(1), maxFill: +Math.max(...f).toFixed(1), jsMs: +(ms / nf).toFixed(2) };
+    }, GNECA_T);
+    const key = 'gneca-' + id; out[key] = r;
+    const gd = golden[key], line = `${r.cars} cars, calls/frame ${r.calls} (max ${r.maxCalls}), vertices/frame ${r.kverts}k (max ${r.maxKverts}k), smoke and dust over ${r.fill} screens (max ${r.maxFill}), JS ${r.jsMs} ms/frame`;
+    if (update) { console.log(`${key.padEnd(12)} ${line}`); continue; }
+    if (!gd) { T.check(`${key}: within the phone budget`, false, 'no reference'); continue; }
+    const why = [];
+    if (r.cars !== gd.cars) why.push(`${r.cars} cars, the reference's ${gd.cars}`);
+    if (r.maxCalls > gd.maxCalls * 1.1 + 5) why.push(`draw calls ${r.maxCalls} > ${Math.round(gd.maxCalls * 1.1 + 5)}`);
+    if (r.maxKverts > gd.maxKverts * 1.1 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(gd.maxKverts * 1.1 + 20)}k`);
+    if (r.maxFill > gd.maxFill * 1.25 + 2) why.push(`smoke and dust over ${r.maxFill} screens > ${(gd.maxFill * 1.25 + 2).toFixed(1)}`);
+    if (!(await page.evaluate((id) => !!(Core.TRACKS.find(d => d.id === id) || {}).test, id)) && (r.maxCalls > 300 || r.maxKverts > 900)) why.push('over the budget of CLAUDE.md at the busiest moment (300 draw calls, 900k vertices)');
+    T.check(`${key} (gneča): within the phone budget`, !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
+  }
+  T.check('gneča: no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
 }
 const update = process.argv.includes('--update');
@@ -123,6 +172,7 @@ try {
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();   // (the tracks' game closed first: still running beside the new map's, it slowed that one's loading past page.goto's limit)
+  if (!only || only.includes('gneca')) await gneca();
   if (!only || only.includes('newmap')) await newMap();
 } finally {
   await browser.close(); await srv.close();

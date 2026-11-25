@@ -516,5 +516,35 @@
   "kverts": 1340,
   "maxKverts": 1516,
   "jsMs": 0
+ },
+ "gneca-nring": {
+  "cars": 101,
+  "calls": 158,
+  "maxCalls": 172,
+  "kverts": 438,
+  "maxKverts": 471,
+  "fill": 0,
+  "maxFill": 0,
+  "jsMs": 1.51
+ },
+ "gneca-spa": {
+  "cars": 101,
+  "calls": 219,
+  "maxCalls": 243,
+  "kverts": 495,
+  "maxKverts": 578,
+  "fill": 0.7,
+  "maxFill": 2.7,
+  "jsMs": 1.6
+ },
+ "gneca-killar": {
+  "cars": 61,
+  "calls": 182,
+  "maxCalls": 201,
+  "kverts": 484,
+  "maxKverts": 554,
+  "fill": 2.9,
+  "maxFill": 4.3,
+  "jsMs": 1.41
  }
 }

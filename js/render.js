@@ -11058,7 +11058,12 @@ const Render = (function () {
   function info() { return renderer ? renderer.info : null; }
   const dbg = { noSmoke: false, allCars: false };
   function setDebug(o) { Object.assign(dbg, o); }
-  function fxStats() { let n = 0, sp = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; for (let i = 0; i < sparkP.max; i++) if (sparkP.life[i] > 0) sp++; return { alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
+  function fxStats() { let n = 0, sp = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; for (let i = 0; i < sparkP.max; i++) if (sparkP.life[i] > 0) sp++; // fill: how much of the screen the live puffs cover, in screens (1 = every pixel once; the see-through sprites over each other are what a
+    // phone's graphics chip pays for in a big field: tests/browser/perf.test.mjs, gneča)
+    let fill = 0; const e = camera.matrixWorldInverse.elements, us = particles.mat.uniforms.uScale.value, P = particles.pos;
+    for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) { const d = -(e[2] * P[i * 3] + e[6] * P[i * 3 + 1] + e[10] * P[i * 3 + 2] + e[14]); if (d > 1.5) { const px = Math.min(2048, particles.size[i] * us / d); fill += px * px * 0.785; } }
+    const cv = renderer.domElement;
+    return { alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n, fill: +(fill / Math.max(1, cv.width * cv.height)).toFixed(2) }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
   function winCount() { let n = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) n++; }); return n; }   // (tests: the materials with the lit windows)
   function lookInfo() {   // (tests) the look of the moment: the night's lights, the post pass's glow, the stars, the crowd's excitement
     let win = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) win++; });
