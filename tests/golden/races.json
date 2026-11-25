@@ -3648,5 +3648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "e20e46921c7571f4c4c76817"
+ },
+ "musandam/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 107.31,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "60edaec6fca9f92b6717727f"
+ },
+ "musandam/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 129.28,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "083997378fcbf8fc4099447d"
+ },
+ "musandam/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 93.12,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "aeb6e09a5006f287ef98e7b3"
+ },
+ "musandam/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 94.6,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "62b0dd7323654d25074ea386"
+ },
+ "musandam/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 108.69,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0391640f4e2f1cd98c8b4ad8"
  }
 }
