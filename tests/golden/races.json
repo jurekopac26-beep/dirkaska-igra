@@ -3102,52 +3102,52 @@
  "koli/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 55.57,
+  "winner": 62.64,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "60c85622158f4ee52259689e"
+  "digest": "35db147b6116d700b71dbc86"
  },
  "koli/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 65.7,
+  "winner": 78.13,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4edc8604891873dbdb8cd335"
+  "digest": "bc2baa5b2f5898754c446086"
  },
  "koli/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 47.97,
+  "winner": 64.43,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "40a51791167957b2c2829a06"
+  "digest": "7975f5bd1a04291e62bc8aed"
  },
  "koli/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 48.47,
+  "winner": 66.75,
   "spins": 0,
-  "walls": 0,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "3b06fbcb53042a0cb0a8bdb3"
+  "digest": "7042c5a75e7e74fe04289e26"
  },
  "koli/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 55.7,
+  "winner": 62.5,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b9e900936f06eb53bc9c9f4d"
+  "digest": "806316ea1d18c97ad65c822e"
  },
  "kanaba/cs": {
   "finished": 13,

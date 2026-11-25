@@ -1494,22 +1494,20 @@
   }
  },
  "koli": {
-  "meshes": 425,
-  "verts": 378015,
+  "meshes": 369,
+  "verts": 380343,
   "instances": 6932,
   "props": 79,
   "crowd": 195,
-  "world": "c91c59f7",
+  "world": "c48c2abc",
   "propsHash": "e208c7c7",
   "floor": "5239e5c0/4536",
   "groups": {
-   "-:MeshLambertMaterial": "7cb80468",
+   "-:MeshLambertMaterial": "97da108",
    "-:MeshBasicMaterial": "6fe4118b",
    "crowd:MeshLambertMaterial": "1b8a2e66",
    "flags:MeshLambertMaterial": "82734531",
-   "ao:MeshBasicMaterial": "76f616e2",
-   "tyremarks:MeshBasicMaterial": "764e2173",
-   "roadwear:MeshLambertMaterial": "c9af1725"
+   "ao:MeshBasicMaterial": "76f616e2"
   }
  },
  "kanaba": {
