@@ -5272,6 +5272,18 @@ const Render = (function () {
     if (_crowd.length <= K) return;
     _crowd.sort((a, b) => a - b); crowd2 = Math.max(_crowd[K - 1], CROWD_R * CROWD_R / 0.81);
   }
+  // Gneča (the user's, 25. 11. 2026: a field of 100 stuttered): tyre smoke, dust, spray and sparks only from the FX_K cars nearest the camera
+  // (the player's always; a burning or badly damaged car's plume too, as carCull keeps it). fx2: the squared distance of the FX_K-th this
+  // frame, Infinity in a field no bigger. The others' effects are muted as a car's out of the view is (updateCars): their random numbers
+  // drawn, their skid marks laid, so a seeded race goes on as ever
+  const FX_K = 12, _fxD = [];
+  let fx2 = Infinity;
+  function fxCut() {
+    fx2 = Infinity; const K = dbg.fxK != null ? dbg.fxK : FX_K; if (views.length <= K) return;   // (dbg.fxK: the tests, the rule measured off and on)
+    const cp = camera.position; _fxD.length = 0;
+    for (const v of views) { const c = v.car, dx = c.x - cp.x, dy = (c.y || 0) - cp.y, dz = c.z - cp.z; _fxD.push(v.fxD = dx * dx + dy * dy + dz * dz); }
+    _fxD.sort((a, b) => a - b); fx2 = _fxD[K - 1];
+  }
   function farStep(v, x, y, z) {
     const F = v.far, c = v.car;
     if (F.ok && ((c.dmg || 0) >= FAR_DMG || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver - v.kit.dk !== F.pv) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;   // (a kit car: its pieces changed, not only knocked: pv)
@@ -7078,6 +7090,7 @@ const Render = (function () {
     const sk = (atmos.tod === 'night' ? 0 : atmos.tod === 'dusk' ? 0.8 : 1) * (1 - Math.min(1, Math.max(0, wet) * 1.6)) * Math.min(1, sun.intensity);   // sk: the sun's glint on the paint
     glows.begin(); streaks.begin(); fireScan(now); xShardsRun(now); particles.mute = sparkP.mute = glows.mute = false;
     crowdCut();   // (a big field: which rivals are drawn in full, farStep)
+    fxCut();   // (and whose smoke, dust and sparks are drawn)
     for (const v of views) {
       const c = v.car, M = c.m, u = lodU(c, alpha);
       const x = lerp(c.px, c.x, u), z = lerp(c.pz, c.z, u), h = c.ph + wrapPi(c.h - c.ph) * u;
@@ -7147,7 +7160,9 @@ const Render = (function () {
           if (v.dirtW && da > 0) v.dirtW.value += (wt - v.dirtW.value) * da / (v.dirtU.value + da);   // (the colour: the dirt's mean by where it came from)
           v.dirtU.value += Math.max(0, da); }
       }
-      if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
+      const hot = (v.fire && !v.fire.done) || c.dmg > 0.45, fxm = v.fxD > fx2 && !c.isPlayer && !hot;   // (fxm: past the FX_K nearest, fxCut: no smoke, dust, sparks of its own)
+      if (fxm) particles.mute = sparkP.mute = true;
+      if (!vis && !hot) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
       if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
@@ -7159,7 +7174,7 @@ const Render = (function () {
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
-        try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
+        try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis || fxm; } }
       if (!v.xOn && !v.rep && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
         xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
@@ -7167,7 +7182,7 @@ const Render = (function () {
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
-      if (!vis) particles.mute = sparkP.mute = glows.mute = false;
+      if (!vis || fxm) particles.mute = sparkP.mute = glows.mute = false;
     }
     if (pitL) pitGlow(wk);   // (the pits' lamps at dusk and at night)
     glows.end();
@@ -11063,7 +11078,7 @@ const Render = (function () {
     let fill = 0; const e = camera.matrixWorldInverse.elements, us = particles.mat.uniforms.uScale.value, P = particles.pos;
     for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) { const d = -(e[2] * P[i * 3] + e[6] * P[i * 3 + 1] + e[10] * P[i * 3 + 2] + e[14]); if (d > 1.5) { const px = Math.min(2048, particles.size[i] * us / d); fill += px * px * 0.785; } }
     const cv = renderer.domElement;
-    return { alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n, fill: +(fill / Math.max(1, cv.width * cv.height)).toFixed(2) }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
+    return { cars: views.length, quiet: views.filter(v => v.fxD > fx2 && !v.car.isPlayer).length, alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n, fill: +(fill / Math.max(1, cv.width * cv.height)).toFixed(2) }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
   function winCount() { let n = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) n++; }); return n; }   // (tests: the materials with the lit windows)
   function lookInfo() {   // (tests) the look of the moment: the night's lights, the post pass's glow, the stars, the crowd's excitement
     let win = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) win++; });

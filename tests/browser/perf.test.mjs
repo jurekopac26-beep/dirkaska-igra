@@ -98,7 +98,7 @@ async function gneca() {
       }
       const c = s.map(x => x[0]), v = s.map(x => x[1]), f = s.map(x => x[2]);
       return { cars: g.race.cars.length, calls: Math.round(c.reduce((a, b) => a + b) / c.length), maxCalls: Math.max(...c), kverts: Math.round(v.reduce((a, b) => a + b) / v.length / 1000), maxKverts: Math.round(Math.max(...v) / 1000),
-        fill: +(f.reduce((a, b) => a + b) / f.length).toFixed(1), maxFill: +Math.max(...f).toFixed(1), jsMs: +(ms / nf).toFixed(2) };
+        fill: +(f.reduce((a, b) => a + b) / f.length).toFixed(1), maxFill: +Math.max(...f).toFixed(1), jsMs: +(ms / nf).toFixed(2), quiet: Render.fxStats().quiet };
     }, GNECA_T);
     const key = 'gneca-' + id; out[key] = r;
     const gd = golden[key], line = `${r.cars} cars, calls/frame ${r.calls} (max ${r.maxCalls}), vertices/frame ${r.kverts}k (max ${r.maxKverts}k), smoke and dust over ${r.fill} screens (max ${r.maxFill}), JS ${r.jsMs} ms/frame`;
@@ -108,6 +108,7 @@ async function gneca() {
     if (r.cars !== gd.cars) why.push(`${r.cars} cars, the reference's ${gd.cars}`);
     if (r.maxCalls > gd.maxCalls * 1.1 + 5) why.push(`draw calls ${r.maxCalls} > ${Math.round(gd.maxCalls * 1.1 + 5)}`);
     if (r.maxKverts > gd.maxKverts * 1.1 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(gd.maxKverts * 1.1 + 20)}k`);
+    if (r.quiet < r.cars - 13) why.push(`smoke, dust and sparks from ${r.cars - r.quiet} cars, more than the 12 nearest`);   // (FX_K, js/render.js)
     if (r.maxFill > gd.maxFill * 1.25 + 2) why.push(`smoke and dust over ${r.maxFill} screens > ${(gd.maxFill * 1.25 + 2).toFixed(1)}`);
     if (!(await page.evaluate((id) => !!(Core.TRACKS.find(d => d.id === id) || {}).test, id)) && (r.maxCalls > 300 || r.maxKverts > 900)) why.push('over the budget of CLAUDE.md at the busiest moment (300 draw calls, 900k vertices)');
     T.check(`${key} (gneča): within the phone budget`, !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
