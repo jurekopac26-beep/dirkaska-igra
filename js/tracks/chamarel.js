@@ -41,10 +41,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
       {"n": "Case Noyale", "d": 120.0, "say": ["Away from the coast at Case Noyale, the hills ahead!", "Up from Case Noyale, the sea behind you!"]},
       {"n": "Gozd", "d": 860.0, "say": ["Into the forest, the bends begin!", "Under the trees now, and climbing!"]},
-      {"n": "Serpentine · 190 m", "d": 1775.0, "say": ["Into the hairpins, tight and steep!", "The switchbacks now, left and right and up again!"]},
-      {"n": "Razgledišče · 297 m", "d": 2900.0, "say": ["Past the viewpoint, the whole west coast below!", "By the viewpoint, the lagoon far below!"]},
+      {"n": "Serpentine · 196 m", "d": 1775.0, "say": ["Into the hairpins, tight and steep!", "The switchbacks now, left and right and up again!"]},
+      {"n": "Razgledišče · 300 m", "d": 2900.0, "say": ["Past the viewpoint, the whole west coast below!", "By the viewpoint, the lagoon far below!"]},
       {"n": "Chamarel", "d": 3450.0, "say": ["Into Chamarel, the village on the plateau!", "Through Chamarel, mind the houses close to the road!"]},
-      {"n": "Proti Plaine Champagne · 338 m", "d": 4755.0, "say": ["The last climb toward Plaine Champagne, the line is close!", "Up through the forest again, nearly there!"]},
+      {"n": "Proti Plaine Champagne · 341 m", "d": 4755.0, "say": ["The last climb toward Plaine Champagne, the line is close!", "Up through the forest again, nearly there!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
