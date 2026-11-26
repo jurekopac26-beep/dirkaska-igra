@@ -4525,6 +4525,7 @@ const World = (function () {
     // the roads under the track's bridges (def.brO, not the two by T13): nrH digs a cutting for each, 6 m below the road, straight across the track
     P.br = (def.brO || []).map(([x, z]) => T.nearestIdx(x, z)).filter(i => { const d = ((i * T.ds - T.startS) % T.len + T.len) % T.len; return d > 250 && d < T.len - 250; })
       .map(i => ({ i, x: T.px[i], z: T.pz[i], tx: T.tx[i], tz: T.tz[i], nx: T.nx[i], nz: T.nz[i], y: T.hy[i] - 6 }));
+    P.bake = API.sencenje ? API.sencenje.prep(P, def, nrDem, nrGround) : null;   // (the terrain's baked shading, a real track that asks for it: js/world-sencenje.js)
   }
   function nrChamfer(d, nx, nz, c) {   // two-pass 3x3 chamfer distance transform (in place)
     const c2 = c * Math.SQRT2;
@@ -4638,6 +4639,7 @@ const World = (function () {
   function nrVCol(i, j) {   // grid vertex (i, j): its colour's index in G.col, coloured once per build (as a full tile's vertex: the normal from the neighbours)
     const G = NR.G, k = j * G.nx + i, C = G.col; if (C[k * 3] === C[k * 3]) return k * 3;
     nrGH(i, j); const nx = (nrGH(i + 1, j) - nrGH(i - 1, j)) / (2 * NRC), nz = (nrGH(i, j + 1) - nrGH(i, j - 1)) / (2 * NRC), c = nrCol(G.x0 + i * NRC, G.z0 + j * NRC, 1 / Math.hypot(nx, 1, nz), G.dd[k], G.cov[k]);
+    if (NR.bake) NR.bake(G.x0 + i * NRC, G.z0 + j * NRC, nx, nz, G.dd[k], G.cov[k], c);
     C[k * 3] = c[0]; C[k * 3 + 1] = c[1]; C[k * 3 + 2] = c[2]; return k * 3;
   }
   function nrGCol(x, z) {   // the terrain mesh's vertex colour at (x, z) (bilinear over the grid vertices)
@@ -4662,7 +4664,7 @@ const World = (function () {
       let nx = -(nrGH(i + st, j) - nrGH(i - st, j)) / (2 * NRC * st), nz = -(nrGH(i, j + st) - nrGH(i, j - st)) / (2 * NRC * st), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; nor[k * 3] = nx; nor[k * 3 + 1] = ny; nor[k * 3 + 2] = nz;
       if (st === 1) { const q = nrVCol(i, j), C = G.col; col[k * 3] = C[q]; col[k * 3 + 1] = C[q + 1]; col[k * 3 + 2] = C[q + 2]; }   // (cached: the verges take their outer colours from it)
-      else { const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), c = nrCol(x, z, ny, G.dd[kk], G.cov[kk]); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2]; }
+      else { const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), c = nrCol(x, z, ny, G.dd[kk], G.cov[kk]); if (NR.bake) NR.bake(x, z, -nx / ny, -nz / ny, G.dd[kk], G.cov[kk], c); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2]; }
       uv[k * 2] = x / 14; uv[k * 2 + 1] = -z / 14;
     }
     const idx = new Uint16Array(m * m * 6); k = 0;
