@@ -38,7 +38,17 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the police of the run (their patrol cars: the label on the band along both sides, its colour, the text's): generic, no agency's name or badge
     police: { label: 'ՈՍՏԻԿԱՆՈՒԹՅՈՒՆ', band: '#1f3f8a', text: '#f4f6f2' }, escTo: 'Do Tateva',   // (and the results of an escape: 'Do Tateva v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
-    names: [],
+    names: [
+      {"n": "Ruševine nad sotesko", "d": 2048.0, "say": ["Past the old ruins, and the gorge opens below!", "The ruins on the left, and down to the river we go!"]},
+      {"n": "Hudičev most · 1.013 m", "d": 2223.0, "say": ["Over the natural rock bridge, the lowest point of the road!", "Across the rock bridge, the river right underneath!"]},
+      {"n": "Reka Vorotan", "d": 2543.0, "say": ["Along the Vorotan, right at the water!", "The river beside you, and the climb starts now!"]},
+      {"n": "Topli izvir", "d": 2674.0, "say": ["Past the warm spring by the road!", "The warm spring on the side, and into the hairpins!"]},
+      {"n": "Serpentina 1 · 1.042 m", "d": 2828.0, "say": ["First of the hairpins up the gorge wall!", "Hairpin one, and the long climb to Tatev begins!"]},
+      {"n": "Serpentina 5 · 1.135 m", "d": 3919.0, "say": ["Hairpin five, the gorge falling away below!", "Into hairpin five, a long way to go still!"]},
+      {"n": "Studenec", "d": 4404.0, "say": ["Past the roadside fountain!", "The fountain on the side, keep climbing!"]},
+      {"n": "Serpentina 10 · 1.296 m", "d": 5453.0, "say": ["Hairpin ten, more than halfway up!", "Hairpin ten! The plateau is getting closer!"]},
+      {"n": "Zadnja serpentina · 1.379 m", "d": 6482.0, "say": ["The last hairpin, and Tatev is just above!", "Last hairpin! Now flat out to the finish!"]},
+    ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, seven kilometres down into the gorge and up the other side, and you start {grid}.", "Here we are on the edge of the Vorotan gorge. Down to the rock bridge, then nineteen hairpins up, and you line up {grid}.", "Welcome to the far south of Armenia! A descent and a climb in one road, and you start {grid}."],
