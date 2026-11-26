@@ -11,5 +11,6 @@ Dirkališče na planoti province Batangas južno od Manile pri Rosariu, v pravi 
 - **Imena:** samo zemljepisna (pokrajina, mesta, vasi, otok Luzon, država) in opisna. Imen dirkališča, podjetij, sponzorjev in prireditev v igri ni.
 - **Stranske ceste:** servisne ceste so preproste površine na terenu brez črt, za ograjami (dostopi do tribun in boksov).
 - **Približki:** višine so iz satelitskega modela, od katerega sta odšteti višina krošenj in stavb (±1 m), zglajene; ciljna ravnina enakomerno pada ~1,2 %. Stavbe so škatle po tlorisu iz OSM.
+- **Obcestje** (`js/world-batangas-obcestje.js`, 23. 11. 2026): 136 hiš iz OSM (višine po pravilu iz `build.py`) in sadovnjak w975562695 (5,8 ha, 102 m in več od proge): vrste na 8 m, drevo samo tam, kjer je krošnja po karti višja od 2 m, drugje odprta mesta. Vrsta (mango) in razmik sta ocenjena.
 - **Viri:** © OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021, višina krošenj Meta in WRI (glej »Zasluge« v `README.md`). Orodji: `tools/proga-podatki.py` (nastavitve `tools/batangas/config.json`) in `tools/batangas/build.py`.
 - **Test:** `tests/batangas.test.js` (ime, dolžina, smer in zavitost, ovinki po vrsti in smeri, najožji 8. ovinek, razdalja med kraki, višine in nakloni, boksi, izletne cone, tribune za ograjo, teren in raba tal, stavbe in servisne ceste, obzorje, imena, dirka v suhem in v dežju).
