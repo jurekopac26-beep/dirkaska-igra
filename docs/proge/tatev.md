@@ -6,7 +6,7 @@
 
 Cesta H-46 v soteski reke Vorotan (pokrajina Sjunik, jug Armenije), v pravem merilu, ~7,2 km: od zahodnega roba soteske nad Halidzorjem (1215 m, 39,396° S, 46,266° V) se s tremi serpentinami spusti po pobočju na dno soteske, kjer gre čez naravni skalni most nad reko (Hudičev most, 1013 m, najnižja točka), pelje mimo toplega izvira ob reki in se po serpentinah vzhodne stene vzpne proti Tatevu (cilj na 1440 m); skupaj 19 ostrih ovinkov. Najbolj ovinkast kos ceste v soteski; padca čez rob ni (pravilo: samo Killarney).
 
-- **Dirka**: tekmeci (v meniju *Opponents*), leteči start kot na vseh odprtih cestah, ena vožnja do cilja; po cilju vsak avto zapelje na svoje mesto ob cesti.
+- **Dirka**: tekmeci (v meniju *Opponents*), leteči start kot na vseh odprtih cestah, ena vožnja do cilja; po cilju vsak avto zapelje na svoje mesto ob cesti; največ 70 tekmecev (za ciljem je ~260 m ozke ceste).
 - **Kronometer**: sam proti uri, dve kontrolni točki z vmesnimi časi in višino, lestvica, duh in medalje (zlata 3:50, srebrna 4:01, bronasta 4:19, v dežju 4:33 / 4:47 / 5:08; zlato je čas relijskega avta na avtopilotu × 1,01).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti: največ avtomobilov, kombiji, avtobusi in tovornjaki, nekaj motoristov in kolesarjev; v obe smeri.
 - **Policija**: beg pred policijo, v rezultatih pobega piše »Do Tateva v …«.
