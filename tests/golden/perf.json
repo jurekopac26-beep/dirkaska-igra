@@ -105,11 +105,11 @@
   "jsMs": 2.88
  },
  "balea": {
-  "calls": 166,
-  "maxCalls": 175,
-  "kverts": 396,
-  "maxKverts": 448,
-  "jsMs": 0.94
+  "calls": 175,
+  "maxCalls": 185,
+  "kverts": 454,
+  "maxKverts": 515,
+  "jsMs": 1.24
  },
  "silkeborg": {
   "calls": 244,
@@ -399,11 +399,11 @@
   "jsMs": 0.95
  },
  "aguascalientes": {
-  "calls": 203,
-  "maxCalls": 225,
-  "kverts": 463,
-  "maxKverts": 604,
-  "jsMs": 1.56
+  "calls": 211,
+  "maxCalls": 234,
+  "kverts": 496,
+  "maxKverts": 632,
+  "jsMs": 1.16
  },
  "koli": {
   "calls": 181,
