@@ -397,6 +397,14 @@ const MEJE = {
     now += 60000;
     const potem = await zahteva('/v1/lestvica?kljuc=gora-tt@suho', ip);
     check('branje: drug IP in naslednja minuta brez omejitve; brez pisanja v bazo', drug.status === 200 && potem.status === 200 && DB.vrstice("SELECT 1 FROM omejitve WHERE k LIKE 'branje%'").length === 0);
+    // the rate limiting binding (wrangler.toml [[ratelimits]]): across the isolates, keyed by the salted hash, never the IP; failing = through
+    const kljuci = [], vezava = { limit: async ({ key }) => { kljuci.push(key); return { success: kljuci.filter(k => k === key).length <= 2 }; } };
+    const zV = { ...env, BRANJE_OMEJI: vezava }, ip2 = { headers: { 'CF-Connecting-IP': '198.51.100.7' } };
+    now += 60000;
+    const sv = []; for (let i = 0; i < 3; i++) sv.push((await zahteva('/v1/stanje', ip2, zV)).status);
+    check('branje: vezava za omejevanje prek izolatov (3. branje 429), ključ je odtis, ne IP', sv.join() === '200,200,429' && kljuci.length === 3 && kljuci.every(k => k === kljuci[0] && k.length === 22 && !k.includes('198.51')), sv.join() + ' ' + kljuci[0]);
+    const zlV = { ...env, BRANJE_OMEJI: { limit: async () => { throw new Error('ni vezave'); } } };
+    check('branje: vezava, ki ne dela, branja ne ustavi', (await zahteva('/v1/stanje', { headers: { 'CF-Connecting-IP': '198.51.100.8' } }, zlV)).status === 200);
   }
 
   // 13. the keeper's tool on the same database

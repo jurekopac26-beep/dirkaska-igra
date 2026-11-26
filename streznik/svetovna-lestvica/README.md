@@ -60,7 +60,7 @@ Nekaj milisekund procesorja (`src/pregled.js`), proti mejam iz R2 (`meje.json`, 
 
 Števci v tabeli `omejitve` (fiksno okno): 20 oddaj na uro in 100 na dan, 3 spremembe vzdevka na dan, 10 prijav na dan na igralca; z enega zgoščenega IP (`IP_SOL`, sol se ne vidi) 50 novih igralcev na dan in 300 pisanj na minuto. Prek meje 429 `omejitev` z `cez` in `Retry-After`; ključ prek meje do konca okna zavrne isti izolat brez pisanja v bazo.
 
-Javna branja (`/v1/lestvica`, `/v1/mesto`, `/v1/duh`, `/v1/stanje`): 120 na minuto z enega IP, šteje izolat sam brez pisanja (IP samo v pomnilniku do konca minute, nikoli zapisan; `omejiBranje` v `src/skupno.js`), prek meje 429 `omejitev`. Odgovori lestvic so 60 s v predpomnilniku izolata (do 500), zato poplava različnih poizvedb ne prebere baze več, kot dovoli ta meja. Števec ne velja čez izolate: ob namestitvi preveri, ali paket ponuja vezavo za omejevanje hitrosti Workers (`[[ratelimits]]` v `wrangler.toml`), in jo dodaj z isto mejo.
+Javna branja (`/v1/lestvica`, `/v1/mesto`, `/v1/duh`, `/v1/stanje`): 120 na minuto z enega IP, šteje izolat sam brez pisanja (IP samo v pomnilniku do konca minute, nikoli zapisan; `omejiBranje` v `src/skupno.js`), prek meje 429 `omejitev`. Odgovori lestvic so 60 s v predpomnilniku izolata (do 500), zato poplava različnih poizvedb ne prebere baze več, kot dovoli ta meja. Števec ne velja čez izolate; to doda vezava za omejevanje hitrosti Workers `BRANJE_OMEJI` (blok `[[ratelimits]]` v `wrangler.toml`, zakomentiran; ob namestitvi ga odkomentiraj, če ga paket ponuja). Njen ključ je odtis IP s soljo, nikoli IP; če vezava ne dela, branje gre naprej (velja števec izolata).
 
 ## Brisanje
 

@@ -18,6 +18,13 @@ binding = "R2"
 bucket_name = "lestvica-posnetki"
 jurisdiction = "eu"
 
+# the public reads' limit across the isolates (src/skupno.js, omejiBranje; README.md, »Omejitve«): uncomment at the install once the plan
+# offers the Workers rate limiting binding (the period is 10 or 60 s); without it the isolate's count alone holds the limit
+# [[ratelimits]]
+# name = "BRANJE_OMEJI"
+# namespace_id = "1001"
+# simple = { limit = 120, period = 60 }
+
 [vars]
 # the audience the checking job's GitHub OIDC token is asked for (.github/workflows/lestvica-preveri.yml: audience: lestvica)
 OIDC_AUD = "lestvica"

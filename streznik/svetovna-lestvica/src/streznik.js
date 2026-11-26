@@ -31,7 +31,7 @@ export async function obdelaj(req, env, ctx) {
     if (!m) throw new Napaka(404, 'ni');
     if (req.method === 'OPTIONS') res = new Response(null, { status: 204, headers: { 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '86400' } });
     else if (!own(m, req.method)) res = json({ ok: false, napaka: 'metoda' }, 405, { Allow: [...Object.keys(m), 'OPTIONS'].join(', '), ...NE });
-    else { if (req.method === 'GET' && JAVNE.has(pot)) omejiBranje(env, req, ura(env)); res = await m[req.method](req, env, ctx); }
+    else { if (req.method === 'GET' && JAVNE.has(pot)) await omejiBranje(env, req, ura(env)); res = await m[req.method](req, env, ctx); }
   } catch (e) {
     if (e instanceof Napaka) res = json({ ok: false, napaka: e.koda, ...(e.extra || {}) }, e.st, e.st === 429 && e.extra ? { 'Retry-After': String(e.extra.cez), ...NE } : NE);
     else { console.log(`napaka: ${e && e.name}: ${String(e && e.message).slice(0, 200)}`); res = json({ ok: false, napaka: 'napaka' }, 500, NE); }
