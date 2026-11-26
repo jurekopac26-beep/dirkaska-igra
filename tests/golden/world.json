@@ -1386,17 +1386,17 @@
   }
  },
  "eljem": {
-  "meshes": 237,
-  "verts": 437162,
+  "meshes": 249,
+  "verts": 537989,
   "instances": 339,
   "props": 0,
   "crowd": 118,
-  "world": "f6b7146c",
+  "world": "cf2e7149",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "97d7df14",
-   "rob:MeshLambertMaterial": "221c2f11",
+   "rob:MeshLambertMaterial": "2a1aa27f",
    "crowd:MeshLambertMaterial": "1fc2f910",
    "flags:MeshLambertMaterial": "da3620fd",
    "ao:MeshBasicMaterial": "b6319958",
