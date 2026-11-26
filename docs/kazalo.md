@@ -330,6 +330,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | hafit | Džebel Hafit, Združeni arabski emirati | hafit | `js/world-hafit.js` (`PL_LOOK.hafit` za `buildPrelaz`: cestne svetilke ob ločilnem pasu, hiše z ravnimi strehami, akacije, razgledišče; rumena leva robna črta `edgeL` v `js/world-prelaz.js`) |
 | gudauri | Gudauri, Gruzija | gudauri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.gudauri`: hoteli in apartmajski bloki (`hotels`), sedežnice s sedeži (`chairs`), daljnovod, plazovna galerija (`portal: 2`), ovce) |
 | kanaba | Kanaba, Uganda | kanaba | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kanaba`: zelena polja na rdeči prsti, pločevinaste strehe, drobnica; vožnja po levi) |
+| sipka | Šipka, Bolgarija | sipka | `js/world-sipka.js` (`PL_LOOK.sipka` za `buildPrelaz`: bukov gozd z redkimi iglavci, kamnit stolp na vrhu po obrisu iz OSM; vožnja po desni) |
 | canaries | Canaries, Sveta Lucija | canaries | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.canaries`: tropski gozd `trop`, morje, hiše; `CESTE.canaries` v `js/world-cesta.js`) |
 | *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | *bangsaen* | *Bang Saen, Tajska (test)* | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
