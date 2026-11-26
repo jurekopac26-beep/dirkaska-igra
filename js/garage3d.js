@@ -7392,6 +7392,7 @@ const Garage3D = (function () {
       // 13: home
       yield* waitFor(() => stowed, 4); fin = true; yield* par(home(1.4), rglUnstay(1.4), waitFor(() => exS.off, 6)); return;
     }
+    if (rg2 && el === 'stabilizatorji' && typeof GarazaAnim !== 'undefined' && GarazaAnim.stabilizatorji) { yield* GarazaAnim.stabilizatorji({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }, { THREE, V3, EZ, SFX, FIT, RGL, RB, ARM, BRG, LIFT, puffs, sparks, SPK, rnd, mark, burst, par, spawn, wait, waitFor, tween, armTool, armExt, armCarry, armRest, armsTo, carriageTo, poseArm, poseBridge, bridgeRest, tipM, tipLen, hold, letGo, passMk, tyrePass, camTo, view, spotView, liftUp, lowerCar, fitLog, fitSwap, settle, rglCopy, rglHide, rglUnstay, disposeTree, deliKey, home, get hud() { return hud; }, get cur() { return cur; }, get lift() { return lift; } }); return; }   // (I3: the anti-roll bars' own show, js/garaza-anim/stabilizatorji.js)
     if (rg2) { yield* regalTwoShow({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }); return; }
     // THE WING with an old one on the lid by both arms: roka 1 to the lid as roka 2 goes over the regal, the old one off (the car the new
     // one's, its wing folded away), roka 2 lifts the new one off the regal, the bridge's half turn, roka 1 stands the old one in the empty
