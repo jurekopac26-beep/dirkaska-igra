@@ -28,5 +28,7 @@ Okolica (skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom 
 - **Črte na cesti**: stara cesta od prelaza proti vrhu ima v resnici morda le robne črte ali nobene; v igri ima sredinsko črto kot glavna cesta (fotografij z istega mesta iz okolja seje ni bilo mogoče preveriti).
 - **Drevesa**: delež iglavcev med bukvami je ocenjen; drevesa so generična, razporejena po rabi tal, ne po resničnih legah.
 - **Stolp**: višina (~31 m) je iz besedilnih virov, oblika poenostavljena (kvadraten stolp, rahlo ožji proti vrhu).
+- **Izvir (km 2,2) in obcestno znamenje (km 4,2)**: na potrjenem seznamu zanimivosti, a podatki proge (OSM) zanju nimajo točke, zato v svetu še nista; Overpass iz okolja seje 26. 11. ni bil dosegljiv.
+- **Dolžina in lasnice**: kartica je navajala ~5,0 km in 6 lasnic; proga v igri meri 4,84 km s 4 izrazitimi lasnicami (manjši zavoji niso šteti).
 
 Podatke proge pripravi `tools/proga/proga.py` (`python3 tools/proga/proga.py sipka --zapisi`, nastavitve v `tools/proga/proge.json`). Vire glej v `README.md` pod »Zasluge«.
