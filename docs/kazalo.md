@@ -363,6 +363,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | izoard | Izoard, Francija | izoard | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.izoard`: macesnov gozd s cemprini `forest: 'larch'`, daljnovod `def.power`/`def.poles`, obelisk na prelazu `def.obelisk`, francoske table, grmovje samo do 120 m od ceste `shrubR`) |
 | isuna | Isuna, Butan | isuna | `js/world-isuna.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
+| trebevic | Trebević, Bosna in Hercegovina | trebevic | `js/world-trebevic.js` (`PL_LOOK.trebevic` za `buildPrelaz`: razgledišče Vidikovac z zidcem, betonsko korito stare bob steze in brv čez cesto, ruševine utrdbe Draguljac, kamnolom) |
 | krasnahorka | Krásna Hôrka, Slovaška | krasnahorka | `js/world-krasnahorka.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | elcastano | El Castaño, Venezuela | elcastano | `js/world-elcastano.js` (`World.gore` iz `js/world-gore.js`, slog proge: oblačni gozd, mostovi z betonskimi parapeti, daljni grebeni `irFar`) |
 | killar | Killar, Indija | killar | `js/world-killar.js` (kopija `buildUncompahgre` s podobo Killarja: `UNK`; hiše `klHouse`, molilne zastavice `klFlags`, table `KL_BOARDS`, lesena ograja levo `T.fence`, pregrada proti kamenju in mreža po pobočju `ukNetMat`, travnik do roba ceste brez bankine in jarka `mead`, senčenje hrbtov in kotanj na vozišču `uk` po `def.roadBase`) |
