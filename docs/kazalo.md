@@ -345,8 +345,11 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | aguascalientes | Aguascalientes, Mehika | aguascalientes | `js/world-rbring.js` (`buildRbring`) in `js/world-aguascalientes.js` (videz v `RB_LOOK` prek `API.rbLook`: napisi krajev, zastavica `mx`, suha trava `colMod`; obzorje `def.far` prek `API.rsFar` iz `js/world-riverside.js` v ovoju `World.ext.aguascalientes`) |
 | balea | Bâlea, Romunija | balea | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.balea`: portal predora, žičnica, jezero, ovce) |
 | hafit | Džebel Hafit, Združeni arabski emirati | hafit | `js/world-hafit.js` (`PL_LOOK.hafit` za `buildPrelaz`: cestne svetilke ob ločilnem pasu, hiše z ravnimi strehami, akacije, razgledišče; rumena leva robna črta `edgeL` v `js/world-prelaz.js`) |
+| chamarel | Chamarel, Mavricij | chamarel | `js/world-chamarel.js` (`PL_LOOK.chamarel` za `buildPrelaz`: tropski gozd `L.trop`, rdeče-rjave brežine, razgledišče z zidcem iz bazalta `L.pre`, sladkorni trs `L.extra`; levi promet `def.leftHand`) |
+| meteora | Meteora, Grčija | meteora | `js/world-meteora.js` (`PL_LOOK.meteora` za `buildPrelaz`: sivi konglomeratni stebri na skalnih celicah rabe tal, samostani po obrisih iz OSM: kamnite stene, opečnate strehe, kupola na skupino) |
 | gudauri | Gudauri, Gruzija | gudauri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.gudauri`: hoteli in apartmajski bloki (`hotels`), sedežnice s sedeži (`chairs`), daljnovod, plazovna galerija (`portal: 2`), ovce) |
 | kanaba | Kanaba, Uganda | kanaba | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kanaba`: zelena polja na rdeči prsti, pločevinaste strehe, drobnica; vožnja po levi) |
+| sipka | Šipka, Bolgarija | sipka | `js/world-sipka.js` (`PL_LOOK.sipka` za `buildPrelaz`: bukov gozd z redkimi iglavci, kamnit stolp na vrhu po obrisu iz OSM; vožnja po desni) |
 | canaries | Canaries, Sveta Lucija | canaries | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.canaries`: tropski gozd `trop`, morje, hiše; `CESTE.canaries` v `js/world-cesta.js`) |
 | musandam | Musandam, Oman | musandam | `js/world-musandam.js` (`PL_LOOK.musandam` za `buildPrelaz`: morje zaliva, čolni, hiše zaselka, akacije) |
 | limalimo | Limalimo, Etiopija | limalimo | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.limalimo`: ograja nad prepadom, bazalt, suha trava, ovce) |
@@ -370,6 +373,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | cusco | Cusco, Peru | cusco | `js/world-cusco.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | haivan | Hải Vân, Vietnam | haivan | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.haivan`: tropski gozd, `L.trop`, brez snega in ovc) |
 | mapileng | Mã Pí Lèng, Vietnam | mapileng | `js/world-kratke.js` (`buildKratke`, slog `KR.mapileng`: kraški apnenec, skalni stolpiči, koruza, spomenik s svetiščem, muzej, kavarna, razgledišče) |
+| tatev | Tatev, Armenija | tatev | `js/world-kratke.js` (`buildKratke`, slog `KR.tatev`: soteska Vorotana, suha trava, sipari in skalne stene, kamniti parapeti, ruševine nad sotesko, kavarna, tabla) |
 | longyearbyen | Longyearbyen, Norveška | longyearbyen | `js/world-longyearbyen.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | savusavu | Savusavu, Fidži | savusavu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.savusavu`: tropski gozd, `L.trop`, bela sredinska črta, brez snega in ovc) in `js/world-savusavu-obcestje.js` (stranske ulice in dovozi iz OSM prek `L.pre`, `L.gravel`, `L.railGap` in `L.extra`: makadam v mreži bankine, samo grafika) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
@@ -380,6 +384,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | isuna | Isuna, Butan | isuna | `js/world-isuna.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | kaligandaki | Kali Gandaki, Nepal | kaligandaki | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kaligandaki`: soteska, prepad z ograjo, slap Rupse, generične hiše Kopčepanija) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
+| trebevic | Trebević, Bosna in Hercegovina | trebevic | `js/world-trebevic.js` (`PL_LOOK.trebevic` za `buildPrelaz`: razgledišče Vidikovac z zidcem, betonsko korito stare bob steze in brv čez cesto, ruševine utrdbe Draguljac, kamnolom) |
 | krasnahorka | Krásna Hôrka, Slovaška | krasnahorka | `js/world-krasnahorka.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | elcastano | El Castaño, Venezuela | elcastano | `js/world-elcastano.js` (`World.gore` iz `js/world-gore.js`, slog proge: oblačni gozd, mostovi z betonskimi parapeti, daljni grebeni `irFar`) |
 | killar | Killar, Indija | killar | `js/world-killar.js` (kopija `buildUncompahgre` s podobo Killarja: `UNK`; hiše `klHouse`, molilne zastavice `klFlags`, table `KL_BOARDS`, lesena ograja levo `T.fence`, pregrada proti kamenju in mreža po pobočju `ukNetMat`, travnik do roba ceste brez bankine in jarka `mead`, senčenje hrbtov in kotanj na vozišču `uk` po `def.roadBase`) |

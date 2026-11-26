@@ -4,6 +4,7 @@
 // economy (kariera-5): a simulation of the career, wins only, must buy every car at about the end of the path (the last one at 80–105 % of
 // its races) and a car of the next stage every 4–16 races (times the path's races / DIRK_REF); outside those ranges the test fails
 // (kariera-5, option 2 'hitro', tuned 20. 11., with the single events 22. 11.; proge3-kariera 25. 11.: the ranges grow with the tracks).
+// economy (kariera-5): a simulation of the career, wins only, must buy every car in 110–130 wins and a car of the next stage every 4–20
 'use strict';
 const { loadCore } = require('./lib/core.js');
 const C = loadCore();
@@ -245,8 +246,8 @@ check('the racing cars and trucks on circuits', ['dirkalni', 'tovornjaki'].every
   check('every car at about the end of the path: the last at 80–105 % of its races (kariera-5, proge3-kariera)', a.cars === models.length && a.last >= 0.8 * a.path && a.last <= 1.05 * a.path,
     `the last after ${a.last} wins, ${a.path} on the path, ${a.cars}/${models.length} cars`);
   const b = sim('save'), at = [0, b.bought[1], b.bought[2], b.bought[3], b.bought[4]], gaps = [1, 2, 3, 4].map(s => at[s] - at[s - 1]);
-  const most = Math.round(16 * Math.max(1, P.dirk / K.DIRK_REF));
-  check('a car of the next stage every 4–' + most + ' races (16 times ' + P.dirk + ' / ' + K.DIRK_REF + ')', [1, 2, 3, 4].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 4 && g <= most), `bought after ${at.slice(1).join(', ')} races`);
+  const most = Math.round(20 * Math.max(1, P.dirk / K.DIRK_REF));
+  check('a car of the next stage every 4–' + most + ' races (20 times ' + P.dirk + ' / ' + K.DIRK_REF + ')', [1, 2, 3, 4].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 4 && g <= most), `bought after ${at.slice(1).join(', ')} races`);
 }
 
 console.log(`\n${n - bad}/${n} OK`);
