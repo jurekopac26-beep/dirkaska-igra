@@ -1,7 +1,7 @@
 /* =========================================================================
    RENDER — the colour grade baked at load for the weak phones (AAA H1″, docs/grafika-aaa.md on raziskava/grafika-aaa: »Barvna korekcija za
-   šibke telefone, pečena ob nalaganju«). PROTOTYPE for the decision on the Odločitve page (id grafika-aaa-h1): off until the user chooses
-   (MOZNOST 0); the pictures take the options through window.BARVE_H1 (0 none, 1 »kot Visoka«, 2 »živahnejša«).
+   šibke telefone, pečena ob nalaganju«). Chosen on the Odločitve page (id grafika-aaa-h1): option 1 »kot Visoka«
+   (MOZNOST 1; the user's decision 26. 11. 2026 at ~19.47); the pictures take the options through window.BARVE_H1 (0 none, 1 »kot Visoka«, 2 »živahnejša«).
    On 'normal' (the post pass is off: no grade per pixel) on a chosen real track (IZBRANE; not test: true nor pending: true, those stay as
    they are: CLAUDE.md) the world's colours are graded once, when the world is built: the materials' colours (a textured one by its
    texture's mean colour: a multiplier, the texture itself is shared and stays), the vertex colours, the colour uniforms of the world's own
@@ -21,7 +21,7 @@
   const more = (G, k, sat, con) => ({ tint: G.tint.map(v => 1 + (v - 1) * k), sh: G.sh.map(v => 1 + (v - 1) * k), hi: G.hi.map(v => 1 + (v - 1) * k), sat, con });
   const MOZNOSTI = { 1: BASE, 2: more(BASE, 1.5, 1.2, 1.08) };
   const IZBRANE = { spa: true };   // (the real tracks graded: the prototype's one, Spa, Belgija)
-  const MOZNOST = 0;   // (the chosen option: none until the decision)
+  const MOZNOST = 1;   // (the chosen option: 1 »kot Visoka«, the user's decision 26. 11. 2026 at ~19.47, #382)
   const opt = () => { const w = typeof window !== 'undefined' && window.BARVE_H1; return w != null ? +w : MOZNOST; };
 
   const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
