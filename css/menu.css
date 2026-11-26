@@ -1052,7 +1052,11 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .room { display: contents; }   /* (its parts placed on the screen) */
   #s-track :is(.stage, .rcard) { position: absolute; flex: none; min-height: 0; overflow: hidden; touch-action: pan-y;
     left: calc(var(--ox) + var(--x) * var(--u)); top: calc(var(--oy) + var(--y) * var(--u)); width: calc(var(--w) * var(--u)); height: calc(var(--h) * var(--u)); border-radius: calc(var(--r) * var(--u));
-    box-shadow: 0 0 0 calc(3 * var(--g) * var(--u)) rgba(255, 198, 41, var(--g)), 0 calc((12 - 4 * var(--t)) * var(--u)) calc((30 - 10 * var(--t)) * var(--u)) rgba(0, 0, 0, calc(.6 - .1 * var(--t))), inset 0 0 0 1px rgba(255, 255, 255, calc(.2 * var(--t))); }
+    box-shadow: 0 0 0 calc(3 * var(--g) * var(--u)) rgba(var(--vc), var(--g)), 0 0 0 calc(3 * var(--g) * var(--u) + 1.5px) rgba(255, 255, 255, calc(var(--vo) * var(--g))), 0 calc((12 - 4 * var(--t)) * var(--u)) calc((30 - 10 * var(--t)) * var(--u)) rgba(0, 0, 0, calc(.6 - .1 * var(--t))), inset 0 0 0 1px rgba(255, 255, 255, calc(.2 * var(--t))); }
+  /* the frame's colour: the track's kind (js/menu.js vrCls; the user's of 26. 11. 2026); the dangerous black with a thin light rim */
+  #s-track :is(.stage, .rcard) { --vc: 255, 198, 41; --vo: 0; }
+  #s-track :is(.stage, .rcard).v-dirkalisce { --vc: 30, 150, 255; } #s-track :is(.stage, .rcard).v-sneg { --vc: 255, 255, 255; } #s-track :is(.stage, .rcard).v-trava { --vc: 40, 200, 80; }
+  #s-track :is(.stage, .rcard).v-mivka { --vc: 255, 205, 40; } #s-track :is(.stage, .rcard).v-nevarne { --vc: 8, 8, 8; --vo: .8; }
   #s-track .stage { --x: 254; --y: 70; --w: 384; --h: 236; --r: 16; --g: 1; --t: 0; z-index: 4; }
   #s-track .rcard { display: block; z-index: 3; cursor: pointer; filter: brightness(var(--b)) var(--wxk, ); background: var(--pic) center / cover no-repeat, #16263c; }
   #s-track .rcard.mdl { background: var(--pic) center 42% / 92% auto no-repeat, linear-gradient(180deg, #2c4b72, #172a44 70%, #101d31); }   /* (the model on the sky) */
