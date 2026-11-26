@@ -14,6 +14,6 @@ Odločitve uporabnika (13. in 14. 11. 2026): bokse imajo samo dirkališča v kro
 |---|---|---|
 | Kildare, Irska | da (reli kros, 8 krogov) | da: steza in 13 boksov po OSM (`def.pit`, `pitRow`), garaže in stolp že iz OSM; odobreno 26. 11. (#1163, `boksi-kildare`) |
 | Sosnová, Češka | da (7 krogov) | ne zdaj: OSM nima boksarske steze, garaže 3 m za zidom; vprašanje `boksi-sosnova` |
-| Nürburg, Nemčija | zaprta proga v krogu (1 krog) | ne zdaj: krog po severni zanki mimo boksov ne pelje; vprašanje `boksi-nring` |
+| Nürburg, Nemčija | zaprta proga v krogu (1 krog) | ne: brez boksov (krog po severni zanki mimo boksov ne pelje); odločeno 26. 11. (#1163, `boksi-nring` = 1) |
 | Livorno, Italija | ne: krog po javnih cestah | ne (odprta cesta) |
 | Hakone, Japonska | ne: krog po javnih gorskih cestah | ne (gorska, odprta cesta) |
