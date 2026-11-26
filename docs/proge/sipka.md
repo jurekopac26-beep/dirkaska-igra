@@ -4,7 +4,7 @@
 
 Severna stran ceste čez Šipčenski prelaz v osrednji Stari planini (Balkan), med Gabrovom na severu in dolino Kazanlaka na jugu, in stara ozka cesta od prelaza po grebenu do vrha Šipka, v pravem merilu. Proga se začne na glavni cesti (I-5) v bukovem gozdu na 1.064 m (42,7703° S, 25,3107° V), se v prvi serpentini in dolgih ovinkih vzpne do sedla prelaza (1.206 m), nato zavije na staro cesto in se v treh serpentinah po grebenu vzpne tik pod vrh Šipka (1.304 m, 42,7486° S, 25,3227° V; zadnjih ~170 m do vrha je za ciljem): 4,84 km, ves čas navzgor. V Bolgariji se vozi **po desni**. Kartica proge je ena, na njej stikalo **Dirka / Kronometer / Promet / Policija** (kot na Kanabi):
 
-- **Dirka**: 21 tekmecev, start v gozdu pod prelazom, en vzpon do cilja; po cilju vsak avto zapelje na svoje mesto ob cesti. Kvalifikacij ni (odprta cesta).
+- **Dirka**: tekmeci (v meniju *Opponents*, privzeto 21, največ 39: za ciljem je le ~150 m ceste za parkiranje), start v gozdu pod prelazom, en vzpon do cilja; po cilju vsak avto zapelje na svoje mesto ob cesti. Kvalifikacij ni (odprta cesta).
 - **Kronometer**: sam proti uri, kontrolne točke z vmesnimi časi in višino, duh in medalje (zlata 2:39, srebrna 2:47, bronasta 3:00, v dežju 3:13 / 3:23 / 3:38; pozimi 3:07 / 3:17 / 3:32, v snegu 3:51 / 4:02 / 4:21; zlato je čas relijskega avta na avtopilotu).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti, na kateri so večinoma avtomobili obiskovalcev, nekaj kombijev, avtobusov in motorjev ter redek tovornjak (oboje smeri), ob cesti kolesarji.
 - **Policija**: beg pred policijo (generične patrulje z napisom POLICE, brez imena ali znaka katere koli službe); v rezultatih »Na vrh v …«.
