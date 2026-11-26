@@ -664,7 +664,7 @@
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: tmAtlas2(def.curves || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'tianmen', { gH: tmGround, slope: tmSlope });   // (the roadside ground for the chase camera: js/world-chase-bt13.js)
-    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), steps: nSteps, cabins: nCab, side: nSide, town: nTown, mist: out.mist, stops: nStop };   // (read by the tests)
+    out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), steps: nSteps, cabins: nCab, side: nSide, town: nTown, mist: out.mist };   // (read by the tests)
     return out;
   }
 

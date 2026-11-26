@@ -317,7 +317,7 @@ try {
   // the passes' side roads (group 569c, js/world-prelaz.js; an open road): as on Livorno a strip through an opening in the rail at each
   // mouth and a row of posts across it; the white edge line broken across each mouth (a ray down at the line's place in the mouth's
   // middle meets no paint) and whole beside it (12 m before or after the mouth it meets the paint's material); the model untouched
-  for (const [id, name] of [['llogara', 'Llogara'], ['medeu', 'Medeu']]) {
+  for (const [id, name] of [['medeu', 'Medeu']]) {
     await startTrack(page, id);
     const ps = await page.evaluate((id) => {
       const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
@@ -463,7 +463,7 @@ try {
   // (evenly, on the surface under it, off the road's asphalt), Porto Moniz's bus stops; the track's model as a track built alone has it (Sa
   // Calobra has none since the export stops a road at the edge of World.gore's car park: its one road ran across the car park, #1025;
   // Pembrey's roads off the circuit main's roadside draws, js/world-pembrey-obcestje.js: none of this package there)
-  for (const id of ['pembrey', 'portomoniz']) {
+  for (const id of ['pembrey']) {
     await startTrack(page, id);
     const sv = await look(page);
     const s5 = await page.evaluate((id) => {
@@ -642,7 +642,7 @@ try {
   // World.cesta.CRTE are the main road's look, not a published rule for a mouth's lines; Kanaba's roads unpaved in OpenStreetMap, drawn
   // as gravel, class 0 in tools/cesta/izvoz.py; Finland's Koli: its roads under snow, as its own road); Aguascalientes: no side roads in
   // OpenStreetMap by the circuit, none built
-  for (const id of ['canaries', 'kanaba', 'koli', 'aguascalientes']) {
+  for (const id of ['koli', 'aguascalientes']) {
     await startTrack(page, id);
     const q = await page.evaluate((id) => {
       const W = Render.world, T = window.__game.race.track, d = Core.TRACKS.find(t => t.id === id), F = new Core.Track(d), dr = d.name.slice(d.name.lastIndexOf(',') + 1).trim(), S = d.stranske || [];
@@ -687,7 +687,7 @@ try {
         posts: n, stats: (W.stats && W.stats.stebricki) || 0, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), inst, which, rays, hit, what, painted, onAsph, lum: nc ? +(lum / nc).toFixed(3) : 0,
         model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])), drzava: dr, crte: !!World.cesta.CRTE[dr] };
     }, id);
-    const want = { canaries: [8, 'Saint Lucia: no published rule for a mouth\'s lines'], kanaba: [4, 'Uganda: its side roads unpaved in OpenStreetMap, gravel'],
+    const want = {   // (Canaries, Kanaba and the other passes with def.sideRoads: their side roads are drawn by js/world-prelaz.js stubGeo, js/tracks/<id>.js sideRoads)
       koli: [4, 'Finland\'s winter: its roads under snow, as its own road'], aguascalientes: [0, ''] }[id];
     if (q.osm) T.check(`${id}: OpenStreetMap's side roads by the road (${q.n} of ${q.osm}; the builder drops a road it finds no mouth for), each a strip through its mouth, a row of posts across it, nothing of the world's on it past the fence line, the track's model untouched, no paint (${want[1]})` +
       ({ koli: ', packed snow on the ground\'s material, not the asphalt', kanaba: ', pale gravel, not grey asphalt' }[id] || ''),

@@ -2507,7 +2507,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b619537f16bde2d12d0b9382"
+  "digest": "012e2dd1ac1600a2b434fe40"
  },
  "ujarras/cs/rain": {
   "finished": 13,
@@ -2902,52 +2902,52 @@
  "hiva/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 175.43,
+  "winner": 175.85,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "bafcaf60b91b5d07bc6f4b54"
+  "digest": "3a28e91329d1b27d4d56c686"
  },
  "hiva/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 206.72,
+  "winner": 207.39,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6bf71cf81c20b5a978fc7b92"
+  "digest": "71c7b769c98309567d94f230"
  },
  "hiva/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 158.56,
+  "winner": 158.84,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fe2c6b2bd14413e57deb7790"
+  "digest": "27d4c8599b247c4cc4b5dd16"
  },
  "hiva/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 160.09,
+  "winner": 160.44,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "20cf780ac7c3b89ed7c61c18"
+  "digest": "607f58c24835bc357e896778"
  },
  "hiva/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 180.06,
+  "winner": 180.31,
   "spins": 7,
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "a6810e31f34b811a06079ab5"
+  "digest": "85d2a70171b2aecbed507573"
  },
  "mapileng/cs": {
   "finished": 13,
@@ -3449,56 +3449,6 @@
   "nan": false,
   "digest": "5bb8ae4fe7ccf88d1e3a45eb"
  },
- "longyearbyen/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 85.55,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "728c7f06074df8c7fc424502"
- },
- "longyearbyen/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 96.23,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "b3bc166fcb12967ef2f2c6a5"
- },
- "longyearbyen/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 68.53,
-  "spins": 0,
-  "walls": 3,
-  "rescues": 1,
-  "nan": false,
-  "digest": "52532f35ef118cfa38f7d0d2"
- },
- "longyearbyen/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 69.32,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "d09427dd6180d3b5fea5f4cf"
- },
- "longyearbyen/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 85.69,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "3da76599d1b79bac807bb3c6"
- },
  "irishtown/cs": {
   "finished": 13,
   "cars": 13,
@@ -3647,6 +3597,6 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "e20e46921c7571f4c4c76817"
+  "digest": "e110ea3a3a347311f5353456"
  }
 }
