@@ -63,6 +63,8 @@ Iskanje 26. 11. 2026; neposredno branje strani v tej seji ni bilo mogoče (omre�
 | LASTOVKA | 0,53 | **potrjeno**: nagib 28° brez izgube stika koles (tan 28° = 0,53) | UNECE R107 (preskus stabilnosti); opis postopka: <https://www.vti.se/en/research-areas/stability-and-rollover-testing/>, <https://www.tuvsud.com/en-us/knowledge-hub/technical-updates/automotive-essentials/physical-testing-of-buses> |
 | GASILEC | 0,50 | **brez vira**: EN 1846-2 predpisuje statični kot nagiba, številke v javnih povzetkih ni (standard je plačljiv) | EN 1846-2:2009+A1:2013 |
 
+Dodatni viri (26. 11., seja 1): najmanjši prag težkih vozil **0,35 g** (NZTA, <https://nzta.govt.nz/vehicles/vehicle-types/vehicle-classes-and-standards/vehicle-dimensions-and-mass/static-roll-thresholds>); FHWA 2004 (Western Uniformity Scenario Analysis, sl. 7-2): polpriklopnik 0,36 g, dvojni sklopi 0,376–0,395 g, cisterna B-vlak 0,34 g. Zrcalni vlak 0,40 je tako blizu razpona dvojnih sklopov, a ostaja **brez vira**; avtovoz 0,38, krilo 0,45 in gasilec 0,50 ostajajo **brez vira** (EN 1846-2, izdaja 2024, brez javnih vrednosti).
+
 ### Zavore (UNECE R13, kategoriji N3 in M3)
 
 - **Preskus tip 0** (hladne zavore, motor odklopljen): N3 in M3 iz 60 km/h, pojemek najmanj **5,0 m/s²**; z motorjem iz 80 % najvišje hitrosti (največ 90 km/h) najmanj 4,0 m/s². Vir: UNECE R13, Priloga 4 (EUR-Lex: <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX%3A42016X0218%2801%29>; <https://unece.org/fileadmin/DAM/trans/main/wp29/wp29regs/r013r7e.pdf>).
@@ -83,6 +85,10 @@ Iskanje 26. 11. 2026; neposredno branje strani v tej seji ni bilo mogoče (omre�
 3. **Klanec**: sila teže za ta vozila na vseh progah, ne samo tam, kjer je `gradeForce`.
 4. **AI**: vozi do deleža praga prevrnitve, na spustu prej zavira, s pregretimi zavorami podaljša zavorno točko.
 5. Testi: nove ovojnice v `tests/fleet.test.js` (razreda `prikolica`, `vlak`), prevrnitev in gretje zavor v `tests/cisterna.test.js`, `tests/zrcalni.test.js`, `tests/novi-tovornjaki.test.js`.
+
+## Model v kodi (seja 1, 26. 11.)
+
+`js/velika-vozila.js` (`VelikaVozila`): vklop z `model.heavy` (true ali predmet s popravki `srt`, `masa`), brez njega se nič ne spremeni. Preglednica `VOZILA` (masa, prag, vir), konstante `K` (130 km/h, hladni pojemek 6,5 m/s², najmanj 5,0; slabljenje 350–550 °C do 60 %; motorna zavora pol dela; 0,6 s nad pragom; opozorilo pri 85 %; kazen 10 s). `pred`/`po` okrog koraka fizike: zavorna moč (omejitev pojemka, pregrete zavore), gretje zavor, klanec na progah brez `gradeForce`, bočni pospešek in prevrnitev (`vv.pad`). Za AI: `vOvinek(c, k)`, `zavPot(c, v0, v1)`. Priklop v `js/core.js`: `VV`, `Car.vv`, `step`, prevrnitev v dirki (vrnitev, `tfPen`). Skripta se naloži šele z vrstico v `index.html` in `garaza.html` pred `core.js` (vprašanje na strani Odločitve).
 
 ## Možnosti
 

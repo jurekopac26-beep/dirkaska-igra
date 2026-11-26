@@ -6,6 +6,7 @@
    ========================================================================= */
 const Core = (function () {
   'use strict';
+  const VV = typeof VelikaVozila !== 'undefined' ? VelikaVozila : null;   // the heavy vehicles' shared model (js/velika-vozila.js; absent: no heavy vehicle)
   const G = 9.81;
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -3046,6 +3047,7 @@ const Core = (function () {
       this.upg = U ? { motor: upgLv(opts.upg, 'motor'), gume: upgLv(opts.upg, 'gume'), zavore: upgLv(opts.upg, 'zavore'), aero: upgLv(opts.upg, 'aero') } : null;
       this.upgGrip = U ? U.grip : 0;   // autopilot / AI corner-speed scale (0 = stock car)
       this.m = model;
+      this.vv = VV ? VV.za(this, model) : null;   // (a heavy vehicle's shared model: js/velika-vozila.js, only with model.heavy)
       this.id = opts.id || 0;
       this.isPlayer = !!opts.isPlayer;
       if (opts.slide) this.nvSl = true;   // (the new physics' sliding style, Nastavitve → Slog nove fizike: Drseč; NVK.slide)
@@ -3631,7 +3633,7 @@ const Core = (function () {
       if (F.brT > BRK_FADE[0] && !F.brH) { F.brH = true; F.ev = 'brakes'; } else if (F.brT < BRK_FADE[0] - 120) F.brH = false;
       if (F.enT > ENG_HOT[0] && !F.enH) { F.enH = true; F.ev = 'engine'; } else if (F.enT < ENG_HOT[0] - 15) F.enH = false;
     }
-    step(dt, trk) { const r = this.phys === 'nova' ? this.stepNova(dt, trk) : this.stepCS(dt, trk); if (this.tl) tlStep(this, dt, trk); return r; }   // (a semi-trailer behind it: its own step on the kingpin, tlStep)
+    step(dt, trk) { if (this.vv) VV.pred(this, dt, trk); const r = this.phys === 'nova' ? this.stepNova(dt, trk) : this.stepCS(dt, trk); if (this.vv) VV.po(this, dt, trk); if (this.tl) tlStep(this, dt, trk); return r; }   // (a semi-trailer behind it: its own step on the kingpin, tlStep)
   }
   // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
   const wreck0 = (W) => { if (W.rule) W.rule.burn = 0; return Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
@@ -8111,6 +8113,7 @@ const Core = (function () {
         // (a rescue would cost it the stop; the player's car too, spared backing out of the jam)
         if (c.inPit && !c.net && c.pitState !== 'repair' && c.speed < 1.2 && fwd < 0.85 && (this.state === 'racing' || this.state === 'done')) c.wedgeT = (c.wedgeT || 0) + cdt; else if (c.wedgeT) c.wedgeT = 0;   // (the timer only on a car that got knocked across)
         if (c.wedgeT > 2) { const y = c.y, i = q.i; c.place(c.x, c.z, Math.atan2(q.tz, q.tx)); c.y = c.py = y; c.q.i = i; c.wedgeT = 0; }   // (where it stands: its height and its road sample kept, the autopilot steers from it before the next step)
+        if (c.vv && c.vv.pad && !c.net) { c.falls = (c.falls || 0) + 1; applyDamage(c, 0.2); c.tfPen = (c.tfPen || 0) + VV.K.kazen; this.rescue(c); VV.reset(c); }   // (a heavy vehicle rolled over: back on the road with a time penalty, js/velika-vozila.js)
         // stuck detection (AI auto-rescue)
         if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished) && !(c.fl && c.fl.rw)) c.stuckT += cdt; else c.stuckT = Math.max(0, c.stuckT - cdt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
         if (!c.isPlayer && (c.stuckT > (c.inPit && c.fuel != null ? 30 : c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished) && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason, behind one filling up longer still; not a car pulled up past the finish of an open road, nor a retired one or one the marshals are fixing)
