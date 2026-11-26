@@ -37,8 +37,8 @@ try {
   const t0 = await page.evaluate(() => ({ ext: !!(Render.ext && Render.ext.senca), chunk: THREE.ShaderChunk.shadowmap_pars_fragment.includes('getShadowH6') && THREE.ShaderChunk.shadowmap_pars_fragment.includes('uniform vec2 uShEdge'), u: Render.ext.senca ? Render.ext.senca.uniform.value.toArray() : null }));
   T.check('js/render-senca.js loaded: getShadow wrapped (uShEdge), the uniform 0 on the title screen', t0.ext && t0.chunk && t0.u && t0.u[0] === 0 && t0.u[1] === 0, JSON.stringify(t0));
 
-  // 2. Killar (Indija) at 1780 m, NIZKA: the fade's width 12 m over the box's; the picture changed by it, the same draw calls and programs
-  await race(page, 'killar', 1780);
+  // 2. Killar (Indija) at 1300 m, NIZKA (where the fade shows most: the trees' shadows at the view's left edge): the fade's width 12 m over the box's; the picture changed by it, the same draw calls and programs
+  await race(page, 'killar', 1300);
   const on = await frame(page, null), off = await frame(page, 0), on2 = await frame(page, null);
   const w = await page.evaluate(() => { const sc = Render.ext.senca; return sc.ROB_M; });
   T.check('Killar: the fade on (uShEdge = 12 m over the box\'s width and height, at most 0.5)', on.u[0] > 0 && on.u[1] > 0 && on.u[0] <= 0.5 && on.u[1] <= 0.5 && w === 12, JSON.stringify(on.u));

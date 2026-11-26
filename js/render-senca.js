@@ -2,8 +2,10 @@
    RENDER — the sun's shadow box (Grafika AAA, docs/grafika-aaa.md on the branch raziskava/grafika-aaa: H6 and H7).
    H6, a soft edge of the shadow box: the sun's shadows are drawn only inside its box (on NIZKA fitted round the ground the camera sees, on
    SREDNJA and VISOKA a 160 m square round the view's centre: js/render.js fitShadow), and where the box ends a shadow ended in a straight
-   line across the slope ahead (Killar, Indija, m 1780). On a track of ROB the shadows fade out over the last ROB_M metres inside the box's
-   edges instead (the shadow's darkness × smoothstep of the distance to the nearest edge), so the box's edge no longer shows.
+   line across the road ahead (Spa, Belgija, m 3420 on VISOKA). On a track of ROB the shadows fade out over the last ROB_M metres inside
+   the box's edges instead (the shadow's darkness × smoothstep of the distance to the nearest edge), so the box's edge no longer shows.
+   (The light rectangle on the slope at Killar, Indija, m 1780 is not the box's edge but the terrain's own shading: the same with a box
+   three times as large; H6 leaves it.)
    How: three.js r128's shadow part of the shaders (THREE.ShaderChunk.shadowmap_pars_fragment) is changed here once, when the page loads,
    before any shader is compiled (the menu's, the garage's, the race's): r128 does not count a chunk's text in its programs' key, so a
    program compiled before the change would be used on as it was. getShadow becomes a wrapper round the old one, which fades by the uniform
