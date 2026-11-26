@@ -3648,5 +3648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "e20e46921c7571f4c4c76817"
+ },
+ "chamarel/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 170.07,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e9d7f375bee6dcfbe215b217"
+ },
+ "chamarel/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 205.99,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "489819f6134cbedaf6a7d54d"
+ },
+ "chamarel/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 154.67,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ffee3f31d94720fe59dd16e1"
+ },
+ "chamarel/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 157.94,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4da3c63d5e1790711c3fe4fe"
+ },
+ "chamarel/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 171.52,
+  "spins": 0,
+  "walls": 8,
+  "rescues": 1,
+  "nan": false,
+  "digest": "e4fd14b1c73608ba97c0ddd1"
  }
 }
