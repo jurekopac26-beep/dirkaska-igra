@@ -29,7 +29,7 @@ try {
   T.check('a fresh browser, a plain start: Prvič na cesti (the three ways to drive, Tipke marked), the panel inside the screen upright and on its side',
     a1.screen === 'prvi' && a1.show && a1.a && !a1.b && a1.cards.join() === 'buttons*,wheel,tilt' && a1.prvi.fresh && a1.prvi.can && !a1.prvi.seen && up && side, JSON.stringify({ a1, up, side }));
   // the language switch beside the title (a foreign player's first screen): English, the panel inside a small phone (360 × 640) upright
-  // and on its side, the menu's settings follow; back to Slovenščina
+  // and on its side (S.lang, the title, Poskusna vožnja, the lit button and <html lang> follow); back to Slovenščina
   const lng = () => ev(() => ({ lang: window.__game.S.lang, h: document.querySelector('#prvi-a h2').textContent, test: document.querySelector('#prvi-a [data-act="prvi-test"]').textContent,
     sel: [...document.querySelectorAll('#prvi-a .prvi-lang button.sel')].map(b => b.dataset.v).join(), html: document.documentElement.lang }));
   const l0 = await lng();
