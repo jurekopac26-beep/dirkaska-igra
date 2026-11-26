@@ -1,11 +1,11 @@
 {
  "id": "chamarel",
- "about": "Chamarel, Mavricij (id chamarel): from the coast above Case Noyale up the B104 to Chamarel, through the village and up the Plaine Champagne road to the plateau, 7.8 km, +506 m (option 1 of the card proga-chamarel-pot; docs/proge-po-drzavah.md)",
+ "about": "Chamarel, Mavricij (id chamarel): from the coast above Case Noyale up the B104 through the hairpins, past the Chamarel viewpoint and through the village of Chamarel onto the Plaine Champagne road, 5.0 km, +334 m (option 1 of the card proga-chamarel-pot, answered 25. 11. 2026; docs/proge-po-drzavah.md)",
  "box": [
   -20.44,
   57.355,
   -20.404,
-  57.43
+  57.415
  ],
  "closed": false,
  "route": [
@@ -46,22 +46,10 @@
    ""
   ],
   [
-   -20.42686,
-   57.40368,
+   -20.42447,
+   57.4015,
    "Plaine Champagne Road",
-   "the forest climb"
-  ],
-  [
-   -20.42604,
-   57.41039,
-   "Plaine Champagne Road",
-   ""
-  ],
-  [
-   -20.42394,
-   57.4173,
-   "Plaine Champagne Road",
-   "finish: on the Plaine Champagne plateau"
+   "finish: on the Plaine Champagne road above the village, 5.0 km from the start"
   ]
  ],
  "prefer": [
