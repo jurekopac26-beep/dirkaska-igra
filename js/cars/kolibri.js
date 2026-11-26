@@ -59,7 +59,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // (the stock one on the left), the tailgate (its panel from the bumper to the window's foot, the window up to the roof's edge, its
       // garnish), the tow points on the bumpers' faces, the mud flaps behind the arches (the sills' guards between them)
       zadnje_luci: { x: -1.642, zc: 0.64, yc: 0.705, w: 0.14, h: 0.3, shape: [[-0.069, -0.154], [0.066, -0.174], [0.069, 0.149], [-0.069, 0.164]], hosts: ['tailL', 'tailR'], bar: { x: -1.661, y: 0.822, w: 0.55, part: 'trunk' } },
-      auspuh: { x: -1.72, y: 0.25, z: 0.42, r: 0.03, len: 0.2, part: 'body' },
+      auspuh: { x: -1.77, y: 0.235, z: 0.42, r: 0.03, len: 0.2, k: 1.4, part: 'body' },
       prtljaznik: { x: [-1.66, -1.655], glass: -1.585, w: 0.565, part: 'trunk', garnish: [-1.663, 0.81, 1.1, 0.07] },
       vlecne_kljuke: { f: [1.703, 0.31, 0.56], r: [-1.692, 0.33, 0.42] },
       lovilci_blata: { x: [0.8, -1.49], z: [0.52, 0.72], y: [0.3, 0.075], sill: [-0.82, 0.78, 0.19, 0.72], part: 'body' },

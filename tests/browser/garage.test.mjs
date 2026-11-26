@@ -468,6 +468,32 @@ try {
     T.check('an exhaust that lifts the engine\'s level (a Stage 1 map and the straight pipe: +8,5 %, level 1): the same fitting on the lift with the wrench, then the engine\'s short show (its parts on, MOČ with both numbers, no KONČANO) (' + rx2.t + ' s: within 15); the arms parked',
       exLog(fx2) && !ex2.plain && fx2.plan.lift === 0.55 && fx2.plan.wrench && ex2.wr === '2+1' && rx2.lift > 0.5 && ex2.lift === 0 && fx2.put === 'regal' && !fx2.stay && fx2.parked && /MOČ/.test(fx2.chip) && /kW → /.test(fx2.chip) && !/KONČANO/.test(fx2.chip) && ux2.info.upg.motor === 1 && ux2.info.parts.motor >= 1 && rx2.t <= 15,
       JSON.stringify({ fx2, ex2, t: rx2.t, upg: ux2.info.upg, parts: ux2.info.parts }));
+    // (every exhaust on the smallest car (KOLIBRI), odlocitve garaza-auspuh-kolibri-25-11: after each of the 16 is fitted the car on the
+    // table is that option's (its deli's key, the pipes unfolded), its tips stand out behind the bumper (rays from behind meet them
+    // first, 5 cm past the stock one's end), each option's tail reads differently from behind and from the stock one's, and the show ends
+    // low behind the car at three quarters (its plate's last frame, 12_auspuh): the tips in the picture)
+    { const k0 = await page.evaluate(() => { const S = __garage.S, k = JSON.stringify([S.cars.kolibri, S.money]); S.money = 9e6; S.cars.kolibri.own = true; S.cars.kolibri.parts = {}; __garage.pickCar('kolibri'); return k; }); await run();
+      const tail = () => page.evaluate(() => { const cur = Garage3D.cur, m = cur.M.def.mounts.auspuh, n = (cur.spec.deli || {}).auspuh || 0, R = new THREE.Raycaster(); R.camera = Garage3D.camera;
+        cur.root.updateMatrixWorld(true); const hit = (y, z) => { R.set(new THREE.Vector3(-4, y, z), new THREE.Vector3(1, 0, 0)); const h = R.intersectObject(cur.root, true).find(q => q.object.visible); return h ? h.point.x : null; };
+        const sig = []; for (let y = 0.13; y < 0.33; y += 0.02) for (let z = -0.66; z <= 0.66; z += 0.03) { const x = hit(y, z); sig.push(x == null || x > -1.2 ? '.' : Math.round((x + 2) * 50).toString(36)); }
+        const tips = DELI.tips(n, m), cam = Garage3D.camera; cam.updateMatrixWorld(true);
+        const out = tips.map(([z, r]) => { let x = 0; for (const dy of [-1, 0, 1]) for (const dz of [-1, 0, 1]) { const h = hit(m.y + dy * r * 0.8, z + dz * Math.abs(r) * 0.8); if (h != null) x = Math.min(x, h); } return +x.toFixed(3); });
+        const ndc = tips.map(([z]) => { const v = new THREE.Vector3(m.x, m.y, z).applyMatrix4(cur.root.matrixWorld).project(cam); return [+v.x.toFixed(2), +v.y.toFixed(2), +v.z.toFixed(3)]; });
+        const sw = Garage3D._dbg.FIT.log.find(q => q.step === 'swap') || {}, rig = Garage3D._dbg.rig;
+        return { n, key: DELI.key(cur.spec.deli, cur.spec.M), sw: sw.deli, sig: sig.join(''), out, ndc, x: m.x, rig: [rig.yaw, rig.pitch, rig.dist].map(q => +q.toFixed(2)), part: JSON.stringify(__garage.S.cars.kolibri.parts.auspuh) }; });
+      const t0 = await tail(), opts = await page.evaluate(() => { const E = GarageShop.EL.auspuh, o = []; for (let t = 0; t < E.c.length; t++) E.c[t][1].forEach((q, j) => o.push([t, j])); return o; }), seen = new Map([[t0.sig, 0]]), bad = [];
+      for (let i = 0; i < opts.length; i++) { await page.evaluate((sel) => { __garage.S.money = 9e6; __garage.openMenu({ el: 'auspuh', key: null, sel }); document.querySelector('#g-menu [data-mact="buy"]').click(); }, opts[i]); await run();
+        const r = await tail(), why = [];
+        if (r.n !== i + 1 || r.part !== JSON.stringify(opts[i])) why.push('not this option on the car');
+        if (!r.key || (r.sw && r.sw !== r.key)) why.push('the car\'s key is not the fitted one\'s');
+        if (!r.out.length || r.out.some(x => x > t0.out[0] - 0.04)) why.push('a tip is not out behind the bumper');
+        if (seen.has(r.sig)) why.push('the tail as option ' + seen.get(r.sig) + '\'s'); else seen.set(r.sig, i + 1);
+        const yaw = Math.atan2(Math.sin(r.rig[0]), Math.cos(r.rig[0]));   // (the rig's yaw unwrapped: turns of the plate in it)
+        if (!(yaw < -0.8 && yaw > -1.3 && r.rig[1] < 0.1 && r.rig[2] < 2.5) || r.ndc.some(v => Math.abs(v[0]) > 0.9 || Math.abs(v[1]) > 0.9 || v[2] > 1)) why.push('the show does not end low behind the car on the tips');
+        if (why.length) bad.push({ i: i + 1, why, out: r.out, ndc: r.ndc, rig: r.rig, key: r.key, sw: r.sw }); }
+      T.check('KOLIBRI\'s 16 exhausts: each fitted one is the car\'s (its key, the pipes unfolded), its tips out behind the bumper, every tail different from behind (and from the stock one), the show ends low behind the car with the tips in the picture',
+        opts.length === 16 && seen.size === 17 && !bad.length, JSON.stringify({ n: opts.length, tails: seen.size, stock: t0.out, bad }));
+      await page.evaluate(k => { const S = __garage.S, q = JSON.parse(k); __garage.closeMenu(); S.cars.kolibri = q[0]; S.money = q[1]; __garage.pickCar('muscle'); }, k0); await run(); }
     // (the GT wing again, the car's own now (NAMESTI): the SPORT kit's wing stands on the lid: no caps there, the snap, the old part back onto the regal)
     await page.evaluate(() => { __garage.openMenu({ el: 'krilo', key: 'rgl:GT WING', sel: __garage.findOpt('krilo', 'GT wing') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rw3 = await run();
     const fw3 = await fitOf(), uw3 = await ui();

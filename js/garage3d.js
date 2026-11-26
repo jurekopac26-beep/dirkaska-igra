@@ -7413,6 +7413,8 @@ const Garage3D = (function () {
     const VH = wing ? view({ at: [S.p.x + 0.1, cT.y, 0], yaw: -1.27, pitch: 0.27, dist: 3.1, fov: 33 }) : null;
     // (the exhaust's: the car's rear on the lift from behind, a little to the near side (V2); the same down on its wheels for the revs)
     const VE = exS ? view({ at: [K.rear - 0.05, S.p.y - FIT.lift + 0.2, 0], yaw: -1.22, pitch: 0.14, dist: 3.5, fov: 34 }) : null;
+    // (the exhaust's last frame by its plate (12_auspuh): low from behind at three quarters, the new tips under the name's bubble; the camera stays there)
+    const VX = exS ? view({ at: [S.p.x + 0.1, S.p.y - FIT.lift + 0.42, 0], yaw: -0.95, pitch: 0.03, dist: 2.1, fov: 33 }) : null;
     const burst = (p) => { for (let j = 0; j < 14; j++) sparks.emit(p.x, p.y - 0.02, p.z, rnd(-2, 2), rnd(-1.8, 0.3), rnd(-2, 2), rnd(0.3, 0.6), 0.06, 0.015, SPK, 1, 9, 0.4, 0); mark(2, p.x, p.y, p.z, 0.35, 1.6, 1.0, 0.5, 0.15); SFX.wrench(); SFX.spark(); };
     const wrenchAt = function* (n, f) { const W = exS.wr; yield* armExt(0, W.s, 0, 0.3 * f); for (let k = 0; k < n; k++) { burst(W.tip); yield* wait(0.22 * f); } yield* armExt(0, W.pre.s, 0, 0.25 * f); };
     // to the part: the arm's tool over it; the trolley in from the door (for a drawer's part to the cabinet first: the drawer out, the part
@@ -7492,7 +7494,7 @@ const Garage3D = (function () {
       else { idleOn(cur); SFX.ping(1760); hud('done', { kind: el }); yield* wait(0.2); }
       fitLog('revs');
       // 13: home
-      yield* waitFor(() => stowed, 4); fin = true; yield* par(home(1.4), rglUnstay(1.4), waitFor(() => exS.off, 6)); return;
+      yield* waitFor(() => stowed, 4); fin = true; yield* par(camTo(VX, 1.2), rglUnstay(1.4), waitFor(() => exS.off, 6)); return;
     }
     if (rg2 && self.GarazaAnim && GarazaAnim.run && (yield* GarazaAnim.run(el, { cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }, { THREE, V3, EZ, ARM, BRG, RB, RGL, FIT, LIFT, SFX, SPK, sparks, rnd, mark, burst, glint, poseBridge, passMk, spawn, par, wait, tween, waitFor, armTool, armExt, armCarry, armRest, armsTo, carriageTo, bridgeRest, poseArm, tipM, tipLen, hold, holdTo, letGo, tyrePass, camTo, view, spotView, liftUp, lowerCar, fitLog, fitSwap, settle, rglCopy, rglHide, rglUnstay, disposeTree, deliKey, home, get cur() { return cur; }, get lift() { return lift; }, get scene() { return scene; }, get puffs() { return puffs; }, get hud() { return hud; }, get DELI() { return self.DELI; } }))) return;   // (#1084 I1–I4: vzmeti, amortizerji, stabilizatorji, zamasek; js/garaza-anim/run.js)
     if (rg2) { yield* regalTwoShow({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }); return; }
@@ -7765,7 +7767,7 @@ const Garage3D = (function () {
       yield* par(camTo(VE, 0.9), waitFor(() => lift < 1e-3, 3)); fitLog('down');   // (on its wheels: the revs as it settles)
       if (o.up) yield* upShow(o.up[0], o.up[1], true);
       else { if (cur.M.ev) yield* evPulse(cur, cur.parts.motor || cur.v.grp, 1); else yield* revs(cur, 2, false); idleOn(cur); SFX.ping(1760); hud('done', { kind: el }); yield* wait(0.2); }
-      fitLog('revs'); yield* waitFor(() => stowed, 4); yield* home(1.4); exS.end = true; })());
+      fitLog('revs'); yield* waitFor(() => stowed, 4); yield* camTo(VX, 1.2); exS.end = true; })());
     // the old part back where the new one came from: on the regal as the new one stood (in by the way it was taken), on the deck
     let put = null;
     if (!op) { /* (nothing to take back) */ }
