@@ -217,11 +217,11 @@
   "jsMs": 1.11
  },
  "ella": {
-  "calls": 187,
-  "maxCalls": 232,
-  "kverts": 491,
-  "maxKverts": 704,
-  "jsMs": 1.34
+  "calls": 192,
+  "maxCalls": 238,
+  "kverts": 534,
+  "maxKverts": 761,
+  "jsMs": 1.62
  },
  "llogara": {
   "calls": 168,
