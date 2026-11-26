@@ -261,7 +261,8 @@
   // cream render, grey cladding on the big halls; flat roofs, grey or terracotta); before the crowds and the trees (the buildings kept clear
   // in tzKeep)
   function tzExtra(o) {
-    const { scen } = o, sk = API.T.def.sk || {}, R = rng(9037), st = { road: 0, track: 0, link: 0, drift: 0, buildings: 0 };
+    const { scen } = o, sk = API.T.def.sk || {}, R = rng(9037), st = { road: 0, track: 0, link: 0, drift: 0, buildings: 0, runoff: 0 };
+    tzRunoff(o, st);   // (before the service roads: of the meshes under the root so far)
     tzRoads(o, st);
     const b6 = sk.bld || [], WALL = [[0.93, 0.91, 0.86], [0.9, 0.85, 0.74], [0.84, 0.82, 0.78], [0.72, 0.73, 0.75]], ROOF = [[0.36, 0.37, 0.39], [0.62, 0.32, 0.22], [0.48, 0.49, 0.5]];
     for (const B of [b6, TZ_BLD2]) for (let k = 0; k < B.length; k += 6) {
@@ -272,6 +273,88 @@
       st.buildings++;
     }
     return st;
+  }
+
+  // the shaders' hash and noise (the run-offs', the ground's)
+  const TZ_FN = [
+    'float tzHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
+    'float tzNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(tzHash(i), tzHash(i + vec2(1.0, 0.0)), u.x), mix(tzHash(i + vec2(0.0, 1.0)), tzHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+
+  /* ---- the paved run-offs: their own surface on the shared builder's one run-off material ----
+     The circuit's run-offs are wide sheets of asphalt, and the chase camera fills the frame with them at every other corner. A sheet that
+     size is laid by a paver in lanes along the track, each lane in a day's lengths: lanes 5.2 m wide in lengths of 58-88 m, staggered from
+     lane to lane, each length its own shade (the mix, its age), a sealed joint between two of them (a thin dark line, spread over the
+     pixel it falls in: no shimmer further out), the paver's faint streaks along the lane; the dust and the dry grit the wind leaves along
+     the outer edge by the barrier; here and there the two dark lines of a car that ran wide and came back. All of it generic wear, none of it
+     surveyed: OSM holds the run-offs' outlines at most (docs/proge/tuzla.md). No paint (the builder's green band and the words lie on top).
+     The builder's quads carry the track's own frame in one more attribute (tzRo: metres across from the centreline, negative on the left;
+     metres along; metres to the sheet's outer and inner edges): no extra draw, no extra vertices. The renderer's asphalt sheen and the rain
+     chain on this material's shader after it (render.js, asphaltLook): only the colour changes here. */
+  const TZ_RO_GLSL = [
+    'varying vec4 vTzRo; varying vec2 vTzRw;', TZ_FN,
+    // a line's cover of the pixel: d metres from its middle, hw its half width, aw the pixel's width across it
+    'float tzLine(float d, float hw, float aw) { aw = max(aw, 1e-4); return clamp((hw + 0.5 * aw - d) / aw, 0.0, min(1.0, 2.0 * hw / aw)); }',
+    // the marks of a car that ran wide: one per 110 m and side at most, a shallow arc out from the track's edge and back (s along, sd the side, di from the inner edge, aw the pixel)
+    'float tzMark(float s, float sd, float di, float aw, float fk) {',
+    '  float sb = s + fk * 47.0, b = floor(sb / 110.0), u = sb - b * 110.0; vec2 hs = vec2(b * 3.17 + sd * 41.0 + fk * 7.0, b * 1.31 + 5.0 + fk * 3.0);',
+    '  float len = 40.0 + 45.0 * tzHash(hs + 19.7), t = (u - (110.0 - len) * tzHash(hs + 43.1)) / len, amp = len * (0.03 + 0.05 * tzHash(hs + 71.3));',
+    '  float dd = abs(abs(di - (amp * 4.0 * t * (1.0 - t) - 0.5)) - 0.8);   // (the two wheels 1.6 m apart)',
+    '  return step(tzHash(hs), 0.62) * step(0.0, t) * step(t, 1.0) * smoothstep(0.0, 0.08, t) * (1.0 - smoothstep(0.7, 1.0, t)) * tzLine(dd, 0.11, aw) * (0.5 + 0.5 * tzNoise(vec2(u * 0.9, b * 13.0 + fk * 5.0)));',
+    '}'].join('\n');
+  function tzRunoff({ root, tex, out }, st) {
+    const T = API.T, N = T.N, w = T.w, eps = 0.004;
+    let mat = null;   // the run-offs' material: the asphalt's picture, neither the road's own nor a layer laid over it; told by its first vertex (the builder's colour, its 8 m picture)
+    for (const m of root.children) {
+      const mm = m.material; if (!m.isMesh || !mm || !mm.isMeshLambertMaterial || mm.map !== tex.asphalt || mm === out.asphaltMat || mm.polygonOffset) continue;
+      const { color: C, uv: U, position: P } = m.geometry.attributes; if (!C || !U || !P || !P.count || P.count % 6) continue;
+      if (Math.abs(C.getX(0) - 1.02) < eps && Math.abs(C.getZ(0) - 1.04) < eps && Math.abs(U.getX(0) - P.getX(0) / 8) < 0.01 && Math.abs(U.getY(0) + P.getZ(0) / 8) < 0.01) { mat = mm; break; }
+    }
+    if (!mat) return;
+    const lat = (p, i) => (p[0] - T.px[i]) * T.nx[i] + (p[2] - T.pz[i]) * T.nz[i], gap = (p, q) => Math.hypot(p[0] - q[0], p[2] - q[2]), same = (p, q) => p[0] === q[0] && p[1] === q[1] && p[2] === q[2];
+    const across = (p) => {   // the sample a point of the sheet's inner edge lies across from
+      let bi = 0, bs = 1e9;
+      for (let i = 0; i < N; i++) { const dx = p[0] - T.px[i], dz = p[2] - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], e = Math.max(0, Math.abs(dx * T.nx[i] + dz * T.nz[i]) - w - 4), q = al * al + e * e; if (q < bs) { bs = q; bi = i; } }
+      return bi;
+    };
+    for (const m of root.children) {
+      if (m.material !== mat) continue;
+      const P = m.geometry.attributes.position.array, n = P.length / 3, A = new Float32Array(n * 4);
+      for (let q = 0; q < n; q += 6) {   // a quad of the builder's: (a, b, c) and (a, c, d), either one perhaps turned over: a and b across from sample i (inner, outer), c and d from i + 1 (outer, inner)
+        const v = [0, 1, 2, 3, 4, 5].map(k => [P[(q + k) * 3], P[(q + k) * 3 + 1], P[(q + k) * 3 + 2]]), set = (k, x, s, o, i) => A.set([x, s, o, i], (q + k) * 4);
+        const c1 = same(v[1], v[4]) || same(v[1], v[5]) ? 1 : same(v[2], v[4]) || same(v[2], v[5]) ? 2 : 0;
+        if (!c1 || !same(v[0], v[3])) { for (let k = 0; k < 6; k++) set(k, 2.6, 20, 99, 99); st.runoffOdd = (st.runoffOdd || 0) + 1; continue; }   // (not the builder's quad: plain, no joints, no dust)
+        const b1 = 3 - c1, c2 = same(v[4], v[c1]) ? 4 : 5, d2 = 9 - c2, i = across(v[0]), j = (i + 1) % N, sd = lat(v[0], i) < 0 ? -1 : 1, wi = gap(v[0], v[b1]), wj = gap(v[d2], v[c1]);
+        const la = Math.abs(lat(v[0], i)), lb = Math.abs(lat(v[b1], i)), lc = Math.abs(lat(v[c1], j)), ld = Math.abs(lat(v[d2], j)), s0 = i * T.ds, s1 = s0 + T.ds;
+        set(0, sd * la, s0, wi, 0); set(3, sd * la, s0, wi, 0); set(b1, sd * lb, s0, 0, wi); set(c1, sd * lc, s1, 0, wj); set(c2, sd * lc, s1, 0, wj); set(d2, sd * ld, s1, wj, 0);
+        st.runoff++;
+      }
+      m.geometry.setAttribute('tzRo', new THREE.BufferAttribute(A, 4));
+    }
+    const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => {
+      prev.call(mat, sh, r);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 tzRo; varying vec4 vTzRo; varying vec2 vTzRw;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvTzRo = tzRo; vTzRw = (modelMatrix * vec4(transformed, 1.0)).xz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + TZ_RO_GLSL).replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          float rSd = step(0.0, vTzRo.x), rL = abs(vTzRo.x), rS = vTzRo.y, rAl = fwidth(vTzRo.x), rAs = fwidth(vTzRo.y), rAi = fwidth(vTzRo.w);
+          float rLn = floor(rL / 5.2), rLf = rL - rLn * 5.2;   // the lane, the metres across it
+          float rLen = 58.0 + 30.0 * tzHash(vec2(rLn * 7.13 + rSd * 31.7, 11.0)), rSo = rS + 90.0 * tzHash(vec2(rLn * 3.31 + rSd * 17.9, 23.0)), rB = floor(rSo / rLen), rBf = rSo - rB * rLen;   // the lane's lengths, staggered
+          float rT1 = tzHash(vec2(rB * 1.37 + rLn * 17.0, rLn * 5.11 + rSd * 9.0 + 2.0)), rT2 = tzHash(vec2(rB * 2.11 + 5.0, rLn * 3.7 + rSd * 13.0 + 7.0));
+          vec3 rC = (0.93 + 0.12 * rT1) * mix(vec3(0.98, 1.0, 1.025), vec3(1.03, 1.0, 0.965), rT2);   // a length's shade: darker and bluer the newer, paler and warmer the older
+          rC *= 1.0 + (tzNoise(vec2(rL * 2.1 + rB * 7.0, rSo * 0.035 + rLn * 3.0)) - 0.5) * 0.06 * clamp(0.3 / max(rAl, 1e-4), 0.0, 1.0);   // the paver's streaks along the lane
+          float rN = tzNoise(vTzRw * 0.31), rN2 = tzNoise(vTzRw * 0.071 + 13.0);
+          rC *= 0.96 + 0.08 * rN2;   // (the sheet's own patches, 14 m)
+          float rJ = max(tzLine(min(rLf, 5.2 - rLf), 0.035, rAl), tzLine(min(rBf, rLen - rBf), 0.035, rAs));   // the sealed joints: between two lanes, across a lane at a length's end
+          rC *= 1.0 - 0.4 * rJ;
+          rC *= 1.0 - 0.3 * max(tzMark(rS, rSd, vTzRo.w, rAi, 0.0), tzMark(rS, rSd, vTzRo.w, rAi, 1.0));
+          float rDu = (1.0 - smoothstep(0.5, 9.0, vTzRo.z)) * (0.2 + 0.8 * rN) * (0.45 + 0.55 * rN2) + (1.0 - smoothstep(0.0, 1.4, vTzRo.z)) * 0.5;   // dust and grit toward the outer edge, a strip of it along the edge itself
+          diffuseColor.rgb *= rC * mix(vec3(1.0), vec3(1.3, 1.2, 1.0), clamp(rDu, 0.0, 1.0) * 0.55);
+        }`);
+    };
+    mat.customProgramCacheKey = () => 'tzRunoff';
+    mat.extensions = { derivatives: true };   // (fwidth: WebGL 1 needs the extension)
+    mat.needsUpdate = true;
   }
 
   /* ---- the ground (LK.ground): Tuzla's own, in place of World's grassLook (which leaves alone a material it finds marked) ----
@@ -315,10 +398,7 @@
     const t = new THREE.DataTexture(tzGPix, S, S, THREE.RGBAFormat);   // (a DataTexture: a canvas would premultiply the stones' alpha into the other channels; its rows are the picture's v as they are)
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = 4; t.needsUpdate = true; return t;
   }
-  const TZ_GLSL = [
-    'varying vec2 vTzW; varying float vTzD; uniform vec3 uTzAvg; uniform sampler2D uTzT; uniform float uNat; uniform float uPat;',
-    'float tzHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
-    'float tzNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(tzHash(i), tzHash(i + vec2(1.0, 0.0)), u.x), mix(tzHash(i + vec2(0.0, 1.0)), tzHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+  const TZ_GLSL = 'varying vec2 vTzW; varying float vTzD; uniform vec3 uTzAvg; uniform sampler2D uTzT; uniform float uNat; uniform float uPat;\n' + TZ_FN;
   function tzGround(m, ownTex) {
     const avg = (m.map && m.map.avgCol) || [0.35, 0.49, 0.22], t = ownTex(tzTex()), mean = tzGMean.toFixed(3), nat = (API.T && API.T.def && API.T.def.grassNat) || 0;
     m.userData.grassLook = true;
