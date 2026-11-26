@@ -116,6 +116,13 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-104`
+
+Kamera za avtom, skupina 104 (drugi prehod, `js/world-chase-bt104.js`): Sepang (pas 1–16 m za ograjo, ki je bil doslej enakomerna trata: redke zaplate bujne, pokošene in mokre trate, nizki šopi, pod palmami rjava tla, suhi listi in praprot, v sekundarnem gozdu temno grmičevje; nič 330 m ob velikih tribunah; +5 klicev, 200 od 300, vrh oglišč 899,9 od 900 tisoč, zato je sprememba majhna). Hakone ni v skupini, ker ga spreminja odprti #1079. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Ne, odstrani skupino 104 (Sepang ostane pri skupini 55, rezerva oglišč ostane za druge).
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
