@@ -1228,5 +1228,155 @@
    "n": "Antignano",
    "d": 16847
   }
+ ],
+ "kildare": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Donore",
+   "d": 60
+  },
+  {
+   "n": "Grand Canal",
+   "d": 850
+  }
+ ],
+ "furka": [
+  {
+   "n": "Muttbach",
+   "d": 55,
+   "sub": "2,045 m"
+  },
+  {
+   "n": "Gletsch",
+   "d": 730
+  },
+  {
+   "n": "Rhône Glacier",
+   "d": 2935
+  },
+  {
+   "n": "Furkastock",
+   "d": 4960,
+   "sub": "2,665 m"
+  }
+ ],
+ "tuzla": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Büyükballıca Tepe",
+   "d": 2570,
+   "sub": "300 m"
+  },
+  {
+   "n": "Meşeli Tepe",
+   "d": 3025
+  },
+  {
+   "n": "Kumgeçidi",
+   "d": 3135
+  }
+ ],
+ "mombasa": [
+  {
+   "n": "Old Town",
+   "d": 940
+  },
+  {
+   "n": "Fortress",
+   "d": 1190
+  },
+  {
+   "n": "Kizingo",
+   "d": 1740
+  },
+  {
+   "n": "Likoni Channel",
+   "d": 3395
+  }
+ ],
+ "sacalobra": [
+  {
+   "n": "Nus de sa Corbata",
+   "d": 155
+  },
+  {
+   "n": "Coll dels Reis",
+   "d": 575,
+   "sub": "682 m"
+  },
+  {
+   "n": "Font de sa Mata",
+   "d": 640
+  },
+  {
+   "n": "Els Castellots",
+   "d": 1590,
+   "sub": "752 m"
+  },
+  {
+   "n": "Torrent d'Es Racó",
+   "d": 3580
+  },
+  {
+   "n": "Sa Calobra",
+   "d": 4480
+  }
+ ],
+ "silkeborg": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Gudenå",
+   "d": 230
+  },
+  {
+   "n": "Resenbro",
+   "d": 260
+  },
+  {
+   "n": "Linå",
+   "d": 1630
+  },
+  {
+   "n": "Skellerup",
+   "d": 1980
+  }
+ ],
+ "aguascalientes": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "El Cedazo",
+   "d": 310
+  },
+  {
+   "n": "Buenavista de Peñuelas",
+   "d": 415
+  }
+ ],
+ "ngorongoro": [
+  {
+   "n": "Ngorongoro Crater",
+   "d": 25,
+   "sub": "2,169 m"
+  },
+  {
+   "n": "Seneto Springs",
+   "d": 2900
+  },
+  {
+   "n": "Lake Magadi",
+   "d": 2970
+  }
  ]
 }
