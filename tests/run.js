@@ -134,7 +134,7 @@ const RELATED = [
   [/^js\/(render|game)\.js$|^css\/style\.css$/, ['browser/startcam.test.mjs']],   // (the camera before the start: its flights, its six start lights)
   [/^js\/render\.js$/, ['browser/ostrenje.test.mjs']],   // (the sharpening in the post pass: casK)
   [/^js\/render(-senca)?\.js$/, ['browser/senca.test.mjs']],   // (the sun's shadow box: its soft edge, H6, js/render-senca.js)
-  [/^js\/render(-vecer)?\.js$/, ['browser/atmos.test.mjs', 'browser/vecer.test.mjs']],   // (the time of day's lights: the evening's, js/render-vecer.js)
+  [/^js\/render(-vecer|-barve)?\.js$/, ['browser/atmos.test.mjs', 'browser/vecer.test.mjs']],   // (the time of day's lights: the evening's, js/render-vecer.js)
   [/^js\/(menu|menu-data)\.js$|^css\/menu\.css$/, ['browser/menu.test.mjs', 'browser/darktip.test.mjs']],
   [/^temni-nacin\.html$/, ['browser/darktip.test.mjs']],
   [/^js\/sence\.js$/, ['browser/menu.test.mjs', 'browser/darktip.test.mjs', 'browser/hud.test.mjs']],
