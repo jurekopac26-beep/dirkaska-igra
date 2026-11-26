@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">
+  <title>Bulgaria</title>
+  <!-- Ratio 3:5. Three equal horizontal bands white, green, red (Constitution, art. 166).
+       Colours: white #FFFFFF, green #00966E, red #D62612. -->
+  <rect x="0" y="0" width="1000" height="200" fill="#FFFFFF"/>
+  <rect x="0" y="200" width="1000" height="200" fill="#00966E"/>
+  <rect x="0" y="400" width="1000" height="200" fill="#D62612"/>
+</svg>

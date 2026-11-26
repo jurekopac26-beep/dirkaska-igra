@@ -524,6 +524,13 @@
   "maxKverts": 632,
   "jsMs": 1.47
  },
+ "sipka": {
+  "calls": 172,
+  "maxCalls": 188,
+  "kverts": 492,
+  "maxKverts": 616,
+  "jsMs": 1.26
+ },
  "meteora": {
   "calls": 171,
   "maxCalls": 205,

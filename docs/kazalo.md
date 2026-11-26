@@ -333,6 +333,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | meteora | Meteora, Grčija | meteora | `js/world-meteora.js` (`PL_LOOK.meteora` za `buildPrelaz`: sivi konglomeratni stebri na skalnih celicah rabe tal, samostani po obrisih iz OSM: kamnite stene, opečnate strehe, kupola na skupino) |
 | gudauri | Gudauri, Gruzija | gudauri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.gudauri`: hoteli in apartmajski bloki (`hotels`), sedežnice s sedeži (`chairs`), daljnovod, plazovna galerija (`portal: 2`), ovce) |
 | kanaba | Kanaba, Uganda | kanaba | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kanaba`: zelena polja na rdeči prsti, pločevinaste strehe, drobnica; vožnja po levi) |
+| sipka | Šipka, Bolgarija | sipka | `js/world-sipka.js` (`PL_LOOK.sipka` za `buildPrelaz`: bukov gozd z redkimi iglavci, kamnit stolp na vrhu po obrisu iz OSM; vožnja po desni) |
 | canaries | Canaries, Sveta Lucija | canaries | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.canaries`: tropski gozd `trop`, morje, hiše; `CESTE.canaries` v `js/world-cesta.js`) |
 | *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | *bangsaen* | *Bang Saen, Tajska (test)* | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
