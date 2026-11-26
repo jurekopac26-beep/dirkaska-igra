@@ -257,9 +257,76 @@
     m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'tuzla service roads'; root.add(m);
   }
 
-  // LK.extra: the service roads, the link, the drift course, the buildings by the circuit and 60-200 m off (OSM outlines as boxes: white or
-  // cream render, grey cladding on the big halls; flat roofs, grey or terracotta); before the crowds and the trees (the buildings kept clear
-  // in tzKeep)
+  // A building by the circuit. OSM holds its outline only (building=yes: no height, no roof, no use) and its height is the track data's
+  // estimate by its footprint (tools/tuzla/build.py): what its walls and its roof carry is plain and generic, none of it surveyed
+  // (docs/proge/tuzla.md), none of it a sign or a name. A darker plinth; windows in a row on the long walls and on the short ones, a door on
+  // a long wall (panes and leaf a hand's width proud of the wall, the panes lighter toward their tops: the sky in them); then by its kind:
+  //   0 a flat roof behind a parapet (its outer, top and inner faces), an air conditioner or two and a hatch on it; two rows of windows
+  //     where it is tall enough for two storeys;
+  //   1 a low hipped roof of tiles (18 degrees at most, the building's height its ridge's) over a 0.45 m eave with its fascia, in courses
+  //     from the eave to the ridge, a shade lighter and darker in turn (seen from above: the rows), the eave's the darkest;
+  //   2 a big hall: cladding, a band of glazing under the eaves of both long walls, roller doors along one, a ridged roof of metal sheets
+  //     at 6 degrees (sheets 2.4 m wide, lighter and darker in turn, a rooflight in every fourth).
+  // Hashed from where it stands (the world's random stream untouched); in the scenery's chunk (no draw of its own; ~300-450 vertices, the 100 m hall ~1000)
+  const TZ_PANE = [[0.15, 0.19, 0.25], [0.31, 0.39, 0.49]], TZ_DOOR = [0.4, 0.36, 0.31], TZ_ROLL = [0.61, 0.65, 0.7], TZ_UNIT = [[0.76, 0.77, 0.78], [0.62, 0.64, 0.66]], TZ_LITE = [0.74, 0.79, 0.8];
+  function tzBld(g, x, y, z, L, W, rot, h, wc, rc, kind) {
+    if (W > L) return tzBld(g, x, y, z, W, L, rot + Math.PI / 2, h, wc, rc, kind);   // (the long side along local x)
+    const c = Math.cos(rot), s = Math.sin(rot), P = (lx, ly, lz) => [x + lx * c - lz * s, y + ly, z + lx * s + lz * c], sc = (cl, k) => [cl[0] * k, cl[1] * k, cl[2] * k];
+    const H = rng((Math.round(x * 10) * 73856093) ^ (Math.round(z * 10) * 19349663) ^ 4421), a = L / 2, b = W / 2, inn = [x, y + h / 2, z], PR = 0.07;
+    // a pane on a wall: sd -1 / 1 the long walls (local z), -2 / 2 the short ones (local x); u along the wall, from y0 to y1 over the ground
+    const pane = (sd, u, w, y0, y1, c0, c1, pr) => { const Q = Math.abs(sd) === 1 ? (uu, yy) => P(uu, yy, sd * (b + pr)) : (uu, yy) => P(sd / 2 * (a + pr), yy, uu);
+      g.quadO(Q(u - w / 2, y0), Q(u + w / 2, y0), Q(u + w / 2, y1), Q(u - w / 2, y1), c0, inn, null, [c0, c0, c1, c1]); };
+    const rise = kind === 1 ? Math.min((b + 0.45) * 0.325, h * 0.4) : kind === 2 ? (b + 0.3) * 0.105 : 0.42, he = h - rise;   // (the walls' top: the eave, the flat roof's deck)
+    box(g, x, y - 0.4, z, L + 0.1, 0.95, W + 0.1, rot, sc(wc, 0.7), null, true);   // the plinth
+    box(g, x, y - 0.4, z, L, he + 0.4, W, rot, wc, kind ? wc : rc, true);
+    if (kind === 2) {
+      // the hall: bays of ~4.8 m; glazing under the eave, a roller door in every third bay of one long wall (the first by its hash)
+      const nb = Math.max(2, Math.round((L - 1.2) / 4.8)), bw = (L - 1.2) / nb, d0 = Math.floor(H() * 3);
+      for (let k = 0; k < nb; k++) { const u = -a + 0.6 + bw * (k + 0.5);
+        for (const sd of [-1, 1]) pane(sd, u, bw - 0.7, he - 1.7, he - 0.6, TZ_PANE[0], TZ_PANE[1], PR);
+        if (k % 3 === d0 && bw > 4.2) pane(1, u, 3.7, 0.1, Math.min(4.3, he - 2.1), sc(TZ_ROLL, 0.86), TZ_ROLL, PR + 0.03); }
+      // its roof: the gables' triangles flush with the short walls, the sheets from the eaves to the ridge
+      const ae = a + 0.3, be = b + 0.3, ns = Math.max(2, Math.round(2 * ae / 2.4)), sw = 2 * ae / ns, top = [x, y + he - 3, z];
+      for (const sd of [-1, 1]) g.triO(P(sd * a, he, -b), P(sd * a, he, b), P(sd * a, h, 0), wc, inn);
+      for (let k = 0; k < ns; k++) for (const sd of [-1, 1]) { const u0 = -ae + sw * k, u1 = u0 + sw, f = (k % 2 ? 0.95 : 1.04) * (0.97 + 0.06 * H());
+        g.quadO(P(u0, he - 0.03, sd * be), P(u1, he - 0.03, sd * be), P(u1, h, 0), P(u0, h, 0), sc(rc, f), top);
+        if (k % 4 === 1) { const e = (t) => [he - 0.03 + (h - he + 0.03) * t + 0.05, sd * be * (1 - t)], [y0, z0] = e(0.22), [y1, z1] = e(0.8);
+          g.quadO(P(u0 + 0.35, y0, z0), P(u1 - 0.35, y0, z0), P(u1 - 0.35, y1, z1), P(u0 + 0.35, y1, z1), TZ_LITE, top); } }
+      return;
+    }
+    // the windows: every ~3.1 m along the long walls, ~3.4 m along the short ones; a door in place of one on a long wall's ground floor
+    const rows = kind === 0 && he > 4.6 ? 2 : 1, st = he / rows, wy = Math.min(1.25, st - 0.95 - 0.3), nl = Math.max(1, Math.floor((L - 1.6) / 3.1)), ns = Math.floor((W - 1.6) / 3.4), dk = Math.floor(H() * nl), ds = H() < 0.5 ? -1 : 1;
+    for (let r = 0; r < rows; r++) {
+      for (let k = 0; k < nl; k++) for (const sd of [-1, 1]) { const u = -a + 0.8 + (L - 1.6) / nl * (k + 0.5);
+        if (!r && k === dk && sd === ds) pane(sd, u, 1.15, 0.12, Math.min(2.2, he - 0.25), sc(TZ_DOOR, 0.85), TZ_DOOR, PR + 0.03);
+        else if (wy > 0.45) pane(sd, u, 1.45, r * st + 0.95, r * st + 0.95 + wy, TZ_PANE[0], TZ_PANE[1], PR); }
+      if (wy > 0.45) for (let k = 0; k < ns; k++) for (const sd of [-2, 2]) pane(sd, -b + 0.8 + (W - 1.6) / ns * (k + 0.5), 1.3, r * st + 0.95, r * st + 0.95 + wy, TZ_PANE[0], TZ_PANE[1], PR);
+    }
+    if (kind === 1) {
+      // the hipped roof: the eave's rectangle shrinking to the ridge, a course at a time; the fascia under the eave
+      const ae = a + 0.45, be = b + 0.45, n = Math.max(2, Math.min(5, Math.round(Math.hypot(be, rise) / 1.1))), low = [x, y + he - 3, z], fc = sc(wc, 0.62);
+      const R4 = (t, dy) => { const u = ae - be * t, v = be * (1 - t), yy = he + rise * t + (dy || 0); return [P(-u, yy, -v), P(u, yy, -v), P(u, yy, v), P(-u, yy, v)]; };
+      const F0 = R4(0, -0.18), F1 = R4(0); for (let e = 0; e < 4; e++) g.quadO(F0[e], F0[(e + 1) % 4], F1[(e + 1) % 4], F1[e], fc, inn);
+      for (let k = 0; k < n; k++) { const A = R4(k / n), B = R4((k + 1) / n), f = k === 0 ? 0.84 : k === n - 1 ? 0.9 : k % 2 ? 0.94 : 1.03;
+        for (let e = 0; e < 4; e++) { const cb = sc(rc, f * (e % 2 ? 0.96 : 1) * (e > 1 ? 1.03 : 1));
+          if (k === n - 1 && e % 2) g.triO(A[e], A[(e + 1) % 4], B[e], cb, low);   // (a hip's last course: a triangle up to the ridge's end)
+          else g.quadO(A[e], A[(e + 1) % 4], B[(e + 1) % 4], B[e], cb, low); } }
+      return;
+    }
+    // the flat roof: the parapet round the deck (the walls carried up 0.42 m, a paler coping, the inner face in its own shade), what stands on it
+    const pw = 0.26, C4 = [[-a, -b], [a, -b], [a, b], [-a, b]], I4 = C4.map(([u, v]) => [u - Math.sign(u) * pw, v - Math.sign(v) * pw]), up = [x, y + he - 3, z], mid = [x, y + h + 3, z];
+    for (let e = 0; e < 4; e++) { const [u0, v0] = C4[e], [u1, v1] = C4[(e + 1) % 4], [i0, j0] = I4[e], [i1, j1] = I4[(e + 1) % 4];
+      g.quadO(P(u0, he, v0), P(u1, he, v1), P(u1, h, v1), P(u0, h, v0), wc, inn);
+      g.quadO(P(u0, h, v0), P(u1, h, v1), P(i1, h, j1), P(i0, h, j0), sc(wc, 1.04), up);
+      g.quadO(P(i0, he, j0), P(i1, he, j1), P(i1, h, j1), P(i0, h, j0), sc(wc, 0.8), [(P(u0, h, v0)[0] + P(u1, h, v1)[0]) / 2 * 2 - mid[0], mid[1], (P(u0, h, v0)[2] + P(u1, h, v1)[2]) / 2 * 2 - mid[2]]); }
+    const units = L > 8 && W > 6 ? 1 + Math.floor(H() * 2) : 0;
+    for (let k = 0; k < units; k++) { const q = P((H() - 0.5) * (L - 4.5), he, (H() - 0.5) * (W - 4.5)); box(g, q[0], q[1], q[2], 0.95, 0.62, 0.72, rot + (H() < 0.5 ? 0 : Math.PI / 2), TZ_UNIT[0], TZ_UNIT[1], true); }
+    if (units) { const q = P((H() < 0.5 ? -1 : 1) * (a - 1.6), he, (H() - 0.5) * (W - 3.5)); box(g, q[0], q[1], q[2], 0.95, 0.28, 0.95, rot, sc(TZ_UNIT[1], 0.92), TZ_UNIT[1], true); }
+  }
+
+  // LK.extra: the service roads, the link, the drift course, the buildings by the circuit and 60-200 m off (OSM outlines: white or cream
+  // render, grey cladding on the big halls; their roofs grey and flat or of terracotta tiles: tzBld); before the crowds and the trees (the
+  // buildings kept clear in tzKeep)
   function tzExtra(o) {
     const { scen } = o, sk = API.T.def.sk || {}, R = rng(9037), st = { road: 0, track: 0, link: 0, drift: 0, buildings: 0, runoff: 0 };
     tzRunoff(o, st);   // (before the service roads: of the meshes under the root so far)
@@ -268,8 +335,8 @@
     for (const B of [b6, TZ_BLD2]) for (let k = 0; k < B.length; k += 6) {
       const [x, z, L, W, deg, h] = B.slice(k, k + 6), rot = deg * Math.PI / 180, c = Math.cos(rot), s = Math.sin(rot);
       let y = 1e9; for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.min(y, nrGround(x + (a * L * c - b * W * s) / 2, z + (a * L * s + b * W * c) / 2));
-      const wc = h > 6 ? WALL[3] : WALL[Math.floor(R() * 3)], rc = ROOF[h > 6 ? 0 : Math.floor(R() * 3)];
-      box(scen.get(x, z), x, y - 0.4, z, L, h + 0.4, W, rot, wc, rc, true);
+      const wc = h > 6 ? WALL[3] : WALL[Math.floor(R() * 3)], ri = h > 6 ? 0 : Math.floor(R() * 3);   // (the colours as they were drawn for the boxes)
+      tzBld(scen.get(x, z), x, y, z, L, W, rot, h, wc, ROOF[ri], h > 6 ? 2 : ri === 1 ? 1 : 0);
       st.buildings++;
     }
     return st;
