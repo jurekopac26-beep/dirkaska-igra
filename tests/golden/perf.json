@@ -182,11 +182,11 @@
   "jsMs": 1.09
  },
  "furka": {
-  "calls": 173,
-  "maxCalls": 211,
-  "kverts": 384,
-  "maxKverts": 532,
-  "jsMs": 1.13
+  "calls": 182,
+  "maxCalls": 222,
+  "kverts": 433,
+  "maxKverts": 593,
+  "jsMs": 1.14
  },
  "santoantao": {
   "calls": 179,
@@ -196,11 +196,11 @@
   "jsMs": 1.19
  },
  "gudauri": {
-  "calls": 179,
-  "maxCalls": 219,
-  "kverts": 515,
-  "maxKverts": 690,
-  "jsMs": 1.11
+  "calls": 186,
+  "maxCalls": 229,
+  "kverts": 554,
+  "maxKverts": 740,
+  "jsMs": 1.08
  },
  "ngorongoro": {
   "calls": 161,
