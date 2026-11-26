@@ -3848,5 +3848,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "4e44a040775a2f96e1f446a5"
+ },
+ "tatev/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 237.74,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "535c131463fc782f40c137f7"
+ },
+ "tatev/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 279.71,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "74c6950989f95ad47817d621"
+ },
+ "tatev/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 214.74,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e7ecdb03327989cf4fabc088"
+ },
+ "tatev/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 217.8,
+  "spins": 0,
+  "walls": 12,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c0fb6f84ff950e480396101c"
+ },
+ "tatev/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 238.26,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "26b790fda7626b915436f131"
  }
 }
