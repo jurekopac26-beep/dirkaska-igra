@@ -265,17 +265,47 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
   diffuseColor.rgb *= 1.0 - 0.3 * ceEm * ( 1.0 - smoothstep( ceE, ceE + 0.05, ceEd ) );
   diffuseColor.rgb = mix( diffuseColor.rgb, texture2D( uCeM, vec2( - ceEd * uCeE.z, ceS * uCeE.w ) ).rgb * ceQ.rgb * ( uCeE.y * ceWet ), ceSh );` : ''}
 }`;
+  /* ---- Grafika AAA, SR1 (docs/grafika-aaa.md, N1-N9): the sun's glint on the aggregate's stones (Tex's zrno(): their tilts and their
+     gloss), the dry road's sparkle a camera sees towards the sun. Lambert lights per vertex: here the stone's own normal, a half vector
+     to the sun (the first directional light) and the shadow the vertex's light already holds (no second look at the shadow map). It
+     fades out with the distance (the mipmaps average the stones away before that) and with the wet (ceWet: the darkened colour of
+     applyRoad; the wet road's own look stays as it was). Two samples of the tile, turned and scaled apart: no repeat to see ---- */
+  const GLINT = `
+#if NUM_DIR_LIGHTS > 0
+{
+  float ceZw = smoothstep( 0.93, 0.995, dot( diffuse, vec3( 1.0 ) ) * uCeD.w );
+  float ceZd = length( vCeV ), ceZf = ceZw * ( 1.0 - smoothstep( uCeZ.y * 0.4, uCeZ.y, ceZd ) );
+  if ( ceZf > 0.002 ) {
+    vec4 ceG1 = texture2D( uCeG, vCe * uCeZ.x );
+    vec4 ceG2 = texture2D( uCeG, vec2( vCe.y, - vCe.x ) * ( uCeZ.x * 0.73 ) + 0.37 );
+    vec3 ceNn = normalize( vCeNv ), ceXv = ( viewMatrix * vec4( 1.0, 0.0, 0.0, 0.0 ) ).xyz;
+    vec3 ceTt = normalize( ceXv - ceNn * dot( ceNn, ceXv ) ), ceBt = cross( ceNn, ceTt );
+    vec2 ceTl = ( ceG1.rg + ceG2.rg - 1.0 ) * 2.0;
+    vec3 ceNs = normalize( ceNn + ceTt * ceTl.x + ceBt * ceTl.y );
+    vec3 ceL = directionalLights[ 0 ].direction, ceH = normalize( ceL + vCeV / max( ceZd, 0.001 ) );
+    float ceGl = max( ceG1.b, ceG2.b ), ceNh = max( dot( ceNs, ceH ), 0.0 );
+    float ceLf = dot( vLightFront * BRDF_Diffuse_Lambert( diffuseColor.rgb ), vec3( 1.0 ) );
+    float ceSm = ceLf > 1e-4 ? clamp( dot( reflectedLight.directDiffuse, vec3( 1.0 ) ) / ceLf, 0.0, 1.0 ) : 0.0;
+    reflectedLight.directDiffuse += directionalLights[ 0 ].color * ( uCeZ.z * ceZf * ceSm * ceGl * ceGl * pow( ceNh, uCeZ.w ) * step( 0.0, dot( ceNn, ceL ) ) );
+  }
+}
+#endif
+#include <aomap_fragment>`;
   function roadMat(base, T, cfg, P, V) {
-    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta' + (V.rob ? 'R' : '') + (V.paint ? 'P' : '') + '|' + base.customProgramCacheKey(), frag = roadFrag(V);
+    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta' + (V.rob ? 'R' : '') + (V.paint ? 'P' : '') + (V.zrno ? 'Z' : '') + '|' + base.customProgramCacheKey(), frag = roadFrag(V);
     const U = { uCeN: { value: noiseTex() }, uCeP: { value: P.tex }, uCeA: { value: new THREE.Vector4(1 / T.len, dirka, cfg.kPrah, cfg.kOlje) },
       uCeB: { value: new THREE.Vector4(cfg.kMadez, cfg.kOdsek, cfg.kLise, cfg.kProge || 0) }, uCeC: { value: new THREE.Vector4(cfg.sPrah, dirka ? 0 : 0.35, dirka ? 0 : 0.2, cfg.kKol || 0) }, uCeD: { value: new THREE.Vector4(cfg.prah[0], cfg.prah[1], cfg.prah[2], 1 / Math.max(0.01, base.color.r + base.color.g + base.color.b)) } };
     if (V.rob) { U.uCeM = { value: V.rob.tex }; U.uCeE = { value: new THREE.Vector4(cfg.rob, TMAX, V.rob.uv[0], V.rob.uv[1]) };
       U.uCeF = { value: new THREE.Vector4(Math.max(0, (cfg.robV || 0) - cfg.rob), cfg.kRobV > 0 && cfg.robV > cfg.rob ? 0.8 - 0.2 * cfg.kRobV : 2, 0, 0) }; }
+    if (V.zrno) { U.uCeG = { value: V.zrno.tex }; U.uCeZ = { value: new THREE.Vector4(1 / V.zrno.tile, V.zrno.dal, V.zrno.k, V.zrno.sij) };
+      m.ceZrno = V.zrno.tex; }   // (a key of the material's own: render.js's buildWorld finds it there and sends the shared picture up with the others, N3)
     m.onBeforeCompile = (sh, r) => {
       prev.call(m, sh, r);   // (whatever the builder's material has in its shader already)
       Object.assign(sh.uniforms, U);
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vCe;' + (V.rob ? '\nvarying float vCeZ;' : '')).replace('#include <begin_vertex>', `#include <begin_vertex>\nvCe = vec2( uv.y * ${TILE.toFixed(1)}, uv.x * ${TILE.toFixed(1)} );`);
       if (V.rob) sh.vertexShader = sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvCeZ = - mvPosition.z;');
+      if (V.zrno) { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCeV, vCeNv;').replace('#include <project_vertex>', '#include <project_vertex>\nvCeV = - mvPosition.xyz; vCeNv = normalize( transformedNormal );');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeG; uniform vec4 uCeZ; varying vec3 vCeV, vCeNv;').replace('#include <aomap_fragment>', GLINT); }
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN, uCeP; uniform vec4 uCeA, uCeB, uCeC, uCeD; varying vec2 vCe;' + (V.rob ? '\nuniform sampler2D uCeM; uniform vec4 uCeE, uCeF; varying float vCeZ;' : ''))
         .replace('#include <color_fragment>', '#include <color_fragment>' + frag);
     };
@@ -318,7 +348,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
   const TONE = [0.40, 0.41, 0.43];   // (the asphalt texture's average tone, Tex's asphalt(): what shows where the paint is worn through)
 
   /* ---- at the end of a world's build (World's finish): the track's road and paint take their worn materials ---- */
-  function finish(o, tex, T) {
+  function finish(o, tex, T, tier) {
     const cfg = T && T.def && PROGE[T.def.id]; o.cesta = null;
     if (!cfg || !o || !o.root || !o.asphaltMat || !o.asphaltMat.isMeshLambertMaterial || !tex || !tex.asphalt || o.asphaltMat.map !== tex.asphalt) return;
     const N = T.N, ds = T.ds, open = T.open, HY = (i) => T.hy[i];
@@ -445,7 +475,8 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
       if (!open && !mid && hi - lo > len / 2) for (let k = 0; k < n; k++) if (A[k * 2] < len / 2) A[k * 2] += len;   // (a chunk across the lap's seam: its metres run on, as the road's UVs do)
       g.setAttribute('ceSO', new THREE.BufferAttribute(A, 2));
     };
-    const V = { paint: road.some(m => !!m.geometry.attributes.paint), rob: cfg.rob > 0 && tex.makadam ? robData() : null };
+    const Z = zrno(T, tier), V = { paint: road.some(m => !!m.geometry.attributes.paint), rob: cfg.rob > 0 && tex.makadam ? robData() : null, zrno: Z && tex.zrno ? Object.assign({ tex: tex.zrno }, Z) : null };
+    if (V.zrno) info.zrno = 1;
     const P = profil(T, cfg, seed, V.rob), rm = roadMat(o.asphaltMat, T, cfg, P, V); if (o.ownTex) o.ownTex.push(P.tex);
     for (const m of road) { m.material = rm; info.asfalt++; }
     for (const m of cand) {
@@ -467,5 +498,15 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     const d = T && T.def; if (!d || d.test || d.pending) return 0;
     const z = OZNAKE[d.id]; return z && z[kljuc] ? 1 : 0;
   }
-  World.cesta = { finish, crte, precne, oznake, OZNAKE, CRTE, PROGE, BELA, RUMENA };
+  /* ---- Grafika AAA, SR1: the asphalt's grain in the sun's light, gated per track (default none: 0; a frozen track never). ZRNO[id]:
+     tile (m: the grain texture's tile, Tex's zrno()), dal (m: where the glint has faded out), k (its strength, of the sun's light), sij
+     (the stones' polish: the glint's width). Only from SREDNJA up (tier 1); NIZKA keeps the grain baked into the asphalt's colour alone
+     (0 ms). spa: the pilot (N4/N5); an assumption, no source on its own mix yet: a circuit's fine dense-graded asphalt of crushed stone. on: 0 until N9's
+     measurement on a weak and a mid phone (the coordination's decision); a capture turns it on with ZRNO.spa.on = 1 before the build ---- */
+  const ZRNO = { spa: { on: 0, tile: 1.0, dal: 38, k: 0.42, sij: 90 } };
+  function zrno(T, tier) {
+    const d = T && T.def; if (!d || d.test || d.pending || (tier == null ? 2 : tier) < 1) return null;
+    const z = ZRNO[d.id]; return z && z.on ? z : null;
+  }
+  World.cesta = { finish, crte, precne, oznake, OZNAKE, zrno, ZRNO, CRTE, PROGE, BELA, RUMENA };
 })();
