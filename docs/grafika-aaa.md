@@ -4,6 +4,8 @@ Lastnik: partyslo, od 26. 11. 2026. Samo raziskava, brez kode v igri (`js/render
 
 Stanje: zasnova po preverjanju; izvedba šele po »ok« na strani Odločitve. Ta PR ne spreminja nobene datoteke igre.
 
+Stanje točk po odprtih PR (26. 11.): H0 in H6 #1116; H2′ #1120; SR1 #1123; SR4a #1124; V4 #1125; H1 #1126 (čaka kartico); SR3′ #1128; V1 #1129; G0 #1121; zbirka #1130. V2 zaprt (»ne izplača se«), V5 in V6 zavrnjena; V3′ v delu.
+
 Vse »ms« so ocene za šibke telefone iz števila operacij in branj tekstur, ne meritve na napravi; kjer številka stoji sama, piše »ocena«. Izjema so časi slik iz #1104, navedeni, kot so zapisani tam. Klici risanja in oglišča so šteti z ovojem iz vrat. Naprave: »šibki telefoni« (NIZKA, `normal`), »referenčni srednji telefon« (SREDNJA, `high`), »zmogljiv računalnik« (VISOKA). Zamrznjene proge (45 s `test`/`pending` in Bathurst, Avstralija po odločitvi) niso nikoli cilj. Številke vrstic so približne.
 
 Slike zdaj in potem (predogled) so samo na kartici na strani Odločitve: repozitorij je javen, slik za vprašanja ne shranjujemo.
