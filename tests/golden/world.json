@@ -1935,16 +1935,16 @@
   }
  },
  "elcastano": {
-  "meshes": 906,
-  "verts": 910880,
-  "instances": 19712,
+  "meshes": 902,
+  "verts": 1268152,
+  "instances": 37588,
   "props": 312,
   "crowd": 51,
-  "world": "6e81e4d2",
+  "world": "884d245b",
   "propsHash": "5802b953",
   "floor": "d7b3cd7d/16660",
   "groups": {
-   "-:MeshLambertMaterial": "f618a184",
+   "-:MeshLambertMaterial": "f183316e",
    "-:MeshPhongMaterial": "90f6928",
    "-:MeshBasicMaterial": "e58ba41f",
    "irFar:MeshLambertMaterial": "5fce813c",
@@ -1953,9 +1953,9 @@
    "ao:MeshBasicMaterial": "3f5cad75",
    "tyremarks:MeshBasicMaterial": "f7f0f7c",
    "roadwear:MeshLambertMaterial": "34ee0d8d",
-   "life:MeshLambertMaterial": "39381c24",
-   "lifeShadow:MeshBasicMaterial": "6b9fda58",
-   "life:MeshBasicMaterial": "54f4e429"
+   "life:MeshLambertMaterial": "b639ca15",
+   "lifeShadow:MeshBasicMaterial": "18b12e76",
+   "life:MeshBasicMaterial": "89c19ef8"
   }
  }
 }
