@@ -261,9 +261,9 @@
  "lombok": {
   "calls": 219,
   "maxCalls": 252,
-  "kverts": 644,
-  "maxKverts": 753,
-  "jsMs": 1.02
+  "kverts": 648,
+  "maxKverts": 760,
+  "jsMs": 1.27
  },
  "buriram": {
   "calls": 207,
