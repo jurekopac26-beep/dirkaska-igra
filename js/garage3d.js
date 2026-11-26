@@ -7117,6 +7117,7 @@ const Garage3D = (function () {
     if (up) spawn((function* () { yield* lowerCar(cur, false, 0.5); yield* armsTo(0, 1.1); yield* carriageTo(LIFT.c0, 0.25); stowed = true; })());
     spawn((function* () { yield* tyrePass(PK.Q[0], PK.Q[1], 1.0, null, PK); bridgeRest(); yield* par(armRest(0, 2.0), armRest(1, 2.0)); off = true; })());
     if (up) { yield* waitFor(() => lift < 1e-3, 3); fitLog('down'); }
+    if (el === 'dim_gum' && self.GarazaDimGum) yield* GarazaDimGum.show({ cv: cur, puffs, eng, SFX, tween, wait, camTo, view, fitLog, idleOn });   // (I5: the smoke in its new colour, js/garaza-anim/dim-gum.js)
     SFX.ping(1760); hud('done', { kind: el });
     yield* waitFor(() => off && stowed, 6); fin = true; yield* par(home(1.4), rglUnstay(1.4));
   }
