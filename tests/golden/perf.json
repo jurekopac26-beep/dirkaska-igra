@@ -58,9 +58,9 @@
  "harju": {
   "calls": 190,
   "maxCalls": 229,
-  "kverts": 541,
+  "kverts": 542,
   "maxKverts": 780,
-  "jsMs": 0.4
+  "jsMs": 0.52
  },
  "bathurst": {
   "calls": 175,
@@ -91,11 +91,11 @@
   "jsMs": 1
  },
  "montreal": {
-  "calls": 209,
+  "calls": 224,
   "maxCalls": 272,
-  "kverts": 552,
-  "maxKverts": 682,
-  "jsMs": 1.22
+  "kverts": 587,
+  "maxKverts": 783,
+  "jsMs": 2.49
  },
  "livorno": {
   "calls": 155,
@@ -135,9 +135,9 @@
  "izoard": {
   "calls": 190,
   "maxCalls": 232,
-  "kverts": 425,
+  "kverts": 427,
   "maxKverts": 543,
-  "jsMs": 0.92
+  "jsMs": 1.58
  },
  "pembrey": {
   "calls": 225,
@@ -319,7 +319,7 @@
   "maxCalls": 211,
   "kverts": 308,
   "maxKverts": 371,
-  "jsMs": 0.62
+  "jsMs": 0.9
  },
  "ghoufi": {
   "calls": 143,
@@ -333,7 +333,7 @@
   "maxCalls": 179,
   "kverts": 367,
   "maxKverts": 467,
-  "jsMs": 0.6
+  "jsMs": 0.84
  },
  "mombasa": {
   "calls": 132,
@@ -357,11 +357,11 @@
   "jsMs": 0.57
  },
  "eljem": {
-  "calls": 117,
-  "maxCalls": 135,
+  "calls": 118,
+  "maxCalls": 136,
   "kverts": 347,
-  "maxKverts": 495,
-  "jsMs": 0.47
+  "maxKverts": 496,
+  "jsMs": 0.69
  },
  "isuna": {
   "calls": 155,
@@ -410,7 +410,7 @@
   "maxCalls": 290,
   "kverts": 631,
   "maxKverts": 748,
-  "jsMs": 0.63
+  "jsMs": 0.96
  },
  "kanaba": {
   "calls": 208,
