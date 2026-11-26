@@ -949,6 +949,56 @@
   "nan": false,
   "digest": "01dee7ebbc9c2e702ed708cb"
  },
+ "stavrovouni/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 148,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4ef6f140eb3fe62936e68ae1"
+ },
+ "stavrovouni/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 177.01,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "41d049fb599474dde0980acb"
+ },
+ "stavrovouni/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 133.59,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "df8f44c7c9904068e8b4c667"
+ },
+ "stavrovouni/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 136.73,
+  "spins": 1,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "638556cebc5bcc13b9741e80"
+ },
+ "stavrovouni/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 146.55,
+  "spins": 1,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0cafdaaaa930a1818f3cb9d2"
+ },
  "silkeborg/cs": {
   "finished": 13,
   "cars": 13,
