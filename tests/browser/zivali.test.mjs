@@ -11,7 +11,8 @@
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'katu', 'bathurst', 'spa', 'caracoles', 'medvode'];   // (Spa in Irohazaka's place, a test track since 12. 11. 2026; Medvode: scenes at their real places with things of their own, its stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026; Ouninpohja, a test track since 8. 11. 2026, has no animals' scenes)
+const CIRC = ['nring', 'bathurst', 'spa'];   // (circuits: no animals since 24. 11. 2026, the user's choice; their glades keep only the things)
+const TRACKS = ['katu', 'caracoles', 'medvode'];   // (Spa in Irohazaka's place, a test track since 12. 11. 2026; Medvode: scenes at their real places with things of their own, its stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026; Ouninpohja, a test track since 8. 11. 2026, has no animals' scenes)
 // (how many glades a track must have: Katu-Jaryk's ladder of hairpins keeps each leg's run-off short of the middle between the legs since the
 // serpentines' barriers of Track._buildEdges (limitNear, 6. 11. 2026), so fewer spots fit between them: 5 glades, before 11)
 const MIN = { katu: 4 };
@@ -20,9 +21,16 @@ const srv = await serve();
 const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'high', shadows: 1, camera: 'chase' }, { width: 640, height: 360 }, { seed: 7 });
-  for (const id of TRACKS.concat(['jezero'])) {
+  for (const id of CIRC.concat(TRACKS, ['jezero'])) {
     await page.goto(srv.base + '/index.html?proga=' + id + '&t=0.5', { timeout: 300000 });
     await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
+    if (CIRC.includes(id)) {
+      const c = await page.evaluate(() => { const w = Render.world, st = w.lifeStats, grp = w.root.getObjectByName('life'); let moving = 0;
+        if (grp) grp.traverse(m => { const u = m.isMesh && m.material.userData; if (u && (u.U || u.herd || u.soft)) moving++; });
+        return { animals: st ? st.animals : 0, groups: st ? st.groups : 0, live: st ? st.live : 0, things: st ? st.things : 0, moving, roos: !!(w.dyn && w.dyn.roos), no: World.noAnimals(window.__game.race.track.def) }; });
+      T.check(`${id}: a circuit has no animals (no scene, no herd, no live one, no kangaroos; its glades keep their things)`, c.no && !c.animals && !c.groups && !c.live && !c.moving && !c.roos, JSON.stringify(c));
+      continue;
+    }
     const r = await page.evaluate((id) => {
       const w = Render.world, st = w.lifeStats, Z = World.lifeTable[id], SOC = World.lifeSoc, SC = World.lifeScenes[id], A = World.api, T = window.__game.race.track;
       const grp = w.root.getObjectByName('life'); let meshes = 0, liveMeshes = 0, verts = 0, herdMeshes = 0, herdAnimals = 0;

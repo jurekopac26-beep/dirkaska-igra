@@ -755,9 +755,14 @@
 
   /* ---------------- the build: World.life(o) at the end of every world's build ---------------- */
   const LIVE_R = 150;   // (a live one farther than this from the camera is hidden: one draw call less)
+  // the menu's group 'circuit' (js/menu.js, gr): not a test track, a rally, a descent against the clock or an open road
+  World.noAnimals = (d) => !!d && !d.test && !d.pending && !(d.rally || d.descent && d.timeTrial) && !d.open;
   World.life = function (o) {
     const A = World.api, T = A.T, def = T && T.def; if (!def || def.test || !o || !o.root) return null;
     const Z = ZIV[def.id]; if (!Z || (Z.nizka === false && World.api.LOD.tier === 0)) return null;
+    // a circuit has no animals (the user's choice of 24. 11. 2026: »dirkališča brez živali«): no scenes, the glades only their things; the road
+    // and rally tracks keep theirs. A frozen track (pending) stays as it was
+    const noAnim = World.noAnimals(def); if (noAnim && !Z.t.length) return null;
     const LOD = A.LOD, R = A.rng(1777 + [...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) % 100000), gH = o.groundH;
     if (typeof gH !== 'function') return null;
     const W = World.woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
@@ -817,7 +822,7 @@
     // 1) the track's scenes (sixteen tracks, two on two of them), first: the glades keep away from them. A scene with its place (m, side, b: where
     // it really is) there; the others where the search finds a flat open spot, 200 m or more from the scene before
     const done = [];
-    for (const Sc of [].concat(SCENE[def.id] || [])) {
+    for (const Sc of noAnim ? [] : [].concat(SCENE[def.id] || [])) {
       let c = null;
       if (Sc.m != null) { const s = (T.startS || 0) + Sc.m, i = T.idx(((s % T.len) + T.len) % T.len), bar = Sc.side > 0 ? T.br[i] : T.bl[i], off = Sc.side * (bar + Sc.b);
         c = [0, i, Sc.side, T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, Sc.b]; }
@@ -874,7 +879,8 @@
       const deep = false;   // (the user: »samo na vidnih mestih«: none deep in the woods any more, all near the road where the chase camera sees them)
       const i = T.idx(((s + (tr ? (R() - 0.5) * step * 0.6 : 0)) % T.len + T.len) % T.len), side = R() < 0.5 ? -1 : 1, bar = side > 0 ? T.br[i] : T.bl[i];
       const b = deep ? 30 + R() * 40 : 3.5 + Math.pow(R(), 1.3) * 16, off = side * (bar + b), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;   // (near the road: the chase camera looks steeply down, a glade deep in the woods hides under the crowns)
-      const wantThing = Z.t.length && R() < 0.34, kind = wantThing ? Z.t[Math.floor(R() * Z.t.length)] : Z.a[Math.floor(R() * Z.a.length)];
+      const wantThing = Z.t.length && R() < 0.34; if (noAnim && !wantThing) break;
+      const kind = wantThing ? Z.t[Math.floor(R() * Z.t.length)] : Z.a[Math.floor(R() * Z.a.length)];
       const crew = wantThing ? null : company(kind, R), hr = crew ? HERD_SP((tpl(crew[0][0]) || { size: 1 }).size) * Math.sqrt(crew.length) : 0;
       const alone = crew && crew.length === 1, rr = wantThing ? ROOM[kind] || 3 : Math.max(alone ? 5.2 : 4.4, hr + 2.4);
       if (cl(x, z) < rr + 2.5) continue;   // (not on another part of the road, its verges or barriers)

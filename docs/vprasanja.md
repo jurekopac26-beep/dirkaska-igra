@@ -116,6 +116,27 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `ptice-podrobnost-1060`
+
+Ptice so zdaj ploščat trikotnik s kriloma (3 trikotniki). Tri podrobnejše oblike, vse v enem klicu risanja, največ 16 ptic (oglišča največ 384 / 672 / 1056); barve so zaenkrat odtenki sedanje barve, barve vrst pridejo po virih. PR #1060.
+
+1. A: 8 trikotnikov (trup, glava, rep, krilo v 2 delih).
+2. **B: 14 trikotnikov (še kljun, krilo v 3 delih, senčenje) (priporočeno).**
+3. C: 22 trikotnikov (še prsti peruti, vrat, širši rep).
+4. Pusti sedanjo ptico.
+
+Odgovor (uporabnik, 24. 11.): **3 · C, 22 trikotnikov.** Izvedeno na veji PR #1060.
+
+### `ptice-skorci-1060`, `ptice-viri-1060`
+
+Odgovora (uporabnik, 25. 11.): škorci **a** (navadna ptica, brez oblaka in novega razreda); viri **1** (gostitelji iz `docs/ptice.md` naj bodo dovoljeni v okolju; seja jih javi koordinaciji).
+
+### `ptice-vrste-1060`
+
+Slike zdaj/potem: žerjavi v klinu (Kågeröd), črni jastrebi v kroženju (Aguascalientes). Možnosti: 1 · ok, na `main` (priporočeno); 2 · popravi; 3 · brez vrst. 
+
+Odgovor (uporabnik, 26. 11.): **1 · Ok, tako na main.**
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.

@@ -96,7 +96,7 @@ async function speech() {
     return { herd: ahead[0], from: Math.round(P.q.s), steps: k, n0: SfxOkolje.levels().n }; });
   const H = []; if (h0) for (let k = 0; k < 14; k++) H.push(await frame(0.4));
   const hl = H.length ? H[H.length - 1].L.n : {};
-  T.check('Spa: the cows\' bells as the car passes a herd', !!h0 && H.some(x => x.L.herd) && hl.herds > h0.n0.herds && hl.strikes > h0.n0.strikes, JSON.stringify({ h0, at: H.map(x => [x.s, x.L.herd ? 1 : 0]), n: hl }));
+  T.check('Spa, a circuit: no animals (docs/ptice.md), so no herd by the road and no cows\' bells', !h0 && !H.length, JSON.stringify({ h0, at: H.map(x => [x.s, x.L.herd ? 1 : 0]), n: hl }));
 
   // Marrakesh: its traffic, its pigeons (now and then: the test's chance)
   await startTrack(page, 'marrakesh');
@@ -159,7 +159,7 @@ try {
   // (nabor 3: the herds where World.life put cows or sheep by the road, a town's traffic and pigeons, a circuit's announcer by its stands)
   const cnt = (id, z) => Z[id] ? Z[id].rows.filter(r => r[2] === z).length : 0, list = (z) => ids.filter(id => has(id, z));
   const sets = JSON.stringify({ krave: list('krave'), ovce: list('ovce'), mesto: list('mesto'), razglas: list('razglas') });
-  T.check('Spa: its herds of cows by the road, the announcer by the stands; Red Bull Ring: cows', cnt('spa', 'krave') >= 3 && has('spa', 'razglas') && has('rbring', 'krave'), sets);
+  T.check('Spa: the announcer by the stands; no herds on a circuit (Spa, Red Bull Ring: docs/ptice.md), herds by an open road (Rio do Rastro)', has('spa', 'razglas') && !has('spa', 'krave') && !has('rbring', 'krave') && has('rastro', 'krave'), sets);
   T.check('Marrakesh: the town (its traffic, its pigeons) and the announcer; Bathurst: the announcer, no town', has('marrakesh', 'mesto') && has('marrakesh', 'razglas') && has('bathurst', 'razglas') && !has('bathurst', 'mesto'), sets);
   T.check('no announcer on an open road (Rio do Rastro), no herd at Medvode, no wind of ours at Pikes Peak (its own: js/sfx.js)', Z.rastro && !has('rastro', 'razglas') && !has('medvode', 'krave') && Z.pikes && !has('pikes', 'veter'), sets);
 

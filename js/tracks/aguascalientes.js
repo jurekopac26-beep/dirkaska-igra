@@ -28,6 +28,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Aguascalientes',
     grassNat: 0.45, lawn: [1.06, 1.0, 0.8],
     zivali: { a: ['coyote', 'hare', 'horse'], t: ['windpump', 'waterTank'], open: true },
+    ptice: 'jastreb',   // (the birds over it: the black vulture, circling; BIRD_KIND in js/render.js, the sources in docs/ptice.md)
     id: 'aguascalientes', name: 'Aguascalientes, Mehika', theme: 'aguascalientes', laps: 5, halfWidth: 7,
     desc: "Oval na visoki planoti južno od mesta Aguascalientes v osrednji Mehiki: 1,34 km v nasprotni smeri urinega kazalca, štirje levi zavoji v dveh polkrogih, okoli 1860 m nad morjem. Bel betonski zid z rjavo lovilno mrežo, zavita glavna tribuna z ložami in dva stolpa ob ciljni ravnini, v notranjosti ovinkasta cesta z malim predorom in boksi za ograjo, kjer čakajo mehaniki. Suha trava, grmičevje in redka drevesa, polja in nizki griči na obzorju.",
     en: { name: 'Aguascalientes, Mexico', desc: "An oval on the high plateau south of the city of Aguascalientes in central Mexico: 1.34 km, anticlockwise, four lefts in two half circles, about 1,860 m above the sea. A white concrete wall with a brown catch fence, the curved main grandstand with its suites and two towers by the front straight, a twisty road with a little tunnel in the infield and the pits behind a fence where the mechanics wait. Dry grass, scrub and a few trees, fields and low hills on the horizon." },

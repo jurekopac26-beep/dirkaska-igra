@@ -138,6 +138,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 |---|---|---|---|---|
 | 10.1 | #1075 | Popravek rdečega `main`: ploščica izbere progo pred izbrano (`pad.test`) | biketraveler | prvi v vrsti; CI zelen, združi seja Združevanje. |
 | 10.2 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: takoj za #1075) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
+| 10.19 | #1060 Ptice in živali | dirkališča brez živali; ptice po vrsti: žerjavi v klinu (Nürburg, Kågeröd), črni jastrebi v kroženju (Aguascalientes, Quezaltepeque, Ujarrás, Rio do Rastro), en klic risanja kot prej. Predaja v `docs/ptice.md` | biketraveler | osnutek, svež `main` (26. 11.); škorci = navadna ptica (odločitev a). »Ok« na kartici `ptice-vrste-1060` (26. 11.); nove vrste čakajo gostitelje virov v okolju |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 
