@@ -10217,7 +10217,7 @@ const Render = (function () {
     const thm = THEMES[themeId], sd = thm && thm.sunDist ? thm.sunDist / Math.hypot(sunOff[0], sunOff[1], sunOff[2]) : 1;   // (theme.sunDist: a low sun placed further up its ray, so the long shadows of casters far up-sun reach the view)
     sun.position.set(cx + sunOff[0] * sd, baseY + sunOff[1] * sd, cz + sunOff[2] * sd);
     sun.target.updateMatrixWorld();
-    fitShadow(tierNow === 0 && !shot && lastMode === 'chase', px, py, pz, tx, ty, tz, vd ? 80 : 160);   // (the camera before the start: a smaller box round what it looks at)
+    fitShadow((tierNow === 0 || (EXT.senca && EXT.senca.fit(tierNow, curTrack && curTrack.def))) && !shot && lastMode === 'chase', px, py, pz, tx, ty, tz, vd ? 80 : 160);   // (the camera before the start: a smaller box round what it looks at; EXT.senca.fit: H7, js/render-senca.js)
   }
   // NIZKA (the phone budget), behind the car: the sun's shadow box only round the ground the camera sees (the view's corners and the middles
   // of its top and bottom edges on the road's plane, at most 80 m past the point it looks at, 12 m more round them for the slopes), in steps
@@ -10243,6 +10243,7 @@ const Render = (function () {
       l = Math.round(((x0 + x1 - w) / 2 + aX) / qx) * qx - aX; r = l + w; b = Math.round(((y0 + y1 - h) / 2 + aY) / qy) * qy - aY; t = b + h;
     }
     if (sc.left !== l || sc.right !== r || sc.bottom !== b || sc.top !== t) { sc.left = l; sc.right = r; sc.bottom = b; sc.top = t; sc.updateProjectionMatrix(); }
+    if (EXT.senca) EXT.senca.box(sc, curTrack && curTrack.def);   // (H6: the box's soft edge, js/render-senca.js)
   }
   let sunOff = [-80, 96, 70], lastMode = 'chase';
   // TV camera posts (the replay): every 170 m, 40 m past the start of its stretch, on the outside of the bend there (else alternating
