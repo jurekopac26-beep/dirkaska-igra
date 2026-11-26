@@ -8,8 +8,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // the player's own car), alone against the clock (def.timeTrial).
   TRACK_DEFS.push({
     id: 'fairymeadows', name: 'Fairy Meadows, Pakistan', theme: 'fairymeadows', open: true, timeTrial: true, vehicle: 'cisterna', laps: 1, halfWidth: 2,
-    desc: 'Jeep cesta iz doline Inda proti Fairy Meadows v severnem Pakistanu: 489 m vzpona (+5 %) po suhi sivi soteski, tri serpentine (polmer 12 m), prepad brez ograje ob dveh tretjinah poti. V serpentinah prikolica reže notranji rob. Samo cisterna, na čas.',
-    en: { name: 'Fairy Meadows, Pakistan', desc: 'The jeep track from the Indus valley up towards Fairy Meadows in northern Pakistan: 489 m of climb (+5 %) up a dry grey gorge, three serpentines (12 m radius), a drop with no barrier along two thirds of it. In the serpentines the trailer cuts the inside. Only the tanker, against the clock.' },
+    desc: 'Makadamska cesta iz doline Inda proti Fairy Meadows v severnem Pakistanu: 489 m vzpona (+5 %) po suhi sivi soteski, tri serpentine (polmer 12 m), prepad brez ograje ob dveh tretjinah poti. V serpentinah prikolica reže notranji rob. Samo cisterna, na čas.',
+    en: { name: 'Fairy Meadows, Pakistan', desc: 'The gravel track from the Indus valley up towards Fairy Meadows in northern Pakistan: 489 m of climb (+5 %) up a dry grey gorge, three serpentines (12 m radius), a drop with no barrier along two thirds of it. In the serpentines the trailer cuts the inside. Only the tanker, against the clock.' },
     say: 'Fairy Meadows',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     aiVmax: 11, dropCare: 0.5, wideLine: true,   // (the autopilot: no faster than 40 km/h, half the grip in a bend over a drop, wide through the tight bends: core speedProfile, _buildRacingLine)
     runoff: 0.06, inner: 1.0, side: 1.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,   // (the rock a metre past the edge on one side, the brink on the other: def.drops)

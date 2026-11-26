@@ -2,7 +2,7 @@
 
 [← Vse proge](../../README.md#proge) · proga `fairymeadows` (`js/tracks/fairymeadows.js`, svet `js/world-fairymeadows.js` na podatkovnem graditelju `js/world-gore.js`)
 
-Jeep cesta iz doline Inda proti Fairy Meadows v Gilgit-Baltistanu na severu Pakistana (spodnji del, v suhi soteski). Proga 2 prog za cisterno (`docs/proge-cisterna.md`, odločitve uporabnika 8. 11. 2026).
+Makadamska cesta iz doline Inda proti Fairy Meadows v Gilgit-Baltistanu na severu Pakistana (spodnji del, v suhi soteski). Proga 2 prog za cisterno (`docs/proge-cisterna.md`, odločitve uporabnika 8. 11. 2026).
 
 - **Samo cisterna, na čas**: TITAN CISTERNA (tudi če je igralec nima; `vehicle: 'cisterna'`), brez tekmecev in prometa; cilj je pripeljati cisterno do konca. Medalje: čas avtopilota s cisterno × 1,02 (zlato), × 1,15 (srebro), × 1,40 (bron).
 - **Odsek**: 489 m vzpona z 1837 na 1861 m (+5 %), tri serpentine (najmanjši polmer ~12 m).
