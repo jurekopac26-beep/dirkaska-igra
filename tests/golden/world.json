@@ -731,12 +731,12 @@
   }
  },
  "mogyorod": {
-  "meshes": 549,
-  "verts": 626372,
+  "meshes": 551,
+  "verts": 626748,
   "instances": 9167,
   "props": 98,
   "crowd": 17,
-  "world": "239169b4",
+  "world": "7ae4cb2e",
   "propsHash": "d961bf84",
   "floor": "7e726a52/8736",
   "groups": {
@@ -755,16 +755,18 @@
    "life:MeshBasicMaterial": "9aa50bf8",
    "people:MeshLambertMaterial": "9f3e0fe9",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "1f847a6"
+   "standSteps:MeshLambertMaterial": "1f847a6",
+   "zaslon-okvir:MeshLambertMaterial": "111132ef",
+   "zaslon-slika:MeshBasicMaterial": "5f88ec9b"
   }
  },
  "sindia": {
-  "meshes": 471,
-  "verts": 594173,
+  "meshes": 473,
+  "verts": 594549,
   "instances": 5077,
   "props": 84,
   "crowd": 20,
-  "world": "ce2c7b8d",
+  "world": "a3cafc2c",
   "propsHash": "dd959616",
   "floor": "cd7e77c6/9296",
   "groups": {
@@ -782,16 +784,18 @@
    "life:MeshBasicMaterial": "7f6a853f",
    "people:MeshLambertMaterial": "289d35b3",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "d336cdef"
+   "standSteps:MeshLambertMaterial": "d336cdef",
+   "zaslon-okvir:MeshLambertMaterial": "d0fbc4c",
+   "zaslon-slika:MeshBasicMaterial": "2fe12a77"
   }
  },
  "yahuarcocha": {
-  "meshes": 583,
-  "verts": 427504,
+  "meshes": 585,
+  "verts": 427880,
   "instances": 4417,
   "props": 56,
   "crowd": 27,
-  "world": "e0475616",
+  "world": "a7d08fe",
   "propsHash": "5dfcc583",
   "floor": "fb98b226/7224",
   "groups": {
@@ -812,16 +816,18 @@
    "life:MeshBasicMaterial": "bd5ad64c",
    "people:MeshLambertMaterial": "a1af7785",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "b544e7c4"
+   "standSteps:MeshLambertMaterial": "b544e7c4",
+   "zaslon-okvir:MeshLambertMaterial": "4a414ddb",
+   "zaslon-slika:MeshBasicMaterial": "d4422a7d"
   }
  },
  "parnu": {
-  "meshes": 400,
-  "verts": 291875,
+  "meshes": 402,
+  "verts": 292251,
   "instances": 5671,
   "props": 111,
   "crowd": 94,
-  "world": "48cf0308",
+  "world": "2dcf4c3b",
   "propsHash": "ffd38022",
   "floor": "413f5517/6356",
   "groups": {
@@ -841,16 +847,18 @@
    "life:MeshBasicMaterial": "f4810eb5",
    "people:MeshLambertMaterial": "688de0ab",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "1c7db0ee"
+   "standSteps:MeshLambertMaterial": "1c7db0ee",
+   "zaslon-okvir:MeshLambertMaterial": "820d9e66",
+   "zaslon-slika:MeshBasicMaterial": "e9eb0793"
   }
  },
  "houli": {
-  "meshes": 532,
-  "verts": 695061,
+  "meshes": 534,
+  "verts": 695437,
   "instances": 11064,
   "props": 92,
   "crowd": 39,
-  "world": "6386a3ea",
+  "world": "7b9594e",
   "propsHash": "6cfd31bb",
   "floor": "66871a4a/7084",
   "groups": {
@@ -870,16 +878,18 @@
    "life:MeshBasicMaterial": "d36f3dd1",
    "people:MeshLambertMaterial": "3ea581cf",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "5b91d2c3"
+   "standSteps:MeshLambertMaterial": "5b91d2c3",
+   "zaslon-okvir:MeshLambertMaterial": "d9f6578b",
+   "zaslon-slika:MeshBasicMaterial": "9aa97e89"
   }
  },
  "tocancipa": {
-  "meshes": 468,
-  "verts": 336301,
+  "meshes": 470,
+  "verts": 336677,
   "instances": 6821,
   "props": 51,
   "crowd": 23,
-  "world": "25ec7523",
+  "world": "1e601b7a",
   "propsHash": "8f10568f",
   "floor": "81102ac9/5320",
   "groups": {
@@ -901,16 +911,18 @@
    "life:MeshBasicMaterial": "de27a525",
    "people:MeshLambertMaterial": "8da3100b",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "9faefa93"
+   "standSteps:MeshLambertMaterial": "9faefa93",
+   "zaslon-okvir:MeshLambertMaterial": "bd13c424",
+   "zaslon-slika:MeshBasicMaterial": "a56a4db"
   }
  },
  "cromwell": {
-  "meshes": 592,
-  "verts": 422387,
+  "meshes": 594,
+  "verts": 422763,
   "instances": 15371,
   "props": 135,
   "crowd": 22,
-  "world": "f3e8fb6a",
+  "world": "a24d0fc7",
   "propsHash": "a1f8ac77",
   "floor": "8a034d3b/8288",
   "groups": {
@@ -932,7 +944,9 @@
    "life:MeshBasicMaterial": "f91be92e",
    "people:MeshLambertMaterial": "e2380226",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "34a814d8"
+   "standSteps:MeshLambertMaterial": "34a814d8",
+   "zaslon-okvir:MeshLambertMaterial": "b7289a3c",
+   "zaslon-slika:MeshBasicMaterial": "1dc4531f"
   }
  },
  "mujib": {
