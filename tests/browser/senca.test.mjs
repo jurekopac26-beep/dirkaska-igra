@@ -1,7 +1,8 @@
 // The sun's shadow box (Grafika AAA H6, js/render-senca.js): three.js's shadow part of the shaders changed before any is compiled (getShadow
-// a wrapper fading by the uniform uShEdge, one object for every material); on a track of ROB (Killar, Indija) the shadows fade out over the
-// last 12 m inside the box's edges (the uniform set every frame from the box: its width over the box's), the picture changed only by that
-// (the same draw calls, no shader built again); on a frozen track (Jezero) and on the title screen the uniform 0 (the picture as before).
+// a wrapper fading by the uniform uShEdge, one object for every material); on a track of ROB (Killar, Indija) on SREDNJA and VISOKA the
+// shadows fade out over the last 12 m inside the box's edges (the uniform set every frame from the box: its width over the box's), the
+// picture changed only by that (the same draw calls, no shader built again); on NIZKA (the user, 26. 11.), on a frozen track (Jezero) and
+// on the title screen the uniform 0 (the picture as before).
 //   node tests/browser/senca.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -37,11 +38,15 @@ try {
   const t0 = await page.evaluate(() => ({ ext: !!(Render.ext && Render.ext.senca), chunk: THREE.ShaderChunk.shadowmap_pars_fragment.includes('getShadowH6') && THREE.ShaderChunk.shadowmap_pars_fragment.includes('uniform vec2 uShEdge'), u: Render.ext.senca ? Render.ext.senca.uniform.value.toArray() : null }));
   T.check('js/render-senca.js loaded: getShadow wrapped (uShEdge), the uniform 0 on the title screen', t0.ext && t0.chunk && t0.u && t0.u[0] === 0 && t0.u[1] === 0, JSON.stringify(t0));
 
-  // 2. Killar (Indija) at 1300 m, NIZKA (where the fade shows most: the trees' shadows at the view's left edge): the fade's width 12 m over the box's; the picture changed by it, the same draw calls and programs
+  // 2. Killar (Indija) at 1300 m, NIZKA: off as the track says (uniform 0, the picture as with H6 off); on SREDNJA and VISOKA (box() with
+  // tier 1 and 2) the fade's width 12 m over the box's; forced on here (debug.rob 1: where the fade shows most, the trees' shadows at the
+  // view's left edge) the picture changed by it, the same draw calls and programs
   await race(page, 'killar', 1300);
-  const on = await frame(page, null), off = await frame(page, 0), on2 = await frame(page, null);
-  const w = await page.evaluate(() => { const sc = Render.ext.senca; return sc.ROB_M; });
-  T.check('Killar: the fade on (uShEdge = 12 m over the box\'s width and height, at most 0.5)', on.u[0] > 0 && on.u[1] > 0 && on.u[0] <= 0.5 && on.u[1] <= 0.5 && w === 12, JSON.stringify(on.u));
+  const nat = await frame(page, null), on = await frame(page, 1), off = await frame(page, 0), on2 = await frame(page, 1);
+  T.check('Killar on NIZKA: H6 off (uniform 0, the picture as with H6 off)', nat.u[0] === 0 && nat.u[1] === 0 && diff(nat.px, off.px) === 0, JSON.stringify(nat.u));
+  const t = await page.evaluate(() => { const S = Render.ext.senca, sc = { left: -80, right: 80, bottom: -80, top: 80 }, def = { id: 'killar' }, r = [];
+    for (const tier of [0, 1, 2]) { S.box(sc, def, tier); r.push(S.uniform.value.toArray()); } S.box(sc, { id: 'killar', pending: true }, 2); r.push(S.uniform.value.toArray()); return { r, m: S.ROB_M }; });
+  T.check('Killar on SREDNJA and VISOKA: the fade on (uShEdge = 12 m over a 160 m box), on NIZKA and a frozen track 0', t.m === 12 && t.r[0][0] === 0 && t.r[1][0] === 0.075 && t.r[1][1] === 0.075 && t.r[2][0] === 0.075 && t.r[3][0] === 0, JSON.stringify(t.r));
   const d = diff(on.px, off.px), same = diff(on.px, on2.px);
   T.check('Killar: the picture with the fade differs from the one without it (a little: the shadows at the box\'s edge), the same again with it', d > 0.01 && d < 25 && same === 0, JSON.stringify({ d, same }));
   T.check('Killar: no draw call and no shader program more for it', on.calls === off.calls && on.progs === off.progs && on2.progs === on.progs, JSON.stringify([on.calls, off.calls, on.progs, off.progs, on2.progs]));

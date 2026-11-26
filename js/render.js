@@ -10243,7 +10243,7 @@ const Render = (function () {
       l = Math.round(((x0 + x1 - w) / 2 + aX) / qx) * qx - aX; r = l + w; b = Math.round(((y0 + y1 - h) / 2 + aY) / qy) * qy - aY; t = b + h;
     }
     if (sc.left !== l || sc.right !== r || sc.bottom !== b || sc.top !== t) { sc.left = l; sc.right = r; sc.bottom = b; sc.top = t; sc.updateProjectionMatrix(); }
-    if (EXT.senca) EXT.senca.box(sc, curTrack && curTrack.def);   // (H6: the box's soft edge, js/render-senca.js)
+    if (EXT.senca) EXT.senca.box(sc, curTrack && curTrack.def, tierNow);   // (H6: the box's soft edge, js/render-senca.js)
   }
   let sunOff = [-80, 96, 70], lastMode = 'chase';
   // TV camera posts (the replay): every 170 m, 40 m past the start of its stretch, on the outside of the bend there (else alternating
