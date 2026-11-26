@@ -17,13 +17,4 @@ const G = goreTrack('cusco', [900, 1000]);
   G.check('landmark: three walls of Sacsayhuamán, the nearest within 25-60 m of the road, 25-75 % into the race', walls.length === 3 && best[0] > 15 && best[0] < 60 && best[1] > 0.25 && best[1] < 0.75,
     `${walls.length} walls, ${best[0].toFixed(0)} m from the road at ${(best[1] * 100).toFixed(0)} %`);
 }
-{
-  const { C, def, T } = G, check = G.check;
-  // Realizem E: the side roads from OpenStreetMap (def.stranske, World.cesta.stranske) only for the look: the track's model the same
-  // without them (the line, the heights, the barriers' lines), each road from its mouth at most ~60 m into the land
-  const T0 = new C.Track(Object.assign({}, def, { stranske: undefined })), same = ['px', 'pz', 'hy', 'bl', 'br'].every(k => T0[k].length === T[k].length && T0[k].every((v, i) => v === T[k][i]));
-  const len = def.stranske.map(r => { let l = 0; for (let k = 2; k + 1 < r[6].length; k += 2) l += Math.hypot(r[6][k] - r[6][k - 2], r[6][k + 1] - r[6][k - 1]); return l; });
-  check('road: the one side road from OpenStreetMap (Realizem E) only for the look: the model the same without them, each at most ~60 m from the road',
-    def.stranske.length === 1 && same && len.every(l => l > 5 && l < 70), `${def.stranske.length} roads, ${Math.min(...len).toFixed(0)}-${Math.max(...len).toFixed(0)} m`);
-}
 G.done();

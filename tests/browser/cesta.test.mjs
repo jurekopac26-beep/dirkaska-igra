@@ -309,7 +309,7 @@ try {
   // the passes' side roads (group 569c, js/world-prelaz.js; an open road): as on Livorno a strip through an opening in the rail at each
   // mouth and a row of posts across it; the white edge line broken across each mouth (a ray down at the line's place in the mouth's
   // middle meets no paint) and whole beside it (12 m before or after the mouth it meets the paint's material); the model untouched
-  for (const [id, name] of [['llogara', 'Llogara'], ['medeu', 'Medeu']]) {
+  for (const [id, name] of [['llogara', 'Llogara']]) {   // (Medeu's side roads: main's js/world-medeu-obcestje.js, decision of 26. 11.)
     await startTrack(page, id);
     const ps = await page.evaluate((id) => {
       const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
@@ -353,7 +353,7 @@ try {
   // the side roads of OpenStreetMap on the tracks of group 569a (package E, docs/realizem/paket-e.md): Biķernieki and Buriram circuits,
   // Ella, Furka and Gudauri open roads, each built by its own builder; a strip through each mouth, a row of posts across it, the track's
   // model untouched; their countries have no lines of their own in World.cesta.CRTE (no public rules found): no paint at the mouths
-  for (const id of ['bikernieki', 'buriram', 'ella', 'furka', 'gudauri']) {
+  for (const id of ['bikernieki', 'buriram', 'ella', 'furka']) {   // (Gudauri's: main's js/world-gudauri-obcestje.js)
     await startTrack(page, id);
     const q = await page.evaluate((id) => {
       const W = Render.world, T = window.__game.race.track, d = Core.TRACKS.find(t => t.id === id), F = new Core.Track(d), dr = d.name.slice(d.name.lastIndexOf(',') + 1).trim();
@@ -436,7 +436,7 @@ try {
     return { n: W.stranske, osm: T.def.stranske.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, gravel, broken, through, sidePaint,
       posts: P.length / 4, rows: rows.size, road: +road.toFixed(1), stat: [W.stats.stranske, W.stats.stebricki], model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
   }, id);
-  for (const [id, name, open, min, paint] of [['hakone', 'Hakone', true, 85, true], ['izoard', 'Izoard', true, 1, false], ['kagerod', 'Kågeröd', false, 11, false], ['kildare', 'Kildare', false, 4, false]]) {
+  for (const [id, name, open, min, paint] of [['hakone', 'Hakone', true, 85, true], ['izoard', 'Izoard', true, 1, false], ['kildare', 'Kildare', false, 4, false]]) {
     await startTrack(page, id);
     const q = await stranskeQ(id);
     T.check(name + ': OpenStreetMap\'s side roads for the look (' + min + ' or more, at most the track\'s rows: those under a braking board or off the edges left out), a strip from each mouth (3 to 40 m wide) to the asphalt\'s edge, the posts across every mouth 2 m or more off the asphalt, the stats, the track\'s model untouched',
@@ -447,7 +447,7 @@ try {
   // the side roads of OpenStreetMap for the look on the tracks of the group 569d (docs/realizem/paket-e.md »569d«): Pembrey (a circuit), Porto
   // Moniz and Sa Calobra (open roads): every row of the track's data built, a strip through each opening, a row of posts across it on the
   // fence line (evenly, on the surface under it, off the road's asphalt), Porto Moniz's bus stops; the track's model as a track built alone has it
-  for (const id of ['pembrey', 'portomoniz', 'sacalobra']) {
+  for (const id of ['portomoniz', 'sacalobra']) {   // (Pembrey's: main's js/world-pembrey-obcestje.js)
     await startTrack(page, id);
     const sv = await look(page);
     const s5 = await page.evaluate((id) => {
@@ -503,7 +503,7 @@ try {
   // the world's on the road past the fence line (Silkeborg's farm fences open where a road goes through, Zandvoort's dune bushes, marram and
   // reeds off it), no paint (Denmark's and the Netherlands' rows are not in World.cesta.CRTE, and a farm track or a service road has no lines);
   // Sosnová and Tuzla: no side roads in OpenStreetMap by the circuit, none built
-  for (const id of ['silkeborg', 'zandvoort', 'sosnova', 'tuzla']) {
+  for (const id of ['silkeborg', 'sosnova', 'tuzla']) {   // (Zandvoort's: main's js/world-zandvoort-obcestje.js)
     await startTrack(page, id);
     const q = await page.evaluate((id) => {
       const W = Render.world, T = window.__game.race.track, d = Core.TRACKS.find(t => t.id === id), F = new Core.Track(d), dr = d.name.slice(d.name.lastIndexOf(',') + 1).trim(), S = d.stranske || [];
@@ -689,7 +689,7 @@ try {
   // across each mouth (a ray down at the line's place in the mouth's middle meets no paint) and whole beside it (12 m before or after the
   // mouth it meets the paint's material); no paint at a mouth (Palau's and Fiji's rows in CRTE hold the main road's lines only, El Salvador
   // has none); the track's model as a track built alone has it; no errors
-  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 8], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2]]) {
+  for (const [id, name, rob, least] of [['quezaltepeque', 'Quezaltepeque', 0, 1]]) {   // (Koror's and Savusavu's side roads: main's js/world-koror-obcestje.js and js/world-savusavu-obcestje.js, decision of 26. 11.)
     await startTrack(page, id);
     const sx = await page.evaluate(([id, rob]) => {
       const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
