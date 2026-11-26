@@ -1946,15 +1946,15 @@
   }
  },
  "meteora/car/cs": {
-  "digest": "9231ca24241503993d1faa99",
-  "lead": 1847.6,
+  "digest": "8751ddeec4cb690f298df784",
+  "lead": 1847.2,
   "car0": [
-   588.15,
-   -1002.88
+   635.94,
+   -983.78
   ],
   "cover": {
    "dmg": 1,
-   "loose": 4,
+   "loose": 3,
    "rescues": 0,
    "repairs": 0
   }
@@ -7238,15 +7238,15 @@
   }
  },
  "trebevic/car/cs": {
-  "digest": "298fd9c0865522581b5c4254",
-  "lead": 1320,
+  "digest": "e762288dafd99c72a47b4bce",
+  "lead": 1319.7,
   "car0": [
-   -430.62,
-   688.36
+   -433.3,
+   687.14
   ],
   "cover": {
-   "dmg": 0.77,
-   "loose": 4,
+   "dmg": 0.52,
+   "loose": 1,
    "rescues": 1,
    "repairs": 0
   }
@@ -7336,15 +7336,15 @@
   }
  },
  "chamarel/car/cs": {
-  "digest": "9a5bf0279171a058ecb3002f",
-  "lead": 1638.2,
+  "digest": "f0825cda72974c41aeb1694b",
+  "lead": 1635.7,
   "car0": [
-   1159.16,
-   -143.65
+   1160.97,
+   -136.47
   ],
   "cover": {
-   "dmg": 0.97,
-   "loose": 3,
+   "dmg": 0.47,
+   "loose": 4,
    "rescues": 0,
    "repairs": 0
   }
