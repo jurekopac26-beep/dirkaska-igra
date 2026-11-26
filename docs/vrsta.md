@@ -87,6 +87,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Zima na severu: Silkeborg, Kågeröd (po N1 #485) | po načrtu 9. 11. | ko je N1 na `main` |
 | Prvi zagon z angleškim menijem (I2), samo preizkus (#673) | jure.kopac26, croatiadata | po tedenskem načrtu |
 | Najboljše vožnje: 10 najboljših `.rrp` na progo, gumb »Deli 10 najboljših« | jure.kopac26 | po #650; ~14. 11. |
+| Hiše previsoko na temeljih: temelj samo do ~0,3 m in na nižji strani pobočja, vse prave proge (`js/world-prelaz.js` in drugi svetovi; poročilo 21. 11. ob 3.45, Savusavu) | biketraveler | PR #840; ok uporabnika 21. 11. (hise-840); nižja stran pobočja brez sivega temelja 24. 11. (seja partyslo), **čaka ok** (hise-840-pobocje); vrstica 10.14 |
 | Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
 | **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
 | Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
@@ -136,6 +137,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 10.14 | #840 Hiše brez visokih temeljev | Hiše na pravih progah stojijo na tleh, na pobočju so vkopane v breg, stena sega do tal v barvi hiše, brez sivega temelja; zamrznjene proge in fizika nespremenjene, na `main` pred #1052. | biketraveler, popravek partyslo | **čaka ok** (hise-840-pobocje); spojen `main` 6b6def53, `test:related` 11/11 zelen 25. 11.; združi seja Združevanje |
 | 10.14 | #755 Meni: gumba načina in težavnosti brez okna; Police chase: izbira strani | partyslo | 24. 11.: svež main spojen, menu.test lokalno zelen (tudi 640 × 360); pripravljen, združi seja Združevanje (odločitev Mateja 24. 11.). |
 | 10.14 | #821 Zbirna grafika (chase) biketraveler | Kamera za avtom, tla ob cesti: #815 (9 prog), #820 (7 prog), #826 (5 prog), vse POTEM (odločitev uporabnika 20. 11.); #824 čaka končni »ok« | biketraveler | povezani testi zeleni (20. 11.); osnutek do vrste, združi seja Združevanje |
 | 10.14 | #965 Predogled do 12 | `MAX` 8 → 12, da izbira prog ne da 404 (majhen, brez konfliktov) | jure.kopac26 | osnutek, testi zeleni |

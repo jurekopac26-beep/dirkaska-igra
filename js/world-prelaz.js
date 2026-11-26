@@ -499,6 +499,7 @@
 
   function buildPrelaz(scene, tex, opts, look) {
     L = look;
+    const FROZEN = !!(T.def.test || T.def.pending);   // (the frozen tracks, CLAUDE.md »Proge«: Hải Vân and Sogeri (test), Irishtown (pending) keep their houses and timing hut as they were; a track that leaves the freeze takes the others' houses, its references then anew)
     const R = rng(L.seed), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
     const out = { root, dyn: {}, groundH: caGround, camFloor: caGround, props: [], farClip: true, ownTex: [], dust: [0.7, 0.68, 0.62] };
@@ -831,25 +832,26 @@
        (a hut's two storeys), the stalls and sheds (timber, a tarp or a low roof) ---- */
     let nBld = 0;
     {
-      const RB = rng(L.seed + 21), stone = [[0.58, 0.56, 0.52], [0.52, 0.5, 0.47], [0.62, 0.6, 0.56]], wood = [[0.46, 0.32, 0.2], [0.4, 0.28, 0.18], [0.54, 0.4, 0.26]], tarps = [[0.2, 0.34, 0.6], [0.7, 0.16, 0.14], [0.86, 0.86, 0.84], [0.22, 0.46, 0.3]];
+      const RB = rng(L.seed + 21), RP = rng(L.seed + 29), stone = [[0.58, 0.56, 0.52], [0.52, 0.5, 0.47], [0.62, 0.6, 0.56]], wood = [[0.46, 0.32, 0.2], [0.4, 0.28, 0.18], [0.54, 0.4, 0.26]], tarps = [[0.2, 0.34, 0.6], [0.7, 0.16, 0.14], [0.86, 0.86, 0.84], [0.22, 0.46, 0.3]];
       const PLASTER = [[0.88, 0.85, 0.77], [0.9, 0.9, 0.87], [0.85, 0.75, 0.58], [0.8, 0.64, 0.52], [0.7, 0.7, 0.68], [0.54, 0.4, 0.27]], GLASS = [0.15, 0.19, 0.23], BALC = [[0.74, 0.73, 0.7], [0.3, 0.26, 0.22]];   // (L.hotels: the walls' plaster, a few of timber; the windows; the balconies' slabs and rails)
       for (const b of blds) {
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = caGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
         if (L.hotels && b.kind !== 1) {   // (L.hotels, Gudauri's) the hotels and the apartment blocks (a big house: 3-6 storeys, or as many as OpenStreetMap's height
-          // gives), the guesthouses (2-3): plastered walls over a stone plinth, a dark band of windows along each storey (beyond ~220 m none), balconies
+          // gives), the guesthouses (2-3): plastered walls down to the ground (the house is cut into the slope by up to 0.75 m, so that the ground-floor windows stay 0.4 m clear of the ground on the uphill side: its floor ~0.25 m over the footprint's lowest corner, or 0.5 m under the highest on a steeper plot; what is left on the downhill side is the wall itself in its own colour, no grey plinth under the house: the user's decision of 24. 11.), a dark band of windows along each storey (beyond ~220 m none), balconies
           // along the long sides of the big ones, a low roof of coloured metal
           const big = b.kind === 2, FL = 3, nF = b.h > 0 ? clamp(Math.round(b.h / FL), 2, 8) : big ? 3 + Math.floor(RB() * 4) : 2 + (RB() < 0.35 ? 1 : 0);
-          const wl = vary(PLASTER[Math.floor(RB() * PLASTER.length)], RB, 0.05), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08), y0 = hi + 0.5, det = vrDist(b.x, b.z) < 220;
-          box(g, b.x, lo - 0.4, b.z, b.L + 0.3, y0 - lo + 0.4, b.W + 0.3, b.ang, vary(stone[nBld % 3], RB, 0.08), null, true);   // the plinth
-          box(g, b.x, y0, b.z, b.L, nF * FL, b.W, b.ang, wl, null, true);   // the storeys
+          const wl = vary(PLASTER[Math.floor(RB() * PLASTER.length)], RB, 0.05), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08), y0 = Math.max(lo, hi - 0.75) + 0.25, det = vrDist(b.x, b.z) < 220;
+          const sunk = (px, pz, ex, ez, wy) => wy < Math.max(caGround(px - ex, pz - ez), caGround(px, pz), caGround(px + ex, pz + ez)) + 0.3;   // (a ground-floor window band with its sill in the ground: where the hillside rises over the footprint's corners; that band is left out)
+          RB();   // (the draw of the former plinth's colour: the stream, so every house's storeys and colours, as before)
+          box(g, b.x, lo - 0.4, b.z, b.L, y0 - lo + 0.4 + nF * FL, b.W, b.ang, wl, null, true);   // the storeys, their wall down to the ground
           if (det) for (let f = 0; f < nF; f++) { const wy = y0 + f * FL + 0.9;
-            for (const sd of [-1, 1]) { const v = sd * (b.W / 2 + 0.03);
+            for (const sd of [-1, 1]) { const v = sd * (b.W / 2 + 0.03); if (!f && sunk(b.x - s * v, b.z + c * v, c * (b.L / 2 - 0.8), s * (b.L / 2 - 0.8), wy)) continue;
               box(g, b.x - s * v, wy, b.z + c * v, b.L - 1.6, 1.3, 0.06, b.ang, GLASS, null, true);   // (the windows)
               if (big && f > 0) { const v1 = sd * (b.W / 2 + 0.6), v2 = sd * (b.W / 2 + 1.17);   // (a balcony: its slab and its rail)
                 box(g, b.x - s * v1, wy - 0.95, b.z + c * v1, b.L - 1.2, 0.18, 1.2, b.ang, BALC[0]);
                 box(g, b.x - s * v2, wy - 0.77, b.z + c * v2, b.L - 1.2, 0.95, 0.05, b.ang, BALC[1], null, true); } }
-            if (b.W > 7) for (const sd of [-1, 1]) { const u = sd * (b.L / 2 + 0.03); box(g, b.x + c * u, wy, b.z + s * u, 0.06, 1.3, b.W - 2.4, b.ang, GLASS, null, true); }
+            if (b.W > 7) for (const sd of [-1, 1]) { const u = sd * (b.L / 2 + 0.03); if (!f && sunk(b.x + c * u, b.z + s * u, -s * (b.W / 2 - 1.2), c * (b.W / 2 - 1.2), wy)) continue; box(g, b.x + c * u, wy, b.z + s * u, 0.06, 1.3, b.W - 2.4, b.ang, GLASS, null, true); }
           }
           gable(g, b.x, y0 + nF * FL, b.z, b.L + 1.0, b.W + 1.0, Math.min(b.W, 18) * 0.3, b.ang, rf, wl);
         } else if (b.kind === 1) {   // a stall: timber walls, a tarp roof
@@ -857,11 +859,29 @@
           gable(g, b.x, hi + 2.2, b.z, b.L + 0.5, b.W + 0.6, 0.5, b.ang, vary(tarps[Math.floor(RB() * tarps.length)], RB, 0.08), vary(wood[0], RB, 0.1));
         } else {
           const H1 = b.kind === 2 ? 6.2 : 3.2, st = vary(stone[nBld % 3], RB, 0.08), wd = vary(wood[nBld % 3], RB, 0.1), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08);
-          box(g, b.x, lo - 0.4, b.z, b.L, hi - lo + 0.4 + H1 * 0.45, b.W, b.ang, st, null, true);
-          box(g, b.x, hi + H1 * 0.45 - 0.02, b.z, b.L, H1 * 0.55, b.W, b.ang, wd, null, true);
-          for (const f of [-1, 1]) for (let q = -1; q <= 1; q++) { if (b.L < 7 && q) continue; const u = q * b.L * 0.28, v = f * (b.W / 2 + 0.03);   // (windows on the long sides)
-            box(g, b.x + c * u - s * v, hi + H1 * 0.55, b.z + s * u + c * v, 1.0, 0.9, 0.06, b.ang, [0.14, 0.17, 0.2]); }
-          gable(g, b.x, hi + H1, b.z, b.L + 0.8, b.W + 0.8, Math.min(b.W, 12) * 0.42, b.ang, rf, wd);
+          // the house on the ground, as in reality: on a slope it is cut into the hillside by up to half its wall's height (the windows stay clear
+          // of the ground on the uphill side), so its floor is ~0.25 m over the footprint's lowest corner, on a steeper plot half a wall's height
+          // under the highest one; what then is left on the downhill side is the wall itself, on down to the ground in the house's own colour,
+          // no grey foundation block under the house (the user's decision of 24. 11.: no grey base under a house on any track; one box fewer per house).
+          // L.trop (Fiji, Palau, Samoa, Saint Lucia): painted walls in one colour, no stone storey; elsewhere a masonry ground storey
+          // under a timber upper one, as the mountain villages build
+          const F0 = Math.max(lo, hi - H1 * 0.5) + 0.25, pl = L.trop ? vary(PLASTER[nBld % 5], RP, 0.05) : null;   // (its own stream: the roofs' colours as before)
+          if (FROZEN) {   // (Hải Vân, Sogeri, Irishtown: frozen, CLAUDE.md »Proge«: their houses as before)
+            box(g, b.x, lo - 0.4, b.z, b.L, hi - lo + 0.4 + H1 * 0.45, b.W, b.ang, st, null, true);
+            box(g, b.x, hi + H1 * 0.45 - 0.02, b.z, b.L, H1 * 0.55, b.W, b.ang, wd, null, true);
+            for (const f of [-1, 1]) for (let q = -1; q <= 1; q++) { if (b.L < 7 && q) continue; const u = q * b.L * 0.28, v = f * (b.W / 2 + 0.03);
+              box(g, b.x + c * u - s * v, hi + H1 * 0.55, b.z + s * u + c * v, 1.0, 0.9, 0.06, b.ang, [0.14, 0.17, 0.2]); }
+            gable(g, b.x, hi + H1, b.z, b.L + 0.8, b.W + 0.8, Math.min(b.W, 12) * 0.42, b.ang, rf, wd);
+            CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++; continue;
+          }
+          RP();   // (the draw of the former foundation's colour: the stream, so the walls' colours, as before)
+          if (pl) box(g, b.x, lo - 0.4, b.z, b.L, F0 - lo + 0.4 + H1, b.W, b.ang, pl, null, true);
+          else { const S1 = lo + 0.25 + H1 * 0.45;   // (the masonry storey's top: as tall over the downhill ground as on a flat plot, never taller; on a steeper plot the timber wall is the taller one)
+            box(g, b.x, lo - 0.4, b.z, b.L, S1 - lo + 0.4, b.W, b.ang, st, null, true); box(g, b.x, S1 - 0.04, b.z, b.L, F0 + H1 - S1, b.W, b.ang, wd, null, true); }
+          for (const f of [-1, 1]) for (let q = -1; q <= 1; q++) { if (b.L < 7 && q) continue; const u = q * b.L * 0.28, v = f * (b.W / 2 + 0.03), wx = b.x + c * u - s * v, wz = b.z + s * u + c * v;   // (windows on the long sides)
+            if (F0 + H1 * 0.55 < caGround(wx, wz) + 0.3) continue;   // (none with its sill in the ground: where the hillside rises over the footprint's corners)
+            box(g, wx, F0 + H1 * 0.55, wz, 1.0, 0.9, 0.06, b.ang, [0.14, 0.17, 0.2]); }
+          gable(g, b.x, F0 + H1, b.z, b.L + 0.8, b.W + 0.8, Math.min(b.W, 12) * 0.42, b.ang, rf, pl || wd);
         }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
       }
@@ -913,8 +933,10 @@
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
       for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
       out.dyn.lights = lights;
-      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = caGround(hx, hz), gh = scen.get(hx, hz); hold(hx, hz, 2.2);   // the timing hut
-      box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.32, 0.3], [0.62, 0.44, 0.28]);
+      const [hx, hz] = onSide(sStart - 5, -1, 3.2), gh = scen.get(hx, hz); hold(hx, hz, 2.2);   // the timing hut
+      let hlo = 1e9, hy = -1e9; { const c = Math.cos(T.hd[i]), s = Math.sin(T.hd[i]); for (const [u, v] of [[-2, -1.4], [2, -1.4], [2, 1.4], [-2, 1.4], [0, 0]]) { const y = caGround(hx + c * u - s * v, hz + s * u + c * v); hlo = Math.min(hlo, y); hy = Math.max(hy, y); } }
+      if (FROZEN) hy = caGround(hx, hz); else hy += 0.15;   // (Hải Vân, Sogeri, Irishtown, frozen: as before; the others: its floor just over the highest corner, its walls down into the ground: it never floats over a slope, no tall base under it)
+      if (FROZEN) box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); else box(gh, hx, hlo - 0.3, hz, 4.0, hy - hlo + 0.3 + 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.32, 0.3], [0.62, 0.44, 0.28]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
       const pc = [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.95, 0.72, 0.16]];
       for (let s = 8, k = 0; s < sStart + 50; s += 12, k++) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue; hold(px, pz, 0.1);   // pennants on poles
