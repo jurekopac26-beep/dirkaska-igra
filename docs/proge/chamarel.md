@@ -11,6 +11,7 @@ Cesta z jugozahodne obale Mavricija na planoto Chamarela v pravem merilu (5,0 km
 - **Imena pod uro**: Case Noyale, Gozd, Serpentine · 196 m, Razgledišče · 300 m, Chamarel, Proti Plaine Champagne · 341 m. Samo zemljepisna in opisna imena, brez imen posestev, lokalov in znamenitosti s plačljivim vstopom.
 - **Oblika in višine**: sredinska črta iz OpenStreetMap, zglajena. Cesta je v igri široka ~7 m, dva ozka pasova, omejitev 40 km/h na večjem delu. Višine iz Copernicus DEM GLO-30, očiščene: do 13 % navzgor in do 9 % navzdol pri spustu v vas.
 - **Brez padca**: ob cesti jeklene ograje (kjer jih ni videti, nevidna stena). Padec čez rob je samo na Killarju.
+- **Izletna cona** (`docs/proge-po-drzavah.md`): v OpenStreetMap ni stavbe do 3 m od asfalta; v igri je ograja do 3 m od roba asfalta na 45 % dolžine (levo 30 %, desno 21 %; povprečno 4,9 m), manj kot polovica, zato se proga lahko začne.
 
 Okolica: skupna okolica prelazov `buildPrelaz` (`js/world-prelaz.js`) z videzom `PL_LOOK.chamarel` in lastnimi deli v `js/world-chamarel.js`.
 
