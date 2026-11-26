@@ -3898,5 +3898,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "26b790fda7626b915436f131"
+ },
+ "sipka/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 166.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a1a2cfe7458c91d8ef65d3e9"
+ },
+ "sipka/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 198.43,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "db402c0f8120f4ac560d0520"
+ },
+ "sipka/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 149.1,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bcafa8b93fa3214da6c82702"
+ },
+ "sipka/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 152.93,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e5d9e19c027ab197b2851e18"
+ },
+ "sipka/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 167.24,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7382560d4fdade8a19226ab8"
  }
 }
