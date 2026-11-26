@@ -7392,6 +7392,7 @@ const Garage3D = (function () {
       // 13: home
       yield* waitFor(() => stowed, 4); fin = true; yield* par(home(1.4), rglUnstay(1.4), waitFor(() => exS.off, 6)); return;
     }
+    if (rg2 && el === 'zamasek' && window.GarazaAnim && GarazaAnim.zamasek) { yield* GarazaAnim.zamasek({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }, { THREE, V3, RB, ARM, BRG, FIT, RGL, LIFT, EZ, SFX, puffs, rnd, glint, poseBridge, passMk, tyrePass, view, spotView, camTo, spawn, par, wait, waitFor, tween, armTool, armExt, poseArm, tipM, tipLen, hold, letGo, rglCopy, rglHide, fitLog, fitSwap, settle, liftUp, lowerCar, armsTo, carriageTo, bridgeRest, armRest, home, rglUnstay, disposeTree, deliKey, hud, DELI: window.DELI, get scene() { return scene; }, get cur() { return cur; }, get lift() { return lift; } }); return; }   // (#1084 I4: js/garaza-anim/zamasek.js)
     if (rg2) { yield* regalTwoShow({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }); return; }
     // THE WING with an old one on the lid by both arms: roka 1 to the lid as roka 2 goes over the regal, the old one off (the car the new
     // one's, its wing folded away), roka 2 lifts the new one off the regal, the bridge's half turn, roka 1 stands the old one in the empty
