@@ -126,11 +126,11 @@
   "jsMs": 1.8
  },
  "sosnova": {
-  "calls": 204,
-  "maxCalls": 249,
-  "kverts": 654,
-  "maxKverts": 829,
-  "jsMs": 0.82
+  "calls": 212,
+  "maxCalls": 258,
+  "kverts": 686,
+  "maxKverts": 868,
+  "jsMs": 1.43
  },
  "izoard": {
   "calls": 190,
@@ -420,11 +420,11 @@
   "jsMs": 1.29
  },
  "tapini": {
-  "calls": 84,
-  "maxCalls": 91,
-  "kverts": 246,
-  "maxKverts": 271,
-  "jsMs": 0.09
+  "calls": 91,
+  "maxCalls": 100,
+  "kverts": 330,
+  "maxKverts": 356,
+  "jsMs": 0.22
  },
  "canaries": {
   "calls": 210,
