@@ -118,7 +118,7 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 
 ### `chase-skupina-103`
 
-Kamera za avtom, skupina 103 (`js/world-chase-bt103.js`): Batangas (prvi prehod: ob ograjah temnejše in svetlejše zaplate pokošene trate, od ~12 m šopi bujne trave, lise rdeče prsti, od ~30 m visoki rumenkasto zeleni šopi trsa, grmi, v gajih listje in podrast do ~60 m; +8 klicev, 295 od 300, 882 od 900 tisoč oglišč) in Río Hondo (od ~16 m od roba stoječi slamnati šopi, nizko trnato grmičje, lise gole zemlje, na poljih strnišče, nič ob jezeru; +9 klicev, 295 od 300, 865 od 900 tisoč). Redko, ker sta obe progi tik pod mejo telefona; sprememba je zato majhna. Kaj naj bo?
+Kamera za avtom, skupina 103 (`js/world-chase-bt103.js`): Batangas (prvi prehod: ob ograjah temnejše in svetlejše zaplate pokošene trate, od ~12 m šopi bujne trave, lise rdeče prsti, od ~30 m visoki rumenkasto zeleni šopi trsa, grmi, v gajih listje in podrast do ~60 m; +8 klicev; s spojenim #1088 285 od 300, 850 od 900 tisoč oglišč) in Río Hondo (od ~16 m od roba stoječi slamnati šopi, nizko trnato grmičje, lise gole zemlje, na poljih strnišče, nič ob jezeru; +9 klicev; s spojenim #1088 288 od 300, 851 od 900 tisoč). Redko, ker sta obe progi tik pod mejo telefona; sprememba je zato majhna. Kaj naj bo?
 
 1. **Ok, tako (priporočeno).**
 2. Samo Batangas, Río Hondo brez dodatka.
