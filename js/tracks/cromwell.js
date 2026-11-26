@@ -62,6 +62,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: [[37.9,165.6],[27.9,193.7],[40.1,257],[60,277.8],[47.8,420.1],[-112.7,445.4],[-96.4,51.6],[-111.8,5.6],[-74.7,-30.4],[-327.1,-103.6],[-278.8,-72.3],[-244,31.5],[-401.9,317.6],[-527.7,373.9],[-380,420.5],[-328.7,486.5],[-189.8,219.4],[-168.6,14.1],[-184.8,-3],[-226.6,-272.8],[-389.9,-162.6],[-183.9,-329.6]],   // the 22 corners' apexes: the chicane (4), the south-east loop (2), the esses (3), the loop by the karting track and the right after it, the right before the long straight, the right by the pines, the west hairpin, the right before the south hairpin, the south hairpin, the left in the bends to the bridge, the left-right before the bridge (2), the long left, the north hairpin, the long right
     pit: [-14, -170, 90, 0],   // pit lane on the left of the main straight: [centre offset to the right (negative: the left), from, to, the player's box] (metres from the start line)
     pitRow: [-65, 55],   // the first and the last of the 13 crews' boxes (the pit building's 13 garages: js/world-cromwell.js)
+    zaslon: { d: -77, side: 1, off: 17 },   // the big screen (js/world-zaslon.js) by the grandstand on the right, turned towards the cars coming (node tools/zaslon-mesto.mjs cromwell)
     walls: [[-170, 90, -1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered one across the straight from the pits
     stands: [[-70,10,1,10,1,3,0,"CROMWELL"]],

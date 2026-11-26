@@ -49,6 +49,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: [[-212.6,-84.8],[-361.2,47.6],[-342.2,168.3],[-28.3,269.1],[55.9,312.8],[329.7,279.1],[341.3,443.3],[-475.9,197.5],[-376.7,-204],[-308.5,-212.5],[-259.1,-302],[-78.3,-264.3],[118.2,-32.1],[565.8,154.5],[315.3,60.8],[290,112]],   // the corners' apexes: the left at the end of the straight, the left over the top, the left into the valley, the fast esses (2), the sharp right, the long right, the baobab corner, the triple bend (3), the fast right, the long left, the right at the bottom, the hairpin, the last corner
     pit: [-14, -260, 180, 10],   // pit lane on the left of the main straight: [centre offset to the right (negative: the left), from, to, the player's box] (metres from the start line)
     pitRow: [-55, 65],   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.sindia.pitBox)
+    zaslon: { d: -104, side: 1, off: 16 },   // the big screen (js/world-zaslon.js) by the grandstand on the right, turned towards the cars coming (node tools/zaslon-mesto.mjs sindia)
     walls: [[-260, 180, -1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered one facing the pits, round the hairpin
     stands: [[-100,70,1,7,1,5,0,"SINDIA"], [4205,4290,1,5,0,2,0,"THIÈS"]],

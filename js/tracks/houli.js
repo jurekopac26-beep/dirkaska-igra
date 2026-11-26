@@ -56,6 +56,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: [[-320.2,252],[-357.5,201.3],[-632.6,160],[-704.9,259.2],[-696.5,137.8],[-588.9,71.8],[-512.1,103.4],[-326.8,-16.7],[-276.5,-70.8],[114,-199.9],[129,-159.8],[187.1,-155.4],[283.5,41.3],[353.9,70.2],[21.7,150.2],[6.7,87.6],[208.3,76],[236.8,-12.1],[174.4,-36],[165.8,-94]],   // the 20 corners' apexes: the first right and its kink, the left before the hairpin, the south-west hairpin, the kink, the fast right, the left by the karting, the north esses (2), the chicane (3), the east left, the east hairpin, the double right (2), the infield left, the infield esses (2), the last corner
     pit: [13, -150, 260, 0],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [-65, 55],   // the first and the last of the 13 crews' boxes (the middle garages of the race building: js/world-houli.js)
+    zaslon: { d: 78, side: -1, off: 17 },   // the big screen (js/world-zaslon.js) by the grandstand on the left, turned towards the cars coming (node tools/zaslon-mesto.mjs houli)
     walls: [[-150, 260, 1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the big one across the straight (its outline: sk.gs)
     stands: [[82,364,-1,20,1,6,0,"HOULI"]],

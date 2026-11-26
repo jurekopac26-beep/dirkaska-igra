@@ -50,6 +50,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: [[-202.4,-313.7],[-81.6,115.5],[-25,124],[-6,202.2],[-7.6,306.3],[60.5,368.3],[358.8,10.7],[338.8,-27.9],[276.2,-131.2],[268.5,-203.8],[203.9,-262.2],[230.1,-302.2],[10.5,-238.3],[269.2,-72.9],[158.8,97.6]],   // the 15 corners' apexes: the left hairpin, the chicane (2), the esses, the south loop (2), the twists (4), the right by the pond, the north hairpin, the long left, the right-hand loop, the last corner
     pit: [14, -150, 300, 0],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [-65, 55],   // the first and the last of the 13 crews' boxes (the middle garages of the pit building: js/world-parnu.js)
+    zaslon: { d: -49, side: -1, off: 22 },   // the big screen (js/world-zaslon.js) by the grandstand on the left, turned towards the cars coming (node tools/zaslon-mesto.mjs parnu)
     walls: [[-150, 300, 1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the small covered one facing the pits
     stands: [[-45,45,-1,6,1,3,0,"PÄRNU"]],

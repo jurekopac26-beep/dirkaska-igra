@@ -55,6 +55,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: [[-254.2,-338.9],[-162.6,-370.6],[-162.9,-267.1],[-74.3,-163.1],[23.1,-151.5],[167.9,-0.2],[291.8,-6.3],[570.7,-206.5],[654,-140.7],[430.2,70.2],[357.2,186.6],[272.6,84.3],[153.6,130.9]],   // the 13 corners' apexes: the first right, the west loop, the left after it, the middle esses (2), the long left, the kink onto the east straight, the east loop (2), the left before the hairpin, the south hairpin, the left after it, the last corner
     pit: [14, -150, 262, 0],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [-65, 55],   // the first and the last of the 13 crews' boxes (the pit building's 13 garages: js/world-tocancipa.js)
+    zaslon: { d: -75, side: -1, off: 17 },   // the big screen (js/world-zaslon.js) by the grandstand on the left, turned towards the cars coming (node tools/zaslon-mesto.mjs tocancipa)
     walls: [[-150, 262, 1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered one across the straight (its outline: sk.gs)
     stands: [[-71,-3,-1,10,1,3,0,"TOCANCIPÁ"]],
