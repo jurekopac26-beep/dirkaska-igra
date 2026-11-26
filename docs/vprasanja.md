@@ -116,6 +116,15 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-108`
+
+Kamera za avtom, skupina 108 (tretji prehod, `js/world-chase-bt108.js`): Pikes Peak na makadamu (na cestišču dve zbiti svetlejši kolesnici in greben sipkega gramoza ob njiju, ob robu izmetano drobno kamenje in na zunanji strani ovinkov pahljače prahu; +7 klicev, 153 od 300, 521 tisoč oglišč) in Rio do Rastro (med bankino in ograjo šopi trave, na planoti slamnati, pod gozdom proge listja, na strani brega odpadlo kamenje in zaplate mahu; +7 klicev, 223 od 300, 677 od 900 tisoč oglišč, zato redkeje na 5 m). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Pikes Peak tako, Rio do Rastro brez (odstrani ga iz skupine).
+3. Rio do Rastro tako, Pikes Peak brez kolesnic (samo kamenje in prah ob robu).
+4. Ne, odstrani skupino 108.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.

@@ -64,6 +64,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 20: Medeu, Ngorongoro (`js/world-chase-bt20.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 19: Harju, Koli (`js/world-chase-bt19.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 18: Livorno, Montréal (`js/world-chase-bt18.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 108 (tretji prehod): Pikes Peak makadam, Rio do Rastro (`js/world-chase-bt108.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-108` |
 | Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
 | Redčenje gozda na pravih progah | 1 | prestavljeno; najprej drevesa A (#419) |
 | Ljudje ob progi in grafika (`docs/ljudje-predlogi.md`) | partyslo | ko uporabnik reče; po #400; pred novimi progami |
