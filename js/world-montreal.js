@@ -155,7 +155,8 @@
       const nq = { i: -1, dd: 0 }, near = (x, z) => { const q = ctx.near(x, z); nq.i = q.i; nq.dd = Math.max(0, q.d); return nq; };
       const slope = (x, z) => Math.hypot(mtGround(x + 3, z) - mtGround(x - 3, z), mtGround(x, z + 3) - mtGround(x, z - 3)) / 6;
       const legs = ctx.legs || [], inLeg = (x, z) => { for (const g of legs) { const dx = x - g.cx, dz = z - g.cz, r = dx * g.ux + dz * g.uz, v = -dx * g.uz + dz * g.ux; if (r > g.r0 - 2 && r < g.rEnd + 4 && Math.abs(v) < g.hw + 3) return true; } return false; };
-      const bad = (x, z) => gAt(MG.SD, x, z) < 4 || (ctx.roadMask && ctx.roadMask(x, z)) || inLeg(x, z);
+      const pitRoad = World.api && World.api.pitRoadAt;   // (nothing on the pit road's junctions: tests/browser/pitjoin.test.mjs)
+      const bad = (x, z) => gAt(MG.SD, x, z) < 4 || (ctx.roadMask && ctx.roadMask(x, z)) || inLeg(x, z) || (pitRoad && pitRoad(x, z, 1.5));
       World.ext.goreRob({ excluded, root, out }, 'montreal', { gH: mtGround, slope, lc: mtKind, near, bad });
     }, 'mtRob');
     K.crowdFinish(ctx.CR, root, out);

@@ -151,3 +151,13 @@ Del s ploščo gre po svoji plošči; del brez plošče po najbližji plošči k
 
 ## Predlog nove teme: deli z regala z obema rokama (16. 11. 2026)
 Ni del #653 (uporabnik je 16. 11. ob 2.26 potrdil animacije, kot so). Deli z regala brez svoje plošče, ki gredo še po starem z eno roko (`plan,grab,swap,put`): **vzmeti, amortizerji, stabilizatorji, zamašek, dim gum**. Predlog: po skupnem pravilu (`an_common`) roka 1 odnese stari del na prazno mesto v regalu, roka 2 prinese novega (vzor: auspuh `exS.R` in krilo `wing.R`); vzmeti, amortizerji in stabilizatorji ob kolesu z dvigalom kot platišča, zamašek in dim gum po predlogi krilo. Nova tema (vpis v »Načrtovano« v `docs/vrsta.md`), ko se uporabnik odloči.
+
+## Klik na vrata, haubo in prtljažnik (21. 11. 2026, veja `garaza/klik-deli`)
+
+Odločitev uporabnika (stran Odločitve, `garaza-klik-deli-21-11`): tap na vrata, haubo ali prtljažnik avta v garaži del odpre na tečaju (kot `K.hinge` pri delu »loose«, `js/render.js` `kitLoosen`; za haubo že `bonnet()` v `js/garage3d.js`) in odpre meni novih delov (`js/data/deli.js`: `vrata`, `hauba`, `prtljaznik`, vsak 4 kategorije po 4). Hauba, vrata in streha doslej niso naprodaj (16. 11.). Najprej vprašanje z 2–3 različicami s slikami (`garaza-klik-deli-izbira`), koda po odgovoru.
+
+Predaja za kodo (po odgovoru na `garaza-klik-deli-izbira`, priporočena 1): v `js/garage-shop.js` dodaj `hauba`, `vrata`, `prtljaznik` v `SHOWN`; v `js/garage.js` ikone (`ICON`) za te tri, ključe `car:hood`, `car:door`, `car:trunk` v `onTap` (zadetek na območju `ranges` hood/trunk/doorL/doorR karoserije; avto brez kompleta: samo meni) in odpiranje dela na tečaju v `js/garage3d.js` po vzoru `bonnet(cv)` (pokrov prečno ob robu pri kabini, vrata pokonci na sprednjem robu); zapre se ob `closeMenu`. Meni: sedanji `#g-menu`, pokonci spodaj (`.bot`), ležeče desno spodaj. Geometrije avtov (`js/cars/*.js`) ne spreminjaj (seja Trki).
+
+Odgovor 23. 11. 2026 (`garaza-klik-deli-izbira`): **možnost 1**, sedanji meni delov (zavihki in 4 ploščice), pokonci spodaj, ležeče desno spodaj (`bottom:8px; right:10px; width:min(470px,50%); scale(.84)`), da odprti del ostane viden. Koda po zgornji predaji.
+
+Narejeno 23. 11. 2026: tap na karoserijo poišče del po trikotniku (`partAt`, območja `ranges`; brez območja ugib po škatli `partZone`, samo meni), meni `hauba`/`vrata`/`prtljaznik` (`.bot` pokonci, `.side` ležeče), del se odpre na tečaju v 0,4 s (`openPart`, `hinged`, hauba prek `bonnet()`), zapre se ob `closeMenu`, nakupu, menjavi avta. Deli samo videz.

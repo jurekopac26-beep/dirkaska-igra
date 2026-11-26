@@ -14,7 +14,8 @@
   const L2 = (p) => p[Lang.cur === 'en' ? 1 : 0];   // (a [Slovenian, English] pair in the page's language)
   const MODELS = Core.MODELS, PRICE = Core.CAREER.car, EL = GarageShop.EL;
   // the game's colours (game.js PLAYER_COLORS), their names
-  const COLORS = [[0xd81f2a, 'Rdeča'], [0xf5f5f0, 'Bela'], [0x1c5fd6, 'Modra'], [0xf2c230, 'Rumena'], [0x1a1a1f, 'Črna'], [0x2fa84f, 'Zelena'], [0xff7a1a, 'Oranžna'], [0x8e3bd6, 'Vijolična']];
+  const COLORS = [[0xd81f2a, 'Rdeča'], [0xf5f5f0, 'Bela'], [0x1c5fd6, 'Modra'], [0xf2c230, 'Rumena'], [0x5c6168, 'Grafitna'], [0x2fa84f, 'Zelena'], [0xff7a1a, 'Oranžna'], [0x8e3bd6, 'Vijolična'],
+    [0xb8bcc2, 'Srebrna'], [0x7d8288, 'Siva'], [0x4a78b5, 'Srednje modra'], [0xa83248, 'Bordo'], [0x1fb5b0, 'Turkizna'], [0xf06aa8, 'Roza'], [0xa6d62b, 'Limeta'], [0xb07a3c, 'Bronasta']];   // (the last eight: docs/novosti-e.md Novost 1, V3)
   const CSS = (h) => '#' + h.toString(16).padStart(6, '0');
   // the cars in the game's display order (game.js's car screen: by category in Core.CATS' order, in each the cheapest first (the career
   // price), then by id); a retired model never listed (a stored one is its heir's, Core.heirOf)
@@ -23,8 +24,10 @@
   const model = (id) => MODELS.find(m => m.id === id);
   const heirId = (id) => { const M = model(id); return M ? Core.heirOf(M).id : id; };
   // each car's colour in a new profile (the 10 older ones as before; the others in turn round the colours by their place in the order)
-  // the paint menu's two tabs (plate an_barvanje 2/6) and each colour's few words
-  const CTAB = [['Klasične', [0, 1, 4, 2]], ['Žive', [3, 5, 6, 7]]], CDESC = ['dirkalna klasika', 'svetla, čista', 'globoka in mirna', 'vidna od daleč', 'globok sijaj', 'stara dirkalna', 'topla in živa', 'drzna izbira'];
+  // the paint menu's four tabs of four (plate an_barvanje 2/6; the last two with V3's colours) and each colour's few words
+  const CTAB = [['Klasične', [0, 1, 4, 2]], ['Žive', [3, 5, 6, 7]], ['Kovinske', [8, 9, 15, 11]], ['Sveže', [10, 12, 13, 14]]],
+    CDESC = ['dirkalna klasika', 'svetla, čista', 'globoka in mirna', 'vidna od daleč', 'globok sijaj', 'stara dirkalna', 'topla in živa', 'drzna izbira',
+      'hladen kovinski sijaj', 'umirjena, sodobna', 'kot jasno nebo', 'žlahtna rdečina', 'morska svežina', 'igriva in drzna', 'kislo zelena', 'topla kovina'];
   const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
   const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
   // service: w = 1 - the row's state; f = (the car's worth / 68.000)^0.8 (the wash ^0.3); the wash (20 + 280 w) f, the body (150 +
@@ -69,7 +72,7 @@
   // has and the other way round); what only the garage knows of each car (its parts, colour, wear) is kept in the career too (career.garage).
   // The mockup's three (a new player, the full game, a veteran) keep their own test money and cars in apex-garage, apart from the game.
   const KEY = 'apex-garage', CKEY = 'tdgp-career', CAR0 = Core.CAREER.car0;
-  const carNew = (id, own) => ({ own: !!own, parts: {}, have: {}, color: color0(id), stripe: true, cond: { clean: 1, body: 1, engine: 1 } });
+  const carNew = (id, own) => ({ own: !!own, parts: {}, have: {}, color: color0(id), stripe: true, sc: -1, num: 0, cond: { clean: 1, body: 1, engine: 1 } });
   // (the parts a car has bought, each element's options 1 .. 16 (have): a part taken off stays that car's, fitted again free (the user's
   // choice 2. 11. 2026, NAMESTI); every part on the car is among them)
   const optN = (v) => v[0] * 4 + v[1] + 1;
@@ -77,7 +80,7 @@
   const haveIt = (k, el, v) => !!v && (isStock(el, v) || !!(k.have[el] && k.have[el].includes(optN(v))));
   const haveFitted = (k) => { for (const el in k.parts) haveAdd(k, el, k.parts[el]); };
   // (a car's parts, colour and wear as saved: { deli, color, stripe, cond })
-  const carFrom = (o, c) => { o.parts = fromDeli(c.deli); o.color = Number.isInteger(c.color) && c.color >= 0 && c.color < COLORS.length ? c.color : o.color; o.stripe = c.stripe !== false;
+  const carFrom = (o, c) => { o.parts = fromDeli(c.deli); o.color = Number.isInteger(c.color) && c.color >= 0 && c.color < COLORS.length ? c.color : o.color; o.stripe = c.stripe !== false; o.sc = Number.isInteger(c.sc) && c.sc >= 0 && c.sc < COLORS.length ? c.sc : -1; o.num = Number.isInteger(c.num) && c.num >= 1 && c.num <= 99 ? c.num : 0;
     o.have = {}; if (c.have && typeof c.have === 'object') for (const el in c.have) if (EL[el] && Array.isArray(c.have[el])) o.have[el] = c.have[el].filter((n, i, a) => Number.isInteger(n) && n >= 1 && n <= 16 && a.indexOf(n) === i);
     for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; };
   // (a save kept safe as the game's: a full storage makes room by dropping ghosts, js/shramba.js)
@@ -137,7 +140,8 @@
   const rentFrom = (r, d) => { const id = r && typeof r === 'object' ? heirId(r.id) : typeof r === 'string' ? heirId(r) : null; return id && ORDER.includes(id) && !d.cars[id].own ? id : null; };
   function careerRead() {
     let c = null; try { c = JSON.parse(localStorage.getItem(CKEY) || 'null'); } catch (_) { c = null; }
-    return c && typeof c === 'object' && c.v === 1 ? c : { v: 1, on: false, money: Core.CAREER.start, cars: [CAR0], upg: {}, earned: 0, races: 0, wins: 0 };
+    // (v 1 and v 2: the career with the path of 1.0, career.pot of js/kariera.js; kept as it is, toCareer writes back only its own fields)
+    return c && typeof c === 'object' && (c.v === 1 || c.v === 2) ? c : { v: 1, on: false, money: Core.CAREER.start, cars: [CAR0], upg: {}, earned: 0, races: 0, wins: 0 };
   }
   // (a car's four levels in the career: its own (a retired model's: its heir's; both: the better of each), 0 .. 3)
   function careerUpg(c, id) { const L = { motor: 0, gume: 0, zavore: 0, aero: 0 }, U = c.upg && typeof c.upg === 'object' ? c.upg : {};
@@ -170,7 +174,8 @@
     for (const id of ORDER) if (S.cars[id].own && !cars.includes(id)) cars.push(id);
     c.money = Math.max(0, Math.round(S.money)); c.cars = cars; c.upg = {}; for (const id of cars) c.upg[id] = levels(S.cars[id].parts);
     const gc = {}; for (const id of ORDER) { const k = S.cars[id], d = toDeli(k.parts);
-      if (k.own || Object.keys(d).length || k.color !== color0(id) || !k.stripe) gc[id] = { deli: d, color: k.color, stripe: k.stripe, cond: Object.assign({}, k.cond), have: JSON.parse(JSON.stringify(k.have)) }; }
+      if (k.own || Object.keys(d).length || k.color !== color0(id) || !k.stripe || k.sc >= 0 || k.num) { gc[id] = { deli: d, color: k.color, stripe: k.stripe, cond: Object.assign({}, k.cond), have: JSON.parse(JSON.stringify(k.have)) };
+        if (k.sc >= 0) gc[id].sc = k.sc; if (k.num) gc[id].num = k.num; } }   // (sc: the stripes' colour, an index into COLORS; num: the car's own number, 1..99; none: auto, the model's: docs/novosti-e.md V2)
     c.garage = { car: S.car, cars: gc }; if (S.rent) c.rent = { id: S.rent }; else delete c.rent;
     keepItem(CKEY, JSON.stringify(c));
   }
@@ -185,7 +190,9 @@
   // 600, a truck (4 t and more) 12.000, any other car 3.500
   const paintPrice = () => 0;   // (the paint free, as the plate an_barvanje 2/6 says: the user's answer to garaza-barva-okvircek, 16. 11. 2026, option 2)
   const srvPrice = (s, c, id) => { const w = 1 - c.cond[s.id]; if (w < 0.02) return 0; const f = Math.pow(worth(id) / 68000, s.e); return round((s.a + s.b * Math.pow(w, s.p)) * f); };
-  const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), deli: toDeli(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
+  const stripeOf = (c) => c.stripe === false ? false : c.sc >= 0 && COLORS[c.sc] ? COLORS[c.sc][0] : true;   // (the stripes as render.js kitRecolour takes them: off, the garage's colour, or auto)
+  const numOf = (id) => S.cars[id].num || model(id).num || 1;
+  const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: stripeOf(c), upg: levels(c.parts), deli: toDeli(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
   // (the aero kits' RACE tab is locked till the SPORT kit or more is fitted)
   const raceLocked = (c) => { const p = c.parts.aero; return !p || (p[0] < 1 || (p[0] === 1 && p[1] < 2)); };
 
@@ -239,6 +246,11 @@
         camo: '<path d="M8 12c6-3 10 2 15 0s9 2 12 6c-4 3-9 0-13 3s-10 3-14-1z" fill="#5d6b3a"/><path d="M10 30c4-4 9-1 13-3s8 1 11 4c-5 3-9 1-13 2s-8 0-11-3z" fill="#3e4a26"/>',
         custom: ['#d8261d', '#ffc21a', '#2fbf5a', '#47a3ff'].map((c, q) => '<circle cx="' + (15 + (q & 1) * 14) + '" cy="' + (15 + (q >> 1) * 14) + '" r="5.5" fill="' + c + '"/>').join('') }[k];
       return '<svg viewBox="0 0 44 44"><rect x="6" y="6" width="32" height="32" rx="3" fill="#eef0f3"/>' + (sm ? '<g transform="translate(6.6 6.6) scale(.7)">' + M + '</g>' : M) + '</svg>'; },
+    // (the car's panels: the hood, a door, the boot lid seen from the side, open; their colour by the tab: steel, light, carbon, racing)
+    hauba: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-5l6-2 6-7h12l8 6 6 2v6z" fill="#9aa2ae"/><path d="M33 22l5-12 3 1-5 12z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
+    vrata: (t) => '<svg viewBox="0 0 44 44"><path d="M8 36V14l8-8h18v30z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><path d="M11 18l7-8h13v8z" fill="#8fc3ef"/><rect x="24" y="22" width="7" height="2.6" rx="1.3" fill="#e0e4ea"/></svg>',
+    prtljaznik: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-6l6-2 6-7h12l8 6 6 2v7z" fill="#9aa2ae"/><path d="M9 23L4 12 1 13l5 11z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
+    ogledala: (t) => '<svg viewBox="0 0 44 44"><path d="M6 30l6-4h4v6h-6z" fill="#6b7380"/><path d="M14 12h20a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6H18a8 8 0 0 1-8-8v-6a4 4 0 0 1 4-4z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><path d="M16 15h17a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4H19a5 5 0 0 1-5-5v-5a2 2 0 0 1 2-2z" fill="#8fc3ef"/></svg>',   // (the mirrors: a housing in the tab's shade, its glass; garaza-klik-deli, 24. 11.)
     celjusti: (t, j, hex) => { const c = [['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', '#d8261d'], ['#e0362c', '#2f7fe0', '#e0b030', '#e0e4ea']][t][j] || CSS(hex || 0x3b78d8);
       return '<svg viewBox="0 0 44 44"><circle cx="22" cy="25" r="15" fill="#7b8594"/><circle cx="22" cy="25" r="5" fill="#4a5160"/><path d="M8 19.5a15 15 0 0 1 28 0l-6 2.6a8.6 8.6 0 0 0-16 0z" fill="' + c + '"/>' +
         (t === 2 && j === 3 ? '<path d="M22 10a15 15 0 0 1 14 9.5l-6 2.6A8.6 8.6 0 0 0 22 16.4z" fill="#1d1f24"/>' : '') + '</svg>'; },
@@ -331,7 +343,7 @@
   function thumbStep() {
     if (!thumbQ.length || G.busy || G.thumbed) return;
     const [id, col] = thumbQ.shift(), k = S.cars[id];
-    try { (thumbs[id] = thumbs[id] || {})[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: k.stripe, upg: levels(k.parts) }, 160, 72, { back: 0.5 }); } catch (e) { console.error(e); return; }
+    try { (thumbs[id] = thumbs[id] || {})[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: stripeOf(k), upg: levels(k.parts) }, 160, 72, { back: 0.5 }); } catch (e) { console.error(e); return; }
     head(); const pi = id === S.car && document.querySelector('#g-menu [data-col="' + col + '"] .pi'); if (pi) pi.innerHTML = '<img alt="" src="' + thumbs[id][col] + '">';   // (a paint card's car in its colour)
   }
 
@@ -360,7 +372,7 @@
     if (!b) { if (t) t.classList.remove('on'); return; }
     if (!t) { t = document.createElement('div'); t.id = 'g-tag'; t.className = 'g-tag'; $('g-stage').appendChild(t); }
     t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); const hw = t.offsetWidth / 2 + 4, W = $('g-stage').clientWidth; t.style.left = Math.round(Math.max(hw, Math.min(W - hw, b.x + b.w / 2))) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }   // (kept on the screen)
-  function closeMenu() { if (!menu) return; menu = null; colTag(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
+  function closeMenu() { if (!menu) return; menu = null; colTag(null); G.openPart(null); G.bayCam(false); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -377,6 +389,10 @@
         g.map(i => { const q = COLORS[i], th = thumbs[S.car] && thumbs[S.car][i]; return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + esc(tr(i === c.color ? 'nameščeno' : 'brezplačno')) + '</i></div></button>'; }).join('') + '</div>';
       ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : p ? tr('KUPI IN NAMESTI · {0}', eur(p)) : tr('BARVAJ · BREZPLAČNO');
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
+      const sc = c.stripe === false ? 'off' : c.sc >= 0 ? c.sc : -1;   // (V2: the stripes' colour and the car's number, free, at once: docs/novosti-e.md)
+      html += '<div class="g-cx">' + (M().kit ? '<div class="g-vr"><span>' + esc(tr('Barva črt')) + '</span><button class="g-sa' + (sc === -1 ? ' sel' : '') + '" data-sc="-1">' + esc(tr('Samodejno')) + '</button>' +   // (the stripes' colour: a kit body's only, render.js kitBodyGeo; docs/novosti-e.md videz-1 = 2)
+        COLORS.map((q, i) => '<button class="g-sw' + (sc === i ? ' sel' : '') + '" data-sc="' + i + '" style="background:' + CSS(q[0]) + '" aria-label="' + esc(tr(q[1])) + '"></button>').join('') +
+        '<button class="g-sa' + (sc === 'off' ? ' sel' : '') + '" data-sc="off">' + esc(tr('Brez črt')) + '</button></div>' : '') + '<div class="g-vr"><span>' + esc(tr('Številka')) + '</span><button class="g-sa" data-num="-1" aria-label="−">−</button><b class="g-nm">' + numOf(S.car) + '</b><button class="g-sa" data-num="1" aria-label="+">+</button></div></div>';
       if (m.car) html += '<div class="g-mx"><button data-mact="aero">' + esc(tr('AERO PAKET')) + ' ›</button></div>';   // (opened from the car: its aero kits a tap away)
     } else {
       const E = EL[el], t = m.tab;
@@ -407,6 +423,9 @@
     box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330, dw = !!kb && kb.startsWith('drw:') && G.drawerBox(kb.slice(4));
     let drop = 0; if (dw) { const need = Math.ceil(top + h + 8 - dw.y); if (need > 0 && dw.y + dw.h + need <= $('g-stage').clientHeight - 4) drop = need; }
     G.drop(drop); box.classList.toggle('bot', !dw && !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
+    // (a panel of the car tapped (the hood, a door, the boot lid): standing, the menu at the bottom; lying, small at the bottom right, the
+    // open panel in sight)
+    const side = !!m.panel && innerWidth > innerHeight; box.classList.toggle('side', side); if (m.panel && !side) box.classList.add('bot');
   }
   function tile(t, j) { if (!menu) return; menu.sel = [t, j]; drawMenu(); }
   // buying the chosen option: paid, fitted, the menu closed; the car's upgrade played when one of its four levels changes, else a word
@@ -489,8 +508,15 @@
     const c = C(); if (!c.own || col === c.color) return;
     if (!pay(paid ? paintPrice(S.car) : 0)) return;
     ppArm(); c.color = col; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
-    G.paint(COLORS[col][0], c.stripe);
+    G.paint(COLORS[col][0], stripeOf(c));
   }
+  // the stripes' colour (i: an index into COLORS, -1 auto, 'off' none) and the car's number (d: -1 or +1, 1..99 round): free, at once
+  function doStripe(i) {
+    const c = C(); if (!c.own) return;
+    if (i === 'off') c.stripe = false; else { c.stripe = true; c.sc = Number.isInteger(i) && i >= 0 && i < COLORS.length ? i : -1; }
+    save(); thumbs[S.car] = {}; carAgain(); if (menu) drawMenu();   // (the car shown again at once: no chamber)
+  }
+  function doNum(d) { const c = C(); if (!c.own) return; c.num = (numOf(S.car) - 1 + d + 99) % 99 + 1; save(); if (menu) drawMenu(); }
   function buy() {
     const id = S.car, p = PRICE[id] || 0;
     if (S.cars[id].own || !pay(p)) return;
@@ -519,12 +545,16 @@
     if (h.kind === 'service') m = { el: 'servis', key: h.key };
     else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
+    else if (h.key === 'car:el' && EL[h.el]) m = { el: h.el, key: null, car: true, part: h.part || null, panel: !!h.part };   // (a part on the car the shop sells: its menu; under the open bonnet the bay's (the bonnet stays up, its menu at the foot as the bonnet's); garaza-klik-deli, 24. 11.)
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
+    else if (h.key === 'car:hood' || h.key === 'car:door' || h.key === 'car:trunk') m = { el: { 'car:hood': 'hauba', 'car:door': 'vrata', 'car:trunk': 'prtljaznik' }[h.key], key: null, car: true, part: h.part || null, panel: true };   // (the panel opens on its hinge, a car with a kit; garaza-klik-deli-izbira, 23. 11.)
     else if (h.key === 'car:body') m = { el: 'barva', key: null, car: true, sel: [0, 0] };   // (the paint: a tap on the car's body (plate barvni_krogi_B f, 15. 11.); the aero kits: AERO › in its menu)
     else if (h.name && sold(h.name)) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];
-    G.markOff(); G.ghostOff(); menu = null; openMenu(m);
+    G.markOff(); G.ghostOff(); menu = null; G.openPart(null); openMenu(m);
+    if (menu && m.part) G.openPart(m.part);
+    G.bayCam(!!(menu && m.part === 'hood'));   // (into the bay with the bonnet up, home again otherwise)
   }
   function onAct(act) {
     G.sound(S.sound);
@@ -586,6 +616,8 @@
       if (t.dataset.tile) { G.sound(S.sound); const [a, b] = t.dataset.tile.split(',').map(Number); tile(a, b); return; }
       if (t.dataset.ctab) { G.sound(S.sound); if (menu) { menu.ctab = +t.dataset.ctab; drawMenu(); } return; }
       if (t.dataset.col) { G.sound(S.sound); if (menu) { menu.color = +t.dataset.col; drawMenu(); } return; }
+      if (t.dataset.sc) { G.sound(S.sound); doStripe(t.dataset.sc === 'off' ? 'off' : +t.dataset.sc); return; }
+      if (t.dataset.num) { G.sound(S.sound); doNum(+t.dataset.num); return; }
       if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); else if (t.dataset.mact === 'aero') { menu = null; openMenu({ el: 'aero', key: null, car: true }); } return; }
       if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
     });
