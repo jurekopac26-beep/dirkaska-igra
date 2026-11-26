@@ -1,6 +1,6 @@
 // Velika vozila: skupni model fizike težkih vozil (#1061). Vklop samo z model.heavy (true ali predmet s popravki): brez njega
 // avto vozi kot doslej. Viri in »brez vira«: docs/velika-vozila-fizika.md. Priklop v js/core.js: Car (za), step (pred, po), Race (prevrnitev).
-// Vse vrednosti so iz virov ali označene »brez vira«; uglaševanje 7 vozil in AI je seja 2.
+// Vse vrednosti so iz virov ali označene »brez vira«. AI (seja 2): lasten profil hitrosti (aiProf) brez sprememb v aiDrive.
 var VelikaVozila = (function () {
   'use strict';
   const G = 9.81;
@@ -24,7 +24,10 @@ var VelikaVozila = (function () {
     srtT: 0.6,              // prevrne po ~0,6 s nad pragom (brez vira)
     opoz: 0.85,             // opozorilo pri 85 % praga
     kazen: 10,              // časovna kazen ob prevrnitvi [s] (brez vira, pravilo igre)
-    aiRez: 0.85,            // AI: hitrost v ovinku do 85 % praga
+    aiRez: 0.8,             // AI: hitrost v ovinku do 80 % praga (brez vira, pravilo igre; 0,85 v testu preveč prevrnitev po trkih)
+    ai: true,               // AI vozi po lastnem profilu (aiProf); false samo za primerjavo v testu
+    aiPlin: 0.7,            // AI: nad 70 % praga (izmerjeni bočni pospešek) popusti plin (brez vira, pravilo igre)
+    aiZav: 0.85,            // AI: nad 85 % praga (kot opozorilo voznika) zavira (brez vira, pravilo igre)
     tau: 0.15,              // glajenje bočnega pospeška [s]
     udar: 2 * G             // nad tem pospeškom je sunek trka, ne vožnja [m/s²]
   };
@@ -42,8 +45,15 @@ var VelikaVozila = (function () {
   // pred korakom fizike: zavorna moč (omejitev pojemka, pregrevanje), stanje za meritev po koraku
   function pred(c, dt, trk) {
     const v = c.vv; if (!v) return;
+    if (K.ai && !c.isPlayer && trk && trk.rk) { aiProf(c, v, trk); aiVoznik(c, v); }
     v.bS = c.brakeG; c.brakeG *= v.kCap * fadeK(v.brT);
     v.vx = c.vx; v.vz = c.vz; v.spd = Math.hypot(c.vx, c.vz);
+  }
+  // AI kot voznik tovornjaka: ob nagibanju (izmerjeni bočni pospešek, tudi po trku ali na drugi liniji) popusti plin in zavira; samo vnos, fizika ista
+  function aiVoznik(c, v) {
+    const r = v.aLat / (G * v.srt); if (!(r > K.aiPlin)) return;
+    c.inThr = Math.min(c.inThr || 0, Math.max(0, 1 - (r - K.aiPlin) / (K.aiZav - K.aiPlin)));
+    if (r > K.aiZav) c.inBrk = Math.max(c.inBrk || 0, Math.min(1, (r - K.aiZav) * 4));
   }
   // po koraku: izmerjena pojemek in bočni pospešek, segrevanje zavor, nagib na progah brez gradeForce, prag prevrnitve
   function po(c, dt, trk) {
@@ -91,8 +101,27 @@ var VelikaVozila = (function () {
     const a = K.pojemek * fadeK(v.brT) * 0.8;
     return (v0 * v0 - v1 * v1) / (2 * a);
   }
+  // AI: profil hitrosti težkega vozila (c.vprof, ki ga bere aiDrive): profil dirke ali modela, omejen z vOvinek na krivini idealne linije
+  // (rk) in z zavorno potjo nazaj od vsakega ovinka (pojemek ob temperaturi zavor, na klancu z višino tudi sila teže, kot v speedProfile).
+  // Na novo se izračuna, ko dirka da nov profil (vreme) ali ko se zavore segrejejo ali ohladijo za več kot 5 % moči. Samo AI, ne igralec.
+  function aiProf(c, v, T) {
+    const f = fadeK(v.brT);
+    if (c.vprof && c.vprof === v.prof && v.profT === T && Math.abs(f - v.profF) < 0.05) return;
+    if (c.vprof !== v.prof) v.src = c.vprof || null;
+    const N = T.N, rk = T.rk, rds = T.rds, src = v.src, gr = T.hasElev ? T.grade : null, aB = K.pojemek * f * 0.8;
+    const p = new Float32Array(N), vk = Math.sqrt(K.aiRez * v.srt * G);
+    for (let i = 0; i < N; i++) {   // (krivina povprečena čez 5 točk: brez skokov na šivih poligona)
+      let kk = 0; for (let j = -2; j <= 2; j++) kk += Math.abs(rk[((i + j) % N + N) % N]);
+      kk = Math.max(kk / 5, 1e-5);
+      p[i] = Math.min(K.vLim, vk / Math.sqrt(kk), src ? src[i] : Infinity);
+    }
+    const a = (i) => gr ? Math.max(aB * 0.6, aB + G * gr[i]) : aB;
+    if (T.open) for (let i = N - 2; i >= 0; i--) p[i] = Math.min(p[i], Math.sqrt(p[i + 1] * p[i + 1] + 2 * a(i) * rds[i]));
+    else for (let n = 0; n < 3; n++) for (let i = N - 1; i >= 0; i--) { const b = (i + 1) % N; p[i] = Math.min(p[i], Math.sqrt(p[b] * p[b] + 2 * a(i) * rds[i])); }
+    v.prof = c.vprof = p; v.profT = T; v.profF = f;
+  }
   // po reševanju (prevrnitev): stanje nazaj, zavore ostanejo vroče
   function reset(c) { const v = c && c.vv; if (v) { v.pad = false; v.nad = 0; v.aLat = 0; v.opoz = false; } }
-  return { VOZILA, K, za, pred, po, fadeK, vOvinek, zavPot, reset };
+  return { VOZILA, K, za, pred, po, fadeK, vOvinek, zavPot, aiProf, aiVoznik, reset };
 })();
 if (typeof module !== 'undefined') module.exports = VelikaVozila;

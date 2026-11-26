@@ -88,7 +88,15 @@ Dodatni viri (26. 11., seja 1): najmanjši prag težkih vozil **0,35 g** (NZTA, 
 
 ## Model v kodi (seja 1, 26. 11.)
 
-`js/velika-vozila.js` (`VelikaVozila`): vklop z `model.heavy` (true ali predmet s popravki `srt`, `masa`), brez njega se nič ne spremeni. Preglednica `VOZILA` (masa, prag, vir), konstante `K` (130 km/h, hladni pojemek 6,5 m/s², najmanj 5,0; slabljenje 350–550 °C do 60 %; motorna zavora pol dela; 0,6 s nad pragom; opozorilo pri 85 %; kazen 10 s). `pred`/`po` okrog koraka fizike: zavorna moč (omejitev pojemka, pregrete zavore), gretje zavor, klanec na progah brez `gradeForce`, bočni pospešek in prevrnitev (`vv.pad`). Za AI: `vOvinek(c, k)`, `zavPot(c, v0, v1)`. Priklop v `js/core.js`: `VV`, `Car.vv`, `step`, prevrnitev v dirki (vrnitev, `tfPen`). Skripta se naloži šele z vrstico v `index.html` in `garaza.html` pred `core.js` (vprašanje na strani Odločitve).
+`js/velika-vozila.js` (`VelikaVozila`): vklop z `model.heavy` (true ali predmet s popravki `srt`, `masa`), brez njega se nič ne spremeni. Preglednica `VOZILA` (masa, prag, vir), konstante `K` (130 km/h, hladni pojemek 6,5 m/s², najmanj 5,0; slabljenje 350–550 °C do 60 %; motorna zavora pol dela; 0,6 s nad pragom; opozorilo pri 85 %; kazen 10 s). `pred`/`po` okrog koraka fizike: zavorna moč (omejitev pojemka, pregrete zavore), gretje zavor, klanec na progah brez `gradeForce`, bočni pospešek in prevrnitev (`vv.pad`). Za AI: `vOvinek(c, k)`, `zavPot(c, v0, v1)`. Priklop v `js/core.js`: `VV`, `Car.vv`, `step`, prevrnitev v dirki (vrnitev, `tfPen`). Skripta se naloži z vrstico v `index.html` in `garaza.html` pred `core.js` (odločitev `velika-vozila-1061-skripta`, 26. 11.: A; dodano v seji 2).
+
+## AI in testi (seja 2, 26. 11.)
+
+AI v težkem vozilu: `aiProf` (lasten profil hitrosti iz krivine idealne linije, pod deležem praga, zaviranje nazaj s 80 % pojemka ob trenutni temperaturi zavor in z nagibom) in `aiVoznik` (ob izmerjenem nagibu nad 70 % praga popusti plin, nad 85 % zavira). Oboje je samo vnos AI v `js/velika-vozila.js`; `aiDrive` v `js/core.js` in fizika vožnje se ne spremenita. Deleži so pravila igre, **brez vira**: `aiRez` 0,8 (pri 0,85 so tovornjaki v gneči po trkih padali preveč), `aiPlin` 0,7, `aiZav` 0,85, rezerva pojemka 0,8.
+
+Test `tests/velika-vozila.test.js` (komplet fleet): jedro z `js/velika-vozila.js` kot v `index.html`; `model.heavy` vklopi samo v svoji kopiji. Cisterna, HRAST in LASTOVKA na Bathurstu in Vršiču, 5 AI, 90 s: z AI 0–4 prevrnitve na dirko, brez njega 35–76. Večina preostalih je po trku med tovornjaki.
+
+Ni narejeno: uglasitev datotek 7 vozil (`heavy: true`, mase, `brakeK`), ker isti datoteki spreminjata #685 (croatiadata) in #480; vprašanje `velika-vozila-1061-vozila` na strani Odločitve. Do takrat je model v igri naložen, a izklopljen (nobeno vozilo nima `heavy`).
 
 ## Možnosti
 
