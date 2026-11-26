@@ -42,6 +42,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 82 (drugi prehod): Seul, Pikes Peak makadam (`js/world-chase-bt82.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-82` |
 | Kamera za avtom, tla ob cesti, skupina 83 (drugi prehod): Montréal, Pikes Peak (makadam) (`js/world-chase-bt83.js`, na zbirno grafika-chase-bt) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-83` |
 | Kamera za avtom, tla ob cesti, skupina 81 (drugi prehod): El Jem, Killar (`js/world-chase-bt81.js`, na zbirno #821) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-81` |
+| Kamera za avtom, tla ob cesti, skupina 94: Kotor (četrti prehod), Krásna Hôrka (prvi prehod) (`js/world-chase-bt94.js`, veja `grafika/chase-bt94`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-94` |
 | Kamera za avtom, tla ob cesti, skupina 37 (drugi prehod): Sakhir, Seul (`js/world-chase-bt37.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 39 (drugi prehod): Pembrey, Pikes Peak (`js/world-chase-bt39.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 33: Aguascalientes, Bathurst (`js/world-chase-bt33.js`, v #821) | biketraveler | v delu 21. 11. |

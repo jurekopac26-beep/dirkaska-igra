@@ -116,6 +116,15 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-94`
+
+Kamera za avtom, skupina 94 (`js/world-chase-bt94.js`): Kotor (četrti prehod: zaplate golega svetlega krasa in slamnate trave, temno nizko grmovje, v borovju listje, do ~45 m; namenoma redko, ker je proga tik pod mejo oglišč, zato je razlika na slikah majhna; +7 klicev, 226 klicev, vrh 896 tisoč oglišč) in Krásna Hôrka (prvi prehod: v redkem listnatem gozdu ob cesti temnejše zaplate lanskega listja in vlažnih tal, nizka podrast in šopi trave, na travnikih zaplate in nepokošena trava, do ~55 m; +8 klicev, 121 klicev, vrh 283 tisoč oglišč). Slike zdaj in potem na strani Odločitve.
+
+1. **Ok, tako (priporočeno).**
+2. Krásna Hôrka manj (pol gostote zaplat in podrasti), Kotor tako.
+3. Samo Krásna Hôrka, Kotor brez tega prehoda.
+4. Ne, odstrani skupino 94.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
