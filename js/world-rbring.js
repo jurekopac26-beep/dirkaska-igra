@@ -17,18 +17,18 @@
   let LOD, T, THEME;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T, THEME } = API); });
 
-  /* ================= RED BULL RING (theme 'rbring') =================
-     The Formula 1 circuit at Spielberg in Styria (4.3 km), in its real layout and heights. The terrain tiles, the land cover forest and the
+  /* ================= STYRIA CIRCUIT (theme 'rbring') =================
+     The top-category circuit at Spielberg in Styria (4.3 km), in its real layout and heights. The terrain tiles, the land cover forest and the
      road ribbons are the Nordschleife's corridor builder (nrPrep and the nr* helpers read def.dem and def.lc); the scenery is its own: pale
      asphalt run-offs where the barriers stand far out (def.runoffTarmac: they drive like asphalt too), concrete walls and debris fences along
      the straight and past the spectators, tyre walls outside the slow corners, armco elsewhere; the pit lane with the crews' boxes, the team
      stands on the pit wall and the 300 m pit building on level ground (NR.pad); the grandstands (the covered Start-Ziel along the whole
-     straight with the voestalpine wing on top, Steiermark, the long Red Bull stand up the hill, T3, Nord, T9, T10) with seated crowds, the
+     straight with the wing on the stand on top, Steiermark, the long hill stand up the hill, T3, Nord, T9, T10) with seated crowds, the
      orange fans on the grass with food stalls behind them, the steel bull on its arch on the infield hill, the 2024 gravel strips at Turns
      9 and 10, advertising boards on the walls, braking boards, turn numbers, marshal posts, TV towers, recovery trucks, car parks on the
      built-up land, Styrian farms. */
   const RB_SHIRTS = [[1, 0.5, 0.08], [0.98, 0.45, 0.06], [1, 0.56, 0.12], [0.95, 0.42, 0.1], [0.94, 0.94, 0.92], [0.12, 0.16, 0.36], [0.86, 0.12, 0.14], [0.98, 0.8, 0.12],
-    [0.16, 0.4, 0.86], [0.12, 0.13, 0.16], [0.2, 0.6, 0.3], [0.97, 0.52, 0.1]];   // the spectators' shirts: lots of orange (the Dutch fans), Red Bull navy, Austrian red and white
+    [0.16, 0.4, 0.86], [0.12, 0.13, 0.16], [0.2, 0.6, 0.3], [0.97, 0.52, 0.1]];   // the spectators' shirts: lots of orange (the Dutch fans), navy, Austrian red and white
   function rbAtlas(LK) {   // text boards (4 x 16 cells of 256 x 64): the turn numbers (1-10 in Styria), the braking boards, banners
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const cell = (k, bg, fg, txt, px, stripe) => { const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64; x.fillStyle = bg; x.fillRect(cx, cy, 256, 64); if (stripe) { x.fillStyle = stripe; x.fillRect(cx, cy + 56, 256, 8); x.fillRect(cx, cy, 256, 4); }
@@ -63,6 +63,7 @@
       } },
   };
   Object.assign(RB_LOOK, API.rbLook);   // (the looks of the worlds whose parts are in files of their own: js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js; tools/razdeli-proge.mjs)
+  API.rbLook = Object.assign(API.rbLook || {}, { rbring: RB_LOOK.rbring });   // (Styria's own look too, for the files that chain its LK.extra: js/world-chase-bt17.js)
   function rbCrowdTex(orange) {   // seated crowd for the grandstand tiers (as Tex.crowd; the orange one for the stands full of Dutch fans)
     return Tex.crowdPic(orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
       : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#1a1b1f', '#1bbfd6'], orange ? 77 : 78);
@@ -182,7 +183,7 @@
       x.fillStyle = '#ffcc00'; x.font = '900 10px ' + F; x.fillText(SC.km, ox + 10, 76); x.fillText(SC.sub, ox + 10, 90); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
   }
-  /* ---- the Red Bull Ring's air show (rbAir builds it at the end of buildRbring, rbAirStep runs it from World.update):
+  /* ---- the Styria circuit's air show (rbAir builds it at the end of buildRbring, rbAirStep runs it from World.update):
      - the TV helicopter (tvHeli) crosses the main straight once a race, low in front of the player's car on its second run down the straight
        (not in the start's scramble, not in a corner); then it is gone, it never hangs about in the way
      - three jets fly down the straight over the grid before the start (game.js asks with air.go and films it with air.shot: a camera on the
@@ -328,7 +329,7 @@
     A.rotor.rotation.y = (t * 41) % TAU; A.tail.rotation.z = (t * 73) % TAU;
   }
   const sAtS = (d) => (((T.startS + d) % T.len) + T.len) % T.len;   // (metres from the start line -> s)
-  /* ---- the Red Bull Ring's podium on the pit building's roof terrace, under the wing-shaped canopy, facing the straight (built by buildRbring,
+  /* ---- the Styria circuit's podium on the pit building's roof terrace, under the wing-shaped canopy, facing the straight (built by buildRbring,
      shown by game.js after the race: show(colours of the first three), step() from World.update, hide()): three steps, the first three in
      their cars' colours (the winner with the cup over the head, the others spraying champagne from ~2 s on, jumping), orange smoke either side,
      and the camera for it (shot: from the straight, a long lens) ---- */
@@ -478,7 +479,7 @@
       const k = pat * (1.05 - 0.3 * rut) * (1 + 0.07 * sstep(w - 1.6, w, Math.abs(o))); return [k * (1 + 0.05 * rut), k * (1 - 0.015 * rut), k * (1 - 0.08 * rut)]; };
     const CH = 128 * CKF, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     // asphalt tone: resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker still in the braking zones of the
-    // slower corners (as on the Nordschleife; an F1 circuit is younger and more even)
+    // slower corners (as on the Nordschleife; a top-category circuit is younger and more even)
     const secT = new Float32Array(N), brk = new Float32Array(N);
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = PER ? 18 + Math.floor(crH(k, 3, 97) * 50) : 60 + Math.floor(crH(k, 3, 97) * 70), t = PER ? 0.9 + crH(k, 5, 97) * 0.15 : 0.94 + crH(k, 5, 97) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }   // (the 1930s: tar macadam laid in shorter, more uneven stretches)
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
@@ -561,7 +562,7 @@
       }
       addM(gs, new THREE.MeshLambertMaterial({ map: LK.gravel ? tex.sand : ownTex(rbGravelTex()), vertexColors: true })); addM(gbl, lMat);   // (Rio: the sand traps of its time)
     }
-    /* ---- on the asphalt: black tyre marks into the slower corners (many: a Formula 1 circuit), a few repair patches and sealed cracks (the
+    /* ---- on the asphalt: black tyre marks into the slower corners (many: a top-category circuit), a few repair patches and sealed cracks (the
        Nordschleife's decal atlas, its marks only: no fans' paint on this track), and the DRS lines across the road: a solid one at each
        detection point, a dashed one where the zone opens. Strips that follow the road 5 cm up, per road chunk, drawn without writing depth ---- */
     let nDecals = 0;
@@ -1017,7 +1018,7 @@
               for (const wa of [-5, -3.6, 5.6, 8.2]) for (const sd of [-1, 1]) box(g, x + Math.cos(hd) * wa - Math.sin(hd) * sd * 1.05, y, z + Math.sin(hd) * wa + Math.cos(hd) * sd * 1.05, 1.0, 1.0, 0.35, hd, [0.08, 0.08, 0.09], null, true); }
             else { box(g, x, y, z, 12, 6.4, 7, hd, [0.95, 0.95, 0.96], tc); box(g, x, y + 6.4, z, 12.6, 0.3, 7.6, hd, tc, tc); kface(g, s0, -5.5, 5.5, lw - 3.52, 1.2, 5.6, GLD); }   // a motorhome: two storeys of glass
             exclPush(x, z, 9); } } }
-      // the Red Bull Energy Station at the paddock's end towards Turn 1: the team's house, three floors of glass under a wide navy roof with
+      // the team pavilion at the paddock's end towards Turn 1: the team's house, three floors of glass under a wide navy roof with
       // the name on top, the top floor set back behind a terrace with sunshades, a pool in front, flags
       { const s0 = sStart + PB[1] + 24, f = gb(s0 + 17) || 30.5, o = f + 40, [cx, cz] = atSf(s0 + 17, o), ik = T.idx(s0 + 17), g = scen.get(cx, cz), NV = [0.12, 0.16, 0.32], RD = [0.86, 0.12, 0.16];
         kbox(g, s0, 17, o, -0.7, 35, 0.85, 25, [0.74, 0.75, 0.77], [0.8, 0.81, 0.82]);                        // the plinth
@@ -1042,7 +1043,7 @@
     }
 
     /* ---- grandstands along the barriers: tiers following the track and the ground, a seated crowd on every tier, covered stands under a roof
-       on columns; the voestalpine wing on top of Start-Ziel ---- */
+       on columns; the wing on the stand on top of Start-Ziel ---- */
     const crowdMats = [ownTex(PER ? Tex.crowdPic(['#3a3a3e', '#4d4236', '#6e6352', '#2c3040', '#8a7f6a', '#5c5c60', '#d8d4c8', '#665040', '#3d4a3c', '#9a8c72'], 79) : rbCrowdTex(false)), ownTex(rbCrowdTex(true))], crowdG = [new GB(true), new GB(true)];
     const TC = LK.tier || [[0.7, 0.71, 0.74], [0.58, 0.59, 0.62], [0.62, 0.63, 0.66]], RC = LK.roof || [[0.93, 0.94, 0.95], [0.62, 0.64, 0.68], [0.85, 0.86, 0.88]];   // (the tiers' and the roof's colours: concrete and steel, or the 1930s' timber)
     let nStands = 0;
@@ -1108,7 +1109,7 @@
         nStands++;
       }
       if (sa < 0 && sb > 0 && def.wing) {
-        // the voestalpine wing (2014): a 90 m racing car rear wing on top of Start-Ziel, the stand's roof there: two end plates (dividing the
+        // the wing on the stand (2014): a 90 m racing car rear wing on top of Start-Ziel, the stand's roof there: two end plates (dividing the
         // stand), the main plane over the back rows on slim columns, the flap above it, the media centre's glass front under it behind the
         // stand. All of it stays under the line from the high cameras (kino, iso: behind the stand, looking across it) to a car on the
         // near edge of the road (height < 0.88 x offset - 4.4 m); its own mesh, faded out while such a camera is inside it (out.dyn.fade)
@@ -1396,7 +1397,7 @@
           if (rd < 420 && nHouse < 600 && !excluded(x, z) && nrSlope(x, z) < 0.2 && RH() < 0.55) house(x, z, a0 + ((Math.floor(x / 96) + Math.floor(z / 96)) & 1 ? Math.PI / 2 : 0));
           continue;
         }
-        if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0) continue;
+        if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0 || (LK.lotOk && !LK.lotOk(x, z))) continue;   // (LK.lotOk: a world's own roads, laid later: Sosnová's)
         const rot = a0 + ((Math.floor(x / 64) + Math.floor(z / 64)) & 1 ? Math.PI / 2 : 0), hb = crH(Math.floor(x / 48), Math.floor(z / 48), 83);
         const kind = hb < MIX[0] ? 'kamp' : hb < MIX[0] + MIX[1] ? 'avtodomi' : 'navijaci'; campLot(scen.get(x, z), nrGround, x, z, rot, kind, i * 7 + j); (out.lots || (out.lots = [])).push([x, z, rot, kind]); nCars++;   // (nCars: the lots; out.lots: where, for the tests and the people)
         exclPush(x, z, 11);
@@ -1438,7 +1439,7 @@
           const p = WD ? WD.p[cl] : RIO ? RIO_TP[cl] : AU ? (cl === 1 ? (LK.trees === 'bt' ? 0.42 : 0.55) : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
           if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue; }
-          if (excluded(x, z) || P.pad(x, z, 0) !== 0 || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon)
+          if (excluded(x, z) || (P.pad(x, z, 0) !== 0 && !(LK.padTrees && LK.padTrees(x, z))) || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon; LK.padTrees: trees on a world's own pad: Lombok's stream swales)
           const y = nrGround(x, z); let sp, hgt, wid;
           if (WD) [sp, hgt, wid] = WD.pick(cl, R, far, x, z);
           else if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);

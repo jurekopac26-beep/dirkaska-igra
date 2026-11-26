@@ -139,6 +139,7 @@
        (World.cesta's crte), the markings across the road where OpenStreetMap has them (World.cesta's precne); the chequered lines at the start
        and at the finish ---- */
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
+    const OB = World.ext.eljemOb || null, GAP = OB ? OB.mouths({ inFort }) : null;   // (OSM's side streets: js/world-eljem-obcestje.js; the edge lines open across their mouths)
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const RC = 128, tileL = 8, secT = new Float32Array(N), CZ = World.cesta ? World.cesta.crte(T, { r: 140, pred: 40 }) : null, CL = CZ ? CZ.at : null;
     const XM = CZ && World.cesta.precne ? World.cesta.precne(T, CZ, (LD.onRoad || []).map(([d, k, x]) => [sAt(d), k, x]), { rob: 0.38, sred: 0.08 }) : { kosi: [], brez: [] }, xk = new Map(), wx = [0.9, 0.9, 0.86];
@@ -161,7 +162,7 @@
         if (cl) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));
         if (!lp.length) { pl = -1; pc = 0; continue; }
         const l = gl.row(lp, lp.map(() => wl));
-        if (pl >= 0) { if (!SR) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } if (cl && pc) gl.link(pl, l, e0, e0 + 1); } pl = l; pc = cl;
+        if (pl >= 0) { if (!SR) { if (!(GAP && GAP[i] & 1)) gl.link(pl, l, 0, 1); if (!(GAP && GAP[i] & 2)) gl.link(pl, l, 2, 3); } if (cl && pc) gl.link(pl, l, e0, e0 + 1); } pl = l; pc = cl;
       }
       if (SR) for (const si of [0, 1]) for (const run of tek(si, 2, c0, Math.min(c0 + RC, N - 1))) { let p = -1; for (const f of run) { const l = gl.row(edgeL(f, si), [wx, wx]); if (p >= 0) gl.link(p, l, 0, 1); p = l; } }
       for (const q of xk.get(c0 / RC) || []) layX(gl, q);
@@ -268,6 +269,7 @@
       if (flat) box(g, bx, y0 + hh, bz, Lb, 0.6, Wb, ang, wc.map(v => v * 0.92), [0.7, 0.64, 0.58]);
       else gable(g, bx, y0 + hh, bz, Lb + 0.6, Wb + 0.6, Math.min(2.4, Wb * 0.22), ang, ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], wc);
     };
+    const blds = [];
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
       if (inFort(bx, bz, 4)) continue;   // (nothing in the amphitheatre)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
@@ -280,9 +282,10 @@
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
       const hh = Hb || (big ? (3 + Math.floor(hk * 2)) * 3.1 : area < 45 || k0 === 4 ? 3 + hk : 6.2 + hk * 1.4);
       house(g, bx, bz, Lb, Wb, ang, y0, hh, big || crH(bx, bz, 15) < 0.96, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
-      nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
+      nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2); blds.push({ x: bx, z: bz, L: Lb, W: Wb, ang });
     }
     // (no houses where OpenStreetMap has no footprints: only what is in the map)
+    if (OB) OB.place({ exclPush, blds, vergeRow });   // (the side streets end at the houses; the trees keep off them)
 
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls; a banner at the finish too ---- */
     for (const s0 of [sStart, sFin]) {
@@ -296,7 +299,7 @@
       const FL = [[0.8, 0.12, 0.12], [0.1, 0.1, 0.1], [0.95, 0.78, 0.15], [0.95, 0.95, 0.93], [0.2, 0.4, 0.7]];
       for (let d = -100; d < 130; d += 18) for (const side of [-1, 1]) {
         const ii = T.idx(sAt(d)), o = side * ((side > 0 ? T.br[ii] : T.bl[ii]) + 1.6), px = T.px[ii] + T.nx[ii] * o, pz = T.pz[ii] + T.nz[ii] * o, py = nrGround(px, pz), gg = scen.get(px, pz);
-        if (seaD(px, pz) > -1 || naSR(px, pz)) continue; CR.avoid(px, pz, 0.45);
+        if (seaD(px, pz) > -1 || naSR(px, pz) || (OB && OB.on(px, pz, 0.6))) continue; CR.avoid(px, pz, 0.45);
         cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [FL[Math.floor(crH(d, side, 5) * FL.length)]], 1.2, 0.8);   // (waving: js/world-zastave.js)
       }
     }
@@ -413,13 +416,15 @@
         const sMat = aMat.clone(); for (const g of SR.asfalt(RB, API.nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
         nStb = SR.predmeti((x, z) => { const g = scen.get(x, z); return { quadO: (...a) => g.quadO(...a), triO: (...a) => g.triO(...a), quadUp() {}, triUp() {} }; }); out.stebricki = SR.stebricki;
       }
+      if (OB) OB.draw({ root, aMat, gMat });   // (the side streets: before the terrain colours are dropped)
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
+    const rob = World.ext.eljemRob ? World.ext.eljemRob({ scen, excluded, root, matV, inFort: (x, z) => fortW(x, z) > 0 }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, rocks: 0 };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, rocks: 0, rob };   // (read by the tests)
     if (SR) Object.assign(out.stats, { stranske: SR.n, stebricki: nStb });
     return out;
   }

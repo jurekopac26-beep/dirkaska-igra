@@ -22,7 +22,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     roadWear: 1.15,
     id: 'savusavu', name: 'Savusavu, Fidži', theme: 'savusavu', open: true, leftHand: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.0,
     desc: 'Savusavu na otoku Vanua Levu na Fidžiju: 2,5 km obalne ceste od planote pri letališču čez nizko gozdnato sleme in navzdol do roba mesta nad zalivom. Levi promet.',
-    en: { name: 'Savusavu, Fiji', desc: 'Savusavu on the island of Vanua Levu in Fiji: 2.5 km of the coast road from the plateau by the airfield over a low wooded ridge and down to the edge of the town above the bay. Left-hand traffic.' },
+    en: { name: 'Savusavu, Fiji', desc: 'Savusavu on the island of Vanua Levu in Fiji: 2.5 km of the coast road from the plateau by the airfield over a low wooded ridge and down to the edge of the town above the bay. Drive on the left.' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: SAVUSAVU_H.map((h, i) => [i / (SAVUSAVU_H.length - 1), h / 10]),
     medals: { cs: [67, 70, 75], wet: { cs: [82, 86, 92] }, winter: { cs: [78, 82, 87], wet: { cs: [96, 101, 108] } } },

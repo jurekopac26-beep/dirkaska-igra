@@ -18,7 +18,10 @@ const OTHERS = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-gap', 'h-map', 'h-pro
 
 // the run on the autopilot for `sec` seconds of game time, a frame drawn after every 0.2 s (a caption stays 1.5 s at least): what the
 // co-driver showed, frame by frame (o.long: the words of the next two calls for this run, Track.paceNotes' own, as the game reads them;
-// o.stop: done once no caption is on after so many shown, so many grades on the sign, a caption so long)
+// o.stop: done once no caption is on after so many shown, so many grades on the sign, a caption so long). With his voice heard (the
+// game's cdTalk) the game time kept to the clock, as in the game: a call waits for the one before on the clock (Comm.noteFree), so a run
+// ahead of it held the next one back for more of the road, late or none on a fast machine (docs/nestabilni-testi.md, 6); the race on
+// the autopilot in the game's own frames (autoDrive), topped up to the clock by sim where the frames fall behind
 const LONG = ['caution', 'hairpin', 'L', 'and', 'hairpin', 'R', 'and', 'hairpin', 'L', 'd150'];   // ('CAUTION · HAIRPIN L › HAIRPIN R › HAIRPIN L')
 const drive = (page, sec, opt = {}) => page.evaluate(async ([OTHERS, sec, long, st]) => {
   const g = window.__game, $ = (id) => document.getElementById(id), fr = () => new Promise(r => requestAnimationFrame(() => r()));
@@ -31,8 +34,12 @@ const drive = (page, sec, opt = {}) => page.evaluate(async ([OTHERS, sec, long, 
   const keep = long ? N.slice(g.codrv.k, g.codrv.k + 2).map(c => [c, c.toks]) : [];
   for (const [c] of keep) c.toks = long.slice();
   let was = '';
-  for (let i = 0; i < sec * 5 && g.phase === 'racing'; i++) {
-    g.sim(0.2, true); await fr();
+  const clock = g.codrv.voice && Comm.noteCan(), t0 = performance.now(), g0 = g.race.time;
+  if (clock) g.autoDrive = true;
+  for (let i = 0; (clock ? g.race.time - g0 < sec : i < sec * 5) && g.phase === 'racing'; i++) {
+    if (!clock) g.sim(0.2, true);
+    else { const lag = (performance.now() - t0) / 1000 - (g.race.time - g0); if (lag > 0) g.sim(Math.min(lag, 0.2), true); }
+    await fr();
     const cap = g.codrv.cap, b = box(el);
     if (cap) {
       const L = g.codrv.log, last = L[L.length - 1], want = Core.codrvCap(N[last.k].toks, lang);
@@ -47,6 +54,7 @@ const drive = (page, sec, opt = {}) => page.evaluate(async ([OTHERS, sec, long, 
     was = cap;
     if (st && !cap && o.shown.length >= (st.shown || 0) && o.nums.size >= (st.nums || 0) && (!st.long || o.shown.some(x => x.length >= st.long))) break;
   }
+  g.autoDrive = false;
   for (const [c, t] of keep) c.toks = t;
   // (rec: each call said from the sheet; spk: the lines the browser's voice was given, its unlock's blank one aside)
   return Object.assign(o, { hits: [...o.hits], nums: [...o.nums], pos: { cap: [...o.pos.cap], free: [...o.pos.free] }, d: g.codrv.log.map(x => x.d), rec: g.codrv.log.map(x => !!x.rec),
