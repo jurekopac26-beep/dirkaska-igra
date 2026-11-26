@@ -513,7 +513,9 @@ async function main() {
   }
   sideRoads.sort((a, b) => a[0] - b[0]);
   for (let k = sideRoads.length - 1; k > 0; k--) for (let m = k - 1; m >= 0; m--) { const A = sideRoads[k], B = sideRoads[m]; if (!A || !B || A[1] !== B[1] || A[0] - B[0] > 40) continue; sideRoads[A[3] > B[3] ? k : m] = null; }
-  const SR = sideRoads.filter(Boolean);
+  let SR = sideRoads.filter(Boolean);
+  // (uvoz.sideMax: a town's many streets thinned to the N that matter, the streets before the service roads, the longer first; none dropped without it)
+  if (U.sideMax != null && SR.length > U.sideMax) { const keep = new Set(SR.slice().sort((a, b) => a[3] - b[3] || b[5] - a[5]).slice(0, U.sideMax)); SR = SR.filter(r => keep.has(r)); }
   // the buildings within 170 m ([x, z, length, width, angle, height (0: unknown), kind: 0 house or lodge, 1 big, 2 shed or garage, 3 hut]),
   // the lakes, the car parks and the viewpoints by the road
   const bld = bld0.filter(B => dRoad(B[0], B[1], 220) < 170 || zoneD(B[0], B[1]) < 40);

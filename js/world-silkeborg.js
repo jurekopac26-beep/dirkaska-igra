@@ -21,6 +21,7 @@
   const SK_SHIRTS = [[0.78, 0.1, 0.16], [0.95, 0.95, 0.93], [0.12, 0.18, 0.36], [0.4, 0.42, 0.46], [0.8, 0.12, 0.18], [0.14, 0.14, 0.16], [0.95, 0.78, 0.12], [0.2, 0.48, 0.3],
     [0.3, 0.55, 0.85], [0.92, 0.92, 0.9], [0.56, 0.44, 0.32], [0.86, 0.32, 0.12]];   // the fans' shirts at the end of the summer: red and white, navy, grey and black, a few bright ones
   let SAND = () => 0;   // (the sand's mask of the build under way: colMod makes it, the verges use it)
+  API.skSand = (x, z) => SAND(x, z);   // (the sand's mask for the roadside tufts of js/world-chase-bt47.js: nothing grows on the sand)
   const SK_SANDC = [2.1, 1.46, 2.3];   // (the sand's colour over the grass picture: pale, not green, so the grass shader leaves it)
   const nordic = (f, c, u0, u1, v0, v1) => ({ grid: [[0, u0, u1, 1], [0, v0, v1, 1], [[f, c, f], [c, c, c], [f, c, f]]] });   // (a Nordic cross: World.flagMesh's grid, the cross c from u0 to u1 along the flag (0 at the pole) and from v0 to v1 down it, the field f)
   const DK = nordic([0.78, 0.06, 0.16], [0.95, 0.95, 0.94], 12 / 37, 16 / 37, 12 / 28, 16 / 28);   // the Danish flag: a white Nordic cross on red

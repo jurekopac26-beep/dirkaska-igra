@@ -37,8 +37,9 @@ function withRandom(seed, fn) {
 // electric car and the truck in turn, by the track's place in the list)
 const raceOpts = (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps: 2, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys });
 const NEW_CARS = ['muscle', 'ev', 'truck'];
-// the car for /car: by index among tracks without their own vehicle (the tanker tracks do not shift it)
-const newCar = (C, tid) => NEW_CARS[C.TRACKS.filter(d => !d.vehicle).findIndex(d => d.id === tid) % NEW_CARS.length];
+// the car for /car: by index among tracks without their own vehicle (the tanker tracks do not shift it); Tapini still counts, as it
+// did on main before its def.vehicle took effect, so the tracks after it keep their cars
+const newCar = (C, tid) => NEW_CARS[C.TRACKS.filter(d => !d.vehicle || d.id === 'tapini').findIndex(d => d.id === tid) % NEW_CARS.length];
 const SETUPS = {
   race: { opts: raceOpts },
   demo: { opts: (C, tt, phys) => ({ numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys }) },
@@ -92,15 +93,16 @@ const SETUPS = {
 // fell or crashed again) the rally car from 15.5 s and the electric car from 4 s (at 12.75 and 8.25 s each falls once and loses no panel; picked from 4 to 16 s in half seconds))
 // Svalvogar (the tanker on its own road, docs/proge-cisterna.md): at 6 s it is barely off the line (4 m/s) and only rubs the rock;
 // on the relief road (9. 11. 2026) it turns into the rock at its top speed at 30.5 s (a knock of 19 %), Manchewe's at 33 s (19 %:
-// before, its left was the drop or it only rubbed), Tapini's at 10 s, the best on that slowest road (6 m/s: 4 %); the tanker loses
-// no panel at its pace (the crash set-up's own rule in golden.test.js)
+// before, its left was the drop or it only rubbed); the tanker loses
+// no panel at its pace (the crash set-up's own rule in golden.test.js); Tapini's at 10 s, the best on that slowest road (6 m/s: 4 %)
 // (Chapman's Peak's hills behind the barrier line, def.hills: from 6 s the left lock of the rally car and the prototype drives up the hill by the
 // start, no damage; tried from 4 s on in half seconds: rally 5.5, prototype 5)
 // (the starts moved to a straight, 15. 11. 2026: there the left lock first only dents or misses; tried from 4 s on in half seconds:
 // Chapman's Peak rally 9, formula 8, electric car 8, Tianmen rally 4 (muscle car 7, the start 20 m further on), Rio do Rastro rally 4.5, Bâlea rally 4, truck 4.5)
 // (zbirna Proge 2: Ujarrás muscle 6.5 (from 6 s it only dents the car, no panel off), Ghoufi rally 8 and electric car 9 (from 6 to 7.5 s mostly
 // only dents against the canyon rim, no panel off; 8-10 s each loses panels), Portobelo truck 6.5 (from 6 s no panel off); tried 4-10 s in half seconds)
-const CRASH_AT = { svalvogar: 30.5, manchewe: 33, tapini: 10, katu: 4.5, 'balea/rally': 4, 'balea/truck': 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 7, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 8, 'chapman/rally': 9, 'chapman/formula': 8, 'chapman/lm': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 4.5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'seoul/truck': 5, 'portomoniz/lm': 4, london: 6.5, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5, 'zurich/rally': 5.5, 'killar/ev': 4, 'killar/rally': 15.5, 'killar/formula': 7.5, 'isuna/rally': 5, 'ujarras/muscle': 6.5, 'ghoufi/rally': 8, 'ghoufi/ev': 9, 'portobelo/truck': 6.5, canaries: 5, 'canaries/formula': 6, 'sogeri/muscle': 5, 'kanaba/truck': 4 };
+// (Tapini, 22. 11. 2026: rally, formula and prototype 4, truck 6.5 (from 5 s mostly only dents on the climb, no panel off); tried 4-11 s)
+const CRASH_AT = { svalvogar: 30.5, manchewe: 33, 'tapini/cisterna': 10, 'tapini/muscle': 16, 'portomoniz/truck': 4, 'riohondo/truck': 5, 'ngorongoro/ev': 9, tapini: 4, 'tapini/truck': 6.5, katu: 4.5, 'balea/rally': 4, 'balea/truck': 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 7, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 8, 'chapman/rally': 9, 'chapman/formula': 8, 'chapman/lm': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 4.5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'seoul/truck': 5, 'portomoniz/lm': 4, london: 6.5, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5, 'zurich/rally': 5.5, 'killar/ev': 4, 'killar/rally': 15.5, 'killar/formula': 7.5, 'isuna/rally': 5, 'ujarras/muscle': 6.5, 'ghoufi/rally': 8, 'ghoufi/ev': 9, 'portobelo/truck': 6.5, canaries: 5, 'canaries/formula': 6, 'sogeri/muscle': 5, 'kanaba/truck': 4, 'irishtown/ev': 5, 'irishtown/rally': 8, 'vaoala/ev': 4.5, 'hafit/formula': 7, 'hafit/lm': 7 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

@@ -3,7 +3,8 @@
    mountain passes (js/world-prelaz.js, buildPrelaz) with a look of its own (PL_LOOK.llogara) and its own landmarks (L.pre, L.extra): the
    black pines along the road and lone ones on the open top and the south face (their own instanced trees, among the shared builder's firs of
    the forest), the concrete bunkers of the old defences, the fountains of the two springs by the road, the monument above the pass (a shape
-   only), the wayside shrine, the guidepost, and at the line the paragliders' launch: its windsock, the wings laid out on the grass, a few in
+   only), the wayside shrine, the guidepost, the information board at the car park by the line
+   (blank), the viewpoint terrace on the knoll west of the pass (flags, a dry-stone wall, a bench), and at the line the paragliders' launch: its windsock, the wings laid out on the grass, a few in
    the air over the slope (World.update: out.dyn.ext). Places from OpenStreetMap (ODbL 1.0); all generic: no names, letters or signs
    ========================================================================= */
 (function () {
@@ -38,6 +39,9 @@
   const BUNKERS = [[516.8, 816.0], [510.0, 826.3], [478.1, 858.7], [1504.5, 1695.8]];   // (the concrete pillboxes in the pines below the pass and on the south face)
   const FOUNTAINS = [[67.6, 171.8], [219.9, 380.7]];   // (the water point by the first hairpins, the spring by the fifth)
   const MONUMENT = [1148.0, 1210.7], SHRINE = [1463.7, 1681.2], GUIDE = [1018.6, 1094.4];
+  // (by the road, OpenStreetMap read 23. 11. 2026: the information point at the car park by the line, the viewpoint on the knoll west of the
+  // pass, 58 m from the road)
+  const BOARD = [1221.8, 2052.7], VIEW = [676.5, 1066.5];
   const LAUNCH = [1213.1, 2099.3], SOCK = [1226.0, 2079.0];   // (the paragliders' launch: the grass below the viewpoint at the line, the windsock at its top)
   const WINGS = [[1208.0, 2096.0, 0.4], [1226.0, 2104.0, -0.3]];   // (the wings laid out on the grass: their middles, the way their span lies)
   const marks = [];   // (the build under way: [what, x, z, rot] where each landmark stands)
@@ -59,6 +63,8 @@
     { const [x, z, hd, sd] = besideRoad(MONUMENT[0], MONUMENT[1], 3.0); marks.push(['monument', x, z, hd, sd]); exclPush(x, z, 4.5); }
     { const [x, z, hd, sd] = besideRoad(SHRINE[0], SHRINE[1], 1.2); marks.push(['shrine', x, z, hd, sd]); exclPush(x, z, 1.6); }
     { const [x, z, hd, sd] = besideRoad(GUIDE[0], GUIDE[1], 1.4); marks.push(['guide', x, z, hd, sd]); exclPush(x, z, 1.4); }
+    { const [x, z, hd, sd] = besideRoad(BOARD[0], BOARD[1], 1.2); marks.push(['board', x, z, hd, sd]); exclPush(x, z, 1.8); }
+    { const [x, z, hd, sd] = besideRoad(VIEW[0], VIEW[1], 2.0); marks.push(['view', x, z, hd, sd]); exclPush(x, z, 4.2); }
     exclPush(LAUNCH[0], LAUNCH[1], 26); exclPush(SOCK[0], SOCK[1], 3);
   };
 
@@ -97,7 +103,7 @@
   /* ---- the landmarks and the pines, after the rest of the pass is built ---- */
   LOOK.extra = function ({ scen, root, out, P, excluded, matV }) {
     const RL = rng(LOOK.seed + 71), G = (x, z) => caGround(x, z), sStart = T.startS, sFin = T.finishS;
-    const st = { pines: 0, bushes: 0, bunkers: 0, fountains: 0, monuments: 0, shrines: 0, guideposts: 0, wings: 0, gliders: 0, sea: 0 };
+    const st = { pines: 0, bushes: 0, bunkers: 0, fountains: 0, monuments: 0, shrines: 0, guideposts: 0, boards: 0, views: 0, wings: 0, gliders: 0, sea: 0 };
     const con = [0.62, 0.61, 0.58], conD = [0.5, 0.49, 0.46], stone = [0.7, 0.68, 0.62], dark = [0.06, 0.06, 0.07];
     for (const [what, x, z, hd, sd] of marks) {
       const g = scen.get(x, z), y = G(x, z), c = Math.cos(hd), s = Math.sin(hd), nx = -s * sd, nz = c * sd;   // (nx, nz: the way from the road out to it)
@@ -133,6 +139,22 @@
         box(g, x + c * 0.45, y + 2.0, z + s * 0.45, 0.9, 0.22, 0.04, hd, [0.5, 0.36, 0.22]);
         box(g, x - c * 0.4, y + 1.65, z - s * 0.4, 0.8, 0.22, 0.04, hd, [0.5, 0.36, 0.22]);
         st.guideposts++;
+      } else if (what === 'board') {   // the information point: a timber board on two posts under a small roof, its face to the road, blank
+        for (const u of [-0.75, 0.75]) box(g, x + c * u, y - 0.2, z + s * u, 0.12, 2.3, 0.12, hd, [0.42, 0.3, 0.2]);
+        box(g, x, y + 0.85, z, 1.4, 1.0, 0.06, hd, [0.5, 0.36, 0.22], [0.5, 0.36, 0.22]);
+        box(g, x - nx * 0.035, y + 0.93, z - nz * 0.035, 1.24, 0.84, 0.01, hd, [0.86, 0.84, 0.78]);
+        gable(g, x, y + 2.1, z, 1.8, 0.5, 0.28, hd, [0.36, 0.26, 0.18], [0.42, 0.3, 0.2]);
+        st.boards++;
+      } else if (what === 'view') {   // the viewpoint on the knoll: a level plot of pale flags, a low dry-stone wall on its far side, a bench
+        const yv = y + 0.05;
+        box(g, x, yv - 0.6, z, 4.4, 0.7, 3.4, hd, vary([0.66, 0.64, 0.6], RL, 0.03), [0.74, 0.72, 0.67]);
+        const wx = x + nx * 1.75, wz = z + nz * 1.75;
+        box(g, wx, yv - 0.5, wz, 4.4, 1.15, 0.45, hd, vary(stone, RL, 0.05), [0.76, 0.74, 0.69]);
+        for (const u of [-2.25, 2.25]) box(g, x + c * u + nx * 0.6, yv - 0.5, z + s * u + nz * 0.6, 0.45, 0.95, 2.3, hd, vary(stone, RL, 0.05), [0.76, 0.74, 0.69]);
+        const bx = x - nx * 0.4, bz = z - nz * 0.4;   // (the bench: a timber seat on two stone blocks, facing the view)
+        for (const u of [-0.7, 0.7]) box(g, bx + c * u, yv, bz + s * u, 0.25, 0.45, 0.4, hd, [0.6, 0.59, 0.56]);
+        box(g, bx, yv + 0.45, bz, 1.8, 0.07, 0.42, hd, [0.5, 0.36, 0.22]);
+        st.views++;
       }
       out.marks[what] = (out.marks[what] || 0) + 1;
     }

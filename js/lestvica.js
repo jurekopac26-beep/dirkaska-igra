@@ -24,7 +24,7 @@
 const Lestvica = (function () {
   'use strict';
   const APP = 'apex-racing', V = 1, KEY = 'tdgp-lp', ME = 'tdgp-lp-me', PHYS = ['cs', 'nova'];
-  const MAX_FRIENDS = 40, MAX_TIMES = 600, MAX_HIDDEN = 100, MAX_LINK = 16000, MAX_IN = 120000, MAX_TEXT = 4e6;
+  const MAX_FRIENDS = 40, MAX_TIMES = 1000, MAX_HIDDEN = 100, MAX_LINK = 16000, MAX_IN = 120000, MAX_TEXT = 4e6;
   const DAY = 864e5, DAY0 = Date.UTC(2026, 0, 1);
   // the bound: in a bend no car turns harder than G3 (m/s²) nor goes faster than VK times the top speed of the fastest car
   const G3 = 3 * 9.81, VK = 1.15;
