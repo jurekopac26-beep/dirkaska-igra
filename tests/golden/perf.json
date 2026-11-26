@@ -524,6 +524,13 @@
   "maxKverts": 632,
   "jsMs": 1.47
  },
+ "chamarel": {
+  "calls": 171,
+  "maxCalls": 206,
+  "kverts": 542,
+  "maxKverts": 804,
+  "jsMs": 1.22
+ },
  "elcastano": {
   "calls": 116,
   "maxCalls": 130,
