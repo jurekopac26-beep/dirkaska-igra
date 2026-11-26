@@ -26,6 +26,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: 'Kudowa-Zdrój v Stołowih gorah na češki meji: spodnjih 7,5 km Ceste stotih ovinkov, od vznožja Lisie Przełęczi na 780 m čez prelaz in navzdol skozi smrekov in bukov gozd ob potoku, ovinek za ovinkom, do prvih hiš Kudowe Górne na 432 m. Po en pas v vsako smer, gozd tik ob cesti.',
     en: { name: 'Kudowa-Zdrój, Poland', desc: 'Kudowa-Zdrój in the Stołowe Mountains on the Czech border: the lower 7.5 km of the Road of a Hundred Bends, from the foot of Lisia Przełęcz at 780 m over the pass and down through the spruce and beech forest along the stream, bend after bend, to the first houses of Kudowa Górna at 432 m. One lane each way, the forest close to the road.' },
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'grass', gradeForce: true, elevSmooth: 6,
+    maxRivals: 40,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~200 m of road past the line (a big vehicle's field over 40: cars on each other)
     elev: KUDOWA_H.map((h, i) => [i / (KUDOWA_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
     medals: {cs:[193,202,218],wet:{cs:[230,241,259]},winter:{cs:[223,234,252],wet:{cs:[271,285,306]}}},

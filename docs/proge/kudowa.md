@@ -4,7 +4,7 @@
 
 Spodnji del Ceste stotih ovinkov (DW387) v Stołowih gorah ob češki meji, v pravem merilu (7,5 km): najbolj ovinkast del ceste. Proga se začne pod Lisio Przełęczjo (~779 m, ~50,46° S, 16,35° V), gre čez prelaz (~798 m) in nato ves čas navzdol skozi smrekov in bukov gozd ob potoku, ovinek za ovinkom, do prvih hiš Kudowe Górne (~432 m); cilj je tik pred njimi, za ciljem je še ~200 m ceste. Po en pas v vsako smer, promet vozi po desni, gozd tik ob cesti.
 
-- **Dirka**: 21 tekmecev (v meniju *Opponents* do 90, `maxRivals`), štart pod prelazom, en spust do doline. Kvalifikacij ni (odprta cesta).
+- **Dirka**: 21 tekmecev (v meniju *Opponents* do 40, `maxRivals`: kratka cesta za ciljem), štart pod prelazom, en spust do doline. Kvalifikacij ni (odprta cesta).
 - **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, lestvica, duh in medalje (zlata 3:13, srebrna 3:22, bronasta 3:38, v dežju 3:50 / 4:01 / 4:19; pozimi 3:43 / 3:54 / 4:12, v dežju 4:31 / 4:45 / 5:06; zlato je čas relijskega avta na avtopilotu).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti (avtomobili, kombiji, avtobusi, kak tovornjak, motoristi, ob cesti kolesarji).
 - **Policija**: beg pred policijo do doline; patrulje imajo samo generičen napis POLICE.
