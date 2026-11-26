@@ -148,6 +148,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.18 | #1026 Zbirka obcestje 23. 11. b | grafika ob progi za 8 prog (Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro), odločitve uporabnika izvedene; predaja v opisu PR | partyslo | svež `main` (25. 11.), zlate vrednosti 8 prog; osnutek do vrste |
 | 10.18 | #1066 Orodje za predajo | `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje, test, kazalo, varčevanje (Matej, #382 7148056618, točka 10); orodje, ne proga | partyslo | osnutek, povezani testi zeleni; predaja za Združevanje partyslo |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
-| 10.20 | #1118 Zbirna: Proge 4 | El Castaño #1090, Chamarel #1091, Meteora #1094, Šipka #1095, Trebević #1096 iz svežega `main` (26. 11.), člani ostanejo odprti; proge, zato zadnje | partyslo | osnutek, povezani testi v teku |
+| 10.20 | #1118 Zbirna: Proge 4 | El Castaño #1090, Chamarel #1091, Meteora #1094, Šipka #1095, Trebević #1096, Tatev #1097 iz svežega `main` (26. 11.), člani ostanejo odprti; proge, zato zadnje | partyslo | osnutek; povezani 37/41, popravljeno 3, kariera (stopnja 3 brez dvoboja) čaka odločitev |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
