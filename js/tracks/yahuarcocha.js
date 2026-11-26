@@ -47,7 +47,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ["Ciljna ravnina", -86.2, 100.8, ["Up the main straight past the pits!", "Flat out up the straight!", "The main straight, the lap is nearly done!"]],
     ],
     turns: [[291.1,-329.1],[710.8,-376.1],[914.5,70.5],[680,19],[795.9,-153.8],[645.4,-304.4],[602.4,-194.3],[468.7,-126],[346.7,-224.2],[265.2,-228.8],[-63.9,165.9],[-71.4,189.6],[-168.7,225.4]],   // the corners' apexes: the gentle right, the long right, the right by the fields, the sharp right, the left up the hill, the left hairpin, the right downhill, the right by the wood, the long left (2), the esses (2), the hairpin by the lake
-    pit: [14, -230, 250, 5],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
+    pit: [14, -230, 250, 10],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [-55, 65],   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.yahuarcocha.pitBox)
     walls: [[-230, 250, 1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered one facing the pits, round the left hairpin

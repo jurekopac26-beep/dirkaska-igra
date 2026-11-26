@@ -48,7 +48,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ["Ciljna ravnina", 79.5, 62.5, ["Down the main straight past the pits!", "Flat out down the long straight!", "The main straight, the lap is nearly done!"]],
     ],
     turns: [[-455.5,-390.9],[-51.7,-212.7],[-58.4,-397],[163.1,-813.8],[161.1,-1058.1],[386.6,-878.6],[369.3,-843.4],[425.8,-676.1],[548.1,-634.5],[541.6,-424.4],[614.3,-287.7],[343.7,25.3],[136.5,-91.5],[261.3,119.6]],   // the corners' apexes: the right hairpin, the left into the valley, the spring corner, the blind left, the long right, the chicane (2), Buda, Pest, the Danube, the fast right, the sharp right, the left hairpin, the last corner
-    pit: [18, -250, 440, 80],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
+    pit: [18, -250, 440, 85],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [20, 140],   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.mogyorod.pitBox)
     walls: [[-250, 440, 1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered one facing the pits, on the short straight before the sharp right, at the last corner
