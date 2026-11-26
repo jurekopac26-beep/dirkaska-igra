@@ -1257,10 +1257,10 @@
  "ujarras": {
   "meshes": 238,
   "verts": 259941,
-  "instances": 2824,
+  "instances": 2760,
   "props": 36,
-  "crowd": 93,
-  "world": "3adf6b1a",
+  "crowd": 29,
+  "world": "a78df858",
   "propsHash": "d16e5841",
   "floor": "d0779776/2212",
   "groups": {
@@ -1269,7 +1269,7 @@
    "-:MeshBasicMaterial": "2ebecc8c",
    "rob:MeshLambertMaterial": "54be33db",
    "roadside-ways:MeshLambertMaterial": "ca2f1154",
-   "crowd:MeshLambertMaterial": "a25e2cb3",
+   "crowd:MeshLambertMaterial": "93c46b91",
    "flags:MeshLambertMaterial": "70e85fef",
    "ao:MeshBasicMaterial": "d5d8626c",
    "tyremarks:MeshBasicMaterial": "39599ac8",
