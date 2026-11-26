@@ -73,6 +73,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Quezaltepeque, Salvador](docs/proge/quezaltepeque.md)
 - [Koli, Finska](docs/proge/koli.md)
 - [Kanaba, Uganda](docs/proge/kanaba.md)
+- [Tapini, Papua Nova Gvineja](docs/proge/tapini.md)
 - [Canaries, Sveta Lucija](docs/proge/canaries.md)
 - [Savusavu, Fidži](docs/proge/savusavu.md)
 - [Koror, Palau](docs/proge/koror.md)
@@ -597,6 +598,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Sogerija: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal Sogerija: Contains modified Copernicus Sentinel data (2024): Sentinel-2 L2A, posnetek 19. 6. 2024 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
 - Drevesa Sogerija (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Tapini (sredinska črta, stranske ceste, stavbe, voda): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (glavni API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/tapini.js` so na voljo pod ODbL 1.0. Višine in teren: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Raba tal: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Canaries (sredinska črta obalne ceste, stranske ceste in križišča, stavbe, potoki, obala, kraji): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/canaries.js` in `tools/canaries/` so na voljo pod ODbL 1.0.
 - Višine in teren Canariesa (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Canariesa: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
