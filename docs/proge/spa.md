@@ -13,6 +13,6 @@ Tla ob progi (ploščice terena in robovi) imajo namesto ene slike trave do dve 
 - **Vir**: ESA WorldCover 2021 (10 m), preslikan na mrežo `lc` (16 m): 10 drevesa → prst, 20 grmičevje → pol trava, pol prst, 30/40/90/100 → trava, 50 pozidano → gramoz, 60/70 golo → skala, 80/95 voda, mangrove → prst. Vsaka celica: prevladujoča plast, druga in njen delež (0, 1/6, 2/6 ali 3/6), zglajeno (σ 0,6 celice).
 - **Poravnava**: WorldCover je glede na gozd v `lc` zamaknjen za −14 m (x) in −22 m (z); ujemanje gozda 0,836.
 - **Skala** samo tam, kjer WorldCover kaže golo površino; na Spa je takih celic 0 %. **Naklon se ne uporablja** (domneva: strma brežina brez golega površja v WorldCoverju je poraščena; prst na strmih brežinah daje že barva oglišč).
-- Deleži prevladujoče plasti: trava 20,7 %, prst 66,8 %, gramoz 12,4 %, skala 0 %. Ozek asfaltni pas, parkirišča in rob ceste niso v tej ločljivosti (to so drugi koraki).
+- Deleži prevladujoče plasti: trava 33,1 %, prst 66,9 %, gramoz 0 % (pozidano, razred 50, je v tej ločljivosti večinoma asfalt proge z bankinami, zato šteje 85 % trava in 15 % gramoz: obrabljene zaplate, ne prevladuje nikjer), skala 0 %. Ozek asfaltni pas, parkirišča in rob ceste niso v tej ločljivosti (to so drugi koraki).
 - **Vrata**: `plasti.on` (privzeto 0), do meritve na napravi (N9). NIZKA: anizotropija 2 in eno branje atlasa (druga plast s povprečno barvo).
 

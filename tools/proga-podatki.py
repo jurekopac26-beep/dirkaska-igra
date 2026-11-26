@@ -888,7 +888,7 @@ def step_data(raw):
 # ---- plasti tal (SR3'): ESA WorldCover -> največ dve plasti na celico def.lc ----
 # Razredi WorldCover v plasti 0 trava, 1 zemlja, 2 gramoz, 3 skala. Skala samo, kjer WorldCover kaže golo ali redko poraslo površje (60);
 # naklon ni uporabljen (predpostavka, zapisana v docs/proge/<id>.md: strma pobočja so v Ardenih porasla, gola so le, kjer to kaže WorldCover).
-PLASTI = {10: (0, 1, 0, 0), 20: (.5, .5, 0, 0), 30: (1, 0, 0, 0), 40: (1, 0, 0, 0), 50: (0, 0, 1, 0), 60: (0, 0, 0, 1), 70: (0, 0, 0, 1),
+PLASTI = {10: (0, 1, 0, 0), 20: (.5, .5, 0, 0), 30: (1, 0, 0, 0), 40: (1, 0, 0, 0), 50: (.85, 0, .15, 0), 60: (0, 0, 0, 1), 70: (0, 0, 0, 1),
           80: (0, 1, 0, 0), 90: (1, 0, 0, 0), 95: (0, 1, 0, 0), 100: (1, 0, 0, 0)}
 A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 def lc_grid(js):

@@ -35,7 +35,7 @@
       const u = i / S, v = j / S, a = n1(u, v), b = n2(u, v), c = n3(u, v), o = (j * S + i) * 4;
       let R, G, B;
       if (kind === 1) {   // earth: the brown floor of the woods, needles and humus, darker hollows
-        const k = 0.78 + a * 0.2 + b * 0.18 + c * 0.12 + (r() - 0.5) * 0.14; R = 124 * k; G = 92 * k; B = 66 * k;
+        const k = 0.78 + a * 0.2 + b * 0.18 + c * 0.12 + (r() - 0.5) * 0.14; R = 104 * k; G = 84 * k; B = 66 * k;
       } else if (kind === 2) {   // gravel: grey-blue slate and limestone chips in fine dust
         const k = 0.8 + b * 0.16 + c * 0.22 + (r() - 0.5) * 0.24; R = 146 * k; G = 142 * k; B = 134 * k;
       } else {   // rock: slate in tilted beds, lighter and darker
@@ -49,7 +49,7 @@
     const wrap = (px, py, f) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) f(ox + px + a * S, oy + py + b * S); };   // (across the edges: tileable)
     if (kind === 1) {   // needles and twigs, a few pebbles
       x.lineWidth = 1;
-      for (const [st, n, len] of [['rgba(150,90,56,0.35)', 700, 3], ['rgba(84,60,42,0.35)', 200, 5], ['rgba(186,150,110,0.3)', 220, 2]]) {
+      for (const [st, n, len] of [['rgba(126,94,68,0.35)', 700, 3], ['rgba(84,60,42,0.35)', 200, 5], ['rgba(186,150,110,0.3)', 220, 2]]) {
         x.strokeStyle = st; x.beginPath();
         for (let k = 0; k < n; k++) { const px = r() * S, py = r() * S, an = r() * Math.PI, l = len * (0.6 + r() * 0.8); wrap(px, py, (qx, qy) => { x.moveTo(qx, qy); x.lineTo(qx + Math.cos(an) * l, qy + Math.sin(an) * l); }); }
         x.stroke(); }
