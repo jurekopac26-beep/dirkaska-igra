@@ -1861,6 +1861,104 @@
    "repairs": 0
   }
  },
+ "meteora/race/cs": {
+  "digest": "0220d89c927dead1809453ad",
+  "lead": 1869,
+  "car0": [
+   882.63,
+   -950.24
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "meteora/demo/cs": {
+  "digest": "d334cfa49843c5a428931230",
+  "lead": 2021.4,
+  "car0": [
+   1122.1,
+   -935.23
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "meteora/upg/cs": {
+  "digest": "665fd817c8e83899d3e9d344",
+  "lead": 1981.8,
+  "car0": [
+   1081.77,
+   -981.93
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "meteora/crash/cs": {
+  "digest": "ca9e6df7d5786cb2fae83c6e",
+  "lead": 1847.2,
+  "car0": [
+   738.77,
+   -964.34
+  ],
+  "cover": {
+   "dmg": 0.89,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "meteora/formula/cs": {
+  "digest": "50bbe1c8d060c919727688dc",
+  "lead": 2049.5,
+  "car0": [
+   835.36,
+   -950.52
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "meteora/lm/cs": {
+  "digest": "9c5f48620e4552943ddf35de",
+  "lead": 2026.6,
+  "car0": [
+   808.14,
+   -954.75
+  ],
+  "cover": {
+   "dmg": 0.97,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "meteora/car/cs": {
+  "digest": "9231ca24241503993d1faa99",
+  "lead": 1847.6,
+  "car0": [
+   588.15,
+   -1002.88
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "silkeborg/race/cs": {
   "digest": "f051e55e7f289c8eedd061c8",
   "lead": 1703.1,

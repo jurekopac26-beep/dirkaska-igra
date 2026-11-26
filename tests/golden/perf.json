@@ -524,6 +524,13 @@
   "maxKverts": 632,
   "jsMs": 1.47
  },
+ "meteora": {
+  "calls": 171,
+  "maxCalls": 205,
+  "kverts": 386,
+  "maxKverts": 543,
+  "jsMs": 1.38
+ },
  "chamarel": {
   "calls": 171,
   "maxCalls": 206,
