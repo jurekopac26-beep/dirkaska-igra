@@ -1,0 +1,25 @@
+{
+  "id": "hinboun",
+  "about": "Phou Hin Boun, Laos (id hinboun): road 8 climbing through the limestone karst of Phou Hin Boun, past the lookout over the stone forest (docs/proge/hinboun.md)",
+  "box": [18.165, 104.460, 18.198, 104.508],
+  "closed": false,
+  "dist": {"grid": 500},
+  "route": [
+    [18.1775048, 104.4735906, null, "start: road 8 at the foot of the climb"],
+    [18.182091, 104.4743279, null, ""],
+    [18.1815005, 104.4777462, null, ""],
+    [18.1799391, 104.4811048, null, ""],
+    [18.1782887, 104.483422, null, "the lookout over the stone forest"],
+    [18.1806336, 104.4870932, null, ""],
+    [18.1836676, 104.4882532, null, ""],
+    [18.1856102, 104.4898148, null, ""],
+    [18.1841141, 104.4904556, null, ""],
+    [18.1821162, 104.4920654, null, ""],
+    [18.1804227, 104.494963, null, "finish"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}

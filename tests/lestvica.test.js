@@ -9,9 +9,9 @@
 //    winner's time; the run from the police to the building at the top shorter than the whole road
 // 4. merging: each time the best its owner ever sent; the same link twice changes nothing; an older packet after a newer one spoils
 //    nothing (the nickname of the newest); the player's own link; a hidden friend (and the player's yes); times faster than the bound
-//    dropped; at most 40 friends (the one heard from longest ago goes) and 1000 times
-// 5. the size: every record of every track (both physics, the rain, every way to drive) in one link: at most 10 000 characters (8 000 until
-//    18. 11. 2026: 68 tracks and 592 times take ~9 100; MAX_LINK is 16 000)
+//    dropped; at most 40 friends (the one heard from longest ago goes) and MAX_TIMES (1200) times
+// 5. the size: every record of every track (both physics, the rain, every way to drive) in one link: at most 13 000 characters (8 000 until
+//    18. 11. 2026: 68 tracks and 592 times take ~9 100; 10 000 until 19. 11. 2026: 85 tracks and 746 times take ~11 200; MAX_LINK is 16 000)
 // 6. the nickname: printable, at most 16 characters; two players with one nickname: (2); the player's own times from the records
 //    (the time, its day and car as first seen) and the record keys as the game makes them
 //   node tests/lestvica.test.js
@@ -93,8 +93,8 @@ const repack = (o) => L.pack(J(o));
     const kinds = [['kind', 'challenge'], ['v', 2], ['app', 'other'], ['sent', Math.floor(NOW / 1000) + 2 * 86400], ['t', []]];
     let rej = 0; for (const [k, v] of kinds) if ((await L.readPacket(await signed(J(Object.assign({}, base, { [k]: v }))), NOW)) === null) rej++;
     check('signed right, but another kind, version, app, sent two days ahead, times not an object: not taken', rej === kinds.length, rej + ' of ' + kinds.length);
-    const t1001 = {}; for (let k = 0; k < 1001; k++) t1001['t' + k + '@cs'] = [1000 + k, 0, null];
-    check('more than 1000 times: not taken', (await L.readPacket(await signed(J(Object.assign({}, base, { t: t1001 }))), NOW)) === null);
+    const t601 = {}; for (let k = 0; k < L.MAX_TIMES + 1; k++) t601['t' + k + '@cs'] = [1000 + k, 0, null];
+    check(`more than ${L.MAX_TIMES} times: not taken`, (await L.readPacket(await signed(J(Object.assign({}, base, { t: t601 }))), NOW)) === null);
     const odd = await L.readPacket(await signed(J(Object.assign({}, base, { t: { 'spa@cs': [134310, 309, null], 'BAD KEY': [1, 0, null], 'x@cs': [-5, 0, null], 'y@cs': [5.5, 0, null], 'z@cs': [5, 0, '<b>'] } }))), NOW);
     check('times of an unknown form are left out, the rest taken', !!odd && J(odd.t) === J({ 'spa@cs': [134310, 309, null] }), odd && J(odd.t));
     const wk = JSON.parse(ch); wk.kind = 'ghost';
@@ -171,12 +171,12 @@ const repack = (o) => L.pack(J(o));
     check('at most 40 friends: the 41st pushes out the one heard from longest ago', Object.keys(S.friends).length === 40 && !S.friends[fr[0].id] && !!S.friends[fr[40].id]);
     const R41 = L.merge(S, [ (await L.readLink((await L.link((await player('F41', {})).pk, [])).z, NOW)).packets[0] ], { now: NOW + 99000 });
     check('the one pushed out is named', R41.evicted.length === 1 && R41.evicted[0] === 'F1', J(R41.evicted));
-    // 1000 times: a friend's merged times stay at most 1000 (the newest kept)
-    const t1 = {}, t2 = {}; for (let k = 0; k < 600; k++) { t1['a' + k + '@cs'] = [1000 + k, 10, null]; t2['b' + k + '@cs'] = [1000 + k, 20, null]; }
+    // MAX_TIMES: a friend's merged times stay at most MAX_TIMES (the newest kept)
+    const HALF = L.MAX_TIMES * 2 / 3, t1 = {}, t2 = {}; for (let k = 0; k < HALF; k++) { t1['a' + k + '@cs'] = [1000 + k, 10, null]; t2['b' + k + '@cs'] = [1000 + k, 20, null]; }
     const K = store(); L.use(K); const p1 = await L.packet('Mnogo', t1, NOW - DAY), p2 = await L.packet('Mnogo', t2, NOW);
     const M2 = await player('Tina', {}); await open(M2, (await L.link(p1, [])).z); L.use(K); const om2 = await open(M2, (await L.link(p2, [])).z);
     const tk = Object.keys(om2.S.friends[Object.keys(om2.S.friends)[0]].t);
-    check('at most 1000 times kept of a friend: the newest', tk.length === 1000 && tk.filter(k => k[0] === 'b').length === 600, tk.length + ' times');
+    check(`at most ${L.MAX_TIMES} times kept of a friend: the newest`, tk.length === L.MAX_TIMES && tk.filter(k => k[0] === 'b').length === HALF, tk.length + ' times');
     // stored and read back the same; a store edited by hand keeps only what is of the right form
     L.use(B.s); const S1 = L.load(); L.save(S1); const S2 = L.load();
     check('the store read back as it was saved', J(S1) === J(S2));
@@ -190,7 +190,7 @@ const repack = (o) => L.pack(J(o));
     const table = L.keyTable(C.TRACKS.filter(d => !d.test)), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;   // (the real tracks: the test ones go before the release, CLAUDE.md)
     for (const k of table.keys()) { t[k] = [60000 + Math.floor(Math.random() * 600000), 300 + (i % 20), cars[i % cars.length]]; i++; }
     const P = await player('Turbo Tina', t), l = await L.link(P.pk, []);
-    check(`every record of every track (${Object.keys(t).length} times) in one link: at most 10 000 characters`, l.z.length <= 10000 && l.n === 0, l.z.length + ' characters');
+    check(`every record of every track (${Object.keys(t).length} times) in one link: at most 13 000 characters`, l.z.length <= 13000 && l.n === 0, l.z.length + ' characters');
     check('...and it opens with all of them', ((await L.readLink(l.z, NOW)) || { packets: [{ t: {} }] }).packets[0].t && Object.keys((await L.readLink(l.z, NOW)).packets[0].t).length === Object.keys(t).length);
   }
 

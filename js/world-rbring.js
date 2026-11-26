@@ -416,6 +416,7 @@
 
   function buildRbring(scene, tex, opts) {
     const R = rng(4318), N = T.N, w = T.w, ds = T.ds, dens = opts.density || 1, sStart = T.startS, def = T.def, L = T.len;
+    SEA = null;   // (the water by the track, API.rbSea: set again by its LK.pad, so a track without one never sees the last one's)
     const root = new THREE.Group(); scene.add(root);
     const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true };   // (ownMarks: its decals paint the tyre marks)
     const ownTex = (t) => { out.ownTex.push(t); return t; };
@@ -616,6 +617,17 @@
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
 
+    /* ---- the side roads for the look (World.cesta's stranske, def.stranske from OpenStreetMap: docs/realizem/paket-e.md): measured here,
+       before the barriers, which open at their mouths (the barrier of the track's model stays: nobody drives there) ---- */
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a, i = ((a % N) + N) % N; if (t < 1e-4) return Pt(i, o, y); const p = Pt(i, o, y), q = Pt((i + 1) % N, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a fractional station: a barrier's end beside a mouth)
+    const barF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, j = (i + 1) % N; return side > 0 ? lerp(T.br[i], T.br[j], f - a) : lerp(T.bl[i], T.bl[j], f - a); };
+    const vergeAt = (i, side, d) => { const pr = rbVerge(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const drzava = def.name.split(',').pop().trim();
+    const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: (i) => 0.85 * secT[i] - 0.03, drzava }) : null;
+    const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
+    const naCesti = (x, z, m) => { if (SC) for (const k of SC.krogi) { const r = k[2] + m; if ((x - k[0]) * (x - k[0]) + (z - k[1]) * (z - k[1]) < r * r) return true; } return false; };   // (on a side road or within m of its edge + 1.8 m)
+    if (SC) { out.cestaRob = SC.ustja.slice(); out.stranske = SC.n; lMat.userData.crte = 1; }   // (crte: the edge lines' material, for the tests)
+
     /* ---- barriers: concrete walls along the straight, the pit wall and in front of the spectators, tyre walls round the outside of the slow
        corners, double armco on posts elsewhere; debris fences behind the walls and the tyre walls ---- */
     const side2 = (side) => (side > 0 ? 1 : 0);
@@ -643,47 +655,51 @@
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.76, 0.76, 0.74], concD = [0.62, 0.62, 0.6], W1 = [1, 1, 1];
-    const railRow = (gr, i, side, k, bi) => {   // armco / wall cross-section at sample i (rows run so that the faces look at the road; bi: the straw bale it closes, else sample i's)
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
+    const railRow = (gr, i, side, k, bi) => {   // armco / wall cross-section at station i (a fractional one beside a side road's mouth; rows run so that the faces look at the road; bi: the straw bale it closes, else sample i's)
+      const bar = barF(i, side), o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45)), Pt = PtF, ir = ((Math.round(i) % N) + N) % N;
       let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
       let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.88, 0.88, 0.86], [0.82, 0.82, 0.8]];
+      if (k === 3) { const b = bi == null ? ir : bi, u = crH(b, side, 51), sh = 0.84 + u * 0.24, gy = crH(b, side, 53) < 0.18 ? 0.88 : 1, ht = 0.86 + crH(b, side, 55) * 0.09, o3 = side * (bar + 0.9 + crH(b, side, 57) * 0.12);   // straw bales: two courses, each bale (a sample, 2 m) its own straw and height (a few weathered greyer), the tops lighter
       if (k === 1 && LK.wallLook) { const wl = LK.wallLook(i * ds, side); c = wl.c; if (wl.h !== h) p = [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, wl.h - 0.1), Pt(i, o, wl.h), Pt(i, o2, wl.h)]; }   // (a track's own paint and height: js/world-aguascalientes.js)
-      if (k === 3) { const b = bi == null ? i : bi, u = crH(b, side, 51), sh = 0.84 + u * 0.24, gy = crH(b, side, 53) < 0.18 ? 0.88 : 1, ht = 0.86 + crH(b, side, 55) * 0.09, o3 = side * (bar + 0.9 + crH(b, side, 57) * 0.12);   // straw bales: two courses, each bale (a sample, 2 m) its own straw and height (a few weathered greyer), the tops lighter
         const S = (r, g, bb) => [r * sh, g * sh * gy + r * sh * (1 - gy) * 0.9, bb * sh * gy + r * sh * (1 - gy) * 0.6];
         p = [Pt(i, o, -0.2), Pt(i, o, 0.44), Pt(i, o, ht), Pt(i, o, ht), Pt(i, o3, ht)]; c = [S(0.6, 0.48, 0.26), S(0.8, 0.68, 0.39), S(0.86, 0.74, 0.43), S(0.95, 0.84, 0.54), S(0.93, 0.82, 0.52)]; }   // (the top's edge twice: a sharp edge, not a rounded one)
-      else if (k === 4) { const o4 = side * (bar + 0.2), sh = i % 3 ? 1 : 0.86;   // a close-boarded timber fence, weathered, its palings in shades
+      else if (k === 4) { const o4 = side * (bar + 0.2), sh = ir % 3 ? 1 : 0.86;   // a close-boarded timber fence, weathered, its palings in shades
         p = [Pt(i, o, -0.3), Pt(i, o, 0.15), Pt(i, o, 1.15), Pt(i, o, 1.15), Pt(i, o4, 1.15)]; c = [[0.3, 0.24, 0.18], [0.46 * sh, 0.37 * sh, 0.27 * sh], [0.53 * sh, 0.43 * sh, 0.31 * sh], [0.6, 0.5, 0.37], [0.6, 0.5, 0.37]]; }
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
       return gr.row(p, c);
     };
     const tyreRow = (gt, i, side, u) => {   // a tyre wall: the textured face towards the road, a dark top
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.9), dk = [0.3, 0.3, 0.32];
+      const bar = barF(i, side), o = side * (bar + 0.1), o2 = side * (bar + 0.9), dk = [0.3, 0.3, 0.32], Pt = PtF;
       let p = [Pt(i, o, -0.1), Pt(i, o, 0.95), Pt(i, o2, 0.95)], uv = [[u, 0.02], [u, 0.98], [u, 0.98]], c = [W1, W1, dk];
       if (side < 0) { p = p.reverse(); uv = uv.slice().reverse(); c = c.slice().reverse(); }
       return gt.row(p, c, uv);
     };
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(), gt = new RB(true);
-      for (const side of [-1, 1]) {
-        let prev = -1, pk = -2, acc = c0 * ds;
-        for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++, acc += ds) {
-          const i = ii % N, k = kindAt(i, side);
+      for (const side of [-1, 1]) for (const run of tek(side2(side), 1, c0, Math.min(c0 + CH, N))) {   // (open at the side roads' mouths)
+        let prev = -1, pk = -2, acc = 0; const nR = run.length;
+        for (let q = 0; q < nR; q++) {
+          const ii = run[q]; acc = q ? acc + (ii - run[q - 1]) * ds : ii * ds;
+          const i = ((Math.round(ii) % N) + N) % N, fi = ((ii % N) + N) % N, k = kindAt(i, side), e0 = q === 0 && run.z0, e1 = q === nR - 1 && run.z1;
           const ib = (i - 1 + N) % N;   // (the bale that ends at sample i)
-          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, i, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, i, side, pk, ib), 0, 4); prev = -1; }   // the old kind runs up to here
+          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, fi, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, fi, side, pk, ib), 0, 4); prev = -1; }   // the old kind runs up to here
           if (k < 0) { pk = k; continue; }
-          const r = k === 2 ? tyreRow(gt, i, side, acc / 3) : railRow(gr, i, side, k);
-          if (prev >= 0) { if (k === 2) gt.link(prev, r, 0, 2); else if (k === 3) gr.link(prev, railRow(gr, i, side, 3, ib), 0, 4); else gr.link(prev, r, 0, 4); } prev = r; pk = k;   // (bales: a row of its own closes the one before, so each bale has its own colour and height)
-          if (k === 0 && ii % 2 === 0 && ii < c0 + CH) { const p = Pt(i, side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }
+          const r = k === 2 ? tyreRow(gt, fi, side, acc / 3) : railRow(gr, fi, side, k);
+          if (prev >= 0) { if (k === 2) gt.link(prev, r, 0, 2); else if (k === 3) gr.link(prev, railRow(gr, fi, side, 3, ib), 0, 4); else gr.link(prev, r, 0, 4); } prev = r; pk = k;   // (bales: a row of its own closes the one before, so each bale has its own colour and height)
+          if (k === 0 && (e0 || e1 || (ii === Math.floor(ii) && ii % 2 === 0 && ii < c0 + CH))) { const f = ii + (e0 ? 0.05 : e1 ? -0.05 : 0), p = PtF(f, side * (barF(f, side) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }   // (a post at the rail's ends by a mouth too)
           if (k >= 1 && k <= 2) fence[side2(side)][i] = k;
         }
       }
       addM(gr, rMat, true); addM(gt, tyMat, true);
     }
     const nPosts = posts.addTo(root, true);
+    if (SC) for (let si = 0; si < 2; si++) for (let i = 0; i < N; i++) if (SC.rez[si][i] & 1) fence[si][i] = 0;   // (no debris fence across a side road's mouth)
+    const odprto = (side, i) => !!SC && !!(SC.rez[side2(side)][i] & 1);   // (the wall open there: a side road's mouth)
     // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     if (!LK.noAds) { const sb = new Chunks(128 * CKF, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
         const j = (i + 2) % N; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || kindAt((i + 1) % N, side) !== 1) continue;
+        if (odprto(side, i) || odprto(side, (i + 1) % N) || odprto(side, j)) continue;
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
         const A = Pt(i, o(i), 0.14), B = Pt(j, o(j), 0.14), C = Pt(j, o(j), 0.96), D = Pt(i, o(i), 0.96), uL = side < 0 ? u0 : u0 + 0.5, uR = side < 0 ? u0 + 0.5 : u0;
         sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
@@ -719,6 +735,7 @@
       board(x, y + y0, z, T.tx[i], T.tz[i], Wd, H, cellK); exclPush(x, z, 3);
     };
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.9, shirts: LK.shirts });   // spectators (instanced)
+    if (SC) for (const k of SC.krogi) CR.avoid(k[0], k[1], k[2]);   // (nobody stands on a side road)
     const PADS = typeof LK.pads === 'function' ? LK.pads(def) : LK.pads;
     if (PADS && PADS.length) {   // (Aguascalientes: the infield's roads off the lap, [{ p: [x, z, ...], hw, k }], flat asphalt ribbons on the ground, resampled every 3 m: no trees, farms or crowds on them; cut short at the barriers and off the level pits)
       const gp = new RB(true);
@@ -1289,7 +1306,7 @@
       parkedCar(g, x, y, z, rot, col); };
     const tent = (x, z, rot, col) => { const g = scen.get(x, z), y = nrGround(x, z); box(g, x, y, z, 3.2, 1.9, 3.2, rot, col, null, true); gable(g, x, y + 1.9, z, 3.5, 3.5, 1.0, rot, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8], col); };
     const van = (x, z, rot) => { const g = scen.get(x, z), y = nrGround(x, z); box(g, x, y + 0.35, z, 6.4, 2.6, 2.3, rot, [0.95, 0.95, 0.93], [0.9, 0.9, 0.88], true); box(g, x + Math.cos(rot) * 2.4, y + 1.6, z + Math.sin(rot) * 2.4, 1.2, 0.7, 2.32, rot, [0.2, 0.26, 0.34], null, true); };
-    const openAt = (x, z) => nrLC(x, z) === 0 && !excluded(x, z) && nrSlope(x, z) < 0.12 && nrDist(x, z) > 90;
+    const openAt = (x, z) => nrLC(x, z) === 0 && !excluded(x, z) && nrSlope(x, z) < 0.12 && nrDist(x, z) > 90 && rbSeaD(x, z) < -20;   // (rbSeaD: no farm, no camp in the water or on its shore: Yahuarcocha's lake is grass in the land cover)
     let nCamp = 0, nFarm = 0;
     for (let tries = 0, camps = 0; tries < 400 && camps < LK.camps; tries++) {
       const x = P.x0 + 200 + R() * (P.x1 - P.x0 - 400), z = P.z0 + 200 + R() * (P.z1 - P.z0 - 400), rd = nrDist(x, z); if (rd < 120 || rd > 360 || !openAt(x, z)) continue;
@@ -1390,7 +1407,7 @@
 
     const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
     const xScen = garZ.length ? Object.assign(Object.create(scen), { get(x, z) { for (let k = 0; k < garZ.length; k += 2) if ((x - garZ[k]) ** 2 + (z - garZ[k + 1]) ** 2 < 49) return xScen.off || (xScen.off = new GB()); return scen.get(x, z); } }) : scen;   // (not where a garage stands: Batangas' OSM pit building, its front 0.8 m before the player's garage; the piece is built and dropped)
-    const xSt = LK.extra ? LK.extra({ root, tex, scen: xScen, exclPush, excluded, CR, out, matV }) : null;   // (a world's own scenery, before the crowds and the trees keep clear of it: Silkeborg's mounds, buildings, fences)
+    const xSt = LK.extra ? LK.extra({ root, tex, scen: xScen, exclPush, excluded, CR, out, matV, naCesti }) : null;   // (a world's own scenery, before the crowds and the trees keep clear of it: Silkeborg's mounds, buildings, fences)
 
     /* ---- spectators on the grass (the hill between Turns 3 and 4, the infield), fans along the fences, a few everywhere ---- */
     {
@@ -1432,7 +1449,9 @@
           else { sp = cl === 1 ? (P.n1(x * 2.2 + 500, z * 2.2) < 0.62 + (R() - 0.5) * 0.3 ? 0 : 1) : 1;
             hgt = sp === 0 ? (13 + R() * 7) * (far ? 1.1 : 1) : (10 + R() * 5) * (far ? 1.15 : 1); wid = hgt * (sp === 0 ? 0.82 : 0.95 + R() * 0.25); }
           if (sp === 3) { const b = RIO_BLOOM[Math.floor(R() * RIO_BLOOM.length)], k = 0.92 + R() * 0.12; fl.add(x, y - 0.1, z, R() * TAU, wid, hgt, [b[0] * k, b[1] * k, b[2] * k]); nrShade(x, z, wid * 0.42, 1); nTrees++; nBloom++; continue; }   // (Rio: in bloom)
-          const cv = 0.86 + R() * 0.28; (far ? tf : tk)[sp].add(x, y - 0.1, z, R() * TAU, wid, hgt, [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)]);
+          const cv = 0.86 + R() * 0.28, rot = R() * TAU, ca = cv * (0.95 + R() * 0.1), cb = cv * (0.95 + R() * 0.1);   // (the same draws as before: the woods stay where they were)
+          if (naCesti(x, z, 0)) continue;   // (none on a side road)
+          (far ? tf : tk)[sp].add(x, y - 0.1, z, rot, wid, hgt, [ca, cv, cb]);
           nrShade(x, z, wid * CR0[sp], 1); nTrees++;
         }
       }
@@ -1442,7 +1461,7 @@
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now: the forest floor under the trees ---- */
-    let nTiles = 0;
+    let nTiles = 0, nStb = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; }
@@ -1483,6 +1502,7 @@
             pv[si] = rv; pw[si] = ow;
           }
         }
+        if (SC) SC.robovi(gv, c0, Math.min(c0 + CH, N), nrGCol);   // (the side roads' grass edges out to the lawn)
         addM(gv, gMat);
       }
       if (PK.gTop && !PK.gTop.empty) addM(PK.gTop, gMat);   // (Crystal Palace: the upper lawns over the terrace walls' cut)
@@ -1495,10 +1515,12 @@
         }
         addM(gb, gMat);
       }
+      if (SC) { const sMat = aMat.clone(); for (const g of SC.asfalt(RB, LK.stranskaBarva ? (x, z) => LK.stranskaBarva(x, z, nrGCol) : nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; } nStb = SC.predmeti(World.cesta.CRTE[drzava] ? (x, z) => scen.get(x, z) : (x, z) => { const g = scen.get(x, z); return { quadO: (...a) => g.quadO(...a), triO: (...a) => g.triO(...a), quadUp() {}, triUp() {} }; }); out.stebricki = SC.stebricki; }   // the side roads (look only: OpenStreetMap, World.cesta; no paint at a mouth where the country has no row in CRTE)
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
-    rbringProps(out, (i, side) => { const d = dS(i * ds); return (d > -440 && d < 280) || (side === PSD && PD && (T.pitAt(i * ds) || T.pitAt(i * ds + 25) || T.pitAt(i * ds - 25))); }, PER);
+    const vUstju = (i, side) => { if (SC) for (let o = -3; o <= 3; o++) if (SC.rez[side > 0 ? 1 : 0][((i + o) % N + N) % N] & 3) return true; return false; };   // (a side road's mouth: no post nor tyre wall on it)
+    rbringProps(out, (i, side) => { const d = dS(i * ds); return (d > -440 && d < 280) || (side === PSD && PD && (T.pitAt(i * ds) || T.pitAt(i * ds + 25) || T.pitAt(i * ds - 25))) || vUstju(i, side); }, PER);
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
@@ -1518,11 +1540,68 @@
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, houses: nHouse, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, park: parkSt };   // (read by the tests)
     if (RIO) { out.stats.rio = rioExtra(scene, root, out, ownTex, tex, excluded, exclPush); out.stats.rio.bloom = nBloom; }   // Rio: the lagoon, palms along the straights, the mountains round the basin
     if (xSt) out.stats.extra = xSt;   // (a world's own scenery: LK.extra)
+    if (SC) Object.assign(out.stats, { stranske: SC.n, stebricki: nStb });
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));   // (last: the build's other flags are in API.flags by now)
     return out;
   }
 
-  Object.assign(API, { RB_WIND, rbAirStep, rbCrowdTex, rbFlags, rbGravelTex, rbSmoke, rbSmokeTex, rbVerge });   // (what World and the other worlds use of this one)
+  // the water by a track (def.sk.sea, made by its tools/<id>/build.py: the signed distance to the shore on its grid, + in the water,
+  // decoded per build, and the water's level lv): Abu Dabi's sea and marina, Yahuarcocha's lake. API.rbSea: pad(pad0) digs it into the
+  // ground (a world's LK.pad), water(o, st, look) lays the water and its shore band (from a world's LK.extra), d(x, z) the distance
+  let SEA = null;
+  function rbSeaLoad() {
+    const S = (API.T.def.sk || {}).sea; if (!S) return null;
+    const bin = atob(S.rle), q = new Uint8Array(S.nx * S.nz); let k = 0;
+    for (let i = 0; i < bin.length && k < q.length;) { const b = bin.charCodeAt(i); if (b === 255) { const n = bin.charCodeAt(i + 2); q.fill(bin.charCodeAt(i + 1), k, k + n); k += n; i += 3; } else { q[k++] = b; i++; } }
+    const d = new Float32Array(q.length); for (let j = 0; j < q.length; j++) d[j] = q[j] / 4 - 30;
+    return { x0: S.x0, z0: S.z0, nx: S.nx, nz: S.nz, c: S.cell, lv: S.lv, d };
+  }
+  function rbSeaD(x, z) {   // metres to the shore, + in the water (-30: far inland, off the grid)
+    const G = SEA; if (!G) return -30;
+    const u = (x - G.x0) / G.c, v = (z - G.z0) / G.c; if (!(u >= 0 && v >= 0 && u <= G.nx - 1 && v <= G.nz - 1)) return -30;
+    const i = Math.min(G.nx - 2, Math.floor(u)), j = Math.min(G.nz - 2, Math.floor(v)), f = u - i, e = v - j, D = G.d, n = G.nx, a = j * n + i;
+    return lerp(lerp(D[a], D[a + 1], f), lerp(D[a + n], D[a + n + 1], f), e);
+  }
+  // LK.pad (the builder's ground round the circuit, before it is built): the water's floor dug and the land round it kept above the water, both
+  // on one even slope through the shore (0.1 m per metre: the terrain's cells then cut the water along the shore, not in steps), the floor
+  // shelving on to 2.5 m, the land back to its own height within 10 m; not inside the barriers, fully only 6 m past them
+  function rbSeaPad(pad0) {
+    SEA = rbSeaLoad();
+    const NRN = API.NRN;
+    return (x, z, h) => {
+      h = pad0(x, z, h);
+      if (!SEA) return h;
+      const d = rbSeaD(x, z); if (d < -10) return h;
+      const f = sstep(1, 6, NRN.dd), L = SEA.lv;
+      if (d > 0) return lerp(h, Math.min(h, L - Math.min(2.5, 0.1 * d + 0.02 * d * d)), f);
+      const t = L - 0.1 * d; return lerp(h, lerp(t, Math.max(h, t), sstep(0, 10, -d)), f);
+    };
+  }
+
+  // the water: flat at its level over the grid's 64 m blocks with water in or near them (World's waterMat in the world's colour and waves,
+  // look: { color, wo }), the shore band (the shallows, the foam at the waterline); nobody and nothing in it
+  function rbSeaWater({ root, tex, exclPush, CR, out }, st, look) {
+    if (!SEA) return;
+    const S = SEA, y = S.lv, x0 = S.x0, z0 = S.z0, x1 = S.x0 + (S.nx - 1) * S.c, z1 = S.z0 + (S.nz - 1) * S.c, gw = new GB(true), wc = [1, 1, 1], uv = (x, z) => [x / 16, -z / 16];
+    for (let bz = z0; bz < z1; bz += 64) for (let bx = x0; bx < x1; bx += 64) {
+      const cx = Math.min(x1, bx + 64), cz = Math.min(z1, bz + 64); let wet = false;
+      for (let zz = bz; zz <= cz && !wet; zz += 8) for (let xx = bx; xx <= cx && !wet; xx += 8) if (rbSeaD(xx, zz) > -12) wet = true;
+      if (!wet) continue;
+      gw.quadO([bx, y, bz], [cx, y, bz], [cx, y, cz], [bx, y, cz], wc, [(bx + cx) / 2, y - 5, (bz + cz) / 2], [uv(bx, bz), uv(cx, bz), uv(cx, cz), uv(bx, cz)]);
+      for (let zz = bz + 6; zz < cz; zz += 12) for (let xx = bx + 6; xx < cx; xx += 12) if (rbSeaD(xx, zz) > 4 && nrDist(xx, zz) < 160) { exclPush(xx, zz, 9); CR.avoid(xx, zz, 8); }   // (no tree, nobody in it)
+      st.water++;
+    }
+    if (gw.empty) return;
+    const G = API.NR.G, gi = (v, o, n) => clamp(Math.floor((v - o) / NRC), 0, n - 1);
+    const wl = waterline(nrGH, G.x0, G.z0, NRC, gi(x0, G.x0, G.nx), gi(x1, G.x0, G.nx), gi(z0, G.z0, G.nz), gi(z1, G.z0, G.nz), y);   // (where the terrain meets the water)
+    const WO = look.wo, wm = new THREE.Mesh(gw.geometry(), waterMat(tex, Object.assign({ color: look.color }, WO)));
+    wm.receiveShadow = true; wm.matrixAutoUpdate = false; wm.updateMatrix(); wm.name = 'water'; root.add(wm); out.dyn.water = tex.water;
+    addShore(root, shoreBand(x0, z0, x1, z1, y + 0.015, (x, z) => Math.min(rbSeaD(x, z), wl(x, z)), 16), wm.material, WO);
+  }
+
+  const rbSea = { pad: rbSeaPad, water: rbSeaWater, d: rbSeaD };   // (API.rbSea: a world's water, above)
+
+  Object.assign(API, { RB_WIND, rbAirStep, rbCrowdTex, rbFlags, rbGravelTex, rbSea, rbSmoke, rbSmokeTex, rbVerge });   // (what World and the other worlds use of this one)
   World.keep('NR', 'rbring');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.rbring = (scene, tex, opts) => buildRbring(scene, tex, opts);
 })();
