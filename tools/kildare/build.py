@@ -93,11 +93,11 @@ NAMES = [
 # right, the left onto the gravel, the right on the gravel straight, the north hairpin
 TURNS = [62, 125, 235, 463, 536, 619, 648, 900]
 
-DESC = ('Kratka proga za reli kros na dirkališču v grofiji Kildare na vzhodu Irske, zahodno od Dublina: 1,2 km asfalta in makadama v smeri '
+DESC = ('Kratka proga za reli kros na dirkališču v grofiji Kildare na vzhodu Irske, zahodno od Dublina: 1,1 km asfalta in makadama v smeri '
         'urinega kazalca, skoraj ravno. Ciljna ravnina, dvojni desni na makadamu, hitri levi, južna ravnina, zahodna lasnica, ostri desni, levi '
         'na makadam, makadamska ravnina in severna lasnica nazaj na asfalt. Ob progi trava, ograje in gume, tribuna, brv čez progo, garaže '
         'boksov, stolp ob ciljni črti, ceste drugih postavitev dirkališča in daljnovod.')
-DESC_EN = ('A short rallycross track at the circuit in County Kildare in the east of Ireland, west of Dublin: 1.2 km of tarmac and gravel, '   # (no č, š or ž in the English: tests/lang.test.js)
+DESC_EN = ('A short rallycross track at the circuit in County Kildare in the east of Ireland, west of Dublin: 1.1 km of tarmac and gravel, '   # (no č, š or ž in the English: tests/lang.test.js)
            'clockwise, almost flat. The finish straight, the double right on the gravel, the fast left, the south straight, the west hairpin, '
            'the sharp right, the left onto the gravel, the gravel straight and the north hairpin back onto the tarmac. Grass, fences and tyre '
            'walls, a grandstand, a footbridge over the track, the pit garages, the tower by the line, the roads of the circuit\'s other '
