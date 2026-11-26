@@ -24,7 +24,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - Commit: »Co-Authored-By: Claude <noreply@anthropic.com>«, »Claude-Session: …«; brez imen modelov.
 - Lokalno `npm run test:related` brez ponavljanja; celoten krog samo na zbirnih vejah (ena na temo, en pregled) in ponoči. Nove proge prek `tools/proga-podatki.py`.
 - PR osnutek ob začetku; »Ready for review« med prvima dvema v `docs/vrsta.md`; **Združevanje vodi seja Združevanje**, seja s kodo se ne naroči na PR. Pravila enkrat na dan v en PR.
-- Največ 6 odprtih tem; **sej s kodo hkrati na račun: v zaostanku s porabo (več kot 5 točk pod ciljem) do 10, sicer 2** (od 18. 11.; 10 je zgornja meja, ne cilj; partyslo do 20 do pet 27. 11. ob 3.00; croatiadata do 20 do ned 29. 11. ob 22.59; jure.kopac26: Tabla); pred zagonom `list_sessions`, odprti PR.
+- Največ 6 odprtih tem; **sej s kodo hkrati na račun: v zaostanku s porabo (več kot 5 točk pod ciljem) do 20, sicer 2** (od 26. 11., vsi računi; 20 je zgornja meja, ne cilj; jure.kopac26: Tabla); pred zagonom `list_sessions`, odprti PR.
 - Pred združitvijo: svež `main`, povezani testi, zelena zadnji krog `main` in nočni; rdeč `main` najprej popravi; po združitvi obvesti seje iz `cakanje`.
 - Popravki uporabnika: čez dan Mateju, do 5.00 zbirka, ob 5.00 en sveženj. **Najprej odločitev, nato koda** (stran Odločitve).
 - **Vprašanja uporabniku vedno s klikom na oštevilčene možnosti** (AskUserQuestion; na strani Odločitve oštevilčene možnosti; pri grafiki in meniju s slikami). **Vsak račun vsak dan do 23.00 vsa vprašanja in vse ok-je na svojo stran Odločitve, s slikami, klikom in komentarjem** (`docs/vprasanja.md`). Stranske ceste samo tam, kjer so v OSM.
@@ -37,7 +37,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - **Predaja pri ~80 tisoč konteksta**; velikih sej ne budi po več kot 1 h: nova s predajo.
 - **Model**: Opus zasnova, koda, proge, meni; Fable 5.2 grafika, fizika; **Trki samo Fable 5.2**; **rutina samo Haiku/Sonnet**; spori, dokumenti, vrsta, Združevanje Sonnet medium. Modela in napora ne menjaj; max samo trki, grafika, težke napake, zasnova. **Težje delo na Fable 5.2, dokler je Fable več kot 5 točk pod vsemi modeli** (od 18. 11.). Koordinacija ob zagonu preveri model in napor.
 - **Več agentov samo za trke** (do 5, preverjanje enkrat pred `main`).
-- **Poraba 100 % 24 h pred iztekom**: pod ciljem seje dodajaj (največ 10), nad ciljem nobene nove; zaostanek več kot 5 točk = do 10 sej s kodo, sicer 2.
+- **Poraba 100 % 24 h pred iztekom**: pod ciljem seje dodajaj (največ 20), nad ciljem nobene nove; zaostanek več kot 5 točk = do 20 sej s kodo, sicer 2.
 - **Varčevanje** (`docs/varcevanje.md`, »Varčevanje 17. 11.«): seja brez commita 2 h ali ponavljajoča: ustavi, sveža s predajo; tabla `since=`; brez preverjanja v zanki; deset pravil 22. 11. (`zetoni-5`: zastareli PR, slike enkrat na skupino, vprašanja enkrat na dan). Deset pravil 25. 11. (`docs/varcevanje.md`): dolgi testi v CI; izpis testov samo napake; pregled = popravek v isti seji; `main` v vejo 1× na dan; ena koordinacija na račun na dan; tabla do 5 vrstic; pregledi na razliki; pomočniki Haiku; slike s številko.
 - **Fizika vožnje se ne spreminja** (samo trki; izjeme: »Dež in sneg«, #605, #783 s pregledom Trki #608).
 - Čakanje: `subscribe_pr_activity`; drugo `cakanje`; brez `sleep`.
