@@ -4,7 +4,7 @@
 
 Ozka cesta z jugovzhodnega roba Sarajeva na goro Trebević v pravem merilu (4,3 km). Proga se začne pri naselju Dolovi (813 m, ~43,85° S, 18,45° V) in se po severnem pobočju skozi bukov gozd povzpne skozi šest lasnic na strmem delu med ~940 in ~1060 m (najožja ~9 m). Ob cesti so v gozdu ostanki stare betonske bob steze, nato razgledišče Vidikovac nad mestom (~2,9 km). Na vrhu vzpona so ruševine utrdbe Draguljac (~3,2 km, ~1155 m), sledi kratek spust do cilja na ~1114 m.
 
-- **Dirka**: tekmeci po izbiri v meniju (*Opponents*), štart pri Dolovih, en vzpon do cilja. Kvalifikacij ni (odprta cesta).
+- **Dirka**: tekmeci (v meniju *Opponents* največ 35: za ciljem je le ~170 m ozke ceste; `maxRivals`), štart pri Dolovih, en vzpon do cilja. Kvalifikacij ni (odprta cesta).
 - **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, lestvica, duh in medalje. Medalje: zlata 2:29, srebrna 2:37, bronasta 2:48; v dežju 3:01 / 3:10 / 3:25; pozimi 2:55 / 3:04 / 3:18, pozimi v dežju 3:37 / 3:47 / 4:05. Zlato je čas relijskega avta na avtopilotu.
 - **Promet**: dvoboj z enim tekmecem po odprti cesti (avtomobili, kombiji, avtobus na goro, kak motorist in tovornjak, kolesarji na vzponu), promet po desni.
 - **Policija**: beg pred policijo mimo Draguljca; patrulje imajo samo generičen napis POLICIJA.

@@ -31,6 +31,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: TREBEVIC_H.map((h, i) => [i / (TREBEVIC_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
     medals: {cs:[149,157,168],wet:{cs:[181,190,205]},winter:{cs:[175,184,198],wet:{cs:[217,227,245]}}},
+    maxRivals: 35,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~170 m of narrow road past the line, the big vehicles' parking (36 the most it took)
     // the traffic of the open road: [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the mountain above Sarajevo:
     // the cars above all, the vans, the bus up to the top now and then, a few motorbikes, hardly a lorry; the cyclists of the city on the climb
     traffic: { mix: [0.7, 0.14, 0.05, 0.08, 0.03], bike: 2500 },
