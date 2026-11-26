@@ -8720,5 +8720,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "envalira/race/cs": {
+  "digest": "cbc0ad7bf43b202e3f763336",
+  "lead": 688,
+  "car0": [
+   -99.67,
+   134.66
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "envalira/demo/cs": {
+  "digest": "1b2268607fdc7b4a2b2d8066",
+  "lead": 715.9,
+  "car0": [
+   -6.8,
+   -0.2
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "envalira/upg/cs": {
+  "digest": "6e4ef0b3aca960bac8976653",
+  "lead": 708,
+  "car0": [
+   -79.76,
+   32.39
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "envalira/crash/cs": {
+  "digest": "afd8730ab5ecd3497cd93199",
+  "lead": 692.4,
+  "car0": [
+   -121.7,
+   107.35
+  ],
+  "cover": {
+   "dmg": 0.28,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "envalira/formula/cs": {
+  "digest": "22bed9097b5543cb9453e9f8",
+  "lead": 754.5,
+  "car0": [
+   -117.71,
+   69.17
+  ],
+  "cover": {
+   "dmg": 0.28,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "envalira/lm/cs": {
+  "digest": "94bfbbaf0dce7152ff5b2f1e",
+  "lead": 731.7,
+  "car0": [
+   -122.43,
+   114.83
+  ],
+  "cover": {
+   "dmg": 0.23,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "envalira/car/cs": {
+  "digest": "6ac01f473c725a218a4c8d37",
+  "lead": 689.6,
+  "car0": [
+   -112.88,
+   118.65
+  ],
+  "cover": {
+   "dmg": 0.29,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

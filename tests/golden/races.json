@@ -4448,5 +4448,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "767e1ef7d7a2ae35b94feed4"
+ },
+ "envalira/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 116.15,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9c374d0a3c5258a658c83406"
+ },
+ "envalira/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 116.15,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "da768a42f4705618f1aac7fc"
+ },
+ "envalira/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 111.39,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "575e475f6f4800c3303ad7da"
+ },
+ "envalira/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 112.18,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8ec770f7d943dbf42ec6e085"
+ },
+ "envalira/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 117.37,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "611306c6a2da92247466632a"
  }
 }

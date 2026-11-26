@@ -27,8 +27,9 @@
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
   const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819],
-    mujib: [31.44, 471], atitlan: [14.76, 2068], mapileng: [23.25, 1184], krasnahorka: [48.67, 608] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge;
+    mujib: [31.44, 471], atitlan: [14.76, 2068], mapileng: [23.25, 1184], krasnahorka: [48.67, 608], envalira: [42.54, 2367] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge;
     // Wadi Mujib and Atitlán, docs/nove-proge-1-0.md del 4: the start's altitude, their heights are from the start line as GEO's offset;
+    // Envalira: OSM's start node, its lowest point 5.8 m under the line's 2,372.9 m, js/tracks/envalira.js;
     // Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
