@@ -3768,7 +3768,9 @@ const World = (function () {
       let y = HYi(i) + (HYi(j) - HYi(i)) * t + 0.035; if (T.bank) y += T.bankAt(s, lo, bk).dy;
       return [L(T.px) + L(T.nx) * lo, y, L(T.pz) + L(T.nz) * lo]; };
     const onTall = (p) => !!T._tall && T._tall.some(Rg => (p[0] - Rg.x) ** 2 + (p[2] - Rg.z) ** 2 < (Rg.ie + 0.2) ** 2);   // (a ring's tall island (Medvode): no wear on its grass)
+    const sr2 = !!(World.cesta && World.cesta.krpe && World.cesta.krpe(T, LOD.tier, o, tex));   // (Grafika AAA, SR2: the road's own shader draws the patches and the cracks, js/world-cesta.js KRPE; R runs as before, so the rubber and the arrows stay)
     const decal = (s, lo, hl, hw, rot, u0, v0, u1, v1, col) => {   // centre (s, lo), half length and width along and across the road, turned by rot; an atlas cell
+      if (sr2) return;
       const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
       if (T._tall && Q.some(q => onTall(q[0]))) return;
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
