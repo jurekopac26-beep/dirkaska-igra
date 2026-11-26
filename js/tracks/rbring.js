@@ -39,13 +39,27 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     pit: [18, -360, 245, -95],   // pit lane on the right of the straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [-160, -40],         // the first and the last of the 13 crews' boxes
-    pitBuilding: [-235, 65],     // the 300 m pit building behind the garages
-    // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: Start-Ziel (the whole straight, covered, the wing
-    // behind it), Steiermark (Turn 1), the long hill stand (from Turn 1 up the hill, 15 sections), T3, Nord (Turn 4, covered), T9 and T10 (covered);
-    // orange: full of Dutch fans
-    stands: [[-268, 140, -1, 18, 1, 1, 0, 'START · ZIEL'], [236, 344, -1, 10, 0, 1, 0, 'STEIERMARK'], [372, 880, -1, 9, 0, 15, 1, 'BERG'], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
-      [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3812, 3928, -1, 9, 1, 1, 0, 'T10']],
-    wing: [-60, -1],             // the wing on the stand (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side]
+    pitBuilding: [-165, 140],    // the 300 m pit building behind the garages (its length and place from its OSM outline; its front stays at the garages)
+    pitPad: [-235, 140],         // the level ground of the pit complex: as before at the start, on to the moved pit building's end
+    // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name, front]: Start-Ziel (the whole straight, covered, the wing
+    // behind it), Steiermark (Turn 1), the hill stand (from Turn 1 up the hill, in three parts), T3, Nord (Turn 4, covered), T9 and T10 (covered);
+    // orange: full of Dutch fans; front: the front's offset from the centre line, from the stand's OSM outline (a number, or [at from, at to]),
+    // never nearer than 2.6 m behind the barrier. Start-Ziel, Steiermark, the hill stand and T10 on their OSM outlines (paket S, docs/realizem/paket-s.md);
+    // T3, Nord and T9 have none near the road and stay; Mitte, Ost and Nord on their OSM outlines 44-115 m from the road (the user's choice, 15. 11. 2026)
+    stands: [[-244, 175, -1, 18, 1, 1, 0, 'START · ZIEL', 21], [273, 333, -1, 10, 0, 1, 0, 'STEIERMARK', 20], [415, 452, -1, 10, 0, 1, 1, 'BERG', 43],
+      [454, 645, -1, 16, 0, 8, 1, 'BERG', [32, 24]], [656, 842, -1, 18, 0, 7, 1, 'BERG', [31, 50]], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
+      [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3786, 3876, -1, 12, 1, 1, 0, 'T10', [48, 32]],
+      [2990, 3040, -1, 14, 0, 2, 0, 'MITTE', [53, 44]], [3718, 3777, -1, 12, 0, 2, 0, 'OST', [70, 53]], [2078, 2102, -1, 10, 0, 1, 0, 'NORD', 115]],
+    // in front of the stands, from OpenStreetMap (the service roads, the walls and the grass between the stands and the road; docs/realizem/paket-s.md):
+    // [from, to, bands] by the stand's middle (World.people standAround), the bands from the stand's front out, [kind, width]: 0 pavers, 1 grass,
+    // 2 a tarmac service lane, 3 concrete, null what is left to the barrier. Start-Ziel: hard ground from the stand to the wall, the service
+    // road 3.3 m off the wall; Steiermark: the road along the wall; the hill stand: grass only; T10, Mitte, Ost and Nord (the far one): the
+    // service road 3-17 m in front of them, grass on both sides. T3, Nord and T9 (no stand in the map): the plain strip, standApron
+    standWalk: [[-100, 60, [[0, null], [2, 3.6], [3, 0.5]]], [290, 330, [[2, null]]], [400, 860, []], [3800, 3870, [[1, 1.4], [2, 3.5]]],
+      [2990, 3040, [[1, 14.7], [2, 3.5]]], [3730, 3765, [[1, 3.3], [2, 3.5]]], [2080, 2095, [[1, 8.5], [2, 5]]]],
+    pitDrain: true,   // (World.buildRbring: the pit apron's channel drain and slab joints)
+    standApron: 6,               // the paved walkway in front of the stands (World.people): at most 6 m wide, the grass on to the barrier where a stand stands far back
+    wing: [-60, -1, 6.9],        // the wing on the stand (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side, moved out (m): with the stand]
     ga: [[1370, 1900, -1], [900, 1180, 1], [2600, 2860, 1]],   // spectators on the grass: [from, to, side] (the hill between Turns 3 and 4 and the infield)
     turns: [[-314.9, 81.6], [-642.6, -470.3], [-837.7, -689], [-36.3, -619.2], [-158.5, -489.7], [-461.8, -494.1], [-328, -230.7], [-234.9, -309.6], [357.8, -336], [417.5, -148.9]],   // the apexes of Turns 1-10 (their number boards)
     // 2024: gravel strips 2.5 m wide just past the kerbs at the exits of Turns 9 and 10 against running wide (Core: gravel there), a blue

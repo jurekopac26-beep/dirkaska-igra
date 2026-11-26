@@ -836,7 +836,7 @@
     // tall as its rope deck (flat roofed: the deck on it), drawn instead of the plain station box
     const HS = typeof World !== 'undefined' && World.stavbe ? World.stavbe.setup({ Chunks, list: blds.map(b => [b.x, b.z, b.L0, b.W0, b.ang, b.h, b.kind]), T, near: vrNear, gH: caGround }) : null;
     const inBld = (b, x, z, m) => { const c = Math.cos(b.ang), s = Math.sin(b.ang), dx = x - b.x, dz = z - b.z; return Math.abs(dx * c + dz * s) < b.L0 / 2 + m && Math.abs(-dx * s + dz * c) < b.W0 / 2 + m; };
-    if (HS) for (const cb of def.cables || []) { const p = cb.p, n = p.length / 2; for (const k of [0, n - 1]) { const x = p[2 * k], z = p[2 * k + 1], b = blds.find(q => q.kind !== 1 && inBld(q, x, z, 3)); if (b) b.station = { x, z }; } }
+    if (HS) for (const cb of def.cables || []) { if (L.chairs && /chair_lift|magic_carpet|drag|platter|t-bar|j-bar|rope_tow/.test(cb.k || '')) continue; const p = cb.p, n = p.length / 2; for (const k of [0, n - 1]) { const x = p[2 * k], z = p[2 * k + 1], b = blds.find(q => q.kind !== 1 && inBld(q, x, z, 3)); if (b) b.station = { x, z }; } }
     {
       const RB = rng(L.seed + 21), stone = [[0.58, 0.56, 0.52], [0.52, 0.5, 0.47], [0.62, 0.6, 0.56]], wood = [[0.46, 0.32, 0.2], [0.4, 0.28, 0.18], [0.54, 0.4, 0.26]], tarps = [[0.2, 0.34, 0.6], [0.7, 0.16, 0.14], [0.86, 0.86, 0.84], [0.22, 0.46, 0.3]];
       const PLASTER = [[0.88, 0.85, 0.77], [0.9, 0.9, 0.87], [0.85, 0.75, 0.58], [0.8, 0.64, 0.52], [0.7, 0.7, 0.68], [0.54, 0.4, 0.27]], GLASS = [0.15, 0.19, 0.23], BALC = [[0.74, 0.73, 0.7], [0.3, 0.26, 0.22]];   // (L.hotels: the walls' plaster, a few of timber; the windows; the balconies' slabs and rails)
@@ -1089,12 +1089,11 @@
           if (tw > 0) { const wa = end(k) ? 0.25 : 1, wb = end(k + 1) ? 0.25 : 1, s = need / ((1 - tw) * wa + tw * wb); A[1] += s * wa; B[1] += s * wb; up = 1; }
         } }
         for (let k = 0; k < n; k++) { const [x, z] = pts[k], y = vrFar(x, z), [dx, dz] = dir(k), dist = vrDist(x, z), hh = top[k][1] - y;
-          if (end(k)) { const sb = HS ? blds.find(q => q.station && q.station.x === x && q.station.z === z) : null;
-            if (sb) { const ry = sb.station.roof, t = top[k][1]; if (t - ry > 0.3) box(scen.get(x, z), x, ry - 0.1, z, 14, t - ry + 0.1, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); continue; }   // (the deck on the station's roof, where its rope was lifted over the road)
-          }
           if (end(k) && ch) { if (dist < 600) { const g = scen.get(x, z), a = Math.atan2(dz, dx);   // (a lift's station: the hut, the bull wheel's housing over the loop)
             box(g, x, y - 0.5, z, 6, 4.2, 5, a, [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); box(g, x, y + 3.7, z, 8.5, 1.3, 6.2, a, [0.84, 0.82, 0.78], [0.42, 0.44, 0.47]); exclPush(x, z, 7); } continue; }
-          if (end(k)) { if (dist < 600) { box(scen.get(x, z), x, y - 0.5, z, 14, hh + 0.5, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); exclPush(x, z, 10); } continue; }
+          if (end(k)) { const sb = HS ? blds.find(q => q.station && q.station.x === x && q.station.z === z) : null;
+            if (sb) { const ry = sb.station.roof, t = top[k][1]; if (t - ry > 0.3) box(scen.get(x, z), x, ry - 0.1, z, 14, t - ry + 0.1, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); continue; }   // (the deck on the station's roof, where its rope was lifted over the road)
+            if (dist < 600) { box(scen.get(x, z), x, y - 0.5, z, 14, hh + 0.5, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); exclPush(x, z, 10); } continue; }
           if (dist > 900) continue;
           const g = scen.get(x, z), a = Math.atan2(dz, dx);   // a pylon: a tapering steel mast, the cross-arm with the two rope saddles
           if (ch) { cyl(g, x, y - 0.4, z, 0.34, hh + 0.4, 6, steel, steel, 0.24); box(g, x, y + hh - 0.3, z, 0.4, 0.4, 5.2, a, steel, null, true);   // (a lift's: the tube, the cross-arm, the sheaves)

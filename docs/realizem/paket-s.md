@@ -209,10 +209,10 @@ Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je nareje
   - v `yard` 1 pot do hiše in 13 asfaltnih poti (samo strnjeni odseki do 30 m od hiš);
   - v `okolica` 168 oblik: 163 makadamskih poti (zrastejo iz poti ob hišah po skupnih točkah, slepi konci so obrezani) in 5 parkirišč;
   - skromna dopolnitev pri 9 hišah (15 vrstic `gen`).
-- Ob potkah 62 prizorov in 246 ljudi, od 0,6 do 8 km, ob gozdnih in travniških poteh.
+- Ob potkah 104 prizori in 410 ljudi, od 0,6 do 19,4 km, ob gozdnih in travniških poteh (izmerjeno 16. 11. 2026, `Render.world.peopleStats`; prej zapisano 62 / 246). Svetilke, koš, stojalo in smeti so samo ob 7 potkah blizu hiš (pri 2,3, 8,4, 8,6, 16,1, 16,2, 16,3 in 19,4 km), drugod samo klop in sprehajalci.
 - Drevesa in tabor navijačev se okolici umaknejo z enakimi žrebi. Drevesa na poteh samo izginejo, nobeno se ne premakne (slike pri 4370 m).
-- Svet ima 3872 mrež in 2 525 682 oglišč.
-- Obremenitev: 171 klicev in 310 tisoč oglišč, na najbolj obremenjenem mestu 198 / 326 (prej 156 / 180 klicev in 271 / 288 tisoč oglišč).
+- Svet ima 3870 mrež in 2 366 379 oglišč (pred odgovorom 16. 11.: 3872 / 2 525 682).
+- Obremenitev: 170 klicev in 298 tisoč oglišč, na najbolj obremenjenem mestu 198 / 322 (pred odgovorom 171 / 310 in 198 / 326; pred S1 156 / 180 klicev in 271 / 288 tisoč oglišč).
 - V kameri za avtom so hiše zunaj slike: OSM ima samo 7 hiš do 40 m od ceste, zgrajene so 27–37 m od nje. Vidijo se potke s prizori (npr. makadam s svetilkami pri 4300 m) in presledki v drevju, kjer gredo poti.
 
 **Livorno (`js/tracks/livorno.js`, `js/world-livorno.js`):**
@@ -221,17 +221,20 @@ Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je nareje
   - v `yard` 34 poti do hiš, 46 asfaltnih poti (strnjeni odseki do 30 m od hiš) in 18 mestnih pločnikov, peš poti in stopnic brez oznake površine (narisani kot asfalt, `yard` vrsta 1);
   - v `okolica` 126 oblik: 25 parkirišč in 101 neasfaltirana pot (makadam: samo izrecno neasfaltirane poti, kolovozi in steze brez asfaltne površine; zrastejo po skupnih točkah, slepi konci so obrezani).
 - **Brez splošnega dopolnila** (`gen: []`): v mestu ulic in pločnikov ne štejemo za površino ob hiši, zato bi dopolnilo izmislilo dvorišča, dovoze ali pasove zemlje pri ~900 hišah, ki jih zemljevid nima (tabla: nič izmišljenega).
-- Ob potkah 53 prizorov in 209 ljudi, od 1,7 do 18,8 km. 25 prizorov je v gosti mreži potk med 17,7 in 18,8 km.
+- Ob potkah 53 prizorov in 209 ljudi, od 1,7 do 18,8 km. 25 prizorov je v gosti mreži potk med 17,7 in 18,8 km. Svetilke, koš, stojalo in smeti so ob 38 potkah blizu hiš, ob 15 samo klop in sprehajalci.
 - Drevesa se okolici umaknejo (žreb po kraju, ne po vrsti).
-- Svet ima 1967 mrež in 1 489 738 oglišč.
-- Obremenitev: 144 klicev in 300 tisoč oglišč, na najbolj obremenjenem mestu 182 / 381 (prej 141 / 173 klicev in 288 / 351 tisoč oglišč).
+- Svet ima 1967 mrež in 1 475 608 oglišč (pred odgovorom 16. 11.: 1 489 738).
+- Obremenitev: 144 klicev in 299 tisoč oglišč, na najbolj obremenjenem mestu 179 / 374 (pred odgovorom 144 / 300 in 182 / 381; pred S1 141 / 173 klicev in 288 / 351 tisoč oglišč).
 
 **Konci poti (preverjanje v orodju):**
 - Konec poti je povezan tudi na robu pasu, merjenem od sredine ceste (64 m, kjer `nrNear` neha). Prej se je pas meril samo od ograje, zato je Nürburg kazal 124 lažnih slepih koncev.
 - Ostanejo 3 konci na Nürburgu: makadam 41795615 pri 4340 m (6 m od ceste), 923094807 pri 4850 m (11 m) in 923094808 pri 4846 m (14 m).
 - Ostanejo 4 konci v Livornu: makadam 684994078 pri 18685 m (6 m), 1395103455 pri 14503 m (4 m), 1420131325 pri 13151 m (41 m) in 1420131327 pri 13149 m (45 m).
 
-**Odprto (vprašanje v PR #696): gostota prizorov ob potkah.** Pravilo S0 da prizor vsaki potki, ki je dolga vsaj 25 m. Na Spaju so 4 prizori, na Nürburgu 62, v Livornu 53. Ko uporabnik odgovori, se odgovor vpiše sem.
+**Oprema ob potkah samo blizu hiš (odgovor uporabnika 16. 11. 2026 ob 19.12, komentar 6924937155 v PR #696: slike v redu, možnost 1).** Prizor dobi še vedno vsaka potka, dolga vsaj 25 m, a svetilke, koš, stojalo z vrečkami in smeti samo potka, ki ima kakšno točko do 40 m od hiše (`near` v `pathsOf()`, `byHouse(x, z, 40)` v `js/world-potke.js`). Ob gozdnih in travniških poteh daleč od hiš ostaneta samo klop s sedečim in sprehajalci.
+- Blizu hiš: Spa vse 4 potke (svet Spaja je do številke enak), Nürburg 7, Livorno 38 od 53.
+- Žrebi so enaki (smeti daleč od hiš žrebajo, a se ne postavijo), zato so ljudje na istih mestih kot na potrjenih slikah.
+- Reference na novo samo za `nring` in `livorno` (`tests/golden/world.json`, `perf.json`); druge proge in fizika vožnje nespremenjene.
 
 **Enaki žrebi:** veji hiš v graditeljih prog naredita iste žrebe v istem redu kot prej (bloki `u: [crH, R(), R()]` namesto dveh `vary`, hiše `R()` namesto enega), zanka dreves žreba po kraju. Predmeti, gledalci in `propsHash` so na obeh progah enaki kot prej; druge proge se ne spremenijo.
 
@@ -246,8 +249,8 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #699. Obe progi imata v `PROG
 **Montréal (`js/world-montreal.js`, `js/tracks/montreal.js`):**
 - 360 manjših stavb brez imena (pod 1500 m², skoraj pravokotnih) gradi skupni graditelj na obrisih iz podatkov (komplet Kanade, 60 % ravnih streh). Višina je iz podatkov, sicer privzeta za vrsto. Paviljoni, boksi (`pitBld`, enak obrisu Paddocks) in velike stavbe ostanejo svoji, na svojih obrisih.
 - Izključitve dreves ostanejo enake kot prej (isti krogi v istem redu), zato se drevesa drugod ne premaknejo (0 % razlike pri 1300, 2000 in 3400 m).
-- Tribune na obrisih iz OSM (`def.bleachers`, 4 obrisi `leisure=bleachers`): do 20 vrst, ki se dvigajo od ceste. Zadaj je ploščad z ograjo, na tribunah ni ljudi (malo gledalcev). Sprednji rob ostane vsaj 3 m za robom ceste. Približne začasne tribune (`def.stands`) ostanejo; vprašanje je v PR.
-- Obremenitev: 189 klicev in 456 tisoč oglišč, na najbolj obremenjenem mestu 246 / 554 (prej 185 / 242 klicev in 443 / 535 tisoč oglišč).
+- Tribune na obrisih iz OSM (`def.bleachers`, 4 obrisi `leisure=bleachers`): do 20 vrst, ki se dvigajo od ceste. Zadaj je ploščad z ograjo, na tribunah ni ljudi (malo gledalcev). Sprednji rob ostane vsaj 3 m za robom ceste. Približne začasne tribune (`def.stands`) so odstranjene (`stands: []`): odločitev uporabnika 15. 11. 2026, »Postavi samo tribune, ki so v resnici tam.« Ostanejo samo 4 tribune iz OSM.
+- Obremenitev: 184 klicev in 429 tisoč oglišč, na najbolj obremenjenem mestu 243 / 532 (prej 185 / 242 klicev in 443 / 535 tisoč oglišč).
 
 **Bâlea (`js/world-prelaz.js`):**
 - 14 koč in hotelov ter postajo žičnice gradi skupni graditelj na pravih obrisih (komplet Romunije, slog `gora`).
@@ -265,7 +268,22 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #714. Proga ima v `PROGE` rav
 - `caH` (PR #694) ostane nespremenjen; Oktogon in železnica ostaneta svoja.
 - Obremenitev: 154 klicev in 269 tisoč oglišč, na najbolj obremenjenem mestu 190 / 393 (prej 154 / 190 klicev in 269 / 394 tisoč oglišč).
 
-## S5: Chapman's Peak in Rio do Rastro (veja `realizem/stavbe-2411`, nad #714; 24. 11. 2026)
+## S4: Štajerska (veja `realizem/s4-stajerska`, nad #714; 15. 11. 2026)
+
+Odločitev Mateja na tabli #382 (15. 11. 2026). PR #713. Graditelj je skupni `js/world-rbring.js` (Štajerska, Bathurst, Rio, Crystal Palace): spremembe so samo v vnosih Štajerske, vrstni red R()/RX() je enak, reference drugih prog se ne spremenijo.
+- **Hiš ni**: v pasu do 64 m od ceste sta v OSM samo 2 stavbi (ena v paddocku za boksi, ena 62–71 m od ceste), zato ni kompleta stavb in ne vnosa v `PROGE`.
+- **Tribune na obrisih iz OSM** (`def.stands`, 9. polje `front`: sprednji rob od sredine ceste, število ali [na začetku, na koncu]): Start-Ziel 21 m, Steiermark 20 m, tribuna na hribu v treh kosih (43 m; 32 → 24 m; 31 → 50 m), T10 48 → 32 m. Sprednji rob ostane vsaj 2,6 m za ograjo. T3, Nord in T9 v OSM nimajo para blizu ceste in ostanejo kot prej; Mitte (53 → 44 m), Ost (70 → 53 m) in Nord (115 m) stojijo na obrisih iz OSM, čeprav jih kamera za avtom ne vidi (odločitev uporabnika 15. 11. 2026: 1.1 in 2.2).
+- **Krilo** na Start-Ziel se premakne s tribuno (`wing[2]` 6,9 m).
+- **Boksi**: stavba na obrisu iz OSM (`pitBuilding` −165…140, prej krajša); spredaj ostane pri garažah. Ravna tla kompleksa (`pitPad` −235…140) so na začetku enaka kot prej, vozna površina (`pit`) se ne spremeni.
+- **Prehod pred tribunami** (`World.people`, skupni; popravek 24. 11. 2026 po pripombi uporabnika »za vsako progo posebej«): `def.standWalk` = [od, do, pasovi] po sredini tribune v metrih proge; pasovi od čela tribune navzven [vrsta, širina]: 0 tlakovci, 1 trava, 2 asfaltni servisni pas, 3 beton; ena širina je lahko `null` (prilagodi se razdalji do zidu). Tribune brez vnosa (in vse druge proge) obdržijo dosedanji pas (`def.standApron`).
+  - Prerezi po OSM (razdalje od sredine proge): **Start-Ziel** zid 10,4–10,7 m, sredina servisne ceste 13,5–14,1 m, čelo tribune 18,1–18,3 m → tlakovci (≈4,8 m), robnik, asfaltni pas 3,6 m, beton 0,5 m do zidu. **Steiermark** zid 11,2 m, cesta 12,4–12,5 m, tribuna 18,2–20 m → sam asfaltni pas. **Tribune na hribu** (5 kosov): samo trava. **T10** cesta 3–6 m pred tribuno → trava 1,4 m, pas 3,5 m. **Ost** cesta 3,5–7 m → trava 3,3 m, pas 3,5 m. **Mitte** cesta 16–19 m spredaj → trava 14,7 m, pas 3,5 m (narisan samo v dolžini vsake tribune). **Nord (oddaljena)** cesta 9–17 m → trava 8,5 m, pas 5 m; s proge se ne vidi. T3, Nord ob progi in T9: v OSM ni dovolj podatkov, dosedanji pas.
+  - Iz OSM so lege zidov, cest in tribun. OSM nima oznak za robnike, talne črte, požiralnike in širine cest, zato so **privzeti**: širine pasu 3,5–3,6 m (5 m pri Nord), robnik med pasom in tlakom, beli robni črti (pas ≥ 2 m), rešetka požiralnika ob robniku na 24 m. Ograje (`barrier=fence`) so v OSM samo pri T9, prehodov za pešce pred tribunami ni (zebre so samo za tribuno Start-Ziel), zato jih ni niti v igri.
+  - **Boksi** (`def.pitDrain`, `js/world-rbring.js`): linijski odtok ob vznožju garaž z jekleno prečko na 2 m in stiki betonskih plošč (vzdolžni, prečni na sredini vsakega 10-metrskega boksa); privzeto, OSM teh podatkov nima. Znana razlika: po OSM je od boksnega zidu (8,4–9,2 m) do čela stavbe (18,8 m) ≈10 m, v igri sta hitri pas 7 m in ploščad 9 m; mere ostanejo, ker so vezane na postanek v boksih.
+  - **Druga dirkališča s tribunami** (vsako potrebuje svojo analizo OSM in svoj `standWalk`, ni v tem PR): Aguascalientes, Batangas, Bathurst, Biķernieki, Buriram, Kågeröd, Kildare, Lombok, Lusail, Montreal, Pembrey, Quezaltepeque, Termas de Río Hondo, Sakhir, Sepang, Silkeborg, Sosnová, Tuzla, Zandvoort. Zamrznjene proge ostanejo.
+- Obremenitev (24. 11., s prehodi po `standWalk`; `PERF_ONLY=rbring`): 208 klicev in 507 tisoč oglišč, na najbolj obremenjenem mestu 246 / 682 (meja ~300 / 900; brez prehodov 208 / 246 klicev in 503 / 675 tisoč oglišč; v zagonu vseh prog zapored 216 / 258 klicev in 501 / 682 tisoč; `tests/golden/perf.json`).
+- `tests/browser/ljudje.test.mjs`: sprehajalec sredi stopnice, višje od 0,3 m (na prehodih tribun so do 0,53 m, tudi prej do 0,47 m), na svoji poti nad stopnico pred njo ni »v zraku«; prej je test uspel samo zato, ker v izbranem trenutku nihče ni bil sredi take stopnice.
+
+## S5: Chapman's Peak in Rio do Rastro (veja `realizem/stavbe-2411`, nad #713; 24. 11. 2026)
 
 Naloga koordinacije partyslo (24. 11. 2026): naslednja skupina stavb, ki še ni nikjer narejena. Obe progi imata v `PROGE` raven 3 (`d2` 34, `d1` 64); kompleta Južne Afrike (slog `cape`) in Brazilije (slog `les`) sta že v graditelju. Novih podatkov ni: tlorisi so obstoječi iz OSM (`def.bld`), tla iz višinskega modela proge.
 
