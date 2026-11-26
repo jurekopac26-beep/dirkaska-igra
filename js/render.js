@@ -3817,6 +3817,7 @@ const Render = (function () {
       K.shT = [0.97, 0.96, 1.04]; K.hiT = [1.07, 0.99, 0.88]; K.bloom = 0.5; K.lit = [0.97, 0.85, 0.74];
       if (EXT.vecer && curTrack) EXT.vecer.dusk(K, curTrack.def, r);   // (a real track's evening: a little later, js/render-vecer.js)
     }
+    if (EXT.sonce && curTrack) EXT.sonce.apply(D, K, dawn, curTrack.def, id);   // (a real track's sun from its place, date and hour: js/render-sonce.js)
     N.fog.setHex(0x070b16); N.sky.setHex(0x26324f); N.gnd.setHex(0x06080b); N.sunC.setHex(0x93aaff); N.hemiI = 0.55; N.sunI = 0.2 * (1 - 0.6 * r);
     N.off = [-40, 110, 60]; N.tint = [0.86, 0.93, 1.12]; N.sat = D.sat * 0.85; N.uHaze = 0; N.postHaze = 0; N.hazeCol = K.hazeCol.slice();   // (no sun glow at night, not even Pikes Peak's)
     N.shT = [1, 1, 1]; N.hiT = [1.02, 1.0, 0.97]; N.bloom = 1.05 + 0.25 * r; N.bThr = 0.62; N.lit = [0.36, 0.4, 0.5];   // (the lamps' light a little warm)
@@ -10206,6 +10207,7 @@ const Render = (function () {
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); if (roll) camera.rotateZ(roll); cam.vcx = tx; cam.vcz = tz; cam.vd = vd || Math.hypot(px - tx, py - ty, pz - tz);   // (the camera before the start: the chase view's own reach, vd, for what is drawn in detail: the props round the view, the rivals near the camera)
     { let dC = shot ? shot.fogD : Math.min(fogCap, Math.hypot(px - tx, py - ty, pz - tz)); if (!shot && pw > 0 && dC < 30) dC += (30 - dC) * pw; dC *= shot ? 1 : (THEMES[themeId] || {}).fogK || 1; const r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; theme.fogK: a clear day's longer view; fogCap: the camera before the start; pw: the pit stop's side view, a 30 m view's haze)
+    if (EXT.megla) EXT.megla.frame(curTrack, sunOff, sun.color, scene.fog);   // (a real track's height fog, on top of this one: js/render-megla.js)
     if (world && (world.farClip || fogCap < Infinity)) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds (and the camera before the start, on every world): nothing past the fog is drawn
     else if (world && camera.far !== 700 && !shot) { camera.far = 700; camera.updateProjectionMatrix(); }   // (the flight over: the world's own far plane again)
     // sun/shadow follows view center
