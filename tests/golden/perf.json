@@ -684,5 +684,12 @@
   "kverts": 447,
   "maxKverts": 492,
   "jsMs": 1.34
+ },
+ "stavrovouni": {
+  "calls": 169,
+  "maxCalls": 209,
+  "kverts": 427,
+  "maxKverts": 550,
+  "jsMs": 1.16
  }
 }

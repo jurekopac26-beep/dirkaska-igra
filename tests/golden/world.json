@@ -2505,5 +2505,28 @@
    "lifeShadow:MeshBasicMaterial": "18b12e76",
    "life:MeshBasicMaterial": "89c19ef8"
   }
+ },
+ "stavrovouni": {
+  "meshes": 1961,
+  "verts": 779028,
+  "instances": 51996,
+  "props": 6,
+  "crowd": 130,
+  "world": "5279fd4e",
+  "propsHash": "e918206c",
+  "floor": "89e04d4e/9576",
+  "groups": {
+   "-:MeshLambertMaterial": "cb70646e",
+   "-:MeshPhongMaterial": "aca3caa1",
+   "-:MeshBasicMaterial": "ae04b351",
+   "irFar:MeshLambertMaterial": "d19e4319",
+   "crowd:MeshLambertMaterial": "154f9275",
+   "ao:MeshBasicMaterial": "558a4729",
+   "tyremarks:MeshBasicMaterial": "2d658af5",
+   "roadwear:MeshLambertMaterial": "c86df23",
+   "life:MeshLambertMaterial": "eb7327c6",
+   "lifeShadow:MeshBasicMaterial": "425fcb45",
+   "life:MeshBasicMaterial": "4117ff9"
+  }
  }
 }

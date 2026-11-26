@@ -539,6 +539,7 @@
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Iz kanjona Mujib': 'Up out of the Mujib canyon',   // (Wadi Mujib: the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Bolnišnica': 'Hospital', 'Pod daljnovodom': 'Under the Power Line', 'Pogled na jezero': 'Lake View',   // (Atitlán: the HUD; the town keeps its name, the hairpins by the rules above, the results of an escape as Bâlea)
+    'Golo pobočje': 'Bare Slope', 'Pod samostanom': 'Below the Monastery',   // (Stavrovouni: the HUD; Serpentina N and the heights by the rules of Lang.place)
     'Apnenčasta stena': 'Limestone Wall', 'Nad puščavo': 'Above the Desert',   // (Jebel Hafeet: the HUD; Prva lasnica, Serpentine, Razgledišče, Vrh vzpona above)
     'Do prelaza Mã Pí Lèng': 'To the Mã Pí Lèng pass',   // (Mã Pí Lèng: the results of an escape; Spomenik, Serpentina N and the heights by the rules of Lang.place)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)

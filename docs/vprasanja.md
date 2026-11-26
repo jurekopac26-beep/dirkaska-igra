@@ -116,6 +116,14 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `proga-1092-stavrovouni-samostan`
+
+Stavrovouni (#1092), 25. 11. 2026: samostan na vrhu. a (priporočeno) kupola in zvonik na stavbi, ki jo OSM označi kot cerkev, brez zidu okoli dvorišča (zid nima vira in na pobočju visi v zraku); b tako kot zdaj, z zidom; c samo obrisi stavb iz OSM. Slike so na strani Odločitve.
+
+### `proge-registracija-prekrivanje`
+
+Nove proge (#1090, #1091, #1092), 26. 11. 2026: ali je vrstica za registracijo nove proge (zastavica v `js/menu.js`, kraj na globusu v `js/menu-data.js` in `tools/menu-globe.mjs`) prekrivanje? A (priporočeno) ni prekrivanje, velja za vse nove proge; kdor se združi drugi, na svežem mainu znova zgradi sezname in zlate datoteke; B vsako tako vrstico vprašamo posebej. #783 gre v #862, zato se ne šteje. Odgovor (Matej, 26. 11. 0.52): **A**; vrstni red na main #788, #1090, #1091, #1092.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
