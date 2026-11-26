@@ -121,9 +121,9 @@ async function takeAll(browser, gameRoot, tag) {
           Render.resetCam(); for (let k = 0; k < 6; k++) { Render.frame(1 / 60, 1, P, 'chase', {}); await raf(); }   // (the camera behind the car at once, the world's near pieces there)
           const hid = m != null ? R.cars.filter(c => c !== P).map(c => Render.viewOf(c)).filter(v => v && v.grp.visible) : [];
           for (const v of hid) v.grp.visible = false;
-          const c = Render.snapshot(P, 'chase', Math.max(side.width, side.height));
+          const d = window.devicePixelRatio || 1, c = Render.snapshot(P, 'chase', Math.max(side.width, side.height) * d);   // (--dpr: the picture in device pixels)
           for (const v of hid) v.grp.visible = true;
-          const k = document.createElement('canvas'); k.width = side.width; k.height = side.height; k.getContext('2d').drawImage(c, 0, 0, k.width, k.height);
+          const k = document.createElement('canvas'); k.width = side.width * d; k.height = side.height * d; k.getContext('2d').drawImage(c, 0, 0, k.width, k.height);
           return { src: k.toDataURL('image/png'), at, s: Math.round((((P.q.s - T.startS) % T.len) + T.len) % T.len), name: T.def.name || T.def.id, ver: g.ver };
         }, [m, SIZE[o], guma]);
         const key = `${id}-${m != null ? m + 'm' : 't' + (t != null ? t : 3) + 's'}-${o}`;
