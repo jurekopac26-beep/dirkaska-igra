@@ -690,6 +690,9 @@
         return P.el === 'krilo' ? (B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null]) : P.kind === 'skirt' ? [3, 'Roka {0} položi prag vzdolž boka', null]
         : P.kind === 'rear' ? [3, 'Roka {0} namesti difuzor pod zadnji odbijač', null] : [3, 'Roka {0} potisne ustnico pod sprednji odbijač: zaskoči', null]; },
       snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], put: (d, B) => d.where === 'none' ? null : [B.P && B.P.el === 'krilo' ? 4 : 3, 'Roka {0} odloži stari kos na voziček', null], cart_out: [4, 'Voziček odpelje'] },
+    // (the fuel cap, #1084 I4 (js/garaza-anim/zamasek.js): its own steps; the def swap »namesti nov del« came after the screw)
+    zamasek: { grip: [1, 'Roka 1 prime stari zamašek za obroč'], unscrew: [1, 'Roka 1 odvije stari zamašek'], seat: [3, 'Roka 2 nastavi nov zamašek na grlo'],
+      screw: [3, 'Roka 2 privije nov zamašek · klik'], swap: [3, 'Nov zamašek je privit · roki gresta počivat'] },
     // (by the plate an_turbo (the regal's): roka 1 lifts and shuts the bonnet, roka 2 brings the turbo and bolts it down; else the bonnet by itself)
     turbo: { plan: [1, 'Kupljeno · roki se zbudita'], bonnet_grip: [1, 'Roka 1 dvigne haubo in jo podpre z drogom'],
       bonnet_up: (d, B) => B.seen.bonnet_grip ? null : [1, 'Hauba je gor, podpira jo drog'], cart_in: [1, 'Voziček pripelje nov turbo'],

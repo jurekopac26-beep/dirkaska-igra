@@ -7,12 +7,7 @@
 (function () {
   'use strict';
   const GA = window.GarazaAnim = window.GarazaAnim || {};
-  const tr = (s) => (window.Lang && Lang.tr ? Lang.tr(s) : s);
   // (the bar's line for a step of its own: garage.js knows only its keys (barSay keeps the line for one it does not know), so it is set here)
-  const LAB = { grip: () => tr('Roka 1 prime stari zamašek za obroč'), unscrew: () => tr('Roka 1 odvije stari zamašek'),
-    seat: () => tr('Roka 2 nastavi nov zamašek na grlo'), screw: () => tr('Roka 2 privije nov zamašek · klik'),
-  swap: () => tr('Nov zamašek je privit · roki gresta počivat') };   // (the def swap label »Roka 2 namesti nov del« came after the screw)
-  const say = (X, k, x) => { X.fitLog(k, x); const l = document.querySelector('#g-steps .l'); if (l && LAB[k]) l.textContent = LAB[k](); };
 
   GA.zamasek = function* (C, X) {
     const { THREE, V3, RB, ARM, BRG, FIT, RGL, EZ, SFX, spawn, par, wait, waitFor, tween } = X;
@@ -74,9 +69,9 @@
     // 2: roka 1 in close to the cap, its jaws on the ring
     const s1 = tipTo(0, PL.s, capAt(ch)), pre = tipTo(0, PL.s, capAt(ch + 0.06));
     yield* par(X.armExt(0, pre, PL.ext, 0.35, EZ.sine), X.camTo(VC, 0.5)); yield* X.armExt(0, s1, PL.ext, 0.25, EZ.sine); X.poseArm(0);
-    X.hold(0, oc, capW(ch)); SFX.click(); say(X, 'grip');
+    X.hold(0, oc, capW(ch)); SFX.click(); X.fitLog('grip');
     // 3: the old cap off: three clicks to the left, out of its thread, the neck open
-    say(X, 'unscrew'); yield* turns(0, 1, 0, 0.012, [0, 0, 1]); neck.visible = true; puff(5); X.fitLog('off');
+    X.fitLog('unscrew'); yield* turns(0, 1, 0, 0.012, [0, 0, 1]); neck.visible = true; puff(5); X.fitLog('off');
     // 4: roka 1 out with it as roka 2 lifts the new one off the regal, the camera to the regal
     yield* par(X.armExt(0, pp.s, pp.ext, 0.3), X.camTo(V1, 0.5), X.armExt(1, grab.s, grab.ext, 0.4));
     { X.disposeTree(X.letGo(0)); const so = old(), M = X.tipM(RB[0].s, X.tipLen(RB[0])).multiply(PL.off); so.matrix.copy(M); so.matrixWorldNeedsUpdate = true; X.hold(0, so, M); }   // (as the regal's piece)
@@ -91,12 +86,12 @@
     const pre2 = tipTo(1, PL.s, capAt(ch + 0.012)), nc = mkCap(ncol, 0xb8bec8);
     { const off = X.tipM(pre2, X.tipLen(RB[1])).invert().multiply(capW(ch + 0.012)); X.disposeTree(X.letGo(1)); X.hold(1, nc, X.tipM(RB[1].s, X.tipLen(RB[1])).multiply(off)); }
     yield* par(X.camTo(VC, 0.5), X.armExt(0, gp.s, gp.ext, 0.3), X.armExt(1, pre2, PL.ext, 0.45, EZ.sine)); X.poseArm(1);
-    say(X, 'seat'); yield* wait(0.15);
+    X.fitLog('seat'); yield* wait(0.15);
     // 8: on it goes: three clicks to the right, drawn in onto its seat (the arm's tip in with it), the last click and its glint
-    say(X, 'screw'); yield* turns(1, -1, 0, -0.012, [0, 0, 1]);
+    X.fitLog('screw'); yield* turns(1, -1, 0, -0.012, [0, 0, 1]);
     const kept = X.letGo(1); X.fitSwap(cv, nw, true); neck.visible = false; if (!up) spawn(X.settle(X.cur, 0.01));
     { const Bn = X.cur.v && X.cur.v.bodyG; if (!g && Bn) { kept.matrixAutoUpdate = true; kept.matrix.decompose(kept.position, kept.quaternion, kept.scale); Bn.attach(kept); } else X.disposeTree(kept); }   // (a car with no cap of its own keeps the drawn one)
-    say(X, 'swap', { deli: X.deliKey(X.cur.spec), car: X.cur === nw, old: 'regal' });
+    X.fitLog('swap', { deli: X.deliKey(X.cur.spec), car: X.cur === nw, old: 'regal' });
     // 9: roka 2 out, the car down (the lift stowed after), the arms home with the bridge, KONČANO
     yield* wait(0.15); yield* par(X.armExt(1, pp.s, pp.ext, 0.3, EZ.sine), X.camTo(V2, 0.5));
     let stowed = !up, off = false;
