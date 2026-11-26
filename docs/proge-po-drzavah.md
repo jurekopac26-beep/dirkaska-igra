@@ -100,6 +100,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Lusail, Katar | Nove proge za 1.0, linija A (A18) | OSM 3 % (ograja); z zidom boksov ~30 % | izletna cona je |
 | Termas de Río Hondo, Argentina | Nove proge za 1.0, linija A (A19) | OSM 0 %; z zidom boksov ~14 % | izletna cona je |
 | Koli, Finska | proge z ledom (zimska) | OSM 2 % (stavbe), ograj, zidov in sten ni | izletna cona je |
+| Meteora, Grčija | PR #1094 | ograja v serpentinah, drugod gozd, grmičevje in trava ob cesti | izletna cona je; padca ni |
 
 ## Države s progo v igri: izbira uporabnika
 
@@ -215,7 +216,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Ciper | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Bolgarija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026; med njimi Šipka, rezerva uporabnika 8. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Armenija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
-| Grčija | nova proga (rezervacija 25. 11. 2026; stara rezerva Meteora iz 8. 11. 2026 je ena od možnosti), veja `proga/<id>` | v delu (partyslo, rezerva croatiadata, od 25. 11. 2026); 2–3 predlogi na strani Odločitve, seznam zanimivosti potrdi uporabnik |
+| Grčija | Meteora (izbira seje proge 26. 11. 2026, kartica `proga-meteora-pot`; PR #1094, veja `proga/meteora`) | v delu (partyslo, rezerva croatiadata); prva proga države |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 

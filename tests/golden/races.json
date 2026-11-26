@@ -949,6 +949,56 @@
   "nan": false,
   "digest": "01dee7ebbc9c2e702ed708cb"
  },
+ "meteora/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 209.74,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "267a8d26bf86d9de6451953b"
+ },
+ "meteora/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 251.29,
+  "spins": 1,
+  "walls": 1,
+  "rescues": 1,
+  "nan": false,
+  "digest": "b017734207942f68e56836de"
+ },
+ "meteora/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 191.07,
+  "spins": 0,
+  "walls": 7,
+  "rescues": 0,
+  "nan": false,
+  "digest": "58a72d1c3d56c55adf854202"
+ },
+ "meteora/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 196.97,
+  "spins": 0,
+  "walls": 11,
+  "rescues": 0,
+  "nan": false,
+  "digest": "cc35497f2364b4a9932aa908"
+ },
+ "meteora/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 209.54,
+  "spins": 1,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6f17512d631a4b4c4c6fb2fb"
+ },
  "silkeborg/cs": {
   "finished": 13,
   "cars": 13,
