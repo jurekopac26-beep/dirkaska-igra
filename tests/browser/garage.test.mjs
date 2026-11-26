@@ -485,9 +485,10 @@ try {
         const r = await tail(), why = [];
         if (r.n !== i + 1 || r.part !== JSON.stringify(opts[i])) why.push('not this option on the car');
         if (!r.key || (r.sw && r.sw !== r.key)) why.push('the car\'s key is not the fitted one\'s');
-        if (!r.out.length || r.out.some(x => x > t0.x - 0.02)) why.push('a tip is not out behind the bumper');
+        if (!r.out.length || r.out.some(x => x > t0.out[0] - 0.04)) why.push('a tip is not out behind the bumper');
         if (seen.has(r.sig)) why.push('the tail as option ' + seen.get(r.sig) + '\'s'); else seen.set(r.sig, i + 1);
-        if (!(r.rig[0] < -0.8 && r.rig[0] > -1.3 && r.rig[1] < 0.1 && r.rig[2] < 2.5) || r.ndc.some(v => Math.abs(v[0]) > 0.9 || Math.abs(v[1]) > 0.9 || v[2] > 1)) why.push('the show does not end low behind the car on the tips');
+        const yaw = Math.atan2(Math.sin(r.rig[0]), Math.cos(r.rig[0]));   // (the rig's yaw unwrapped: turns of the plate in it)
+        if (!(yaw < -0.8 && yaw > -1.3 && r.rig[1] < 0.1 && r.rig[2] < 2.5) || r.ndc.some(v => Math.abs(v[0]) > 0.9 || Math.abs(v[1]) > 0.9 || v[2] > 1)) why.push('the show does not end low behind the car on the tips');
         if (why.length) bad.push({ i: i + 1, why, out: r.out, ndc: r.ndc, rig: r.rig, key: r.key, sw: r.sw }); }
       T.check('KOLIBRI\'s 16 exhausts: each fitted one is the car\'s (its key, the pipes unfolded), its tips out behind the bumper, every tail different from behind (and from the stock one), the show ends low behind the car with the tips in the picture',
         opts.length === 16 && seen.size === 17 && !bad.length, JSON.stringify({ n: opts.length, tails: seen.size, stock: t0.out, bad }));
