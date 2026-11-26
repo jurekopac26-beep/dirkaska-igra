@@ -4860,7 +4860,14 @@ const Render = (function () {
   // the battery saver (game.js: 30 frames a second): the picture drawn at 0.7 of the resolution
   function setSaver(on) { const k = on ? 0.7 : 1; if (k !== saverK) { saverK = k; resize(); } }
   // the new world's shaders compiled at once, while the loading screen is up (else in its first frames, or mid-race as each comes in view)
-  function precompile() { try { renderer.compile(scene, camera); } catch (_) { } }
+  // (tex: also each material's pictures sent to the GPU now, game.js newRace with the cars attached: not in the first frames after the green light)
+  function precompile(tex) {
+    try { renderer.compile(scene, camera); } catch (_) { }
+    if (!tex || !renderer.initTexture) return;
+    const seen = new Set(), up = (t) => { if (t && t.isTexture && !t.isCubeTexture && !t.isDataTexture3D && !t.isDataTexture2DArray && t.image && !seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch (_) { } } };
+    scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : null; if (!ms) return;
+      for (const m of ms) { for (const k in m) up(m[k]); if (m.uniforms) for (const k in m.uniforms) up(m.uniforms[k] && m.uniforms[k].value); } });
+  }
 
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car

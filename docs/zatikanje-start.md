@@ -99,3 +99,14 @@ Drugo: delci brez dima prihranijo 1,7–2,3 ms (manj od senc, izgubimo pa dim na
 - 5 (sence) samo, če po 1–4 še zatika: prihrani 2–3 ms, a vidno vzame sence.
 
 Stalni strošek risanja (22–32 ms pri CPU 4×) ostane; to je tema grafike (#1069 in nadaljnje), ne starta.
+
+## Izvedba (26. 11., veja `zatikanje/start`)
+
+Odločitev uporabnika 26. 11. ob 11.10: DA, s pogojem (korak, sile in vožnja ostanejo enaki).
+
+- **1 izvedeno**: `game.js` `frame`: sam igralec največ 4 koraki na sličico (prej 10), na spletu ostane 64. Korak ostaja 1/120 s; pod 30 sličicami na sekundo gre dirka počasneje od ure (kot prej pod 12).
+- **2 izvedeno**: `Render.precompile(true)` v `newRace` po postavitvi avtov: senčilniki avtov in vse slike materialov gredo na grafično kartico pred uvodom, ne v prvih sličicah po zelenem.
+- **3**: zvok in HUD se na `main` že zaženeta v `newRace` (pred lučmi, `Sfx.setRunning`). Prva sličica po zelenem: dohitevanje fizike (27–31 ms, s 4 koraki pol manj), `Render.frame` 20–22, prisilna postavitev HUD (`h-map`, ~20 ms), zvok starta 4–5 ms. Preostanek ni vreden tveganja v HUD.
+- **4 ni izveden** (`placeNote`, Killarney): ni del te odločitve.
+
+Meritve ZDAJ/POTEM: spodaj.

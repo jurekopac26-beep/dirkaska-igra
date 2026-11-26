@@ -2568,6 +2568,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; aip = { was: new Set(), q: null, last: -Infinity, log: [] }; psw = { n: 0, q: null, log: [] }; pfg = { hb: -1, out: -1, c: null, t0: 0, g: 0, lead: false, e: null, key: '', log: [] }; pout = { c: null, t0: 0, g: 0, e: null, seen: new Set(), log: [] }; pxs = { hb: -1, log: [] }; $('h-fight').className = ''; $('hud').classList.remove('fight'); fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset();
     Render.attachRace(race);
     Render.resetCam();
+    Render.precompile(true);   // (the cars' shaders and every picture on the GPU now, before the intro: not in the first frames after the green light, docs/zatikanje-start.md)
     adaptBreak();
     bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0; toastHeld = null;
     introLen = 1.3; endPodium();
