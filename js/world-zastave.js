@@ -2,7 +2,7 @@
    WORLD — flags that wave (Grafika 02: the user's choice of 3. 11. 2026 on the Odločitve page, »Zastave, ki plapolajo v vetru«: the flags
    on the poles by the grandstands, on the start/finish straight and on the towers wave in the wind instead of standing stiff; the wave is
    the graphics card's (a vertex shader), so the phone's load stays small; on NIZKA only the flags near the camera wave).
-   World.flagMesh(list, uTime, o): one mesh for all the cloths of a world (one draw call; it casts no shadow), waved in the vertex shader on
+   World.flagMesh(list, uTime, o): one mesh for all the cloths of a world (one draw call; it casts no shadow; the cloths past the fog's end not drawn: reach()), waved in the vertex shader on
    a clock World.update drives (uTime: the world's wind, out.dyn.wind, or the crowd's): waves run from the pole to the free end and grow
    towards it, the folds are shaded (the normal tilted with the wave's slope: three.js r128 lights a Lambert material per vertex, so the
    bands of light and shade run along the cloth with the waves), the free end sags a little as it swings, and gusts come and go. On NIZKA
@@ -98,10 +98,35 @@
     return m;
   }
 
+  // the cloths past the fog's end are not drawn (as js/render.js cullByDistance: the haze hides them anyway): still one mesh and one draw
+  // call, its index kept with the cloths within reach first and one draw range over those; looked at again once the camera has moved
+  // STEP m, the index sent again only when a cloth comes into reach or leaves it. A world whose fog has no end: all of them, as before
+  const STEP = 4;
+  function reach(mesh, PC, I) {
+    let px = Infinity, py = 0, pz = 0, pf = -1;
+    mesh.onBeforeRender = function (rn, scene, camera, g) {
+      const f = scene && scene.fog && scene.fog.far > 0 ? scene.fog.far + 20 + STEP : Infinity;
+      const e = camera.matrixWorld.elements, cx = e[12], cy = e[13], cz = e[14];
+      if (f === pf && Math.hypot(cx - px, cy - py, cz - pz) < STEP) return;
+      px = cx; py = cy; pz = cz; pf = f;
+      let ch = false, n = 0;
+      for (const q of PC) { const on = Math.hypot(q.x - cx, q.y - cy, q.z - cz) - q.r < f; if (on !== q.on) { q.on = on; ch = true; } if (on) n += q.n; }
+      if (ch) {
+        const ix = g.index, A = ix.array; let w = 0;
+        for (const q of PC) if (q.on) { for (let k = 0; k < q.n; k++) A[w + k] = I[q.a + k]; w += q.n; }
+        for (const q of PC) if (!q.on) { for (let k = 0; k < q.n; k++) A[w + k] = I[q.a + k]; w += q.n; }
+        ix.needsUpdate = true;
+      }
+      g.setDrawRange(0, n);
+    };
+  }
+
   function flagMesh(list, uTime, o) {
     o = o || {};
     const P = [], N = [], C = [], F = [], I = [], UV = o.map ? [] : null; let v = 0;
+    const PC = [];   // (each cloth's part of the index and its sphere: reach())
     for (const e of list) {
+      const i0 = I.length;
       const [x, y, z, rot, look, W, H, amp] = e, c = Math.cos(rot), s = Math.sin(rot), ph = hash(x, z) * TAU, A = W * AMP * (amp == null ? 1 : amp);
       const SEG = o.tier === 0 ? Math.max(4, Math.min(6, Math.round(W / 0.3))) : Math.max(6, Math.min(12, Math.round(W / 0.14))), CL = cells(look), tri = !!(look && look.tri);   // (segments along the cloth, about eight to a wave, a long one more; NIZKA four to six: about as many triangles as the stiff boxes had)
       const US = new Set(), q5 = (u) => Math.round(u * 1e5) / 1e5; for (let j = 0; j <= SEG; j++) US.add(q5(j / SEG)); for (const q of CL) { US.add(q5(q[0])); US.add(q5(q[1])); }
@@ -122,6 +147,7 @@
         if (UV) UV.push(0, 0);
         return v++;
       }, (a, b, d) => I.push(a, b, d), o.tier === 0 ? 8 : 12);
+      PC.push({ x: x + c * W / 2, y: y - H / 2, z: z + s * W / 2, r: Math.hypot(W, H) / 2 + 1 + W * AMP, a: i0, n: I.length - i0, on: true });
     }
     if (!v) return null;
     const make = () => {
@@ -131,6 +157,7 @@
       g.computeBoundingSphere(); g.boundingSphere.radius += 1;   // (the wave reaches a little out of the cloths' rest)
       const mesh = new THREE.Mesh(g, flagMat(uTime, o.tier === 0 ? FAR : 0, o.map));
       mesh.receiveShadow = true; mesh.matrixAutoUpdate = false; mesh.name = 'flags'; mesh.userData.flags = list.length;
+      if (PC.length > 1) reach(mesh, PC, I);
       return mesh;
     };
     return o.own && World.api && World.api.ownRnd ? World.api.ownRnd(make) : make();
