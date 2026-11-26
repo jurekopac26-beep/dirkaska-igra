@@ -230,7 +230,8 @@
         ['school', 'school', 'Driving school', 'Four lessons with medals.', G.schoolChip(), I.wheelBig],
         ['stats', 'stats', 'Achievements', 'Your numbers and what you have unlocked.', G.statsChip(), I.starBig],
       ];
-      h += subHead('Career', 'Four ways to play') + '<div class="t-sub four">' + four.map(f => card('cm-' + f[0], 'game:to-' + f[1], false, f[2], f[3], f[4], f[5])).join('') + '</div>';
+      const kv = G.kariera && G.kariera();   // (the path of 1.0, js/kariera.js: its strip above the cards, the hub a tap away; no bridge, no strip)
+      h += subHead('Career', 'Four ways to play') + '<div class="t-sub four">' + (kv ? kStrip(kv) : '') + four.map(f => card('cm-' + f[0], 'game:to-' + f[1], false, f[2], f[3], f[4], f[5])).join('') + '</div>';
     } else {
       h += '<button class="tile t-single" data-act="single"><span class="tx"><b>SINGLE RACE</b><small>' + esc(t.name + ' · ' + md.name) + '</small>' + (best ? '<em class="chip">BEST ' + esc(best) + '</em>' : '<em class="chip gold">NEW TRACKS INSIDE</em>') + '</span>' +
         '<span class="im"><img src="' + trackImg(t, weatherIdx() === 1) + '" alt=""></span></button>';
@@ -785,7 +786,7 @@
   const GRID = '<svg class="grid" viewBox="0 0 18 17" aria-hidden="true">' + [[2, 1, 1], [11, 3.6, 1], [2, 6.2, .75], [11, 8.8, .75], [2, 11.4, .5], [11, 14, .5]].map(r => '<rect x="' + r[0] + '" y="' + r[1] + '" width="7" height="4" rx="1.6" fill="#9fb0c8" opacity="' + r[2] + '"/>').join('') + '</svg>';
   const DBL = (dir) => '<svg viewBox="0 0 28 20" aria-hidden="true"><path d="' + (dir < 0 ? 'M13 3 6 10l7 7M22 3l-7 7 7 7' : 'M6 3l7 7-7 7M15 3l7 7-7 7') + '" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // the flags of the countries (assets/flags, drawn to their official rules); a track in another country has none
-  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'algeria', 'japan', 'china', 'thailand', 'russia', 'romania', 'india', 'denmark', 'sweden', 'czechia', 'wales', 'ireland', 'spain', 'montenegro', 'latvia', 'netherlands', 'switzerland', 'cape-verde', 'georgia', 'tanzania', 'kazakhstan', 'sri-lanka', 'albania', 'portugal', 'south-korea', 'mexico', 'turkey', 'malaysia', 'indonesia', 'bahrain', 'qatar', 'argentina', 'angola', 'costa-rica', 'peru', 'kenya', 'madagascar', 'panama', 'tunisia', 'bhutan', 'uzbekistan', 'vietnam', 'philippines', 'el-salvador', 'uganda', 'papua-new-guinea', 'saint-lucia', 'fiji', 'palau'];
+  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'algeria', 'japan', 'china', 'thailand', 'russia', 'romania', 'india', 'denmark', 'sweden', 'czechia', 'wales', 'ireland', 'spain', 'montenegro', 'latvia', 'netherlands', 'switzerland', 'cape-verde', 'georgia', 'tanzania', 'kazakhstan', 'sri-lanka', 'albania', 'portugal', 'south-korea', 'mexico', 'turkey', 'malaysia', 'indonesia', 'bahrain', 'qatar', 'argentina', 'angola', 'costa-rica', 'peru', 'kenya', 'madagascar', 'panama', 'tunisia', 'bhutan', 'uzbekistan', 'vietnam', 'philippines', 'el-salvador', 'uganda', 'papua-new-guinea', 'saint-lucia', 'fiji', 'palau', 'norway', 'jamaica', 'samoa', 'slovakia', 'united-arab-emirates'];
   const flagUrl = (c) => { const f = String(c || '').toLowerCase().replace(/\s+/g, '-'); return FLAG_FILES.includes(f) ? 'assets/flags/' + f + '.svg' : ''; };
   // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
   // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready
@@ -1034,6 +1035,32 @@
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
     for (const v of s.querySelectorAll('video')) if (v.__due) { v.__due = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }   // (a flyover that was ready only while the screen rested)
   }
+  /* the career's valley (js/kariera-dolina.js, MenuDolina: the Atlas career's stages and events in 3D, over the title): opened from the
+     career's strip (kpot), and again after an event's race with its result (G.karieraIzid, showNow). One layer in the phone's Back
+     (MenuIzbor.nazaj, 'dolina'): Back closes it, its own close takes the step out, an event started clears the history. No valley (its
+     file, WebGL or the bridge's atlas missing): the path's hub, karieraSheet */
+  const DO = () => window.MenuDolina || null;
+  const dolOpen = () => !!(DO() && DO().isOpen());
+  const NZ = () => window.MenuIzbor ? MenuIzbor.nazaj : null;
+  let dolQuiet = false;   // (closed by the menu itself, hide/showNow: no new screen drawn under it)
+  const dolShut = () => { dolQuiet = true; try { DO().close(true); } finally { dolQuiet = false; } };
+  const dolCan = () => { const v = DO() && G.kariera && G.kariera(); return v && v.atlas ? v : null; };
+  function dolina(izid) {
+    const D = DO(), v = dolCan(); if (!D || !v || !app) return false;
+    if (izOpen()) IZ().close(true);
+    if (zemOpen()) ZE().close(true);
+    sheet = null;
+    let started = false;
+    const ok = D.open({
+      root: app, view: v, izid: izid || null, from: () => $('.k-strip', app),
+      start: (id) => { if (!G.karieraStart(id)) return false; started = true; if (NZ()) NZ().clear(); return true; },   // (refused: the game's toast says why, the valley stays)
+      close: () => { if (!started && NZ()) NZ().drop('dolina'); if (!dolQuiet && app && app.isConnected && screen === 'title') render(true); },
+    });
+    if (ok === false) return false;
+    if (izid && G.karieraIzid) G.karieraIzid(true);   // (shown once)
+    if (NZ()) NZ().push('dolina', () => { if (dolOpen()) DO().close(true); });
+    return true;
+  }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
     const L = TRACKS(), i = L.findIndex(t => t.id === id); if (i < 0) return false;
     if (i !== trackIdx) {
@@ -1238,8 +1265,8 @@
     const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', d = t.def, pg = IZ() && G.progress ? G.progress(d) : null;
     const cell = (lbl, val, cls) => '<div class="' + (cls || '') + '"><small>' + esc(lbl) + '</small><b>' + esc(val) + '</b></div>';
     // the row of numbers (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026): the flag, the best (NEW or the time), the rating,
-    // the mode, the difficulty and the opponents. A tap on one of the last five: its window from the foot up to the row (twSheet), the cell
-    // framed gold while it is open (twOn)
+    // the mode, the difficulty and the opponents. A tap on the best, the rating or the opponents: its window from the foot up to the row
+    // (twSheet), the cell framed gold while it is open (twOn); on the mode or the difficulty: the next one, no window (the user, 16. 11. 2026)
     const twOn = (k) => sheet === twSheet && tw === k ? ' tw-on' : '';
     const twB = (k, lbl, inner) => '<button data-act="' + (k === 'riv' ? 'riv' : 'tw:' + k) + '" aria-haspopup="dialog" aria-label="' + esc(lbl) + '">' + inner + '</button>';
     // the last cell: the opponents' number by the grid (its name for the readers), a race's a button (its window: how many, 0..100);
@@ -1260,10 +1287,11 @@
     // the rating: the number alone (the player's own until the world's server), as the best's time; none yet: a dash
     const rt = rateOf(t.id), rate = '<div class="rate' + twOn('rate') + '">' + twB('rate', 'Rating: ' + (rt ? rt.v.toFixed(1) : 'none yet') + '. Rate the track', '<small>Rating</small><b class="tm">' + (rt ? rt.v.toFixed(1) : '—') + '</b>') + '</div>';
     // the difficulty: its name (two words on two lines) over 4 dashes, as many lit as the level, in the level's colour
-    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0)), dif = '<div class="dif' + twOn('diff') + '">' + twB('diff', 'Difficulty: ' + DIFFS[dv][0] + '. Choose', '<b>' + two(DIFFS[dv][0]) + '</b>' + dashes(dv + 1, 'd' + dv)) + '</div>';
+    const nxt = (act, lbl, inner) => '<button data-act="' + act + '" aria-label="' + esc(lbl) + '">' + inner + '</button>';
+    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0)), dif = '<div class="dif">' + nxt('diff-next', 'Difficulty: ' + DIFFS[dv] + '. Change', '<b>' + two(DIFFS[dv]) + '</b>' + dashes(dv + 1, 'd' + dv)) + '</div>';
     // the mode: its full name on two lines, 4 grey dashes, the chosen mode's green (Classic race the first, Endless traffic the last)
     const mi = ROW_MODES.findIndex(m => m[0] === mode), mname = mi >= 0 ? ROW_MODES[mi][1] : modeOf(mode).name;
-    const md = '<div class="md' + twOn('mode') + '">' + twB('mode', 'Mode: ' + mname + '. Choose', '<b>' + two(mname) + '</b>' + dashes(mi, 'm', true)) + '</div>';
+    const md = '<div class="md">' + nxt('rmode-next', 'Mode: ' + mname + '. Change', '<b>' + two(mname) + '</b>' + dashes(mi, 'm', true)) + '</div>';
     h += '<div class="trow">' + flagB + best + rate + md + dif + last + '</div>';   // (the mode before the difficulty: the user, 12. 11. 2026)
     // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; no name over it (the user, 12. 11. 2026:
@@ -1297,6 +1325,43 @@
   }
 
   /* ---------------- overlays: sheets ---------------- */
+  /* ---------------- the career's path of 1.0 (js/kariera.js, part C): the strip in the Career panel, the hub in a sheet. Only through the
+     bridge: G.kariera() its plain view, G.karieraStart(id) a cup (false: not now, the game's toast says why) ---------------- */
+  let kStage = 0;   // (the hub's stage tab; 0: the highest open one)
+  const kStName = (v, n) => { const s = v.stopnje[n - 1]; return s ? s.en.name : ''; };
+  const kPct = (a, b) => b > 0 ? Math.max(0, Math.min(100, Math.round(a / b * 100))) : 100;
+  function kNext(v) {   // what the bar under the stage means
+    const p = v.napredek;   // (the Atlas career: the path's stars against the next stage's threshold)
+    if (v.atlas) return p.need ? num(p.done) + ' / ' + num(p.need) + '★ · opens ' + kStName(v, v.stopnja + 1) : num(p.done) + ' / ' + num(v.atlas.max) + '★ · every stage is open';
+    return p.need ? p.done + ' of ' + p.need + ' cups in the top three · opens ' + kStName(v, v.stopnja + 1) : 'Every stage is open';
+  }
+  function kStrip(v) {
+    const p = v.napredek, a = v.atlas;   // (the Atlas career: its stars instead of the path's progress, the valley a tap away)
+    const bar = kPct(p.done, p.need), chip = a ? '<em class="chip gold ks-st">★ ' + num(a.zvezdice) + ' / ' + num(a.max) + '</em>' : '<em class="chip gold">PATH</em>';
+    return '<button class="k-strip' + (a ? ' atlas' : '') + '" data-act="kpot" aria-haspopup="dialog"><span class="ks-tx"><b>STAGE ' + v.stopnja + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><small>' + esc(kNext(v)) + '</small></span>' +
+      '<span class="bar"><b style="width:' + bar + '%"></b></span>' + chip + '</button>';
+  }
+  function kCupRow(c) {
+    const names = c.tracks.map(id => { const t = trackById(id); return t ? t.name : id; });
+    const chip = c.stanje === 'zaklenjen' ? '<em class="chip lk">' + I.lock('currentColor') + 'LOCKED</em>' : c.stanje === 'osvojen' ? '<em class="chip gold">BEST P' + c.best + '</em>' : c.best ? '<em class="chip">BEST P' + c.best + '</em>' : '<em class="chip">OPEN</em>';
+    const meta = c.tracks.length + (c.tracks.length === 1 ? ' race' : ' races') + (c.km ? ' · ' + num(Math.round(c.km)) + ' km' : '') + (c.vrsta === 'tt' ? ' · time trials' : '');
+    return '<button class="k-cup ' + c.stanje + '" data-act="kcup:' + esc(c.id) + '"' + (c.stanje === 'zaklenjen' ? ' aria-disabled="true"' : '') + '><span class="kc-tx"><b>' + esc(c.en.name) + '</b><small>' + esc(meta) + '</small><span class="kc-tr">' + esc(names.join(' · ')) + '</span></span>' + chip + '</button>';
+  }
+  function kClassRow(r) {
+    const goals = r.cilji.map(g => '<span class="kg' + (g.done ? ' done' : '') + '">' + (g.done ? I.check : '') + (g.need > 1 && !g.done ? num(g.progress) + ' / ' : '') + esc(g.en) + '</span>').join('');
+    return '<div class="k-cls">' + kCupRow(r) + '<div class="kg-row">' + (r.stanje === 'zaklenjen' ? '<span class="kg lk">Buy a car of this class</span>' : goals) + '</div></div>';
+  }
+  function karieraSheet() {
+    const v = G.kariera && G.kariera(); if (!v) return '';
+    const n = Math.min(kStage || v.stopnja, v.stopnje.length), st = v.stopnje[n - 1], p = v.napredek;
+    let h = '<div class="sheet-bg" data-act="close-sheet"><div class="sheet kpot" role="dialog" aria-label="Career path"><h2>Career path' + moneyPill() + '</h2>';
+    h += '<div class="kp-prog"><b>STAGE ' + v.stopnja + ' OF ' + v.stopenj + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><span class="bar"><b style="width:' + kPct(p.done, p.need) + '%"></b></span><small>' + esc(kNext(v)) + '</small></div>';
+    h += '<div class="kp-tabs" role="tablist">' + v.stopnje.map(s => '<button role="tab" aria-selected="' + (s.n === n) + '" class="' + (s.odprta ? '' : 'lk') + '" data-act="kstage:' + s.n + '">' + (s.odprta ? '<i>' + s.n + '</i>' : I.lock('currentColor')) + '<span>' + esc(s.en.name) + '</span></button>').join('') + '</div>';
+    h += '<div class="kp-list">' + (st.odprta ? '' : '<p class="kp-note">Finish ' + (p.need || 3) + ' cups of ' + esc(kStName(v, n - 1)) + ' in the top three to open this stage.</p>') + st.pokali.map(kCupRow).join('') + '</div>';
+    h += '<h3>Class cups</h3><p class="kp-note">One cup for each class of car, in a car of that class.</p><div class="kp-list">' + v.razredi.map(kClassRow).join('') + '</div>';
+    h += '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
+    return h;
+  }
   function creditsSheet() {   // where the menu's pictures of the Earth and its land come from, as their licences ask
     return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet credits" role="dialog" aria-label="Credits"><h2>Credits</h2><dl>' +
       D.credits.map(c => '<dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd>').join('') + '</dl><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
@@ -1341,9 +1406,9 @@
      A tap on a cell of the row: its window from the foot of the screen up to the row (on its side: from the head down to the row, as wide
      as it), all of them as big, Close in the middle at their foot; the row stays bright over the dim, its cell framed gold, and a tap on
      another of its cells is that one's window (twPlace: the dim with a hole where the row is). The best (the track's best times), the
-     rating, the difficulty, the mode and the opponents */
+     rating and the opponents */
   let tw = null, btab = 'friends';
-  const TW = { best: bestSheet, rate: rateSheet, diff: diffSheet, mode: modeSheet, riv: rivSheet };
+  const TW = { best: bestSheet, rate: rateSheet, riv: rivSheet };
   const twSheet = () => tw && TW[tw] ? TW[tw]() : '';
   const twFrame = (cls, title, body) => '<div class="sheet-bg tw" data-act="close-sheet"><div class="sheet twin ' + cls + '" role="dialog" aria-label="' + esc(title) + '"><h2>' + title + '</h2><div class="twb">' + body + '</div>' +
     '<div class="row"><button class="go" data-act="close-sheet">Close</button></div></div></div>';
@@ -1364,31 +1429,19 @@
   const dashes = (n, cls, one) => '<span class="dsh ' + cls + '" aria-hidden="true">' + [0, 1, 2, 3].map(i => '<i' + ((one ? i === n : i < n) ? ' class="on"' : '') + '></i>').join('') + '</span>';
   // (in a span: the name's box two lines high whatever its words, so the dashes under Classic race and under Medium are as high: the user, 13. 11. 2026)
   const two = (s) => { const i = s.indexOf(' '); return '<span>' + (i < 0 ? esc(s) : esc(s.slice(0, i)) + '<br>' + esc(s.slice(i + 1))) + '</span>'; };
-  const opt = (act, on, inner, dis) => '<button class="twopt' + (on ? ' on' : '') + '" data-act="' + act + '" aria-pressed="' + on + '"' + (dis ? ' disabled' : '') + '>' + inner + (on ? '<span class="ck">' + I.check + '</span>' : '') + '</button>';
 
   // the difficulty: the game's own (Settings' Difficulty, S.difficulty 0..3); Super hard is a level of its own in a race too (#605: the fastest rivals) and the police's toughest
-  const DIFFS = [['Easy', 'Gentle rivals and police. Room to learn the road.', '#ffd23f'], ['Medium', 'Rivals who fight back, a police that keeps up.', '#ffad5c'],
-    ['Hard', 'Quick rivals, little room for a mistake.', '#ff7a1a'], ['Super hard', 'The fastest rivals at the limit of their cars, never waiting for you. The police at their toughest.', '#ff3b3b']];
-  function diffSheet() {
-    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0));
-    return twFrame('dif', 'Difficulty', DIFFS.map((x, i) => opt('diff:' + i, i === dv, '<span class="tx"><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></span>' + dashes(i + 1, 'd' + i))).join(''));
-  }
-  // the mode: the four of the row (the game's race, traffic, police, endless; one the track has not: not here); the police chase, its side:
-  // the getaway (the game's police mode) or the police (not yet)
-  const MI = (p) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
-  const ROW_MODES = [['race', 'Classic race', 'Closed road, a full grid of rivals.', MI('<path d="M5 3v18" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M6 4h13v9H6z" fill="#fff"/><path d="M6 4h3.3v3h3.2V4h3.2v3H19v3h-3.3v3h-3.2v-3H9.3v3H6v-3h3.3V7H6z" fill="#1b2230"/>')],
-    ['duel', 'Street race', 'Open road, real traffic, one rival.', MI('<path d="M4 15.5 6 10h12l2 5.5V19h-2.5v-1.6h-11V19H4z" fill="#fff"/><path d="M7.2 11.3h9.6l1 3H6.2z" fill="#1b2230"/><circle cx="7.4" cy="16.3" r="1.2" fill="#1b2230"/><circle cx="16.6" cy="16.3" r="1.2" fill="#1b2230"/><path d="M8 7.5h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>')],
-    ['chase', 'Police chase', 'Pick your side.', MI('<path d="M7 18v-6a5 5 0 0 1 10 0v6z" fill="#ff4d4d"/><path d="M4.5 18.5h15v2.5h-15z" fill="#fff"/><path d="M12 2v3M4 6l2 2M20 6l-2 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>')],
-    ['endless', 'Endless traffic', 'Ever denser traffic. Close passes add time.', MI('<path d="M12 12c-2.2-3-3.6-4-5.4-4a4 4 0 0 0 0 8c1.8 0 3.2-1 5.4-4s3.6-4 5.4-4a4 4 0 0 1 0 8c-1.8 0-3.2-1-5.4-4z" fill="none" stroke="#fff" stroke-width="2.4"/>')]];
-  function modeSheet() {
-    const t = curTrack(), has = (m) => !t || t.modes.includes(GAME_MODE[m]);
-    return twFrame('mod', 'Mode', ROW_MODES.map((m, i) => {
-      const on = m[0] === mode, ok = has(m[0]);
-      let h = opt('rmode:' + m[0], on, '<span class="mi">' + m[3] + '</span><span class="tx"><b>' + esc(m[1]) + '</b><small>' + esc(ok ? m[2] : 'Open roads only') + '</small></span>' + dashes(i, 'm', true), !ok);
-      if (m[0] === 'chase' && on) h += '<div class="side" role="group" aria-label="Your side"><button class="on" aria-pressed="true" data-act="side:run">Getaway<small>You run, they chase</small></button>' +
-        '<button disabled aria-pressed="false">Police<small>Soon</small></button></div>';
-      return h;
-    }).join(''));
+  const DIFFS = ['Easy', 'Medium', 'Hard', 'Super hard'];
+  // the mode: the four of the row (the game's race, traffic, police, endless), in the order its dashes show
+  const ROW_MODES = [['race', 'Classic race'], ['duel', 'Street race'], ['chase', 'Police chase'], ['endless', 'Endless traffic']];
+  // a tap on the row's mode: the next of the four the track has (after Endless traffic the first again); none other: as it was
+  function rowNext() {
+    const t = curTrack(); if (!t) return;
+    const i = ROW_MODES.findIndex(m => m[0] === mode);
+    for (let k = 1; k <= ROW_MODES.length; k++) {
+      const m = ROW_MODES[(i + k + ROW_MODES.length) % ROW_MODES.length][0];
+      if (m !== mode && t.modes.includes(GAME_MODE[m])) { rowMode(m); return; }
+    }
   }
   // a mode of the row: the same track in it (its place in the new list), the game's mode with it
   function rowMode(m) {
@@ -1662,35 +1715,23 @@
     return '<svg viewBox="0 0 24 24" width="' + w + '" height="' + w + '" style="overflow:visible" aria-hidden="true">' + g + '</svg>';
   }
   const WK_WATCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="8" fill="none" stroke="#ffc629" stroke-width="2"/><path d="M12 14V9.4M9.4 2.6h5.2M12 2.6v3.2M18.6 6.4l1.6-1.6" stroke="#ffc629" stroke-width="2" stroke-linecap="round"/></svg>';
-  function weekend(R, go) {
-    const t = R.track, X = D.weekend, W = G.weekend(t.def), sky = weekendSky(t, R.wet), country = countryOf(t), S = G.S;
-    const fly = !!RT[t.id] && hasFlight(t.id), time = WK_TIME[S.tod] || '14:00', n = W.cars;
-    const el = document.createElement('div'); el.className = 'intro wk' + (S.quali ? ' on' : '') + (fly ? '' : ' model'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', X.kick);
-    const page = (k, d) => {
-      const q = k === 'q';
-      return '<div class="wk-pg wk-' + k + '"><div class="wk-hd">' + esc((q ? X.sat : X.sun).toUpperCase()) + '</div>' +
-        '<div class="wk-dw"><div class="wk-row">' + skyIcon(d.k, 52) + '<span class="wk-tmp">' + d.t + '<sup>°</sup></span></div><span class="wk-wd"><em>' + esc(X.sky[d.k]) + '</em> · ' + d.wind + ' km/h</span></div>' +
-        '<div class="wk-ses"><b class="wk-t">' + time + '</b><span class="wk-line"><span class="wk-sname">' + esc(q ? X.quali : X.race) + '</span> <span class="wk-sdet">' + wkMin(q ? W.quali : W.race) + '</span></span></div>' +
-        (q ? '<div class="wk-ft"><button class="wk-sw" data-wk="q" role="switch" aria-checked="' + !!S.quali + '" aria-label="' + esc(X.switch) + '"><i></i></button></div><span class="wk-stamp" data-off>' + esc(X.skipped.toUpperCase()) + '</span>'
-          : '<div class="wk-ft"><span class="wk-gl">' + esc(X.grid.toUpperCase()) + '</span><span class="wk-pos" data-off>P' + n + '<u>/' + n + '</u></span><span class="wk-pos" data-on>P1–' + n + '</span></div>') + '</div>';
-    };
-    const sun = sky[1], wet = (R.wet && sun.k !== 'change') || sun.k === 'storm';   // (Changing: its own sky, may change, wet at the start or not)
-    el.innerHTML = '<div class="wk-bg" aria-hidden="true"><div class="wk-pic"><img src="' + (fly ? 'assets/maps/heli-' + t.id + '.webp' : trackImg(t, R.wet)) + '" alt=""><div class="wk-pin"></div></div></div>' +
-      '<div class="wk-head"><button class="sq" data-wk="back" aria-label="' + esc(X.back) + '">' + I.back + '</button><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div></div>' +
-      '<span class="wk-wx' + (wet ? ' wet' : '') + '">' + (wet ? I.rain : skyIcon(sun.k === 'change' ? 'part' : sun.k, 20)) + esc(X.sky[sun.k].toUpperCase()) + '<small>· ' + esc(wet ? X.track.wet : sun.k === 'change' ? X.track.change : X.track.dry) + '</small></span>' +
-      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b>' + esc(X.mode) + '</b> · ' + esc(G.car().name) + ' · ' + laps(W.laps) + ' · ' + n + ' cars</p></div>' +
-        '<div class="wk-cal">' + page('q', sky[0]) + page('r', sky[1]) + '</div>' +
-        '<p class="wk-note" data-off>' + WK_WATCH + esc(X.hint) + '</p><p class="wk-note" data-on>' + esc(X.onNote) + '</p>' +
-        '<button class="go wk-go" data-wk="go" data-off>' + esc(X.go) + '<small>' + esc(X.goSub.toUpperCase()) + '</small></button><button class="go gold wk-go" data-wk="go" data-on>' + esc(X.goQ) + '<small>' + esc(X.goQSub.toUpperCase()) + '</small></button></div>';
+  // the frame of the race weekend and of the police chase's side: the track from afar behind (the first frame of its helicopter's flight, the
+  // start · finish marked on it; else its model), the head (Back, the track's name), over it `inner` (the panel at the foot upright, at the
+  // right on its side; the picture in the room it leaves). The track is loaded under it; close() takes it away
+  function wkShell(t, wet, cls, label, inner) {
+    const fly = !!RT[t.id] && hasFlight(t.id), country = countryOf(t);
+    const el = document.createElement('div'); el.className = 'intro wk' + cls + (fly ? '' : ' model'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', label);
+    el.innerHTML = '<div class="wk-bg" aria-hidden="true"><div class="wk-pic"><img src="' + (fly ? 'assets/maps/heli-' + t.id + '.webp' : trackImg(t, wet)) + '" alt=""><div class="wk-pin"></div></div></div>' +
+      '<div class="wk-head"><button class="sq" data-wk="back" aria-label="' + esc(D.weekend.back) + '">' + I.back + '</button><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div></div>' + inner;
     app.appendChild(el);
-    // the picture in the room the calendar leaves (above it upright, left of it on its side): the helicopter's frame covers it, a model fits in it
+    // the picture in the room the panel leaves (above it upright, left of it on its side): the helicopter's frame covers it, a model fits in it
     const pic = $('.wk-pic', el);
     const fit = () => {
       if (!el.isConnected) { removeEventListener('resize', fit); return; }
       const A = app.getBoundingClientRect(), P = $('.wk-pnl', el).getBoundingClientRect(), side = A.width > A.height;
       const w = side ? Math.max(120, P.left - A.left) : A.width, h = side ? A.height : Math.max(120, P.top - A.top + 24);
       const pw = fly ? Math.max(w, h * 1.5) : w, ph = fly ? pw / 1.5 : h;
-      el.style.setProperty('--wk-y', Math.round(P.top - A.top) + 'px'); el.style.setProperty('--wk-x', Math.round(P.left - A.left) + 'px');   // (where the calendar begins: the picture darkens into it)
+      el.style.setProperty('--wk-y', Math.round(P.top - A.top) + 'px'); el.style.setProperty('--wk-x', Math.round(P.left - A.left) + 'px');   // (where the panel begins: the picture darkens into it)
       Object.assign(pic.style, { left: (w / 2 - pw / 2).toFixed(1) + 'px', top: (h / 2 - ph / 2 + (side || !fly ? 0 : 10)).toFixed(1) + 'px', width: pw.toFixed(1) + 'px', height: ph.toFixed(1) + 'px' });
     };
     fit(); addEventListener('resize', fit);
@@ -1702,7 +1743,25 @@
       const pin = $('.wk-pin', el); pin.style.left = ((pv3.x + 1) / 2 * 100).toFixed(2) + '%'; pin.style.top = ((1 - pv3.y) / 2 * 100).toFixed(2) + '%';
       pin.innerHTML = '<span><b>' + esc(m[0].toUpperCase()) + '</b></span><i></i>'; pin.classList.add('on');
     });
-    const close = () => { removeEventListener('resize', fit); el.remove(); };
+    return { el, close() { removeEventListener('resize', fit); el.remove(); } };
+  }
+  function weekend(R, go) {
+    const t = R.track, X = D.weekend, W = G.weekend(t.def), sky = weekendSky(t, R.wet), S = G.S;
+    const time = WK_TIME[S.tod] || '14:00', n = W.cars;
+    const page = (k, d) => {
+      const q = k === 'q';
+      return '<div class="wk-pg wk-' + k + '"><div class="wk-hd">' + esc((q ? X.sat : X.sun).toUpperCase()) + '</div>' +
+        '<div class="wk-dw"><div class="wk-row">' + skyIcon(d.k, 52) + '<span class="wk-tmp">' + d.t + '<sup>°</sup></span></div><span class="wk-wd"><em>' + esc(X.sky[d.k]) + '</em> · ' + d.wind + ' km/h</span></div>' +
+        '<div class="wk-ses"><b class="wk-t">' + time + '</b><span class="wk-line"><span class="wk-sname">' + esc(q ? X.quali : X.race) + '</span> <span class="wk-sdet">' + wkMin(q ? W.quali : W.race) + '</span></span></div>' +
+        (q ? '<div class="wk-ft"><button class="wk-sw" data-wk="q" role="switch" aria-checked="' + !!S.quali + '" aria-label="' + esc(X.switch) + '"><i></i></button></div><span class="wk-stamp" data-off>' + esc(X.skipped.toUpperCase()) + '</span>'
+          : '<div class="wk-ft"><span class="wk-gl">' + esc(X.grid.toUpperCase()) + '</span><span class="wk-pos" data-off>P' + n + '<u>/' + n + '</u></span><span class="wk-pos" data-on>P1–' + n + '</span></div>') + '</div>';
+    };
+    const sun = sky[1], wet = (R.wet && sun.k !== 'change') || sun.k === 'storm';   // (Changing: its own sky, may change, wet at the start or not)
+    const { el, close } = wkShell(t, R.wet, S.quali ? ' on' : '', X.kick, '<span class="wk-wx' + (wet ? ' wet' : '') + '">' + (wet ? I.rain : skyIcon(sun.k === 'change' ? 'part' : sun.k, 20)) + esc(X.sky[sun.k].toUpperCase()) + '<small>· ' + esc(wet ? X.track.wet : sun.k === 'change' ? X.track.change : X.track.dry) + '</small></span>' +
+      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b>' + esc(X.mode) + '</b> · ' + esc(G.car().name) + ' · ' + laps(W.laps) + ' · ' + n + ' cars</p></div>' +
+        '<div class="wk-cal">' + page('q', sky[0]) + page('r', sky[1]) + '</div>' +
+        '<p class="wk-note" data-off>' + WK_WATCH + esc(X.hint) + '</p><p class="wk-note" data-on>' + esc(X.onNote) + '</p>' +
+        '<button class="go wk-go" data-wk="go" data-off>' + esc(X.go) + '<small>' + esc(X.goSub.toUpperCase()) + '</small></button><button class="go gold wk-go" data-wk="go" data-on>' + esc(X.goQ) + '<small>' + esc(X.goQSub.toUpperCase()) + '</small></button></div>');
     const ctl = el.__wk = {
       back() { close(); render(); },
       go() { close(); go(); },
@@ -1716,6 +1775,40 @@
       G.click(); ({ back: ctl.back, go: ctl.go, q: ctl.quali })[b.dataset.wk]();
     });
   }
+  /* the police chase's side before the race (the user, 16. 11. 2026): the race weekend's frame, its two pages the sides, the one chosen
+     upright and framed red, the other turned aside and grey; a tap on a page (the pad's LB and RB) chooses it, remembered for the next time.
+     The getaway: the game's police mode (the police chase the player); the police: the game's pursuit (js/zabava/lov.js, the player's patrol
+     car chases a getaway car). Race! goes on to the intro as ever; Back to the track screen */
+  const SIDE_IC = {
+    run: '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><path d="M7 31l4-10.5h22l5 10.5v6h-4.5v-3h-22v3H7z" fill="#d81f2a"/><path d="M13.4 22.6h17.8l2.6 6.2H11z" fill="#1b2230"/><circle cx="13.5" cy="33" r="2.6" fill="#1b2230"/><circle cx="30.5" cy="33" r="2.6" fill="#1b2230"/><path d="M2 24h4M1 29h4M3 34h3" stroke="#6b7384" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    cop: '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><path d="M7 31l4-10.5h26l4 10.5v6h-4.5v-3h-25v3H7z" fill="#1f4fa8"/><path d="M13.4 22.6h21.2l2.4 6.2H11z" fill="#1b2230"/><circle cx="14" cy="33" r="2.6" fill="#1b2230"/><circle cx="34" cy="33" r="2.6" fill="#1b2230"/><path d="M18 17h5.5v3.5H18z" fill="#d81f2a"/><path d="M24.5 17H30v3.5h-5.5z" fill="#3fa0ff"/></svg>',
+  };
+  let chSide = 'run';   // (the side chosen last, for the next time)
+  function chaseSide(R, go) {
+    const t = R.track, X = D.side, can = t.modes.includes('lov'), K = ['cop', 'run'];
+    if (!can) chSide = 'run';
+    const page = (k) => '<div class="wk-pg sd-' + k + '" data-wk="side" data-s="' + k + '" role="button" tabindex="0"' + (k === 'cop' && !can ? ' aria-disabled="true"' : '') + '><div class="wk-hd">' + esc(X[k].name.toUpperCase()) + '</div>' +
+      '<div class="wk-dw">' + SIDE_IC[k] + '</div><div class="wk-ses"><span class="wk-line"><span class="wk-sname">' + esc(X[k].role) + '</span></span><span class="wk-sdet">' + esc(X[k].what) + '</span></div>' +
+      '<div class="wk-ft"><span class="wk-gl">' + esc(X[k].goal.toUpperCase()) + '</span></div></div>';
+    const { el, close } = wkShell(t, R.wet, ' sd', X.title,
+      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b class="sd-name"></b> · ' + esc(G.car().name) + '</p></div>' +
+        '<div class="wk-cal">' + K.map(page).join('') + '</div><p class="wk-note">' + esc(X.hint) + '</p>' +
+        '<button class="go wk-go" data-wk="go">' + esc(X.go) + '<small class="sd-sub"></small></button></div>');
+    // the side shown: its page upright and framed (as Sunday's), the other turned aside and grey (as Saturday's when qualifying is off)
+    const show = () => {
+      for (const k of K) { const p = $('.sd-' + k, el); p.classList.toggle('wk-r', k === chSide); p.classList.toggle('wk-q', k !== chSide); p.setAttribute('aria-pressed', k === chSide); }
+      $('.sd-name', el).textContent = X[chSide].name; $('.sd-sub', el).textContent = X[chSide].goSub.toUpperCase();
+    };
+    show();
+    const ctl = el.__wk = {
+      back() { close(); render(); },
+      // (the police: the same track in the pursuit; the track is the one loaded, the mode is read at the start)
+      go() { close(); if (chSide === 'cop') G.select(t.id, 'lov'); go(); },
+      side(k) { k = k || (chSide === 'cop' ? 'run' : 'cop'); if (k === 'cop' && !can) return; chSide = k; show(); },
+    };
+    el.addEventListener('click', (e) => { const b = e.target.closest('[data-wk]'); if (!b) return; G.click(); ctl[b.dataset.wk](b.dataset.s); });
+    el.addEventListener('keydown', (e) => { const b = e.target.closest('[data-wk="side"]'); if (b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ctl.side(b.dataset.s); } });
+  }
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
     const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) { under.pause(); under.__stop = 1; } cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf); cancelAnimationFrame(graphRaf);
@@ -1724,6 +1817,7 @@
     const off = setting('intro') === 2, rect = stageRect();
     wx.detach(); if (MV()) MV().off();
     if (R.kind === 'single' && weekendOn(t, R.mode)) { weekend(R, go); return; }   // (Circuit race: the race weekend's calendar is the intro)
+    if (R.kind === 'single' && R.mode === 'chase' && !R.side) { chaseSide(R, () => beforeRace(Object.assign({}, R, { side: 'run' }), go)); return; }   // (Police chase: the side first)
     const el = document.createElement('div'); el.className = 'intro ix2'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
     const finishIntro = (e) => { if (e.isConnected) e.remove(); go(); };   // (the race is loaded: on to its start lights)
@@ -1939,6 +2033,7 @@
   }
 
   function back() {
+    if (dolOpen()) { DO().back(); return; }
     if (zemOpen()) { ZE().back(); return; }
     if (izOpen()) { IZ().back(); return; }
     if (sheet) { sheet = null; render(true); return; }
@@ -1971,12 +2066,14 @@
       case 'zemlja': zemlja(); break;   // (the globe in the head: the Earth, js/menu-zemlja.js)   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back and its Izberi progo: this step again, game.js garageBack)
       case 'credits': sheet = creditsSheet; render(true); break;
+      case 'kpot': if (dolina()) break; kStage = 0; sheet = karieraSheet; render(true); break;   // (the career's path: the valley, else the hub, js/kariera.js)
+      case 'kstage': kStage = +v || 0; render(true); { const l = $('.sheet.kpot', app); if (l) l.scrollTop = 0; } break;
+      case 'kcup': if (el.getAttribute('aria-disabled') === 'true') { G.karieraStart(v); break; } if (G.karieraStart(v)) { sheet = null; render(true); } break;   // (locked: the game's toast says why; started: the race)
       case 'riv': case 'tw': tw = k === 'riv' ? 'riv' : v; if (tw === 'riv' && !rivOf((curTrack() || {}).def || {})) break; sheet = twSheet; render(true); break;   // (the row's cells: their windows; Opponents: how many, 0..100)
-      case 'diff': G.setOption('difficulty', +v); render(true); break;
-      case 'rmode': rowMode(v); break;
+      case 'diff-next': G.setOption('difficulty', ((G.S.difficulty | 0) + 1) % 4); render(true); break;
+      case 'rmode-next': rowNext(); break;
       case 'rate': { const t = curTrack(); if (t && t.rec[1] !== '—') { rateSet(t.id, +v); render(true); } break; }
       case 'btab': btab = v; render(true); break;
-      case 'side': break;   // (the police chase's side: the getaway only, the police's side not yet)
       case 'riv-n': rivSet(+v); break;
       case 'dark-tip': sheet = darkSheet; render(true); break;
       case 'dark-never': try { localStorage.setItem('tdgp-darktip', 'off'); } catch (_) { /* private mode: it shows again next time */ } sheet = null; render(true); break;
@@ -2000,14 +2097,14 @@
   // the game's gamepad on the menu (game.js padFrame: the highlight and A are the game's, over the buttons of this shadow root): where it looks
   // (the intro, else an open sheet, else the screen), and the keys that are the menu's own: B back, Start on, LB and RB the track; in the
   // intro any of A, B and Start skips it
-  const padRoot = () => app ? $('.intro', app) || (zemOpen() && ZE().root()) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
+  const padRoot = () => app ? $('.intro', app) || (dolOpen() && DO().root && DO().root()) || (zemOpen() && ZE().root()) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
   function padKey(k) {
     if (!app || !G || !G.visible()) return false;
     const wk = $('.intro.wk', app);   // (the race weekend: B back to the tracks, Start the button's choice, A the highlighted button)
-    if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } return false; }
+    if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } if ((k === 'lb' || k === 'rb') && wk.__wk.side) { G.click(); wk.__wk.side(k === 'lb' ? 'cop' : 'run'); return true; } return false; }
     if ($('.intro', app)) { if (k === 'a' || k === 'b' || k === 'start') { const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return true; }
     if (k === 'b') { G.click(); back(); return true; }
-    if (izOpen() || zemOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)
+    if (izOpen() || zemOpen() || dolOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)
     if (sheet) return false;
     if (screen === 'track' && (k === 'lb' || k === 'rb')) { G.click(); act('track:' + (k === 'lb' ? -1 : 1)); return true; }
     if (k === 'start') {
@@ -2030,7 +2127,7 @@
       if (!G || !G.visible()) return;
       const wk = $('.intro.wk', app); if (wk) { if (e.key === 'Escape') { e.preventDefault(); wk.__wk.back(); } return; }   // (Esc: the race weekend back to the tracks)
       if ($('.intro', app)) { if (e.key === 'Escape') { e.preventDefault(); const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return; }   // (Esc skips the intro)
-      if (e.key === 'Escape') { if (zemOpen() || izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
+      if (e.key === 'Escape') { if (dolOpen() || zemOpen() || izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
       if (screen === 'track' && !sheet && !izOpen() && !zemOpen() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
     });
     window.addEventListener('resize', () => wx.resize());
@@ -2085,6 +2182,9 @@
     if (!ready) { want = name; return; }
     if (izOpen()) IZ().close(true);
     if (zemOpen()) ZE().close(true);
+    if (dolOpen()) dolShut();
+    const izid = G.karieraIzid ? G.karieraIzid() : null;   // (after an event's race: back in the valley with its result)
+    if (izid && dolCan()) name = 'title';
     if (carFrom && name === 'title' && screen === 'track') name = 'track';   // (Back from the car screen: the step it was opened from)
     carFrom = false;
     if (name === 'title') {
@@ -2098,7 +2198,9 @@
       if (cur && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else enterTrack();
     }
     cam = G.S.menuCam || 1;   // (back on the track step: the camera it had)
+    if (izid && name === 'title' && dolCan()) { titleSub = 'career'; sheet = null; }
     render();
+    if (izid && name === 'title') dolina(izid);
   }
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
     want = null;
@@ -2107,6 +2209,7 @@
     if (rg) { cancelAnimationFrame(rg.raf); rg = null; } if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; } arriveDone();   // (the carousel: drawn anew when the menu is up again)
     if (izOpen()) IZ().close(true);   // (the quick list and its steps in the history gone)
     if (zemOpen()) ZE().close(true);   // (the Earth too)
+    if (dolOpen()) dolShut();   // (the career's valley too)
     rested = null; globe.reset();
     if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
     for (const v of app.querySelectorAll('video')) { v.pause(); v.__stop = 1; }   // (a flyover still loading: not played under the game later)

@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import { chromium } from 'playwright';
+import { chromium } from '../../tests/lib/playwright.mjs';
 
 const DIR = path.dirname(url.fileURLToPath(import.meta.url)), REPO = path.resolve(DIR, '..', '..'), OUT = path.join(REPO, 'test-results', 'ljudje', 'izris'), FIN = path.join(REPO, 'test-results', 'ljudje');
 fs.mkdirSync(FIN, { recursive: true });

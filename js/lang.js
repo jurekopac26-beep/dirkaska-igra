@@ -420,6 +420,8 @@
     'odšel': 'left', 'vozi …': 'driving …', 'Nazaj v sobo': 'Back to the room',
     'Igra na tej napravi teče počasi: od naslednjega premora ali dirke bo brez senc (vklopiš jih v Nastavitvah).': 'The game runs slowly on this device: from the next pause or race it goes without shadows (switch them on in the Settings).',
     'Nova kariera: {0}.': 'New career: {0}.', 'Res začnem znova?': 'Really start again?', 'Tapni še enkrat, če res želiš začeti novo kariero (denar, avti in nadgradnje se izgubijo).': 'Tap again if you really want a new career (the money, cars and upgrades are lost).',
+    '{0}: kronometer {1}/{2}': '{0}: time trial {1}/{2}', ', končno {0} mesto.': ', {0} overall.', 'brez medalje': 'no medal', 'Ta pokal je še zaklenjen.': 'This cup is still locked.',
+    'Za ta pokal izberi avto njegovega razreda.': 'For this cup choose a car of its class.', 'Najprej končaj ali opusti prvenstvo, ki ga voziš.': 'First finish or give up the championship you are driving.',
     'Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.': 'This car is not yours yet: choose a car from your garage or buy it.', 'Prvenstvo je opuščeno.': 'The championship is given up.',
     'Nalagam novo mapo …': 'Loading the new map …', 'Začneš pri HOME. Zapelji v garažo in odpre se njen meni.': 'You start at HOME. Drive into a garage and its menu opens.', 'V izdelavi': 'Under construction', 'Garaža v izdelavi': 'Garage under construction', 'VIŠINA': 'ALTITUDE', 'HITROST': 'SPEED', 'Na vodi ne moreš pristati.': 'You cannot land on the water.', 'Tu ne moreš pristati.': 'You cannot land here.', 'Nove mape ni bilo mogoče naložiti.': 'The new map could not be loaded.',
     'Res opustim?': 'Really give up?', 'Tapni še enkrat, če res želiš opustiti prvenstvo.': 'Tap again if you really want to give the championship up.', 'Ta avto še ni tvoj: kupi ga v izbiri avta.': 'This car is not yours yet: buy it in the car choice.',
@@ -492,9 +494,10 @@
     'Do El Palmita': 'To El Palmito',   // (Espinazo del Diablo: the results of an escape; Espinazo del Diablo, La Tolva and El Palmito stay as they are, Razgledišče, Lasnica and the heights by the rules of Lang.place)
     'Nad zalivom Lăng Cô': 'Above Lăng Cô Bay', 'Serpentina': 'Hairpin', 'Đỉnh đèo Hải Vân': 'Hải Vân summit', 'Do sedla': 'To the saddle',   // (Hải Vân)
     'Kotanja': 'The Dip', 'Prelaz Kanaba': 'Kanaba Gap', 'Razgledišče na Virunge': 'Virunga Viewpoint',   // (Kanaba: the HUD; Serpentina N and the heights by the rules of Lang.place)
-    'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau',   // (Sogeri: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
+    'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau', 'Do Red Lighta': 'To Red Light',   // (Sogeri: the HUD, the results of an escape; Irishtown: the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Greben': 'Ridge', // (Canaries: the HUD; the heights by the rules of Lang.place)
     'Planota pri letališču': 'Airfield Plateau', 'Sleme': 'Ridge', 'Nad zalivom Savusavu': 'Above Savusavu Bay', 'Do Savusavuja': 'To Savusavu',   // (Savusavu: the HUD, the results of an escape; the heights by the rules of Lang.place)
+    'Gozd nad Vaoalo': 'Forest above Vaoala', 'Do Tiapapate': 'To Tiapapata',   // (Vaoala: the HUD, the results of an escape; Letava, Vaoala and Tiapapata stay as they are, the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
@@ -514,6 +517,8 @@
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', // (Quezaltepeque)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Apnenčasta stena': 'Limestone Wall', 'Nad puščavo': 'Above the Desert',   // (Jebel Hafeet: the HUD; Prva lasnica, Serpentine, Razgledišče, Vrh vzpona above)
+    'Do prelaza Mã Pí Lèng': 'To the Mã Pí Lèng pass',   // (Mã Pí Lèng: the results of an escape; Spomenik, Serpentina N and the heights by the rules of Lang.place)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
     'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
     'Jez Medeu': 'Medeu Dam', 'Za jezom': 'Behind the Dam', 'Soteska Gorelnik': 'Gorelnik Gorge', 'Most čez Kiši Almati': 'Kishi Almaty Bridge', 'Soteska Kiši Almati': 'Kishi Almaty Gorge', 'Po soteski': 'Up the gorge',   // (Medeu: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
@@ -617,7 +622,7 @@
     'Barvanje {0}': 'Paint job {0}', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0}': 'A second colour on the bonnet and the sides · {0}', 'Da': 'Yes',
     'Premalo kovančkov: potrebuješ {0}, imaš {1}.': 'Not enough coins: you need {0}, you have {1}.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
     'V POLNI IGRI': 'IN THE FULL GAME', 'KOT NOV ✓': 'AS NEW ✓', 'SERVIS · {0}': 'SERVICE · {0}', '🔒 najprej športni paket': '🔒 the sport kit first', 'NAMEŠČENO ✓': 'FITTED ✓', '🔒 ZAKLENJENO': '🔒 LOCKED',
-    'KUPI IN NAMESTI · {0}': 'BUY AND FIT · {0}', 'premalo denarja · imaš {0}': 'not enough money · you have {0}', 'SERIJSKO': 'STOCK', 'AERO PAKET': 'AERO KIT', 'Klasične': 'Classic', 'Žive': 'Vivid', 'nameščeno': 'fitted', 'brezplačno': 'free', 'BARVAJ · BREZPLAČNO': 'PAINT · FREE', 'dirkalna klasika': 'racing classic', 'svetla, čista': 'bright, clean', 'globoka in mirna': 'deep and calm', 'vidna od daleč': 'seen from afar', 'globok sijaj': 'deep shine', 'stara dirkalna': 'old racing green', 'topla in živa': 'warm and lively', 'drzna izbira': 'a bold choice', 'NAZAJ': 'BACK', 'Kovanci': 'Coins',
+    'KUPI IN NAMESTI · {0}': 'BUY AND FIT · {0}', 'premalo denarja · imaš {0}': 'not enough money · you have {0}', 'SERIJSKO': 'STOCK', 'AERO PAKET': 'AERO KIT', 'Klasične': 'Classic', 'Žive': 'Vivid', 'Kovinske': 'Metallic', 'Sveže': 'Fresh', 'nameščeno': 'fitted', 'brezplačno': 'free', 'BARVAJ · BREZPLAČNO': 'PAINT · FREE', 'dirkalna klasika': 'racing classic', 'svetla, čista': 'bright, clean', 'globoka in mirna': 'deep and calm', 'vidna od daleč': 'seen from afar', 'globok sijaj': 'deep shine', 'stara dirkalna': 'old racing green', 'topla in živa': 'warm and lively', 'drzna izbira': 'a bold choice', 'hladen kovinski sijaj': 'cool metallic shine', 'umirjena, sodobna': 'calm, modern', 'kot jasno nebo': 'like a clear sky', 'žlahtna rdečina': 'a noble red', 'morska svežina': 'fresh as the sea', 'igriva in drzna': 'playful and bold', 'kislo zelena': 'zesty green', 'topla kovina': 'warm metal', 'NAZAJ': 'BACK', 'Kovanci': 'Coins',
     'Premalo denarja: potrebuješ {0}, imaš {1}.': 'Not enough money: you need {0}, you have {1}.', 'Imaš {0}.': 'You have {0}.', 'Razumem': 'Got it',
     'Deli na regalu': 'Parts on the rack', 'Tapni del na regalu: odpre se meni z možnostmi in cenami. Izbrani del vidiš prosojno na avtu.': 'Tap a part on the rack: a menu opens with the options and their prices. The one you pick shows see-through on the car.',
     'Predali': 'Drawers', 'V predalih omarice so luči, maske, nalepke, čeljusti in zavore. Tapni predal in izvleče se.': 'The cabinet\'s drawers hold lamps, grilles, decals, calipers and brakes. Tap a drawer and it slides out.',
@@ -676,7 +681,7 @@
     'Pladenj se vrne v predal': 'The tray goes back into the drawer', 'Komora se spusti čez avto · roki počivata': 'The booth comes down over the car · both arms rest',
     'Barva teče po bokih navzdol, zgoraj je že nova barva': 'The paint runs down the sides, the top is already the new colour', 'Steber piha vroč zrak čez avto · barva se suši': 'The column blows hot air over the car · the paint dries',
     'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
-    'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
+    'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Grafitna': 'Graphite', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple', 'Barva črt': 'Stripe colour', 'Brez črt': 'No stripes', 'Številka': 'Number', 'Srebrna': 'Silver', 'Siva': 'Grey', 'Srednje modra': 'Mid blue', 'Bordo': 'Burgundy', 'Turkizna': 'Turquoise', 'Roza': 'Pink', 'Limeta': 'Lime', 'Bronasta': 'Bronze',
     'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
     'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
     'Športni izpuh': 'Sports exhaust', 'Dvojni izpuh, zračniki': 'Twin exhaust, bonnet vents', 'Štirje izpuhi, zajemalnik': 'Quad exhaust, bonnet scoop', 'Bel napis': 'White lettering', 'Rumen pas': 'Yellow band', 'Rdeč pas': 'Red band',
@@ -1108,9 +1113,10 @@
     'Nov rekord!': 'New record!', 'Konec vožnje': 'Run over', '{0} točk · {1} km · {2}.': '{0} points · {1} km · {2}.',
     'Neskončna vožnja': 'Endless traffic', 'Za hitrost': 'For speed', 'Za tesna prehitevanja': 'For close passes', 'Tesno / zelo tesno': 'Close / very close',
     'Najdaljši niz': 'Longest combo', 'Promet na koncu': 'Traffic at the end', 'Vozi znova': 'Drive again', 'Najboljših 10 · {0} · {1}': 'Top 10 · {0} · {1}',
+    'Ta dogodek je še zaklenjen.': 'This event is still locked.', 'V dolino': 'To the valley',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
-  const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
+  const SAME = new Set(['MOCKUP', 'CR', 'LAVA', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
 
   const has = Object.prototype.hasOwnProperty;
   let cur = 'sl', REV = null;   // (REV: English -> Slovenian, for the page: a text the game wrote in English goes back)
