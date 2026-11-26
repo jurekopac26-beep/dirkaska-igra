@@ -37,8 +37,8 @@ try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', SET, { width: 844, height: 390 }, { seed: 11 });
   T.check('js/render-rastje.js loaded (Render.ext.rastje), Spa in ON', await page.evaluate(() => !!(Render.ext && Render.ext.rastje) && Render.ext.rastje.ON.has('spa')));
 
-  // 1. Spa (Belgija), NIZKA, 1500 m: the band's chunks swapped; the same draw calls and triangles; the picture changed a little (far away)
-  await race(page, 'spa', 1500);
+  // 1. Spa (Belgija), NIZKA, 5900 m (trees in the band in view): the band's chunks swapped; the same draw calls and triangles; the picture changed a little (far away)
+  await race(page, 'spa', 5900);
   const p0 = await page.evaluate(() => Render.info().programs.filter(p => /\|v1|v1depth/.test(p.cacheKey)).length);
   const on = await frame(page, null), off = await frame(page, 'off'), on2 = await frame(page, null);
   T.check('Spa: the fade on, some chunks in its band (not all)', on.on && on.band > 0 && on.band < on.all && off.band === 0, JSON.stringify([on.band, on.all, off.band]));
