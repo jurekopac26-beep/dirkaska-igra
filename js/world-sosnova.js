@@ -205,8 +205,8 @@
     return Q.ph.concat(Q.ew).map(([u, hh]) => W(u, pole && Q.head === 'small' && u === 0 ? Q.h + 1.6 : hh, 0));
   }
 
-  // the power lines: their pylons within 700 m of the road (the bracing up to 280 m out), the conductors and the earth wires sagging
-  // between them (8 segments a span, a thin ribbon each way); no pylon on the road or in its run-offs (OSM's poles in the wide one before
+  // the power lines: their pylons within 700 m of the road (the bracing up to 200 m out), the conductors and the earth wires sagging
+  // between them (a segment per ~40 m of span, 4 to 8, a thin ribbon each way); no pylon on the road or in its run-offs (OSM's poles in the wide one before
   // the east hairpin, a 35 kV line's: left out, the wires carried across from the pole before to the one after them). The near
   // pylons in the scenery's chunks (their shadows), the far ones and the wires in chunks of their own, 1 km, without shadows (in the
   // scenery's they made a draw call of each far one)
@@ -218,14 +218,14 @@
         const rd = nrDist(x, z), q = nrNear(x, z); if (rd > 700) return null; if (q.i >= 0 && q.dd < 1) return 0;   // (0: a pole in a run-off, left out: the wires go across to the next one)
         const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)], rot = Math.atan2(b[1] - a[1], b[0] - a[0]) + Math.PI / 2;
         let y = 1e9; for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.min(y, nrGround(x + dx * Q.b0, z + dz * Q.b0));
-        const T = soPylon(rd > 280 ? farW.get(x, z) : scen.get(x, z), x, y, z, rot, Q, kind === 2 && kv <= 35, rd > 280, pc);
+        const T = soPylon(rd > 280 ? farW.get(x, z) : scen.get(x, z), x, y, z, rot, Q, kind === 2 && kv <= 35, rd > 200, pc);
         exclPush(x, z, Q.b0 * 1.5 + 2); CR.avoid(x, z, Q.b0 + 1); st.pylons++;
         return T;
       });
       for (let k = 0, j = -1; k < pts.length; k++) { if (tops[k] === 0) continue;   // (the span from the last pole drawn, across those left out)
         const A = j >= 0 && tops[j], B = tops[k]; j = k; if (!A || !B) continue;
         for (let m = 0; m < Math.min(A.length, B.length); m++) { const a = A[m], b = B[m], L = Math.hypot(b[0] - a[0], b[2] - a[2]), sag = L * L / 8 / (m < Q.ph.length ? 1500 : 1900), wr = m < Q.ph.length ? Q.wr : 0.025;
-          for (let q = 0; q < 8; q++) { const t0 = q / 8, t1 = (q + 1) / 8, p0 = [lerp(a[0], b[0], t0), lerp(a[1], b[1], t0) - 4 * sag * t0 * (1 - t0), lerp(a[2], b[2], t0)], p1 = [lerp(a[0], b[0], t1), lerp(a[1], b[1], t1) - 4 * sag * t1 * (1 - t1), lerp(a[2], b[2], t1)];
+          for (let q = 0, nq = Math.max(4, Math.min(8, Math.round(L / 40))); q < nq; q++) { const t0 = q / nq, t1 = (q + 1) / nq, p0 = [lerp(a[0], b[0], t0), lerp(a[1], b[1], t0) - 4 * sag * t0 * (1 - t0), lerp(a[2], b[2], t0)], p1 = [lerp(a[0], b[0], t1), lerp(a[1], b[1], t1) - 4 * sag * t1 * (1 - t1), lerp(a[2], b[2], t1)];
             const g = farW.get(p0[0], p0[2]), dx = p1[0] - p0[0], dz = p1[2] - p0[2], dl = Math.hypot(dx, dz) || 1, ox = -dz / dl * wr, oz = dx / dl * wr;
             g.quadO(p0, p1, [p1[0], p1[1] + wr * 2, p1[2]], [p0[0], p0[1] + wr * 2, p0[2]], WIRE, [(p0[0] + p1[0]) / 2 + ox * 10, p0[1], (p0[2] + p1[2]) / 2 + oz * 10]);
             g.quadO(p0, p1, [p1[0], p1[1] + wr * 2, p1[2]], [p0[0], p0[1] + wr * 2, p0[2]], WIRE, [(p0[0] + p1[0]) / 2 - ox * 10, p0[1], (p0[2] + p1[2]) / 2 - oz * 10]);

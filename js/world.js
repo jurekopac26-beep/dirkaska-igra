@@ -540,8 +540,8 @@ const World = (function () {
     for (let k = 0; k < n; k++) { const a = k / n * TAU + 0.3, c = Math.cos(a), s = Math.sin(a); bot.push(b.v(x + c * r, y0, z + s * r, c, 0, s, lo)); if (top) top.push(b.v(x + c * r2, y0 + h, z + s * r2, c, 0, s, col)); }
     for (let k = 0; k < n; k++) { const j = (k + 1) % n; if (top) { b.t(bot[k], bot[j], top[j], inn); b.t(bot[k], top[j], top[k], inn); } else b.t(bot[k], bot[j], tip, inn); }
   }
-  function rock(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit, flat) {   // chunky boulder (33 faces): 7-sided, bulging middle, chamfered flat top (cy = centre height)
-    const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + (flat == null ? 0.6 : flat) * ry, ym = yb + (yt - yb) * 0.52, n = 7;
+  function rock(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit, flat, sides) {   // chunky boulder (33 faces): 7-sided (or `sides`), bulging middle, chamfered flat top (cy = centre height)
+    const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + (flat == null ? 0.6 : flat) * ry, ym = yb + (yt - yb) * 0.52, n = sides || 7;
     const ring = (y, f) => { const out = []; for (let k = 0; k < n; k++) { const a = (k + (r_() - 0.5) * 0.5) / n * Math.PI * 2, kk = f * (1 + (r_() - 0.5) * jit), lx = Math.cos(a) * rx * kk, lz = Math.sin(a) * rz * kk; out.push([cx + lx * c - lz * s, y + (r_() - 0.5) * jit * ry * 0.3, cz + lx * s + lz * c]); } return out; };
     const B = ring(yb, 0.86), M = ring(ym, 1.0), U = ring(yt, 0.6), inn = [cx, (yb + yt) / 2, cz], sh = (k) => [col[0] * k, col[1] * k, col[2] * k];
     if (ROCK_SMOOTH) {   // rounded, smooth-shaded boulders (as in the reference): normals of the enclosing ellipsoid, darker at the foot

@@ -87,7 +87,7 @@
       seed: 4500, board: 'SA CALOBRA', sub: 'SERRA DE TRAMUNTANA', banner: ['CARRETERA DE SA CALOBRA', 'MA-2141 · SERRA DE TRAMUNTANA'],
       grass: [0.5, 0.5, 0.38], grassDry: [0.6, 0.57, 0.45], grassLush: [0.38, 0.44, 0.27], shrub: [0.22, 0.27, 0.16],
       rock: [0.6, 0.59, 0.56], rockWarm: [0.66, 0.58, 0.48], lichen: [0.48, 0.48, 0.43], scree: [0.62, 0.61, 0.57],
-      bank: [0.52, 0.42, 0.33], flowers: 0.3,   // (the steep banks by the road: the red earth of the karst, terra rossa; few flowers in the dry summer)
+      bank: [0.52, 0.42, 0.33], flowers: 0.3, roadK: 3, plantLo: 1,   // (the steep banks by the road: the red earth of the karst, terra rossa; few flowers in the dry summer)
       sat: 0.35, satV: 1.1, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
       rockCols: [[0.56, 0.55, 0.52], [0.62, 0.61, 0.57], [0.5, 0.49, 0.47], [0.63, 0.56, 0.46], [0.56, 0.52, 0.45], [0.6, 0.59, 0.56]],   // (the limestone: pale grey, a little ochre)
       centre: [0.95, 0.95, 0.92], dash: [3.5, 9], solidNear: 40,   // (the Spanish centre line: 3.5 m dashes, 9 m gaps; solid through the hairpins)
@@ -184,6 +184,7 @@
       cars: [[0.92, 0.92, 0.9], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.2, 0.42, 0.3]],
       roofs: [[0.62, 0.22, 0.16], [0.5, 0.52, 0.54], [0.2, 0.38, 0.5], [0.3, 0.46, 0.28]],
       sheep: 0, portal: 0, far: { lo: [0.15, 0.3, 0.12], hi: [0.36, 0.42, 0.28], dw: [0.11, 0.24, 0.09], snow: 9000 },
+      shrubR: 110, farTree: 110,   // (the phone's load, the dense forest's: the shrubs only within 110 m of the road, the broadleaves past it lighter, kind 10)
     },
     // Savusavu (the south coast of Vanua Levu, Fiji): the coast road over a low ridge of wet tropical forest, coconut palms and gardens by the
     // houses, red-brown volcanic soil in the cuttings, dark basalt in the few crags; no snow, no sheep, no tunnel; a steel rail where the slope falls
@@ -434,10 +435,17 @@
     // the macchia (mastic, wild olive, holm oak scrub: dark rounded clumps), 7 a tussock of càrritx (a fountain of stiff leaves, straw at the
     // tips), 8 holm oak (a dense rounded crown of the darkest green on a short trunk)
     const g = new GB(), R = rng(4140 + kind), rs = API.ROCK_SMOOTH;
+    const NOG = { triO() {}, triON() {} };   // (kind 9: lumps drawn into nothing, their randoms still drawn, so the others stay as they were)
     if (kind === 0 && L.trop) {   // (L.trop: a broadleaf of the tropical forest instead: a slim pale trunk under a wide, lumpy, bright crown)
       cyl(g, 0, 0, 0, 0.035, 0.5, 5, [0.42, 0.38, 0.32]);
       API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
       for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.6, d = k ? 0.2 + R() * 0.08 : 0; ico(g, Math.cos(a) * d, 0.62 + (k ? R() * 0.14 : 0.12), Math.sin(a) * d, 0.24, 0.62, vary(col, R, 0.22), R, 0.3); }
+    } else if (kind === 10) {   // the tropical broadleaf far from the road (L.farTree): the same slim trunk (three faces) under three lumps of its crown, as
+      // wide and as high as kind 0's six; past L.farTree m from the road the chase camera sees it at ~100 m and more, a few pixels across
+      cyl(g, 0, 0, 0, 0.035, 0.5, 3, [0.42, 0.38, 0.32]);
+      API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
+      ico(g, 0, 0.72, 0, 0.3, 0.62, vary(col, R, 0.22), R, 0.3);
+      for (let k = 0; k < 2; k++) { const a = k * TAU / 2 + R() * 0.6; ico(g, Math.cos(a) * 0.19, 0.66 + R() * 0.1, Math.sin(a) * 0.19, 0.27, 0.62, vary(col, R, 0.22), R, 0.3); }
     } else if (kind === 5) {
       const col = [0.25, 0.35, 0.17], bark = [0.42, 0.37, 0.33];
       cyl(g, 0, 0, 0, 0.028, 0.7, 5, bark, null, 0.018);
@@ -469,9 +477,10 @@
       cone(g, 0, 0.84, 0, 0.04, 0.16, 4, col, tip, 0.4);
     } else {
       API.ROCK_SMOOTH = true; const col = kind === 1 ? [0.1, 0.2, 0.11] : kind === 6 ? [0.16, 0.23, 0.12] : [0.2, 0.28, 0.2], n = kind === 1 ? 6 : kind === 6 ? 5 : 4;
-      for (let k = 0; k < n; k++) { const a = k / n * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(g, Math.cos(a) * d, 0.4 - d * 0.45, Math.sin(a) * d, 0.32, 0.7, vary(col, R, 0.18), R, 0.35); }
+      for (let k = 0; k < n; k++) { const a = k / n * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(kind === 9 && (!k || k === 2) ? NOG : g, Math.cos(a) * d, 0.4 - d * 0.45, Math.sin(a) * d, 0.32, 0.7, vary(col, R, 0.18), R, 0.35); }
     }
-    if (kind === 9) {   // a light clump of scrub (two lumps: the banks between Kotor's legs, many of them, L.bkCap)
+    if (kind === 9) {   // a light clump of scrub (two lumps: the banks between Kotor's legs, many of them, L.bkCap), with two of the generic four above (not their
+      // middle one, inside this bigger one and never seen, nor the one opposite this second one: the phone's load, the busiest place's most-drawn mesh, 72 -> 48 vertices)
       API.ROCK_SMOOTH = true; const col = [0.17, 0.24, 0.12];
       ico(g, 0, 0.42, 0, 0.38, 0.72, vary(col, R, 0.12), R, 0.3); ico(g, 0.32, 0.34, 0.14, 0.27, 0.75, vary(col, R, 0.16), R, 0.35);
     }
@@ -721,8 +730,11 @@
         (gq || gW).quadO(a, b, c, d, null, Pt(i, side * (ti[0] - 3), (ti[1] + bi[1]) / 2), [[s0, a[1] / 3.5], [s0, b[1] / 3.5], [s1, c[1] / 3.5], [s1, d[1] / 3.5]], [top, foot, footj, topj]); };
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       const solid = (s) => hairS.some(h => Math.abs(s - h) < L.solidNear) || s < sStart + 20 || s > sFin - 10;
+      const rK = L.roadK || 1;   // (L.roadK: the asphalt, its lines and the shoulder in chunks of rK x 120 m, fewer draws; the verge, heavier, stays at 120 m)
+      let gr0, gl0, gs0;
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
-        const gr0 = new GB(true), gl0 = new GB(), gs0 = new GB(true), gv0 = new GB(true);
+        if (c0 % (60 * rK) === 0) { gr0 = new GB(true); gl0 = new GB(); gs0 = new GB(true); }
+        const gv0 = new GB(true);
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const fb = FB && fadeI[i], gr = fb ? FB.gr : gr0, gl = fb ? FB.gl : gl0, gs = fb ? FB.gs : gs0, gv = fb ? FB.gv : gv0;
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
@@ -753,7 +765,7 @@
           }
         }
         if (L.gravel) L.gravel(gs0, c0, Math.min(c0 + 60, N - 1));   // (a look's own gravel in this chunk's shoulder mesh: the side streets joining the road, js/world-savusavu-obcestje.js)
-        addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); addM(gv0, gMat);
+        if ((c0 + 60) % (60 * rK) === 0 || c0 + 60 >= N - 1) { addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); } addM(gv0, gMat);
       }
       // the bridges (KN): the face walls under the upper road's verges (to the arch, with a ring of lighter dressed stones round it, and either side of it to
       // the ground; at the ends on to the verge's ditch), the arch's barrel, darker, and its abutments at the lower road's barriers
@@ -1178,6 +1190,7 @@
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const larch = L.forest === 'larch', med = L.forest === 'med';   // (the forest's tall trees first: the spruce, or the larch and then the stone pine in tk[3]; the Mediterranean's: the Aleppo pine, the macchia, the càrritx, the holm oak)
     const tk = (larch ? [3, 1, 2, 4] : med ? [5, 6, 7, 8] : [0, 1, 2]).map(k => new IChunks(plTreeGeo(k), tMatT, 96));
+    const farTk = L.farTree && L.trop && !larch && !med ? new IChunks(plTreeGeo(10), tMatT, 96) : null;   // (L.farTree: the broadleaves past it in the lighter kind 10, no shadow: beyond the shadow's box)
     const tkOwn = tk.length; if (L.treeGeo) for (const geo of L.treeGeo()) tk.push(new IChunks(geo, tMatT, 96));   // (a pass's own trees after the shared ones, kinds tkOwn, tkOwn + 1, ... for L.tree: Kanaba's, js/world-kanaba.js)
     let nTrees = 0;
     {
@@ -1218,7 +1231,7 @@
             else { hgt = (6 + r4 * 7) * (0.55 + 0.45 * tl); wid = hgt * (0.52 + r2 * 0.12); col = [0.9 + r3 * 0.16, 0.94 + r4 * 0.12, 0.94 + r2 * 0.12]; }
           }
           if (L.tree) { const t = L.tree(x, z, c, sp, hgt, wid, col, r2, r3, r4, tkOwn); if (!t) continue; [sp, hgt, wid, col] = t; }   // (a pass's own species and sizes, no random draws of its own: L.treeGeo's kinds)
-          tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
+          (farTk && sp === 0 && hd > LOD.radius(L.farTree) ? farTk : tk[sp]).add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -1235,12 +1248,14 @@
         nTrees++; }
       clump.addTo(root, true); }
     for (const t of tk) t.addTo(root, true);
+    if (farTk) farTk.addTo(root, false);
 
     /* ---- the pasture's plants (instanced per 96 m chunk): tufts of grass, cushions of flowers, boulders; stones on the scree and by the road ---- */
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 2, 3].map(k => new IChunks(API.btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : 96));
+    const plo = !!L.plantLo && LOD.tier === 0;   // (L.plantLo, NIZKA: as Beartooth's, the cushions and the stones lighter, the grass and the boulders in bigger chunks)
+    const pk = [0, 1, 2, 3].map(k => new IChunks(plo && (k === 1 || k === 3) ? API.ownRnd(() => API.btPlantGeo(k, true)) : API.btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : !plo ? 96 : k === 0 ? 128 : k === 2 ? 192 : 96));
     const flowerC = [[1.0, 0.92, 0.35], [0.66, 0.5, 0.95], [1, 1, 1], [0.95, 0.5, 0.75], [0.5, 0.65, 1.0]];
     let nPlants = 0;
     {

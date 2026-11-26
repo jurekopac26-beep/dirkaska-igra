@@ -10797,6 +10797,25 @@ const Render = (function () {
       scene.add(v.grp); v.grp.updateMatrixWorld(true); carGlows(v); if (v.tlG) { scene.add(v.tlG); v.tlG.updateMatrixWorld(true); } back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
     if (back) { glows.end(); streaks.end(); }
   }
+  // The rivals' shadow blobs (matBlob / matBlobS, shared; a plane each, only its size the car's): one instanced mesh per material in the main
+  // view, a draw call for the field instead of one per car. Each its own blob's matrix with the plane's size in it, the same texture,
+  // opacity, renderOrder and no depth write: the same pixels (the blobs one colour over another, their order no matter). Hidden for that
+  // render only, shown again after it (blobBatch(false)); dbg.noBlobBatch: the tests, measured off and on.
+  const BB_MAX = 64, _bbA = [null, null], _bbHid = [], _bbM = new THREE.Matrix4(), _bbS = new THREE.Matrix4();
+  function bbSeen(o) { for (; o; o = o.parent) { if (!o.visible) return false; if (o === scene) return true; } return false; }
+  function blobBatch(on) {
+    if (!on) { for (const b of _bbHid) b.visible = true; _bbHid.length = 0; for (const A of _bbA) if (A && A.parent) A.parent.remove(A); return; }
+    if (dbg.noBlobBatch || !curRace) return;
+    const mats = [matBlob, matBlobS], L = [[], []];
+    for (const v of views) { const b = v.blob; if (!b || v.car.isPlayer || v.cull || !b.visible || !camera.layers.test(b.layers)) continue;
+      const k = mats.indexOf(b.material), P = b.geometry.parameters; if (k < 0 || !P || !P.width || !P.height || b.renderOrder !== 1 || !bbSeen(b.parent)) continue;
+      L[k].push(b); }
+    for (let k = 0; k < 2; k++) { const l = L[k]; if (l.length < 2) continue;
+      let A = _bbA[k]; if (!A) { const g = new THREE.PlaneGeometry(1, 1); g.rotateX(-Math.PI / 2); A = _bbA[k] = new THREE.InstancedMesh(g, mats[k], BB_MAX); A.frustumCulled = false; A.renderOrder = 1; A.matrixAutoUpdate = false; A.name = 'blobs'; }
+      A.material = mats[k]; const n = Math.min(l.length, BB_MAX);
+      for (let i = 0; i < n; i++) { const b = l[i], P = b.geometry.parameters; b.updateWorldMatrix(true, false); _bbS.makeScale(P.width, 1, P.height); _bbM.multiplyMatrices(b.matrixWorld, _bbS); A.setMatrixAt(i, _bbM); b.visible = false; _bbHid.push(b); }
+      A.count = n; A.instanceMatrix.needsUpdate = true; scene.add(A); }
+  }
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
     const cdt = opt && opt.rdt != null ? opt.rdt : dt;   // (the replay: the recording's own step, dt × its speed, 0 while it stands: the pit crew and the film camera on that clock)
@@ -10866,10 +10885,10 @@ const Render = (function () {
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = 0.8;   // (a soft depth of field only towards the edges)
       if (!cam.shot) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look in the race, all the cars stay sharp in every camera; the photo mode's own: a narrow sharp band on the car)
       speedLook(target, alpha, U); U.uCas.value = casDrawn = casK();   // (the sharpening: casK)
-      renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
+      blobBatch(true); renderer.setRenderTarget(post.rt); renderer.render(scene, camera); blobBatch(false);
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
-    } else { casDrawn = 0; renderer.render(scene, camera); }
+    } else { casDrawn = 0; blobBatch(true); renderer.render(scene, camera); blobBatch(false); }
     unviewCull();   // (the plant chunks out of this frame's view: shown again, cullByDistance)
     zaslonFeed(dt);   // (the big screen's live picture, js/world-zaslon.js)
   }

@@ -138,6 +138,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 |---|---|---|---|---|
 | 10.1 | #1075 | Popravek rdečega `main`: ploščica izbere progo pred izbrano (`pad.test`) | biketraveler | prvi v vrsti; CI zelen, združi seja Združevanje. |
 | 10.2 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: takoj za #1075) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
+| 10.14 | #982 Zbirna grafika chase 3 biketraveler | Kamera za avtom, tla ob cesti: skupina 86 Katu, Tianmen (#938), skupina 80 Medeu, Canaries (#926), rezerva klicev in oglišč (#966, #971, #975, #972, #968, #963); vse potrjeno na strani Odločitve | biketraveler | svež `main` 25. 11., povezani testi 29 od 29, `stamp --check` v redu; osnutek do vrste, združi seja Združevanje |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 

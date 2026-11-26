@@ -45,6 +45,7 @@ try {
     let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
     g.onAction('restart'); g.pause();
     g.race.lch = null; for (const c of g.race.cars) c.lch = null;
+    g.race.player.kt = null;   // (as perf.test.mjs: the player's tyre wear off, else the car goes otherwise and the samples fall elsewhere)
     const R = window.__R, orig = R.renderBufferDirect, m4 = new THREE.Matrix4(), v3 = new THREE.Vector3(); let rec = null;
     const label = (o) => { const n = []; for (let q = o; q && n.length < 3; q = q.parent) if (q.name) n.push(q.name); return (n.join('<') || o.type) + ' [' + (o.userData.src || (o.parent && o.parent.userData.src) || '') + ']'; };
     R.renderBufferDirect = function (cam, sc, geo, mat, obj) {
