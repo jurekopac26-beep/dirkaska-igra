@@ -4498,5 +4498,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "611306c6a2da92247466632a"
+ },
+ "elcastano/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 275.3,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "be289d119fe37545795373a2"
+ },
+ "elcastano/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 335.5,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6179f749a3b7b6d4f1dfd67d"
+ },
+ "elcastano/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 254.85,
+  "spins": 1,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3eb77b8fa1a65cdb2c2f008f"
+ },
+ "elcastano/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 258.46,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "adabcc0774cb4bd36bfac18e"
+ },
+ "elcastano/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 279.67,
+  "spins": 1,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4e44a040775a2f96e1f446a5"
  }
 }
