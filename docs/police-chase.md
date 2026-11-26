@@ -34,10 +34,10 @@ Fizika vožnje in vožnja obstoječih tekmecev se ne spremenita (golden testi di
 - **Merilnik pod vrstico** (`#h-lovm`, `css/zabava.css`): zelen = aretacija, rdeč = čas, ki ga ima begunec še do pobega.
 - **Testi**: `tests/zabava.test.js`, 8 (stopnje, prednost, ujetje, pobeg, promet, barva, `beg.js`).
 
-## Odločitve (stran Odločitve croatiadata, do odgovora velja priporočena)
+## Odločitve (Matej 26. 11., #1163: priporočene)
 
-Slike možnosti so samo na strani Odločitve (repozitorij je javen).
+Matej (jure.kopac26) je 26. 11. 2026 (#1163) izbral priporočene možnosti: pravila 1, prikaz 2, videz 3. Koda jih je že imela, zato se ni spremenila; kartice na strani Odločitve croatiadata so zapisane kot odgovorjene. Slike možnosti so samo tam (repozitorij je javen).
 
-1. **Pravila ujetja** (`police-pravila`): 1 po težavnosti (zgoraj; priporočeno), 2 enaka na vseh stopnjah (kot pred to temo), 3 zrcalo bega (skoraj stoji, manj kot 9 m, 3 / 2,5 / 2 / 1,6 s).
-2. **Prikaz na zaslonu** (`police-prikaz`): 1 samo vrstica pod uro (kot pred to temo), 2 vrstica in merilnik (priporočeno).
-3. **Videz** (`police-videz`): 1 igralčeva barva s trakom in lučmi, begunec skoraj bel (kot pred to temo), 2 bela patrulja, begunec skoraj bel (avta sta si podobna), 3 bela patrulja, rdeč begunec (priporočeno).
+1. **Pravila ujetja** (`police-pravila`): 1 po težavnosti (zgoraj; priporočeno, izbrano), 2 enaka na vseh stopnjah (kot pred to temo), 3 zrcalo bega (skoraj stoji, manj kot 9 m, 3 / 2,5 / 2 / 1,6 s).
+2. **Prikaz na zaslonu** (`police-prikaz`): 1 samo vrstica pod uro (kot pred to temo), 2 vrstica in merilnik (priporočeno, izbrano).
+3. **Videz** (`police-videz`): 1 igralčeva barva s trakom in lučmi, begunec skoraj bel (kot pred to temo), 2 bela patrulja, begunec skoraj bel (avta sta si podobna), 3 bela patrulja, rdeč begunec (priporočeno, izbrano).
