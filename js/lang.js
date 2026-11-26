@@ -638,7 +638,7 @@
     'Voziček pripelje nov del': 'A trolley brings the new part', 'Hauba je gor, podpira jo drog': 'The bonnet is up, a prop holds it', 'Roka {0} sname stari del': 'Arm {0} takes the old part off',
     'Roka {0} vzame nov del z regala': 'Arm {0} takes the new part from the rack', 'Roka {0} vzame nov del z vozička': 'Arm {0} takes the new part from the trolley', 'Roka {0} namesti nov del': 'Arm {0} fits the new part',
     'Roka 1 prime stari zamašek za obroč': 'Arm 1 grips the old fuel cap by its ring', 'Roka 1 odvije stari zamašek': 'Arm 1 unscrews the old fuel cap',   // (#1084 I4: js/garaza-anim/zamasek.js)
-    'Roka 2 nastavi nov zamašek na grlo': 'Arm 2 sets the new fuel cap on the filler neck', 'Roka 2 privije nov zamašek · klik': 'Arm 2 screws the new fuel cap on · click',
+    'Roka 2 nastavi nov zamašek na grlo': 'Arm 2 sets the new fuel cap on the filler neck', 'Roka 2 privije nov zamašek · klik': 'Arm 2 screws the new fuel cap on · click', 'Nov zamašek je privit · roki gresta počivat': 'The new fuel cap is on · both arms go to rest',
     'Del zaskoči': 'The part clicks into place', 'Vijaki so priviti': 'The screws are tightened', 'Cevi so priklopljene': 'The hoses are connected',
     'Roka 2 dvakrat stisne nov amortizer · preizkus': 'Arm 2 squeezes the new damper twice · a test', 'Preizkus: avto se zaniha, nov amortizer ga umiri': 'Test: the car rocks, the new damper settles it',   // (I2, js/garaza-anim/amortizerji.js)
     'Most se zavrti za pol kroga: stari del k regalu, nov k avtu': 'The bridge turns half a circle: the old part to the rack, the new one to the car',

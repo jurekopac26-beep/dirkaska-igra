@@ -10,7 +10,8 @@
   const tr = (s) => (window.Lang && Lang.tr ? Lang.tr(s) : s);
   // (the bar's line for a step of its own: garage.js knows only its keys (barSay keeps the line for one it does not know), so it is set here)
   const LAB = { grip: () => tr('Roka 1 prime stari zamašek za obroč'), unscrew: () => tr('Roka 1 odvije stari zamašek'),
-    seat: () => tr('Roka 2 nastavi nov zamašek na grlo'), screw: () => tr('Roka 2 privije nov zamašek · klik') };
+    seat: () => tr('Roka 2 nastavi nov zamašek na grlo'), screw: () => tr('Roka 2 privije nov zamašek · klik'),
+  swap: () => tr('Nov zamašek je privit · roki gresta počivat') };   // (the def swap label »Roka 2 namesti nov del« came after the screw)
   const say = (X, k, x) => { X.fitLog(k, x); const l = document.querySelector('#g-steps .l'); if (l && LAB[k]) l.textContent = LAB[k](); };
 
   GA.zamasek = function* (C, X) {
@@ -95,7 +96,7 @@
     say(X, 'screw'); yield* turns(1, -1, 0, -0.012, [0, 0, 1]);
     const kept = X.letGo(1); X.fitSwap(cv, nw, true); neck.visible = false; if (!up) spawn(X.settle(X.cur, 0.01));
     { const Bn = X.cur.v && X.cur.v.bodyG; if (!g && Bn) { kept.matrixAutoUpdate = true; kept.matrix.decompose(kept.position, kept.quaternion, kept.scale); Bn.attach(kept); } else X.disposeTree(kept); }   // (a car with no cap of its own keeps the drawn one)
-    X.fitLog('swap', { deli: X.deliKey(X.cur.spec), car: X.cur === nw, old: 'regal' });
+    say(X, 'swap', { deli: X.deliKey(X.cur.spec), car: X.cur === nw, old: 'regal' });
     // 9: roka 2 out, the car down (the lift stowed after), the arms home with the bridge, KONČANO
     yield* wait(0.15); yield* par(X.armExt(1, pp.s, pp.ext, 0.3, EZ.sine), X.camTo(V2, 0.5));
     let stowed = !up, off = false;
