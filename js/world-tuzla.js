@@ -13,7 +13,7 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
-  const { GB, RB, box, cyl, ico, lerp, nrGround, nrLCf, nrLump, nrNear, rng, sstep } = API;
+  const { GB, RB, box, clamp, cyl, ico, lerp, nrGround, nrLCf, nrLump, nrNear, rng, sstep } = API;
   // the text boards: place names (the town, the city, the country, the villages and the district round the circuit, the region, the province
   // next door), the grandstands' names (def.stands), the start line's, the DRS boards
   const TZ_BAN = [['TUZLA', '#c8102e', '#fff', '#fff'], ['İSTANBUL', '#16213e', '#fff', '#c8102e'], ['BAŞLANGIÇ · BİTİŞ', '#16181c', '#fff', '#c8102e'], ['TÜRKİYE', '#c8102e', '#fff', '#fff'],
@@ -216,17 +216,29 @@
     const rb = new RB(true), eb = new RB(true), col = [0.9, 0.9, 0.92], EA = [0.6, 0.47, 0.34], EM = [0.7, 0.57, 0.42];
     for (const W of TZ_WAYS) {
       const kind = W[0], HW = kind === 2 ? 1.75 : kind === 1 ? 3 : 2.5, B = kind === 2 ? eb : rb, C = kind === 2 ? [EA, EM, EA] : [col, col, col];
-      const pts = tzPts(W.slice(1), false);
-      let prev = -1, along = 0;
+      const pts = tzPts(W.slice(1), false), rows = [];
+      let along = 0;
       for (let q = 0; q < pts.length; q++) {
         const [x, z] = pts[q], a = pts[Math.max(0, q - 1)], b = pts[Math.min(pts.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
         if (q) along += Math.hypot(x - pts[q - 1][0], z - pts[q - 1][1]);
-        const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4 + HW) { prev = -1; continue; }
-        const nx = -dz / dl, nz = dx / dl, row = [-HW, 0, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; });   // (left to right in the way's direction: (nx, nz) its right)
-        const r = B.row(row, C, row.map((e, j) => [j * HW / 4, along / 4]));
-        if (prev >= 0) B.link(prev, r, 0, 2); prev = r;
+        const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4 + HW) { rows.push(null); continue; }
+        const nx = -dz / dl, nz = dx / dl;
+        rows.push({ row: [-HW, 0, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; }), along });   // (left to right in the way's direction: (nx, nz) its right)
         if (q % 2 === 0) { exclPush(x, z, HW + 1.5); if (nn.i >= 0 && nn.dd < 70) CR.avoid(x, z, HW + 0.5); }
         st[kind === 2 ? 'track' : 'road'] += 4;
+      }
+      // the rows kept: from one kept row the next is the farthest (up to 24 m on) that the straight surface between them leaves within 3 cm
+      // of every 4 m row between (its three points: the ground and the way's line), so a straight way over even ground takes few rows and a
+      // bend or a hump all it has (the 8 cm lift never under the ground)
+      const fits = (i, j) => { for (let k = i + 1; k < j; k++) { const t = (rows[k].along - rows[i].along) / (rows[j].along - rows[i].along || 1);
+        for (let c = 0; c < 3; c++) for (let d = 0; d < 3; d++) if (Math.abs(lerp(rows[i].row[c][d], rows[j].row[c][d], t) - rows[k].row[c][d]) > 0.03) return false; } return true; };
+      let prev = -1;
+      for (let q = 0; q < rows.length;) {
+        if (!rows[q]) { prev = -1; q++; continue; }
+        const R = rows[q], r = B.row(R.row, C, R.row.map((e, j) => [j * HW / 4, R.along / 4]));
+        if (prev >= 0) B.link(prev, r, 0, 2); prev = r;
+        let j = q + 1; while (j + 1 < rows.length && rows[j + 1] && rows[j + 1].along - R.along <= 24 && fits(q, j + 1)) j++;
+        q = j;
       }
     }
     if (!eb.empty) { const m = new THREE.Mesh(eb.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
@@ -257,27 +269,266 @@
     m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'tuzla service roads'; root.add(m);
   }
 
-  // LK.extra: the service roads, the link, the drift course, the buildings by the circuit and 60-200 m off (OSM outlines as boxes: white or
-  // cream render, grey cladding on the big halls; flat roofs, grey or terracotta); before the crowds and the trees (the buildings kept clear
-  // in tzKeep)
+  // A building by the circuit. OSM holds its outline only (building=yes: no height, no roof, no use) and its height is the track data's
+  // estimate by its footprint (tools/tuzla/build.py): what its walls and its roof carry is plain and generic, none of it surveyed
+  // (docs/proge/tuzla.md), none of it a sign or a name. A darker plinth; windows in a row on the long walls and on the short ones, a door on
+  // a long wall (panes and leaf a hand's width proud of the wall, the panes lighter toward their tops: the sky in them); then by its kind:
+  //   0 a flat roof behind a parapet (its outer, top and inner faces), an air conditioner or two and a hatch on it; two rows of windows
+  //     where it is tall enough for two storeys;
+  //   1 a low hipped roof of tiles (18 degrees at most, the building's height its ridge's) over a 0.45 m eave with its fascia, in courses
+  //     from the eave to the ridge, a shade lighter and darker in turn (seen from above: the rows), the eave's the darkest;
+  //   2 a big hall: cladding, a band of glazing under the eaves of both long walls, roller doors along one, a ridged roof of metal sheets
+  //     at 6 degrees (sheets 2.4 m wide, lighter and darker in turn, a rooflight in every fourth).
+  // Hashed from where it stands (the world's random stream untouched); in the scenery's chunk (no draw of its own; ~300-450 vertices, the 100 m hall ~1000)
+  const TZ_PANE = [[0.15, 0.19, 0.25], [0.31, 0.39, 0.49]], TZ_DOOR = [0.4, 0.36, 0.31], TZ_ROLL = [0.61, 0.65, 0.7], TZ_UNIT = [[0.76, 0.77, 0.78], [0.62, 0.64, 0.66]], TZ_LITE = [0.74, 0.79, 0.8];
+  function tzBld(g, x, y, z, L, W, rot, h, wc, rc, kind) {
+    if (W > L) return tzBld(g, x, y, z, W, L, rot + Math.PI / 2, h, wc, rc, kind);   // (the long side along local x)
+    const c = Math.cos(rot), s = Math.sin(rot), P = (lx, ly, lz) => [x + lx * c - lz * s, y + ly, z + lx * s + lz * c], sc = (cl, k) => [cl[0] * k, cl[1] * k, cl[2] * k];
+    const H = rng((Math.round(x * 10) * 73856093) ^ (Math.round(z * 10) * 19349663) ^ 4421), a = L / 2, b = W / 2, inn = [x, y + h / 2, z], PR = 0.07;
+    // a pane on a wall: sd -1 / 1 the long walls (local z), -2 / 2 the short ones (local x); u along the wall, from y0 to y1 over the ground
+    const pane = (sd, u, w, y0, y1, c0, c1, pr) => { const Q = Math.abs(sd) === 1 ? (uu, yy) => P(uu, yy, sd * (b + pr)) : (uu, yy) => P(sd / 2 * (a + pr), yy, uu);
+      g.quadO(Q(u - w / 2, y0), Q(u + w / 2, y0), Q(u + w / 2, y1), Q(u - w / 2, y1), c0, inn, null, [c0, c0, c1, c1]); };
+    const rise = kind === 1 ? Math.min((b + 0.45) * 0.325, h * 0.4) : kind === 2 ? (b + 0.3) * 0.105 : 0.42, he = h - rise;   // (the walls' top: the eave, the flat roof's deck)
+    box(g, x, y - 0.4, z, L + 0.1, 0.95, W + 0.1, rot, sc(wc, 0.7), null, true);   // the plinth
+    box(g, x, y - 0.4, z, L, he + 0.4, W, rot, wc, kind ? wc : rc, true);
+    if (kind === 2) {
+      // the hall: bays of ~4.8 m; glazing under the eave, a roller door in every third bay of one long wall (the first by its hash)
+      const nb = Math.max(2, Math.round((L - 1.2) / 4.8)), bw = (L - 1.2) / nb, d0 = Math.floor(H() * 3);
+      for (let k = 0; k < nb; k++) { const u = -a + 0.6 + bw * (k + 0.5);
+        for (const sd of [-1, 1]) pane(sd, u, bw - 0.7, he - 1.7, he - 0.6, TZ_PANE[0], TZ_PANE[1], PR);
+        if (k % 3 === d0 && bw > 4.2) pane(1, u, 3.7, 0.1, Math.min(4.3, he - 2.1), sc(TZ_ROLL, 0.86), TZ_ROLL, PR + 0.03); }
+      // its roof: the gables' triangles flush with the short walls, the sheets from the eaves to the ridge
+      const ae = a + 0.3, be = b + 0.3, ns = Math.max(2, Math.round(2 * ae / 2.4)), sw = 2 * ae / ns, top = [x, y + he - 3, z];
+      for (const sd of [-1, 1]) g.triO(P(sd * a, he, -b), P(sd * a, he, b), P(sd * a, h, 0), wc, inn);
+      for (let k = 0; k < ns; k++) for (const sd of [-1, 1]) { const u0 = -ae + sw * k, u1 = u0 + sw, f = (k % 2 ? 0.95 : 1.04) * (0.97 + 0.06 * H());
+        g.quadO(P(u0, he - 0.03, sd * be), P(u1, he - 0.03, sd * be), P(u1, h, 0), P(u0, h, 0), sc(rc, f), top);
+        if (k % 4 === 1) { const e = (t) => [he - 0.03 + (h - he + 0.03) * t + 0.05, sd * be * (1 - t)], [y0, z0] = e(0.22), [y1, z1] = e(0.8);
+          g.quadO(P(u0 + 0.35, y0, z0), P(u1 - 0.35, y0, z0), P(u1 - 0.35, y1, z1), P(u0 + 0.35, y1, z1), TZ_LITE, top); } }
+      return;
+    }
+    // the windows: every ~3.1 m along the long walls, ~3.4 m along the short ones; a door in place of one on a long wall's ground floor
+    const rows = kind === 0 && he > 4.6 ? 2 : 1, st = he / rows, wy = Math.min(1.25, st - 0.95 - 0.3), nl = Math.max(1, Math.floor((L - 1.6) / 3.1)), ns = Math.floor((W - 1.6) / 3.4), dk = Math.floor(H() * nl), ds = H() < 0.5 ? -1 : 1;
+    for (let r = 0; r < rows; r++) {
+      for (let k = 0; k < nl; k++) for (const sd of [-1, 1]) { const u = -a + 0.8 + (L - 1.6) / nl * (k + 0.5);
+        if (!r && k === dk && sd === ds) pane(sd, u, 1.15, 0.12, Math.min(2.2, he - 0.25), sc(TZ_DOOR, 0.85), TZ_DOOR, PR + 0.03);
+        else if (wy > 0.45) pane(sd, u, 1.45, r * st + 0.95, r * st + 0.95 + wy, TZ_PANE[0], TZ_PANE[1], PR); }
+      if (wy > 0.45) for (let k = 0; k < ns; k++) for (const sd of [-2, 2]) pane(sd, -b + 0.8 + (W - 1.6) / ns * (k + 0.5), 1.3, r * st + 0.95, r * st + 0.95 + wy, TZ_PANE[0], TZ_PANE[1], PR);
+    }
+    if (kind === 1) {
+      // the hipped roof: the eave's rectangle shrinking to the ridge, a course at a time; the fascia under the eave
+      const ae = a + 0.45, be = b + 0.45, n = Math.max(2, Math.min(5, Math.round(Math.hypot(be, rise) / 1.1))), low = [x, y + he - 3, z], fc = sc(wc, 0.62);
+      const R4 = (t, dy) => { const u = ae - be * t, v = be * (1 - t), yy = he + rise * t + (dy || 0); return [P(-u, yy, -v), P(u, yy, -v), P(u, yy, v), P(-u, yy, v)]; };
+      const F0 = R4(0, -0.18), F1 = R4(0); for (let e = 0; e < 4; e++) g.quadO(F0[e], F0[(e + 1) % 4], F1[(e + 1) % 4], F1[e], fc, inn);
+      for (let k = 0; k < n; k++) { const A = R4(k / n), B = R4((k + 1) / n), f = k === 0 ? 0.84 : k === n - 1 ? 0.9 : k % 2 ? 0.94 : 1.03;
+        for (let e = 0; e < 4; e++) { const cb = sc(rc, f * (e % 2 ? 0.96 : 1) * (e > 1 ? 1.03 : 1));
+          if (k === n - 1 && e % 2) g.triO(A[e], A[(e + 1) % 4], B[e], cb, low);   // (a hip's last course: a triangle up to the ridge's end)
+          else g.quadO(A[e], A[(e + 1) % 4], B[(e + 1) % 4], B[e], cb, low); } }
+      return;
+    }
+    // the flat roof: the parapet round the deck (the walls carried up 0.42 m, a paler coping, the inner face in its own shade), what stands on it
+    const pw = 0.26, C4 = [[-a, -b], [a, -b], [a, b], [-a, b]], I4 = C4.map(([u, v]) => [u - Math.sign(u) * pw, v - Math.sign(v) * pw]), up = [x, y + he - 3, z], mid = [x, y + h + 3, z];
+    for (let e = 0; e < 4; e++) { const [u0, v0] = C4[e], [u1, v1] = C4[(e + 1) % 4], [i0, j0] = I4[e], [i1, j1] = I4[(e + 1) % 4];
+      g.quadO(P(u0, he, v0), P(u1, he, v1), P(u1, h, v1), P(u0, h, v0), wc, inn);
+      g.quadO(P(u0, h, v0), P(u1, h, v1), P(i1, h, j1), P(i0, h, j0), sc(wc, 1.04), up);
+      g.quadO(P(i0, he, j0), P(i1, he, j1), P(i1, h, j1), P(i0, h, j0), sc(wc, 0.8), [(P(u0, h, v0)[0] + P(u1, h, v1)[0]) / 2 * 2 - mid[0], mid[1], (P(u0, h, v0)[2] + P(u1, h, v1)[2]) / 2 * 2 - mid[2]]); }
+    const units = L > 8 && W > 6 ? 1 + Math.floor(H() * 2) : 0;
+    for (let k = 0; k < units; k++) { const q = P((H() - 0.5) * (L - 4.5), he, (H() - 0.5) * (W - 4.5)); box(g, q[0], q[1], q[2], 0.95, 0.62, 0.72, rot + (H() < 0.5 ? 0 : Math.PI / 2), TZ_UNIT[0], TZ_UNIT[1], true); }
+    if (units) { const q = P((H() < 0.5 ? -1 : 1) * (a - 1.6), he, (H() - 0.5) * (W - 3.5)); box(g, q[0], q[1], q[2], 0.95, 0.28, 0.95, rot, sc(TZ_UNIT[1], 0.92), TZ_UNIT[1], true); }
+  }
+
+  // LK.extra: the service roads, the link, the drift course, the buildings by the circuit and 60-200 m off (OSM outlines: white or cream
+  // render, grey cladding on the big halls; their roofs grey and flat or of terracotta tiles: tzBld); before the crowds and the trees (the
+  // buildings kept clear in tzKeep)
   function tzExtra(o) {
-    const { scen } = o, sk = API.T.def.sk || {}, R = rng(9037), st = { road: 0, track: 0, link: 0, drift: 0, buildings: 0 };
+    const { scen } = o, sk = API.T.def.sk || {}, R = rng(9037), st = { road: 0, track: 0, link: 0, drift: 0, buildings: 0, runoff: 0 };
+    tzRunoff(o, st);   // (before the service roads: of the meshes under the root so far)
     tzRoads(o, st);
     const b6 = sk.bld || [], WALL = [[0.93, 0.91, 0.86], [0.9, 0.85, 0.74], [0.84, 0.82, 0.78], [0.72, 0.73, 0.75]], ROOF = [[0.36, 0.37, 0.39], [0.62, 0.32, 0.22], [0.48, 0.49, 0.5]];
     for (const B of [b6, TZ_BLD2]) for (let k = 0; k < B.length; k += 6) {
       const [x, z, L, W, deg, h] = B.slice(k, k + 6), rot = deg * Math.PI / 180, c = Math.cos(rot), s = Math.sin(rot);
       let y = 1e9; for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.min(y, nrGround(x + (a * L * c - b * W * s) / 2, z + (a * L * s + b * W * c) / 2));
-      const wc = h > 6 ? WALL[3] : WALL[Math.floor(R() * 3)], rc = ROOF[h > 6 ? 0 : Math.floor(R() * 3)];
-      box(scen.get(x, z), x, y - 0.4, z, L, h + 0.4, W, rot, wc, rc, true);
+      const wc = h > 6 ? WALL[3] : WALL[Math.floor(R() * 3)], ri = h > 6 ? 0 : Math.floor(R() * 3);   // (the colours as they were drawn for the boxes)
+      tzBld(scen.get(x, z), x, y, z, L, W, rot, h, wc, ROOF[ri], h > 6 ? 2 : ri === 1 ? 1 : 0);
       st.buildings++;
     }
     return st;
   }
 
+  // the shaders' hash and noise (the run-offs', the ground's)
+  const TZ_FN = [
+    'float tzHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
+    'float tzNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(tzHash(i), tzHash(i + vec2(1.0, 0.0)), u.x), mix(tzHash(i + vec2(0.0, 1.0)), tzHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+
+  /* ---- the paved run-offs: their own surface on the shared builder's one run-off material ----
+     The circuit's run-offs are wide sheets of asphalt, and the chase camera fills the frame with them at every other corner. A sheet that
+     size is laid by a paver in lanes along the track, each lane in a day's lengths: lanes 5.2 m wide in lengths of 58-88 m, staggered from
+     lane to lane, each length its own shade (the mix, its age), a sealed joint between two of them (a thin dark line, spread over the
+     pixel it falls in: no shimmer further out), the paver's faint streaks along the lane; the dust and the dry grit the wind leaves along
+     the outer edge by the barrier; here and there the two dark lines of a car that ran wide and came back. All of it generic wear, none of it
+     surveyed: OSM holds the run-offs' outlines at most (docs/proge/tuzla.md). No paint (the builder's green band and the words lie on top).
+     The builder's quads carry the track's own frame in one more attribute (tzRo: metres across from the centreline, negative on the left;
+     metres along; metres to the sheet's outer and inner edges): no extra draw, no extra vertices. The renderer's asphalt sheen and the rain
+     chain on this material's shader after it (render.js, asphaltLook): only the colour changes here. */
+  const TZ_RO_GLSL = [
+    'varying vec4 vTzRo; varying vec2 vTzRw;', TZ_FN,
+    // a line's cover of the pixel: d metres from its middle, hw its half width, aw the pixel's width across it
+    'float tzLine(float d, float hw, float aw) { aw = max(aw, 1e-4); return clamp((hw + 0.5 * aw - d) / aw, 0.0, min(1.0, 2.0 * hw / aw)); }',
+    // the marks of a car that ran wide: one per 110 m and side at most, a shallow arc out from the track's edge and back (s along, sd the side, di from the inner edge, aw the pixel)
+    'float tzMark(float s, float sd, float di, float aw, float fk) {',
+    '  float sb = s + fk * 47.0, b = floor(sb / 110.0), u = sb - b * 110.0; vec2 hs = vec2(b * 3.17 + sd * 41.0 + fk * 7.0, b * 1.31 + 5.0 + fk * 3.0);',
+    '  float len = 40.0 + 45.0 * tzHash(hs + 19.7), t = (u - (110.0 - len) * tzHash(hs + 43.1)) / len, amp = len * (0.03 + 0.05 * tzHash(hs + 71.3));',
+    '  float dd = abs(abs(di - (amp * 4.0 * t * (1.0 - t) - 0.5)) - 0.8);   // (the two wheels 1.6 m apart)',
+    '  return step(tzHash(hs), 0.62) * step(0.0, t) * step(t, 1.0) * smoothstep(0.0, 0.08, t) * (1.0 - smoothstep(0.7, 1.0, t)) * tzLine(dd, 0.11, aw) * (0.5 + 0.5 * tzNoise(vec2(u * 0.9, b * 13.0 + fk * 5.0)));',
+    '}'].join('\n');
+  function tzRunoff({ root, tex, out }, st) {
+    const T = API.T, N = T.N, w = T.w, eps = 0.004;
+    let mat = null;   // the run-offs' material: the asphalt's picture, neither the road's own nor a layer laid over it; told by its first vertex (the builder's colour, its 8 m picture)
+    for (const m of root.children) {
+      const mm = m.material; if (!m.isMesh || !mm || !mm.isMeshLambertMaterial || mm.map !== tex.asphalt || mm === out.asphaltMat || mm.polygonOffset) continue;
+      const { color: C, uv: U, position: P } = m.geometry.attributes; if (!C || !U || !P || !P.count || P.count % 6) continue;
+      if (Math.abs(C.getX(0) - 1.02) < eps && Math.abs(C.getZ(0) - 1.04) < eps && Math.abs(U.getX(0) - P.getX(0) / 8) < 0.01 && Math.abs(U.getY(0) + P.getZ(0) / 8) < 0.01) { mat = mm; break; }
+    }
+    if (!mat) return;
+    const lat = (p, i) => (p[0] - T.px[i]) * T.nx[i] + (p[2] - T.pz[i]) * T.nz[i], gap = (p, q) => Math.hypot(p[0] - q[0], p[2] - q[2]), same = (p, q) => p[0] === q[0] && p[1] === q[1] && p[2] === q[2];
+    const across = (p) => {   // the sample a point of the sheet's inner edge lies across from
+      let bi = 0, bs = 1e9;
+      for (let i = 0; i < N; i++) { const dx = p[0] - T.px[i], dz = p[2] - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], e = Math.max(0, Math.abs(dx * T.nx[i] + dz * T.nz[i]) - w - 4), q = al * al + e * e; if (q < bs) { bs = q; bi = i; } }
+      return bi;
+    };
+    for (const m of root.children) {
+      if (m.material !== mat) continue;
+      const P = m.geometry.attributes.position.array, n = P.length / 3, A = new Float32Array(n * 4);
+      for (let q = 0; q < n; q += 6) {   // a quad of the builder's: (a, b, c) and (a, c, d), either one perhaps turned over: a and b across from sample i (inner, outer), c and d from i + 1 (outer, inner)
+        const v = [0, 1, 2, 3, 4, 5].map(k => [P[(q + k) * 3], P[(q + k) * 3 + 1], P[(q + k) * 3 + 2]]), set = (k, x, s, o, i) => A.set([x, s, o, i], (q + k) * 4);
+        const c1 = same(v[1], v[4]) || same(v[1], v[5]) ? 1 : same(v[2], v[4]) || same(v[2], v[5]) ? 2 : 0;
+        if (!c1 || !same(v[0], v[3])) { for (let k = 0; k < 6; k++) set(k, 2.6, 20, 99, 99); st.runoffOdd = (st.runoffOdd || 0) + 1; continue; }   // (not the builder's quad: plain, no joints, no dust)
+        const b1 = 3 - c1, c2 = same(v[4], v[c1]) ? 4 : 5, d2 = 9 - c2, i = across(v[0]), j = (i + 1) % N, sd = lat(v[0], i) < 0 ? -1 : 1, wi = gap(v[0], v[b1]), wj = gap(v[d2], v[c1]);
+        const la = Math.abs(lat(v[0], i)), lb = Math.abs(lat(v[b1], i)), lc = Math.abs(lat(v[c1], j)), ld = Math.abs(lat(v[d2], j)), s0 = i * T.ds, s1 = s0 + T.ds;
+        set(0, sd * la, s0, wi, 0); set(3, sd * la, s0, wi, 0); set(b1, sd * lb, s0, 0, wi); set(c1, sd * lc, s1, 0, wj); set(c2, sd * lc, s1, 0, wj); set(d2, sd * ld, s1, wj, 0);
+        st.runoff++;
+      }
+      m.geometry.setAttribute('tzRo', new THREE.BufferAttribute(A, 4));
+    }
+    const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => {
+      prev.call(mat, sh, r);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 tzRo; varying vec4 vTzRo; varying vec2 vTzRw;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvTzRo = tzRo; vTzRw = (modelMatrix * vec4(transformed, 1.0)).xz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + TZ_RO_GLSL).replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          float rSd = step(0.0, vTzRo.x), rL = abs(vTzRo.x), rS = vTzRo.y, rAl = fwidth(vTzRo.x), rAs = fwidth(vTzRo.y), rAi = fwidth(vTzRo.w);
+          float rLn = floor(rL / 5.2), rLf = rL - rLn * 5.2;   // the lane, the metres across it
+          float rLen = 58.0 + 30.0 * tzHash(vec2(rLn * 7.13 + rSd * 31.7, 11.0)), rSo = rS + 90.0 * tzHash(vec2(rLn * 3.31 + rSd * 17.9, 23.0)), rB = floor(rSo / rLen), rBf = rSo - rB * rLen;   // the lane's lengths, staggered
+          float rT1 = tzHash(vec2(rB * 1.37 + rLn * 17.0, rLn * 5.11 + rSd * 9.0 + 2.0)), rT2 = tzHash(vec2(rB * 2.11 + 5.0, rLn * 3.7 + rSd * 13.0 + 7.0));
+          vec3 rC = (0.93 + 0.12 * rT1) * mix(vec3(0.98, 1.0, 1.025), vec3(1.03, 1.0, 0.965), rT2);   // a length's shade: darker and bluer the newer, paler and warmer the older
+          rC *= 1.0 + (tzNoise(vec2(rL * 2.1 + rB * 7.0, rSo * 0.035 + rLn * 3.0)) - 0.5) * 0.06 * clamp(0.3 / max(rAl, 1e-4), 0.0, 1.0);   // the paver's streaks along the lane
+          float rN = tzNoise(vTzRw * 0.31), rN2 = tzNoise(vTzRw * 0.071 + 13.0);
+          rC *= 0.96 + 0.08 * rN2;   // (the sheet's own patches, 14 m)
+          float rJ = max(tzLine(min(rLf, 5.2 - rLf), 0.035, rAl), tzLine(min(rBf, rLen - rBf), 0.035, rAs));   // the sealed joints: between two lanes, across a lane at a length's end
+          rC *= 1.0 - 0.4 * rJ;
+          rC *= 1.0 - 0.3 * max(tzMark(rS, rSd, vTzRo.w, rAi, 0.0), tzMark(rS, rSd, vTzRo.w, rAi, 1.0));
+          float rDu = (1.0 - smoothstep(0.5, 9.0, vTzRo.z)) * (0.2 + 0.8 * rN) * (0.45 + 0.55 * rN2) + (1.0 - smoothstep(0.0, 1.4, vTzRo.z)) * 0.5;   // dust and grit toward the outer edge, a strip of it along the edge itself
+          diffuseColor.rgb *= rC * mix(vec3(1.0), vec3(1.3, 1.2, 1.0), clamp(rDu, 0.0, 1.0) * 0.55);
+        }`);
+    };
+    mat.customProgramCacheKey = () => 'tzRunoff';
+    mat.extensions = { derivatives: true };   // (fwidth: WebGL 1 needs the extension)
+    mat.needsUpdate = true;
+  }
+
+  /* ---- the ground (LK.ground): Tuzla's own, in place of World's grassLook (which leaves alone a material it finds marked) ----
+     The chase camera looks down at the ground 5-80 m ahead: what counts there is the grain. One tileable 256 px detail picture, read in world
+     space at two scales (2.3 m: the stalks and the grit under the car; 9 m: the same further out, bent by the patches' noise so that the tile
+     does not show): r the grain (dry stalks lying every way, the gaps between them), g and b the relief's slope (clods, tussocks, stones: lit
+     on the sun's side, dark on the far side, none in shadow), a the stones. No extra draw, no extra vertices: the shared builder's one ground
+     material (the terrain's tiles, the mown verges). */
+  let tzGPix = null, tzGMean = 0.5;
+  function tzTex() {
+    const S = 256;
+    if (!tzGPix) {
+      const R = rng(9041), A = new Float32Array(S * S), H = new Float32Array(S * S), B = new Float32Array(S * S);
+      const pn = (cells, seed) => { const r = rng(seed), g = new Float32Array(cells * cells); for (let k = 0; k < g.length; k++) g[k] = r();   // (value noise that wraps: tileable)
+        return (u, v) => { const fx = u * cells, fz = v * cells, i = Math.floor(fx), j = Math.floor(fz), a = fx - i, b = fz - j, sa = a * a * (3 - 2 * a), sb = b * b * (3 - 2 * b), i0 = i % cells, j0 = j % cells, i1 = (i0 + 1) % cells, j1 = (j0 + 1) % cells;
+          return lerp(lerp(g[j0 * cells + i0], g[j0 * cells + i1], sa), lerp(g[j1 * cells + i0], g[j1 * cells + i1], sa), sb); }; };
+      const n1 = pn(5, 9042), n2 = pn(13, 9043), n3 = pn(37, 9044), n4 = pn(90, 9045);
+      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = j * S + i, u = i / S, v = j / S;
+        A[k] = 0.5 + (n3(u, v) - 0.5) * 0.16 + (n4(u, v) - 0.5) * 0.14 + (R() - 0.5) * 0.1;
+        H[k] = n1(u, v) * 6 + n2(u, v) * 4 + n3(u, v) * 1.6 + n4(u, v) * 0.5; }   // (the heights in texels: the clods)
+      const at = (u, v) => (((v % S) + S) % S) * S + ((u % S) + S) % S;   // (wrapped at the edges)
+      const dot = (px, py, w) => { const i = Math.floor(px), j = Math.floor(py), a = px - i, b = py - j;   // a soft point of a stalk: the grain, and a little height where it is a pale one
+        for (const [di, dj, q] of [[0, 0, (1 - a) * (1 - b)], [1, 0, a * (1 - b)], [0, 1, (1 - a) * b], [1, 1, a * b]]) { const k = at(i + di, j + dj); A[k] += w * q; if (w > 0) H[k] += w * q * 1.3; } };
+      for (const [n, len, w] of [[1500, 26, 0.2], [1300, 20, -0.17], [260, 34, 0.34], [240, 12, -0.3]])   // the dry stalks: pale ones lying every way, the dark gaps between them
+        for (let k = 0; k < n; k++) { let x = R() * S, y = R() * S, a = R() * Math.PI * 2; const l = len * (0.45 + R() * 0.9), bend = (R() - 0.5) * 0.05, ww = w * (0.6 + R() * 0.8) * 0.7;
+          for (let t = 0; t < l; t += 0.7) { a += bend; x += Math.cos(a) * 0.7; y += Math.sin(a) * 0.7; dot(x, y, ww); } }
+      const mound = (px, py, rr, ht, stone) => {   // a tussock or a clod (a soft mound, paler on its top), or a stone (a dome, in the stones' channel, its own even tone)
+        const tone = 0.46 + R() * 0.12;
+        for (let v = Math.floor(py - rr - 1); v <= Math.ceil(py + rr + 1); v++) for (let u = Math.floor(px - rr - 1); u <= Math.ceil(px + rr + 1); u++) {
+          const q = Math.hypot(u + 0.5 - px, v + 0.5 - py) / rr; if (q >= 1) continue;
+          const k = at(u, v), dm = stone ? Math.sqrt(1 - q * q) : (1 - q * q) ** 2; H[k] += ht * dm;
+          if (stone) { const cov = clamp((1 - q) * rr, 0, 1); B[k] = Math.max(B[k], cov); A[k] = lerp(A[k], tone, cov); } else A[k] += (dm - 0.3) * 0.1; } };
+      for (let k = 0; k < 260; k++) { const rr = 2.5 + R() * 4.5; mound(R() * S, R() * S, rr, rr * (0.2 + R() * 0.25), false); }   // tussocks and clods
+      for (let k = 0; k < 14; k++) { const rr = 1.6 + R() * 2; mound(R() * S, R() * S, rr, rr * 0.8, true); }   // stones
+      for (let k = 0; k < 90; k++) { const rr = 0.7 + R() * 0.7; mound(R() * S, R() * S, rr, rr * 0.8, true); }   // grit
+      const d = new Uint8Array(S * S * 4); let sum = 0;
+      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = j * S + i, o = k * 4, gx = (H[at(i + 1, j)] - H[at(i - 1, j)]) * 0.5, gz = (H[at(i, j + 1)] - H[at(i, j - 1)]) * 0.5;   // (the slope along the picture's u and v: the world's x and z)
+        d[o] = Math.round(clamp(A[k], 0, 1) * 255); d[o + 1] = Math.round(clamp(0.5 + gx * 0.5, 0, 1) * 255); d[o + 2] = Math.round(clamp(0.5 + gz * 0.5, 0, 1) * 255); d[o + 3] = Math.round(B[k] * 255); sum += d[o]; }
+      tzGPix = d; tzGMean = sum / (S * S) / 255;
+    }
+    const t = new THREE.DataTexture(tzGPix, S, S, THREE.RGBAFormat);   // (a DataTexture: a canvas would premultiply the stones' alpha into the other channels; its rows are the picture's v as they are)
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = 4; t.needsUpdate = true; return t;
+  }
+  const TZ_GLSL = 'varying vec2 vTzW; varying float vTzD; uniform vec3 uTzAvg; uniform sampler2D uTzT; uniform float uNat; uniform float uPat;\n' + TZ_FN;
+  function tzGround(m, ownTex) {
+    const avg = (m.map && m.map.avgCol) || [0.35, 0.49, 0.22], t = ownTex(tzTex()), mean = tzGMean.toFixed(3), nat = (API.T && API.T.def && API.T.def.grassNat) || 0;
+    m.userData.grassLook = true;
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uTzAvg = { value: new THREE.Vector3(avg[0], avg[1], avg[2]) }; sh.uniforms.uTzT = { value: t }; sh.uniforms.uNat = { value: nat }; sh.uniforms.uPat = m.userData.uPat || (m.userData.uPat = { value: 1 });
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vTzW; varying float vTzD;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvTzW = (modelMatrix * vec4(transformed, 1.0)).xz; vTzD = -mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + TZ_GLSL).replace('#include <color_fragment>', `#include <color_fragment>
+        float tzE = 0.0;
+        {
+          const vec3 LUM = vec3(0.3, 0.59, 0.11);
+          vec3 base = vColor * uTzAvg, gc = diffuseColor.rgb;   // (base: the colour the vertex colours mean, over the grass picture's average)
+          float gg = clamp((base.g - max(base.r, base.b)) * 8.0, 0.0, 1.0), near = (1.0 - smoothstep(30.0, 90.0, vTzD)) * uPat, mid = (1.0 - smoothstep(110.0, 300.0, vTzD)) * uPat;
+          float n1 = tzNoise(vTzW * 0.025) * 0.65 + tzNoise(vTzW * 0.07 + 13.1) * 0.35, n2 = tzNoise(vTzW * 0.045 + 57.3);
+          vec2 uC = vTzW * 0.11 + (vec2(n1, n2) - 0.5) * 0.35 + vec2(0.61, 0.17), uD = vTzW * 0.43 + vec2(0.23, 0.71);
+          vec4 tC = texture2D(uTzT, uC), tD = texture2D(uTzT, uD);
+          float grain = (tD.r - ${mean}) * near, grainC = (tC.r - ${mean}) * mid;
+          if (gg > 0.0) {   // the mown lawns (green vertex colours): grassLook's lighter, darker and drier patches, its clumps and its tone; the blades' grain on top
+            gc *= mix(1.0, 0.84 + 0.3 * n1, gg * uPat);
+            gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), gg * smoothstep(0.62, 0.95, n2) * 0.6 * uPat);
+            float cl = tzNoise(vTzW * 0.55 + 3.7) * 0.6 + tzNoise(vTzW * 1.7 + 9.1) * 0.4;
+            gc *= 1.0 + gg * (cl - 0.5) * 0.22 * (1.0 - smoothstep(70.0, 160.0, vTzD));
+            if (uNat > 0.0) { float L = dot(gc, LUM); gc = mix(gc, mix(vec3(L), gc, 0.72) * vec3(1.04, 0.96, 0.86), gg * uNat); }
+            gc *= 1.0 + grain * vec3(0.44, 0.5, 0.3) + grainC * 0.22;
+          }
+          vec3 dry = gc;
+          if (gg < 1.0) {   // the dry hills: paler and deeper patches tens of metres across, soil where the grass is thin, pale stones on it, the stalks
+            float n3 = tzNoise(vTzW * 0.19 + 21.7) * 0.6 + tzNoise(vTzW * 0.53 + 5.3) * 0.4;
+            float tl = dot(texelColor.rgb, LUM) / dot(uTzAvg, LUM), bare = smoothstep(0.54, 0.72, n3 * 0.62 + n2 * 0.3 + grainC * 0.5) * uPat;
+            dry = diffuse * base * mix(1.0, 0.9 + 0.2 * n1, uPat); float dl = dot(dry, LUM);
+            dry = mix(dry, dl * vec3(1.08, 0.9, 0.7) * 0.82, bare * 0.7);
+            dry = mix(dry, dl * vec3(1.2, 1.17, 1.08), max(tD.a * near, tC.a * mid * 0.8) * (0.2 + 0.8 * bare) * 0.85);
+            dry *= mix(1.0, tl, 0.3) * (1.0 + grain * vec3(0.62, 0.6, 0.42) * mix(1.0, 0.6, bare) + grainC * vec3(0.34, 0.33, 0.24));
+          }
+          diffuseColor.rgb = mix(dry, gc, gg);
+          #if NUM_DIR_LIGHTS > 0
+            vec3 tzL = (vec4(directionalLights[0].direction, 0.0) * viewMatrix).xyz; float tzOl = length(tzL.xz);   // (the sun's direction in the world)
+            vec2 tzS = ((tD.gb - 0.502) * near + (tC.gb - 0.502) * mid * 0.8) * 2.0;   // (the relief's slope along the world's x and z)
+            tzE = -dot(tzS, tzL.xz / max(tzOl, 1e-3)) * min(tzOl / max(tzL.y, 0.2), 2.5) * mix(1.0, 0.45, gg);
+          #endif
+        }`)
+        .replace('reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();', 'reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask() * clamp( 1.0 + tzE, 0.45, 1.6 );');
+    };
+    m.customProgramCacheKey = () => 'tzGroundN';   // (N: the lawn toned as grassLook's natural grass; the look's test counts it)
+    m.needsUpdate = true;
+  }
+
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     tuzla: { ban: TZ_BAN, at: TZ_AT, nums: 14, numC: ['#c8102e', '#fff', '#fff'], shirts: TZ_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.1, 1.02, 0.84], gravel: false, noVid: true,
       pitBox: [-260, 90, -1], mow: 0.7,   // (the pit building on the left of the main straight, its garages from the pit entry's end to Turn 1's brakes; fainter mowing stripes; no farms on the circuit's hills)
-      woods: TZ_WOODS, extra: tzExtra, build: tzKeep, lane: true, fl: { tr: TR }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: TZ_WOODS, extra: tzExtra, build: tzKeep, ground: tzGround, lane: true, fl: { tr: TR }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
       flags: { stand: [{ tr: 0.8, tm: 0.2 }, { tr: 0.7, tm: 0.2, rb: 0.1 }], ga: { tr: 0.75, tm: 0.25 }, camp: { tr: 0.85, tm: 0.15 }, pole: 'tr', podium: 'tr' },
       vid: [], poles: [-240, 120, 1], runoff: ['TUZLA', 'İSTANBUL', 'TÜRKİYE'], straight: [-300, 130, 1],
       farm: { wall: [0.93, 0.9, 0.84], roof: [0.62, 0.32, 0.22], end: [0.9, 0.87, 0.8], barn: [0.55, 0.45, 0.35], barnRoof: [0.62, 0.32, 0.22], barnEnd: [0.52, 0.42, 0.32] },
