@@ -26,7 +26,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md) (resnično dirkališče; od 5. 11. 2026 testna, se ne posodablja več)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
-- [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
 - [Džebel Hafit, Združeni arabski emirati](docs/proge/hafit.md)
@@ -39,7 +38,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Sa Calobra, Španija](docs/proge/sacalobra.md)
 - [Kotor, Črna gora](docs/proge/kotor.md)
 - [Biķernieki, Latvija](docs/proge/bikernieki.md)
-- [London, Anglija](docs/proge/london.md)
 - [Zandvoort, Nizozemska](docs/proge/zandvoort.md)
 - [Dadès, Maroko](docs/proge/dades.md)
 - [Furka, Švica](docs/proge/furka.md)
@@ -80,7 +78,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Irishtown, Jamajka](docs/proge/irishtown.md)
 - [Vaoala, Samoa](docs/proge/vaoala.md)
 
-Na odločanju (`pending: true`): iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Hakone (Suzuka in Irohazaka sta po odločitvi 9. 11. 2026 testni); iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+Na odločanju (`pending: true`) zdaj ni nobene proge. Iz Anglije ostane Crystal Palace, iz Maroka Dadès (izbira uporabnika 26. 11. 2026, prek Mateja, tabla #382, komentar 7200860568); London in Marrakesh sta od 26. 11. 2026 testni (spodaj). Iz Japonske ostane prava proga Hakone (Suzuka in Irohazaka sta po odločitvi 9. 11. 2026 testni); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Meni proge na odločanju, kadar so, pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
 Iz Avstralije ostane Bathurst (zgoraj; izbira uporabnika 9. 11. 2026 med Bathurstom in Great Alpine Road, ki sta bila od 6. 11. 2026 na odločanju); Great Alpine Road je od 9. 11. 2026 testna, prav tako od 6. 11. 2026 Longford, Mount Hotham, Newcastle in Townsville (spodaj).
 - [Krásna Hôrka, Slovaška](docs/proge/krasnahorka.md)
@@ -124,6 +122,8 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Bang Saen, Tajska](docs/proge/bangsaen.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md) (resnična pot; od 9. 11. 2026 testna, se ne posodablja več)
 - [Espinazo del Diablo, Mehika](docs/proge/espinazo.md) (resnična pot; od 13. 11. 2026 testna, se ne posodablja več)
+- [Marrakesh, Maroko](docs/proge/marrakesh.md) (mestno dirkališče po pravih ulicah; od 26. 11. 2026 testna, iz Maroka ostane Dadès)
+- [London, Anglija](docs/proge/london.md) (mestna proga po pravih ulicah; od 26. 11. 2026 testna, iz Anglije ostane Crystal Palace)
 
 ## Nov meni
 

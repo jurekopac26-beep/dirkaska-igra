@@ -199,19 +199,6 @@
    49.9
   ]
  },
- "marrakesh": {
-  "s": 2076,
-  "o": "Lasnica",
-  "cam": [
-   -457.1,
-   17.9,
-   -639.3,
-   -421.7,
-   -5.9,
-   -603.9,
-   53.9
-  ]
- },
  "livorno": {
   "s": 11340,
   "o": "Lasnica nad Romitom",
@@ -354,19 +341,6 @@
    0.5,
    -150.9,
    53.3
-  ]
- },
- "london": {
-  "s": 1388,
-  "o": "Desni pri Westminstrskem mostu, Urni stolp",
-  "cam": [
-   222,
-   42,
-   172,
-   138,
-   22,
-   262,
-   58
   ]
  },
  "zandvoort": {

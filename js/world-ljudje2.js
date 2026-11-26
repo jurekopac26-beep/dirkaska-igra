@@ -1134,7 +1134,7 @@
       C.man(Object.assign({}, CREW, { hat: 'beanie', hatCol: 0x31406e }), { act: { a: 5.63, b: 2.7, pose: 'carryWalk', face: fC, hold: BAG },
         bliza: { pose: 'carry', face: fC, look: 'car' }, run: false });   // (where he stopped, turned to the barrier)
     } };
-  site('bathurst', [['delavci', 744, -1]]); site('marrakesh', [['delavci', 1424, -1]]);
+  site('bathurst', [['delavci', 744, -1]]);
 
   /* 2 · TV ekipa (Spa, Montréal, Štajerska: behind the barrier on a straight) — a television crew recording a piece by the track: the
      reporter, her back to the track, talks into her microphone to the camera; the cameraman with the camera on his shoulder, the sound man

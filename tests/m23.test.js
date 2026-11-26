@@ -18,7 +18,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('23'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'marrakesh'), T = new Core.Track(TD);
-check('23: on Marrakesh, a real track, the 4x4 (MEDVED 4x4)', D.track === 'marrakesh' && !TD.test && D.car === 'medved');
+check('23: on Marrakesh (a test track since 26. 11. 2026, the mission stays until the user moves it), the 4x4 (MEDVED 4x4)', D.track === 'marrakesh' && TD.test === true && D.car === 'medved');
 const o = D.opts(D);
 check('its race: K.R rivals, laps enough that nobody finishes, no damage', o.numAI === K.R && o.laps >= 50 && !o.tt && o.damage === 0);
 const M = Core.MODELS.find(m => m.id === 'medved');
