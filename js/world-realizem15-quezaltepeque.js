@@ -2,19 +2,22 @@
    REALIZEM 15 — Quezaltepeque, Salvador: what OpenStreetMap maps within 60 m of the circuit that its world (js/world-quezaltepeque.js on
    js/world-rbring.js) does not draw yet. Loaded after js/world-quezaltepeque.js (index.html); it wraps RB_LOOK.quezaltepeque's extra hook.
    Drawn: the kart track in the infield (OSM highway=raceway, sport=karting, and the 20 m raceway that joins it) as asphalt on the ground
-     where it comes within 60 m: on the right from Turns 6-7 to the lava straight, and before Turn 10; 4 of the 8 lone trees OSM maps
+     where it comes within 60 m: on the right from Turns 6-7 to the lava straight, and before Turn 10; (IZBIRA 'b' only) 4 of the 8 lone trees OSM maps
      (natural=tree: two on the right after Turn 9, one on the left before Turn 10 and one after it); 3 of the 12 picnic tables behind the
      grandstand outside the long left of Turn 5 (leisure=picnic_table). The trees and the tables only 1.5 m past the barriers, the kart track
      not within 4 m of them (the run-offs and the joins are the builder's): the other 4 trees and 9 tables are inside the barrier line the
      world draws there (the run-offs of the lava straight, Turn 10 and Turn 5). The scenery and the people are kept off all of it.
-   Kept open (docs/realizem): the service roads OSM tags unpaved or paving stones, which the world draws as asphalt; the colours of the
-     towers by the main straight (OSM building:colour); the underpass of the unpaved service road under the circuit before Turn 11; the
+   The observation tower by the main straight in its OSM colours (building:colour, the user's choice b on 23. 11.): OSM maps it as five
+     parts one on the other (def.sk.bld, 3, 6, 9, 12 and 15 m high), light grey (#e1dfdf) up to 6 m and from 9 to 12 m, dark blue (#16106a)
+     from 6 to 9 m and from 12 to 15 m and on the top; each part's band (from the part under it to its own top) a shell 4 cm outside the
+     world's white box of that part.
+   Kept open (docs/realizem): the service roads OSM tags unpaved or paving stones, which the world draws as asphalt; the underpass of the unpaved service road under the circuit before Turn 11; the
      83 m raceway OSM maps across the infield at Turn 10 (highway=raceway, sport=motor, no surface).
    Not drawn again (the world has them): the grandstands (OSM bleachers: def.stands), the service roads and the dirt tracks (def.sk.svc,
      sk.trk), the houses and the towers (def.sk.bld), the old lava (def.sk.lava), the grass (OSM landuse=grass: the land cover), the pit lane.
    Left to realizem 13 (PR #844, js/world-realizem13.js): the fences and the walls of the grounds (OSM barrier=fence, barrier=wall).
    Not drawn at all: points without an outline (the car parks, the toilets, the helipad, the gates), the viewpoints, any names.
-   Assumed (OSM has no tags for them): the kart track 7 m wide; the trees broadleaf, 9 m high; the tables timber, 1.8 m long, along the road
+   Assumed (OSM has no tags for them): the kart track 7 m wide; the trees broadleaf, 6 m high; the tables timber, 1.8 m long, along the road
      like the grandstand.
    Data: OpenStreetMap (© OpenStreetMap contributors, ODbL), the main API, 2026-11-22; metres, origin = the finish line, x east, z south.
    ========================================================================= */
@@ -70,13 +73,27 @@
       exclPush(x, z, 2); CR.avoid(x, z, 1.5); st.tables++;
     }
 
-    // the lone trees: the valley's broadleaf tree (the world's own, LK.woods), 9 m high, instanced
-    const pts = []; for (let k = 0; k < TREE.length; k += 2) if (past(TREE[k], TREE[k + 1], 1.5)) pts.push([TREE[k], TREE[k + 1]]);
+    // the observation tower (OSM w1222268361-w1222268364, w421840935): its parts' bands in their OSM colours; [x, z, length, width, angle,
+    // top, colour] as def.sk.bld has the parts (js/tracks/quezaltepeque.js), the bottom of each band the top of the part under it
+    const GREY = [0.882, 0.875, 0.875], BLUE = [0.086, 0.063, 0.416];
+    const TOWER = [[-57.3, 58.5, 4.9, 4.8, -28, 3, GREY], [-57.2, 58.4, 9.4, 7.9, -27, 6, GREY], [-57.7, 57.3, 9.4, 7.9, -25, 9, BLUE], [-55.8, 57.7, 9.4, 7.9, -25, 12, GREY], [-58.7, 58.9, 9.4, 7.9, -25, 15, BLUE]];
+    st.tower = 0; let lo = 0;
+    for (const [x, z, L, W, deg, h, col] of TOWER) {
+      const rot = deg * Math.PI / 180, c = Math.cos(rot), s = Math.sin(rot);
+      let y = 1e9; for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.min(y, nrGround(x + (a * L * c - b * W * s) / 2, z + (a * L * s + b * W * c) / 2));
+      const b0 = lo ? y + lo : y - 0.4; box(scen.get(x, z), x, b0, z, L + 0.08, y + h + 0.02 - b0, W + 0.08, rot, col, col, true); lo = h; st.tower++;
+    }
+
+    // the lone trees: the valley's broadleaf tree (the world's own, LK.woods), instanced. The user found the second picture of the PR (the tree
+    // by the barrier at 1890 m) not right on 23. 11.; the user chose on 25. 11. (docs/slike/quezaltepeque): IZBIRA 'b' all four smaller (6 m high, a narrower
+    // crown); 'a' would draw none; 9 m (the picture the user turned down) is no longer drawn
+    const IZBIRA = 'b', sc = [5.5, 6, 5.5];
+    const pts = []; if (IZBIRA === 'b') for (let k = 0; k < TREE.length; k += 2) if (past(TREE[k], TREE[k + 1], 1.5)) pts.push([TREE[k], TREE[k + 1]]);
     st.trees = pts.length;
     if (pts.length && LK.woods && LK.woods.geo) {
       const im = new THREE.InstancedMesh(LK.woods.geo(1), new THREE.MeshLambertMaterial({ vertexColors: true }), pts.length), mx = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
       pts.forEach(([x, z], k) => {
-        q.setFromAxisAngle(up, k * 2.4); mx.compose(new THREE.Vector3(x, nrGround(x, z) - 0.1, z), q, new THREE.Vector3(9.5, 9, 9.5)); im.setMatrixAt(k, mx);
+        q.setFromAxisAngle(up, k * 2.4); mx.compose(new THREE.Vector3(x, nrGround(x, z) - 0.1, z), q, new THREE.Vector3(...sc)); im.setMatrixAt(k, mx);
         exclPush(x, z, 5); CR.avoid(x, z, 2);
       });
       im.castShadow = true; im.name = 'quezaltepeque lone trees'; root.add(im);
