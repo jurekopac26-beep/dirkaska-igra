@@ -472,7 +472,7 @@ try {
     // first, 5 cm past the stock one's end), each option's tail reads differently from behind and from the stock one's, and the show ends
     // low behind the car at three quarters (its plate's last frame, 12_auspuh): the tips in the picture)
     { const k0 = await page.evaluate(() => { const S = __garage.S, k = JSON.stringify([S.cars.kolibri, S.money]); S.money = 9e6; S.cars.kolibri.own = true; S.cars.kolibri.parts = {}; __garage.pickCar('kolibri'); return k; }); await run();
-      const tail = () => page.evaluate(() => { const cur = Garage3D.cur, m = cur.M.def.mounts.auspuh, n = (cur.spec.deli || {}).auspuh || 0, R = new THREE.Raycaster();
+      const tail = () => page.evaluate(() => { const cur = Garage3D.cur, m = cur.M.def.mounts.auspuh, n = (cur.spec.deli || {}).auspuh || 0, R = new THREE.Raycaster(); R.camera = Garage3D.camera;
         cur.root.updateMatrixWorld(true); const hit = (y, z) => { R.set(new THREE.Vector3(-4, y, z), new THREE.Vector3(1, 0, 0)); const h = R.intersectObject(cur.root, true).find(q => q.object.visible); return h ? h.point.x : null; };
         const sig = []; for (let y = 0.13; y < 0.33; y += 0.02) for (let z = -0.66; z <= 0.66; z += 0.03) { const x = hit(y, z); sig.push(x == null || x > -1.2 ? '.' : Math.round((x + 2) * 50).toString(36)); }
         const tips = DELI.tips(n, m), cam = Garage3D.camera; cam.updateMatrixWorld(true);
