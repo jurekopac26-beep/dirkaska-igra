@@ -133,7 +133,9 @@ Odgovora (uporabnik, 25. 11.): škorci **a** (navadna ptica, brez oblaka in nove
 
 ### `ptice-vrste-1060`
 
-Slike zdaj/potem: žerjavi v klinu (Kågeröd), črni jastrebi v kroženju (Aguascalientes). Možnosti: 1 · ok, na `main` (priporočeno); 2 · popravi; 3 · brez vrst. Odprto od 26. 11.
+Slike zdaj/potem: žerjavi v klinu (Kågeröd), črni jastrebi v kroženju (Aguascalientes). Možnosti: 1 · ok, na `main` (priporočeno); 2 · popravi; 3 · brez vrst. 
+
+Odgovor (uporabnik, 26. 11.): **1 · Ok, tako na main.**
 
 ## Preklic
 

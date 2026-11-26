@@ -145,7 +145,7 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
    birdlife.org.au, pmc.ncbi.nlm.nih.gov, www.audubon.org, www.romania-insider.com, visitqatar.com, en.wikipedia.org, hww.ca,
    datazone.birdlife.org, www.nabu.de, www.allaboutbirds.org. Javljeno koordinaciji biketraveler; do takrat samo žerjav in črni jastreb.
 3. Iz izpisov iskanja 25. 11.: [26] drži za 1 % mahanja in osem ptic, kraj je Argentina (popravljeno zgoraj). Drugi viri [19]–[38] niso preverjeni.
-4. **Kartica `ptice-vrste-1060`** (26. 11.): slike zdaj/potem za žerjave (Kågeröd) in jastrebe (Aguascalientes); pred `main` počakaj »ok«.
+4. **Kartica `ptice-vrste-1060`** (26. 11.): slike zdaj/potem za žerjave (Kågeröd) in jastrebe (Aguascalientes); odgovor **1 · Ok, tako na main**.
 5. Naslednje vrste, ko bodo viri prebrani: siva gos (NL, DK; klin: formacija `wedge` je že v kodi), kanadska gos, črni škarnik (Japonska; `soar`),
    bela štorklja (Romunija; `soar`), rumenokljuni škarnik (Južna Afrika). Nova vrsta = vnos v `BIRD_KIND` in polje `ptice` v progi.
 6. Sepang: na `main` je pri 899 od 900 tisoč oglišč; ptice tega ne spreminjajo (Sepang nima polja `ptice`). Rezerva zahteva poseg v progo: ločena tema.
