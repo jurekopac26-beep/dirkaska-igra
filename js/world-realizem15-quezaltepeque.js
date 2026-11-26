@@ -85,9 +85,9 @@
     }
 
     // the lone trees: the valley's broadleaf tree (the world's own, LK.woods), instanced. The user found the second picture of the PR (the tree
-    // by the barrier at 1890 m) not right on 23. 11.; the question is open (docs/slike/quezaltepeque): IZBIRA 'a' none (until the answer),
-    // 'b' all four smaller (6 m high, a narrower crown); 9 m (the picture the user turned down) is no longer drawn
-    const IZBIRA = 'a', sc = [5.5, 6, 5.5];
+    // by the barrier at 1890 m) not right on 23. 11.; the user chose on 25. 11. (docs/slike/quezaltepeque): IZBIRA 'b' all four smaller (6 m high, a narrower
+    // crown); 'a' would draw none; 9 m (the picture the user turned down) is no longer drawn
+    const IZBIRA = 'b', sc = [5.5, 6, 5.5];
     const pts = []; if (IZBIRA === 'b') for (let k = 0; k < TREE.length; k += 2) if (past(TREE[k], TREE[k + 1], 1.5)) pts.push([TREE[k], TREE[k + 1]]);
     st.trees = pts.length;
     if (pts.length && LK.woods && LK.woods.geo) {

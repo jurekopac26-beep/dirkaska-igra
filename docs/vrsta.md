@@ -95,6 +95,14 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kariera za 1.0 (odločitev uporabnika 19. 11. 2026 ob 10.35 prek Mateja, tabla #382, komentar 7005268592; načrt `docs/kariera-1-0.md`, zbirna veja `kariera-1-0`, deli A–D) | partyslo | del A (logika, #792) na `main` 23. 11. v zbirki meni #1022. Naslednja sta B in C. |
 | **Boksi na vseh krožnih progah** (odločitve uporabnika 13. 11. 2026 ob ~23.40 »vsa dirkališča naj imajo bokse« ter 14. 11. ob ~0.05 »samo dirkališča, ki so v krogu, imajo bokse« in »gorske in odprte ceste: tam jih ne delamo«): bokse (boksarska steza, stavba z boksi, mehaniki) po vzoru Spa (`pit`, `pitRow`) dobijo prave krožne proge brez njih: Livorno, Nürburg (na `main`), Hakone, Kildare, Sosnova (#569); odprte ceste in kronometri ne; start odprtih cest: 3 predlogi v slikah za uporabnika; testne in proge na odločanju ne; obremenitev v mejah; proge, Opus z eno sejo | jure.kopac26 | ko #569 pride na `main` in je prostor za sejo s kodo; pred `main` slike zdaj/potem (kamera za avtom) |
 | **Nova proga: Džebel Hafit, Združeni arabski emirati** (odločitev uporabnika 14. 11. 2026 ob ~1.55 »ok začni 1. Džebel Hafit«, po opozorilu o izletni coni, torej izjema): gorska cesta na Džebel Hafit (~12 km, ~60 ovinkov; navzgor 2 pasova, navzdol 1, smeri večinoma ločeni), odsek 1–5 km najbolj ovinkastega dela po OSM (`tools/proga-podatki.py`); ograja prepreči padec; nova država; preveri pasove in ograje v OSM; slike za meni; proge, Opus z eno sejo | jure.kopac26 | ko je prostor za sejo s kodo |
+| Nova proga: Poljska (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | v delu 25. 11. |
+| Nova proga: Chamarel, Mavricij (rezerva uporabnika 13. 11.; veja `proga/chamarel`) | partyslo (rezerva croatiadata) | raziskava 25. 11.; kartica na strani Odločitve |
+| Nova proga: Bosna in Hercegovina (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11.; kartica na strani Odločitve |
+| Nova proga: Ciper (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11.; kartica na strani Odločitve |
+| Nova proga: Šipka, Bolgarija (A Šipka, B Trigrad, C Melnik na strani Odločitve) | partyslo (rezerva croatiadata) | PR #1095 (osnutek, podatki A); čaka »ok« (kartica proge-bolgarija-pot) |
+| Nova proga: Armenija (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11. |
+| Orodje za prekrivanje `tools/prekrivanje.mjs` (odprti PR z isto progo ali datoteko, račun lastnika; `docs/odlocitve.md`, »Brez dvojnega dela«, točka 3) | croatiadata | #1089 osnutek, test OK 25. 11. |
+| Nova proga: El Castaño, Venezuela (rezerva uporabnika 13. 11.; pot in zanimivosti na kartici Odločitve, veja `proga/el-castano`) | partyslo (rezerva croatiadata) | v delu od 25. 11. |
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
@@ -142,6 +150,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.18 | #1066 Orodje za predajo | `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje, test, kazalo, varčevanje (Matej, #382 7148056618, točka 10); orodje, ne proga | partyslo | osnutek, povezani testi zeleni; predaja za Združevanje partyslo |
 | 10.19 | #1011 Realizem (#862 pregled) | Eljem in Isalo brez stop črt, realizem9 mrtva koda; spoji se v zbirno #862 | biketraveler | svež `main` spojen 25. 11., povezani testi lokalno; osnutek do vrste, združi seja Združevanje |
 | 10.17 | #976 Realizem 2–15 dodatek | zbirka realizma 15 prog na #862 z #1011; svež `main` spojen 25. 11., povezani testi 89/89 zeleni. #952 čaka odločitev, #917/#933 v #1079. | partyslo | Ready for review, združi seja Združevanje |
-| 10.18 | #1080 Realizem 15 Quezaltepeque stolp | ostanek #952 (stolp v barvah iz OSM, b) na #976; povezani testi 89/89 zeleni. Drevesa odprto vprašanje (a/b) na strani Odločitve, privzeto brez. | partyslo | Ready for review, po #976, združi seja Združevanje |
+| 10.18 | #1080 Realizem 15 Quezaltepeque stolp | ostanek #952 (stolp v barvah iz OSM, b) na #976; povezani testi 89/89 zeleni. Drevesa: uporabnik izbral b (štiri manjša, 6 m; kartica `realizem-1080-quezaltepeque-drevesa`, 25. 11.). | partyslo | Ready for review, po #976, združi seja Združevanje |
+| 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
