@@ -7119,6 +7119,7 @@ const Garage3D = (function () {
     if (up) spawn((function* () { yield* lowerCar(cur, false, 0.5); yield* armsTo(0, 1.1); yield* carriageTo(LIFT.c0, 0.25); stowed = true; })());
     spawn((function* () { yield* tyrePass(PK.Q[0], PK.Q[1], 1.0, null, PK); bridgeRest(); yield* par(armRest(0, 2.0), armRest(1, 2.0)); off = true; })());
     if (up) { yield* waitFor(() => lift < 1e-3, 3); fitLog('down'); }
+    if (el === 'dim_gum' && self.GarazaDimGum) yield* GarazaDimGum.show({ cv: cur, puffs, eng, SFX, tween, wait, camTo, view, fitLog, idleOn });   // (I5: the smoke in its new colour, js/garaza-anim/dim-gum.js)
     SFX.ping(1760); hud('done', { kind: el });
     yield* waitFor(() => off && stowed, 6); fin = true; yield* par(home(1.4), rglUnstay(1.4));
   }
@@ -7493,6 +7494,7 @@ const Garage3D = (function () {
       // 13: home
       yield* waitFor(() => stowed, 4); fin = true; yield* par(home(1.4), rglUnstay(1.4), waitFor(() => exS.off, 6)); return;
     }
+    if (rg2 && self.GarazaAnim && GarazaAnim.run && (yield* GarazaAnim.run(el, { cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }, { THREE, V3, EZ, ARM, BRG, RB, RGL, FIT, LIFT, SFX, SPK, sparks, rnd, mark, burst, glint, poseBridge, passMk, spawn, par, wait, tween, waitFor, armTool, armExt, armCarry, armRest, armsTo, carriageTo, bridgeRest, poseArm, tipM, tipLen, hold, holdTo, letGo, tyrePass, camTo, view, spotView, liftUp, lowerCar, fitLog, fitSwap, settle, rglCopy, rglHide, rglUnstay, disposeTree, deliKey, home, get cur() { return cur; }, get lift() { return lift; }, get scene() { return scene; }, get puffs() { return puffs; }, get hud() { return hud; }, get DELI() { return self.DELI; } }))) return;   // (#1084 I1–I4: vzmeti, amortizerji, stabilizatorji, zamasek; js/garaza-anim/run.js)
     if (rg2) { yield* regalTwoShow({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }); return; }
     // THE WING with an old one on the lid by both arms: roka 1 to the lid as roka 2 goes over the regal, the old one off (the car the new
     // one's, its wing folded away), roka 2 lifts the new one off the regal, the bridge's half turn, roka 1 stands the old one in the empty
