@@ -164,7 +164,7 @@ def step_route(raw):
         else:
             t = W[w][1]
             seq.append([w, t.get('name', '') if t.get('name', '') in C['prefer'] else '', t.get('highway'), i, i + 1,
-                        {k: t[k] for k in ('lanes', 'width', 'oneway', 'bridge', 'tunnel', 'surface', 'maxspeed', 'ref', 'layer', 'sidewalk') if k in t}])
+                        {k: t[k] for k in ('lanes', 'width', 'oneway', 'bridge', 'tunnel', 'surface', 'smoothness', 'maxspeed', 'ref', 'layer', 'sidewalk') if k in t}])
     json.dump({'date': time.strftime('%Y-%m-%d', time.gmtime(os.path.getmtime(osm))), 'closed': closed, 'length': round(L, 1),
                'nodes': [[r, N[r][0], N[r][1]] for r in nodes], 'ways': seq}, open(os.path.join(raw, C['id'] + '-route.json'), 'w'), separators=(',', ':'))
     print('route: %d nodes, %.1f m' % (len(nodes), L))
@@ -824,6 +824,16 @@ def bends(line):
     return out
 
 # ================= the data step =================
+# Grafika AAA, SR2: how worn the asphalt of a way is (0-1, as World's roadWear kw: an open road 0.8, a circuit 0.3). OSM's smoothness where
+# it is tagged (the surveyor's own word); else the surface's (asphalt as an ordinary road's), a raceway's 0.4 of it (kept and resurfaced).
+# Not asphalt (gravel, cobbles, ...): 0, the shader draws no patches on it.
+WEAR_SMOOTH = {'excellent': 0.1, 'good': 0.3, 'intermediate': 0.55, 'bad': 0.8, 'very_bad': 1.0, 'horrible': 1.0, 'very_horrible': 1.0, 'impassable': 1.0}
+WEAR_SURF = {'asphalt': 0.75, 'paved': 0.75, '': 0.75, 'concrete': 0.6, 'concrete:plates': 0.7, 'chipseal': 0.9}
+def wear_density(highway, surface, smoothness):
+    if surface not in WEAR_SURF: return 0
+    if smoothness in WEAR_SMOOTH: return WEAR_SMOOTH[smoothness]
+    return round(WEAR_SURF[surface] * (0.4 if highway == 'raceway' else 1), 2)
+
 def step_data(raw):
     R = json.load(open(os.path.join(raw, C['id'] + '-route.json'))); D = json.load(open(os.path.join(raw, C['id'] + '-osm.json')))
     closed = C['closed']; n0 = R['nodes'][0]; F = Frame(n0[1], n0[2])
@@ -843,10 +853,11 @@ def step_data(raw):
     # the route's roads along it: [s0, s1, name (geographic ones only), highway, lanes, width, oneway today, surface, maxspeed, bridge]
     A, sN = route_s(R, line, F)
     if closed and sN[-1] < 1: sN[-1] = L
-    ways = []
+    ways = []; wear = []
     for w, nm, hw, i0, i1, tg in R['ways']:
         a = float(sN[i0]); b = float(sN[i1]) if i1 < len(sN) else L
         ways.append([r1(a), r1(b), nm if nm in C['geoRoads'] else '', hw, tg.get('lanes', ''), tg.get('width', ''), tg.get('oneway', ''), tg.get('surface', ''), tg.get('maxspeed', ''), 1 if tg.get('bridge') else 0])
+        wear.append([r1(a), r1(b), wear_density(hw, tg.get('surface', ''), tg.get('smoothness', ''))])
     step = L / len(line) if closed else L / (len(line) - 1)
     about = {
         'track': C.get('about', C['id']),
@@ -855,6 +866,7 @@ def step_data(raw):
         'h': 'the road\'s height at each point of line (m above sea level, 0.1 m): the ground model across the road (median of 5 samples, -8..8 m), the bridges straight from bank to bank, dips under 60 m filled, a 35 m median, sigma 15 m, grades at most %d %%, sigma 5 m' % round(MAXG * 100),
         'hRaw': 'the ground model under each point of line before the smoothing (m, 0.1 m)',
         'ways': '[s0, s1, road name (geographic names only), OSM highway, lanes, width, oneway today, surface, maxspeed, bridge]: the route\'s OSM ways in driving order (s in m from the start line)',
+        'wear': '[s0, s1, density 0-1]: how worn the asphalt is (patches, sealed cracks; Grafika AAA SR2, js/world-cesta.js KRPE gostota) from OSM\'s smoothness where it is tagged, else from surface and highway (a raceway 0.4 of a road\'s); 0 not asphalt (wear_density)',
         'bends': '[s of the apex, radius m, side (1 right, -1 left), turn deg]: the bends of line with a radius under 60 m',
         'bld': '[x, z, length, width, angle (rad, the long side from +x towards +z), height (m, 0 = not in OSM), kind, s, d (m, + right of the travel direction)]: the buildings with any part within %d m (OSM); kinds: ' % C['dist']['bld'] + BLD_KINDS,
         'bldOutline': '[index in bld, [x, z, ...]]: the outline of the buildings that are not a rectangle',
@@ -874,7 +886,7 @@ def step_data(raw):
         'tools': 'tools/proga-podatki.py with %s/config.json (see the tool\'s header)' % os.path.relpath(out_dir, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     }
     data = {'about': about, 'lat0': round(F.lat0, 7), 'lon0': round(F.lon0, 7), 'closed': closed, 'length': r1(L, 2), 'step': round(step, 4),
-            'line': flat(line, 2), 'h': [r1(v) for v in h], 'hRaw': [r1(v) for v in h0], 'ways': ways, 'bends': bends(line), 'grids': grids}
+            'line': flat(line, 2), 'h': [r1(v) for v in h], 'hRaw': [r1(v) for v in h0], 'ways': ways, 'wear': wear, 'bends': bends(line), 'grids': grids}
     data.update(vec)
     path = os.path.join(out_dir, C['id'] + '.json')
     with open(path, 'w') as f:

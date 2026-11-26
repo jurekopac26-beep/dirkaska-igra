@@ -7,7 +7,8 @@
       open road also down the middle between the two directions; stretches of newer and older asphalt, a whole width or one lane, with a
       straight joint across the road; broad faint blotches; an open road's lanes each with the oil's dark strip down the middle between the
       paler wheel tracks; where the cars brake drips of oil (a circuit: about the racing line; a road: in the lanes). The patches, sealed
-      cracks and the rubber of World's roadWear stay as they are (the rubbered line is a theme of its own: docs/zgumirana-linija.md).
+      cracks and the rubber of World's roadWear stay as they are (the rubbered line is a theme of its own: docs/zgumirana-linija.md);
+      on a track whose SR2 gate is open (KRPE, Grafika AAA) the patches and the sealed cracks are drawn here instead (KRPE_GLSL).
    2. THE PAINT'S WEAR (paintMat): the lines on the road are no longer even bands of one colour: the paint is thin in patches a metre or
       so long and chipped, the asphalt showing through, and a little dirty.
    Only the tracks named in PROGE take it (the real tracks on main; test: true and pending: true are frozen, CLAUDE.md, and the tracks of
@@ -259,25 +260,103 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
   ceDu = max( ceDu, uCeC.y * exp( - ceO * ceO / 0.3 ) * ceN2.a );
   ceDu *= 0.45 + 0.55 * ceN3.g;
   float ceWet = dot( diffuse, vec3( 1.0 ) ) * uCeD.w;
-  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD.rgb * ceWet * ceWet, uCeA.z * ceDu${V.paint ? ' * ceA0' : ''} );${V.rob ? EDGE + `
+  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD.rgb * ceWet * ceWet, uCeA.z * ceDu${V.paint ? ' * ceA0' : ''} );${V.krpe ? KRPE_GLSL.replace(/KRPE_A/g, V.paint ? ' * ceA0' : '') : ''}${V.rob ? EDGE + `
   float ceEs = 0.006 + 0.0016 * vCeZ;
   float ceSh = ( 1.0 - smoothstep( ceE - ceEs, ceE + ceEs, ceEd ) ) * step( 0.03, ceEm );
   diffuseColor.rgb *= 1.0 - 0.3 * ceEm * ( 1.0 - smoothstep( ceE, ceE + 0.05, ceEd ) );
   diffuseColor.rgb = mix( diffuseColor.rgb, texture2D( uCeM, vec2( - ceEd * uCeE.z, ceS * uCeE.w ) ).rgb * ceQ.rgb * ( uCeE.y * ceWet ), ceSh );` : ''}
 }`;
+  /* ---- Grafika AAA, SR2 (docs/grafika-aaa.md): the patches and the sealed cracks of World's roadWear in the road's own shader (no strip
+     of decals more: a draw call and its vertices less), from the same atlas (Tex's wear()) in road coordinates. The road in cells along
+     it: a patch at most in each cell of uCeK.x m (with the chance uCeK.z), a sealed crack at most in each of uCeK.y m (uCeK.w): across
+     the road, along it, or a network or one with its branches, as many of each as roadWear lays (its gaps: every 40-100 m a patch,
+     60 % in a wheel track; 25-60, 50-110, 120-260 m the cracks, all of them by the track's wear, KRPE's gostota). A hash of the cell
+     picks the place and the size; each lies whole in its cell with a margin, so no seam of the mipmaps shows where the cells meet. In
+     the road's colour (diffuse: the rain darkens them with it, as userData.wear does for the decals) ---- */
+  const KRPE_GLSL = `
+{
+  float ceLi = max( 0.8, ceW - 0.6 );
+  float ceC = floor( ceS / uCeK.x ), ceH = ceHs( ceC * 1.37 + 11.0 );
+  if ( ceH < uCeK.z ) {
+    float ceHl = 0.8 + 1.8 * ceHs( ceC + 3.1 ), ceHw = min( 0.5 + 1.1 * ceHs( ceC + 5.7 ), ceLi * 0.9 );
+    float ceSc = ( ceC + 0.5 ) * uCeK.x + ( ceHs( ceC + 8.3 ) - 0.5 ) * ( uCeK.x - 2.0 * ceHl - 1.0 );
+    float ceLo = ceH < 0.6 * uCeK.z ? ceRl + ( ceHs( ceC + 9.9 ) < 0.5 ? - 0.78 : 0.78 ) : ( ceHs( ceC + 2.3 ) * 2.0 - 1.0 ) * ceW;
+    ceLo = clamp( ceLo + ( ceHs( ceC + 4.4 ) - 0.5 ) * 0.6, ceHw - ceLi, ceLi - ceHw );
+    vec2 ceQ = vec2( ( ceS - ceSc ) / ceHl, ( ceO - ceLo ) / ceHw );
+    vec4 ceX = texture2D( uCeW, vec2( 0.02 ) + clamp( ceQ * 0.5 + 0.5, 0.0, 1.0 ) * 0.46 );
+    float ceKp = ceHs( ceC + 6.6 ) < 0.55 ? 0.84 + 0.08 * ceHs( ceC + 7.7 ) : 1.04 + 0.06 * ceHs( ceC + 7.7 );
+    diffuseColor.rgb = mix( diffuseColor.rgb, ceX.rgb * ceKp * diffuse, ceX.a * step( abs( ceQ.x ), 1.0 ) * step( abs( ceQ.y ), 1.0 )KRPE_A );
+  }
+  ceC = floor( ceS / uCeK.y ); ceH = ceHs( ceC * 1.71 + 29.0 );
+  if ( ceH < uCeK.w ) {
+    float ceTy = ceH / uCeK.w, ceH1 = ceHs( ceC + 3.3 ), ceH2 = ceHs( ceC + 5.1 ), ceH3 = ceHs( ceC + 7.9 ) - 0.5, ceH4 = ceHs( ceC + 9.7 );
+    vec2 ceQ; vec4 ceR;
+    if ( ceTy < 0.55 ) {   // (across the road: the atlas' long strips, 8:1, a little askew)
+      float ceL = min( 2.0 * ceLi, 3.0 + ceH1 * ( 2.0 * ceLi - 2.0 ) ), ceLo = ( ceH2 * 2.0 - 1.0 ) * max( 0.0, ceLi - ceL * 0.5 );
+      float ceSc = ( ceC + 0.5 ) * uCeK.y + ceH3 * ( uCeK.y - 4.0 );
+      ceQ = vec2( ( ceO - ceLo ) / ( ceL * 0.5 ), ( ceS - ceSc - ( ceH4 - 0.5 ) * 0.3 * ( ceO - ceLo ) ) / ( ceL / 16.0 ) );
+      ceR = vec4( 0.004, ceHs( ceC + 1.9 ) < 0.5 ? 0.752 : 0.877, 0.992, 0.121 );
+    } else if ( ceTy < 0.87 ) {   // (along it)
+      float ceL = 4.0 + 5.0 * ceH1, ceLo = ( ceH2 * 2.0 - 1.0 ) * ( ceLi - 0.5 ), ceSc = ( ceC + 0.5 ) * uCeK.y + ceH3 * ( uCeK.y - ceL - 1.0 );
+      ceQ = vec2( ( ceS - ceSc ) / ( ceL * 0.5 ), ( ceO - ceLo - ( ceH4 - 0.5 ) * 0.08 * ( ceS - ceSc ) ) / ( ceL / 16.0 ) );
+      ceR = vec4( 0.004, ceHs( ceC + 1.9 ) < 0.5 ? 0.752 : 0.877, 0.992, 0.121 );
+    } else {   // (a network of them, or one with its branches: turned any way)
+      float ceHh = 1.4 + 0.8 * ceH1, ceLo = ( ceH2 * 2.0 - 1.0 ) * max( 0.0, ceLi - ceHh * 1.12 ), ceSc = ( ceC + 0.5 ) * uCeK.y + ceH3 * ( uCeK.y - 2.24 * ceHh - 1.0 );
+      float ceA = ceH4 * 6.2832; vec2 ceD = vec2( ceS - ceSc, ceO - ceLo ), ceCs = vec2( cos( ceA ), sin( ceA ) );
+      ceQ = vec2( dot( ceD, ceCs ) / ceHh, dot( ceD, vec2( - ceCs.y, ceCs.x ) ) / ( ceHh * 0.5 ) );
+      ceR = vec4( ceHs( ceC + 1.9 ) < 0.5 ? 0.002 : 0.502, 0.502, 0.496, 0.246 );
+    }
+    vec4 ceX = texture2D( uCeW, ceR.xy + clamp( ceQ * 0.5 + 0.5, 0.0, 1.0 ) * ceR.zw );
+    diffuseColor.rgb = mix( diffuseColor.rgb, ceX.rgb * diffuse, ceX.a * ( 0.8 + 0.2 * ceHs( ceC + 6.1 ) ) * step( abs( ceQ.x ), 1.0 ) * step( abs( ceQ.y ), 1.0 )KRPE_A );
+  }
+}`;
+  const KRPE_HASH = 'float ceHs( float n ) { n = fract( n * 0.1031 ); n *= n + 33.33; n *= n + n; return fract( n ); }';   // (no sine: steady on phones' GPUs)
+  /* ---- Grafika AAA, SR1 (docs/grafika-aaa.md, N1-N9): the sun's glint on the aggregate's stones (Tex's zrno(): their tilts and their
+     gloss), the dry road's sparkle a camera sees towards the sun. Lambert lights per vertex: here the stone's own normal, a half vector
+     to the sun (the first directional light) and the shadow the vertex's light already holds (no second look at the shadow map). It
+     fades out with the distance (the mipmaps average the stones away before that) and with the wet (ceWet: the darkened colour of
+     applyRoad; the wet road's own look stays as it was). Two samples of the tile, turned and scaled apart: no repeat to see ---- */
+  const GLINT = `
+#if NUM_DIR_LIGHTS > 0
+{
+  float ceZw = smoothstep( 0.93, 0.995, dot( diffuse, vec3( 1.0 ) ) * uCeD.w );
+  float ceZd = length( vCeV ), ceZf = ceZw * ( 1.0 - smoothstep( uCeZ.y * 0.4, uCeZ.y, ceZd ) );
+  if ( ceZf > 0.002 ) {
+    vec4 ceG1 = texture2D( uCeG, vCe * uCeZ.x );
+    vec4 ceG2 = texture2D( uCeG, vec2( vCe.y, - vCe.x ) * ( uCeZ.x * 0.73 ) + 0.37 );
+    vec3 ceNn = normalize( vCeNv ), ceXv = ( viewMatrix * vec4( 1.0, 0.0, 0.0, 0.0 ) ).xyz;
+    vec3 ceTt = normalize( ceXv - ceNn * dot( ceNn, ceXv ) ), ceBt = cross( ceNn, ceTt );
+    vec2 ceTl = ( ceG1.rg + ceG2.rg - 1.0 ) * 2.0;
+    vec3 ceNs = normalize( ceNn + ceTt * ceTl.x + ceBt * ceTl.y );
+    vec3 ceL = directionalLights[ 0 ].direction, ceH = normalize( ceL + vCeV / max( ceZd, 0.001 ) );
+    float ceGl = max( ceG1.b, ceG2.b ), ceNh = max( dot( ceNs, ceH ), 0.0 );
+    float ceLf = dot( vLightFront * BRDF_Diffuse_Lambert( diffuseColor.rgb ), vec3( 1.0 ) );
+    float ceSm = ceLf > 1e-4 ? clamp( dot( reflectedLight.directDiffuse, vec3( 1.0 ) ) / ceLf, 0.0, 1.0 ) : 0.0;
+    reflectedLight.directDiffuse += directionalLights[ 0 ].color * ( uCeZ.z * ceZf * ceSm * ceGl * ceGl * pow( ceNh, uCeZ.w ) * step( 0.0, dot( ceNn, ceL ) ) );
+  }
+}
+#endif
+#include <aomap_fragment>`;
   function roadMat(base, T, cfg, P, V) {
-    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta' + (V.rob ? 'R' : '') + (V.paint ? 'P' : '') + '|' + base.customProgramCacheKey(), frag = roadFrag(V);
+    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta' + (V.rob ? 'R' : '') + (V.paint ? 'P' : '') + (V.zrno ? 'Z' : '') + (V.krpe ? 'K' : '') + '|' + base.customProgramCacheKey(), frag = roadFrag(V);
     const U = { uCeN: { value: noiseTex() }, uCeP: { value: P.tex }, uCeA: { value: new THREE.Vector4(1 / T.len, dirka, cfg.kPrah, cfg.kOlje) },
       uCeB: { value: new THREE.Vector4(cfg.kMadez, cfg.kOdsek, cfg.kLise, cfg.kProge || 0) }, uCeC: { value: new THREE.Vector4(cfg.sPrah, dirka ? 0 : 0.35, dirka ? 0 : 0.2, cfg.kKol || 0) }, uCeD: { value: new THREE.Vector4(cfg.prah[0], cfg.prah[1], cfg.prah[2], 1 / Math.max(0.01, base.color.r + base.color.g + base.color.b)) } };
     if (V.rob) { U.uCeM = { value: V.rob.tex }; U.uCeE = { value: new THREE.Vector4(cfg.rob, TMAX, V.rob.uv[0], V.rob.uv[1]) };
       U.uCeF = { value: new THREE.Vector4(Math.max(0, (cfg.robV || 0) - cfg.rob), cfg.kRobV > 0 && cfg.robV > cfg.rob ? 0.8 - 0.2 * cfg.kRobV : 2, 0, 0) }; }
+    if (V.zrno) { U.uCeG = { value: V.zrno.tex }; U.uCeZ = { value: new THREE.Vector4(1 / V.zrno.tile, V.zrno.dal, V.zrno.k, V.zrno.sij) };
+      m.ceZrno = V.zrno.tex; }   // (a key of the material's own: render.js's buildWorld finds it there and sends the shared picture up with the others, N3)
+    if (V.krpe) { const g = V.krpe.k.gostota, LP = 20, LC = 12;   // (cells of 20 m and 12 m; the chances as roadWear's gaps at the same wear)
+      U.uCeW = { value: V.krpe.tex }; U.uCeK = { value: new THREE.Vector4(LP, LC, clamp(LP * Math.sqrt(g) / 70, 0, 0.9), clamp(LC * g * (1 / 60 + 1 / 105 + 1 / 260), 0, 0.9)) }; }
     m.onBeforeCompile = (sh, r) => {
       prev.call(m, sh, r);   // (whatever the builder's material has in its shader already)
       Object.assign(sh.uniforms, U);
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vCe;' + (V.rob ? '\nvarying float vCeZ;' : '')).replace('#include <begin_vertex>', `#include <begin_vertex>\nvCe = vec2( uv.y * ${TILE.toFixed(1)}, uv.x * ${TILE.toFixed(1)} );`);
       if (V.rob) sh.vertexShader = sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvCeZ = - mvPosition.z;');
+      if (V.zrno) { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCeV, vCeNv;').replace('#include <project_vertex>', '#include <project_vertex>\nvCeV = - mvPosition.xyz; vCeNv = normalize( transformedNormal );');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeG; uniform vec4 uCeZ; varying vec3 vCeV, vCeNv;').replace('#include <aomap_fragment>', GLINT); }
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN, uCeP; uniform vec4 uCeA, uCeB, uCeC, uCeD; varying vec2 vCe;' + (V.rob ? '\nuniform sampler2D uCeM; uniform vec4 uCeE, uCeF; varying float vCeZ;' : ''))
         .replace('#include <color_fragment>', '#include <color_fragment>' + frag);
+      if (V.krpe) sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeW; uniform vec4 uCeK;\n' + KRPE_HASH);
     };
     m.customProgramCacheKey = () => key; m.userData.cesta = 'asfalt'; m.userData.ceU = U;
     return m;
@@ -318,7 +397,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
   const TONE = [0.40, 0.41, 0.43];   // (the asphalt texture's average tone, Tex's asphalt(): what shows where the paint is worn through)
 
   /* ---- at the end of a world's build (World's finish): the track's road and paint take their worn materials ---- */
-  function finish(o, tex, T) {
+  function finish(o, tex, T, tier) {
     const cfg = T && T.def && PROGE[T.def.id]; o.cesta = null;
     if (!cfg || !o || !o.root || !o.asphaltMat || !o.asphaltMat.isMeshLambertMaterial || !tex || !tex.asphalt || o.asphaltMat.map !== tex.asphalt) return;
     const N = T.N, ds = T.ds, open = T.open, HY = (i) => T.hy[i];
@@ -445,7 +524,10 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
       if (!open && !mid && hi - lo > len / 2) for (let k = 0; k < n; k++) if (A[k * 2] < len / 2) A[k * 2] += len;   // (a chunk across the lap's seam: its metres run on, as the road's UVs do)
       g.setAttribute('ceSO', new THREE.BufferAttribute(A, 2));
     };
-    const V = { paint: road.some(m => !!m.geometry.attributes.paint), rob: cfg.rob > 0 && tex.makadam ? robData() : null };
+    const Z = zrno(T, tier), V = { paint: road.some(m => !!m.geometry.attributes.paint), rob: cfg.rob > 0 && tex.makadam ? robData() : null, zrno: Z && tex.zrno ? Object.assign({ tex: tex.zrno }, Z) : null };
+    const K = krpe(T, tier, o, tex); V.krpe = K ? { tex: tex.wear, k: K } : null;
+    if (V.zrno) info.zrno = 1;
+    if (V.krpe) info.krpe = 1;
     const P = profil(T, cfg, seed, V.rob), rm = roadMat(o.asphaltMat, T, cfg, P, V); if (o.ownTex) o.ownTex.push(P.tex);
     for (const m of road) { m.material = rm; info.asfalt++; }
     for (const m of cand) {
@@ -458,5 +540,37 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     o.cestaMat = rm; o.cestaRobData = V.rob;
   }
 
-  World.cesta = { finish, crte, precne, CRTE, PROGE, BELA, RUMENA };
+  /* ---- Grafika AAA, H2′ (docs/grafika-aaa.md, N1-N9): the road markings a builder adds by sources, gated per track. OZNAKE[id]: the
+     markings switched on for the track (default none: 0); a frozen track (test, pending) never takes any, whatever the table says.
+     kildare: 'robRumena' the broken yellow edge line (S.I. 205/2026, RRM 025: about 2 m of line, 2 m of gap, 0.1-0.15 m wide) on the
+     two-lane regional road beside the circuit (js/world-kildare-obcestje.js), not on the circuit itself ---- */
+  const OZNAKE = { kildare: { robRumena: 1 } };
+  function oznake(T, kljuc) {
+    const d = T && T.def; if (!d || d.test || d.pending) return 0;
+    const z = OZNAKE[d.id]; return z && z[kljuc] ? 1 : 0;
+  }
+  /* ---- Grafika AAA, SR1: the asphalt's grain in the sun's light, gated per track (default none: 0; a frozen track never). ZRNO[id]:
+     tile (m: the grain texture's tile, Tex's zrno()), dal (m: where the glint has faded out), k (its strength, of the sun's light), sij
+     (the stones' polish: the glint's width). Only from SREDNJA up (tier 1); NIZKA keeps the grain baked into the asphalt's colour alone
+     (0 ms). spa: the pilot (N4/N5); an assumption, no source on its own mix yet: a circuit's fine dense-graded asphalt of crushed stone. on: 0 until N9's
+     measurement on a weak and a mid phone (the coordination's decision); a capture turns it on with ZRNO.spa.on = 1 before the build ---- */
+  const ZRNO = { spa: { on: 0, tile: 1.0, dal: 38, k: 0.42, sij: 90 } };
+  function zrno(T, tier) {
+    const d = T && T.def; if (!d || d.test || d.pending || (tier == null ? 2 : tier) < 1) return null;
+    const z = ZRNO[d.id]; return z && z.on ? z : null;
+  }
+  /* ---- Grafika AAA, SR2: the patches and the sealed cracks in the road's shader (KRPE_GLSL), gated per track (default none: 0; a frozen
+     track never, Jezero Ring with them). Where the gate is open World's roadWear leaves them out (its strips keep the rubber and the
+     arrows to the pits) and so does every tier, NIZKA too (else NIZKA would lose them). KRPE[id]: gostota, how worn (0-1, as roadWear's
+     kw): from OSM's surface and smoothness of the track's ways by tools/proga-podatki.py (wear_density; its output's "wear"). spa: the
+     pilot; OSM: highway=raceway, surface=asphalt, no smoothness: 0.3 (a modern circuit's, the same as roadWear's for it); the places of
+     the patches and cracks are made up (procedural), an assumption (docs/proge/spa.md). on: 0 until N9's measurement ---- */
+  const KRPE = { spa: { on: 0, gostota: 0.3 } };
+  function krpe(T, tier, o, tex) {
+    const d = T && T.def; if (!d || d.test || d.pending || !PROGE[d.id]) return null;
+    const z = KRPE[d.id]; if (!z || !z.on) return null;
+    if (o && (!o.asphaltMat || !o.asphaltMat.isMeshLambertMaterial || !tex || !tex.wear || o.asphaltMat.map !== tex.asphalt)) return null;   // (finish()'s own test: the road takes its shader, or the decals stay)
+    return z;
+  }
+  World.cesta = { finish, crte, precne, oznake, OZNAKE, zrno, ZRNO, krpe, KRPE, CRTE, PROGE, BELA, RUMENA };
 })();
