@@ -9,7 +9,11 @@
    The sun's position: NOAA Global Monitoring Laboratory, »General Solar Position Calculations« (the fractional year, the equation of time,
    the declination; public domain). The track's frame: metres, x east, z south (the track files), y up; GEO's small rotation (js/geo.js
    rot, Spa −0.62°) is left out.
-   Render.ext.sonce: { pos(S, hour?), apply(D, K, dawn, def, id) (js/render.js applyTheme, before the night's light) }
+   The rubber laid on the racing line (js/render.js rubberLine, the scene object named 'rubberline', Phong) on such a track: its highlight
+   SPEC_K of the one render.js sets (N8). Its specular was tuned for today's sun; under the real sun the camera behind the car can stand near
+   the mirror direction (Spa: the sun ahead, low over the road) and the highlight made the rubber brighter than the bare asphalt (Lambert),
+   which it never is (tests/browser/zgumirana-linija.test.mjs). Every other track's layer: as render.js makes it, bit for bit.
+   Render.ext.sonce: { pos(S, hour?), apply(D, K, dawn, def, id) (js/render.js applyTheme, before the night's light), SPEC_K }
    ========================================================================= */
 (function () {
   'use strict';
@@ -19,6 +23,7 @@
   const WARM = 35;      // (a real sun lower than this, degrees: its light a little warmer; 0 at WARM, WARM_K at the horizon)
   const WARM_K = 0.5, WARM_C = [1.0, 0.78, 0.56];
   const SET_EL = 6;     // (the dusk's light from the azimuth of the sun this high, degrees, that evening; the dawn's that morning)
+  const SPEC_K = 0.2;  // (the rubber's highlight on a real-sun track: this part of render.js's; N8)
   const MD = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
   const real = (def) => !!def && !def.test && !def.pending && !!def.sonce;
 
@@ -58,5 +63,25 @@
     if (v) { const m = Math.hypot(K.off[0], K.off[2]), vl = Math.hypot(v[0], v[2]) || 1; K.off = [v[0] / vl * m, K.off[1], v[2] / vl * m]; }   // (today's height of the dusk's sun)
   }
 
-  Render.ext.sonce = { MIN_EL, pos, apply };
+  // the rubber on the racing line (N8): render.js builds the layer in its frame after the world (js/render.js rubberLine: the object named
+  // 'rubberline', its MeshPhongMaterial in userData.m, made again on each world) and sets the highlight by m.specular.setRGB as the rubber
+  // builds up. On a real-sun track (the world built by Render.buildWorld for def.sonce) that one Color's setRGB is scaled by SPEC_K when the
+  // layer comes into the scene, before its first setRGB (the material starts black): no frame with the full highlight. No other track's
+  // layer is touched; the world's own objects (its root) are not named 'rubberline'.
+  let realNow = false, hooked = false;
+  function rubber(o) {
+    const m = o && o.name === 'rubberline' && o.userData && o.userData.m, c = m && m.specular;
+    if (!c || c.sonceK) return;
+    const set = c.setRGB; c.sonceK = SPEC_K;
+    c.setRGB = function (r, g, b, cs) { return set.call(this, r * SPEC_K, g * SPEC_K, b * SPEC_K, cs); };
+  }
+  const build = Render.buildWorld;
+  if (typeof build === 'function') Render.buildWorld = function (track) {
+    realNow = real(track && track.def);
+    const sc = Render.scene;
+    if (!hooked && sc) { hooked = true; const add = sc.add; sc.add = function (...o) { if (realNow) o.forEach(rubber); return add.apply(this, o); }; }
+    return build.apply(this, arguments);
+  };
+
+  Render.ext.sonce = { MIN_EL, SPEC_K, pos, apply };
 })();
