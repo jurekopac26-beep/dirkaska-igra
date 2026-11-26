@@ -116,6 +116,14 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-116`
+
+Kamera za avtom, skupina 116 (tretji prehod, `js/world-chase-bt116.js`): Ella (ob vznožju ograje nepokošen pas višje trave, na pobočjih do ~60 m nizko temno grmičevje v skupinah, pod gozdom nizka podrast, ob robu gozda listje in praprot na travi, na strminah mokre lise in mah; +5 klicev, 192 od 300, 534 tisoč oglišč). Tuzla ni v skupini, ker njena tla spreminja #1099. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Manj grmičevja (pol gostote), drugo tako.
+3. Ne, odstrani skupino 116.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
