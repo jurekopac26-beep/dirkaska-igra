@@ -26,8 +26,8 @@ const altD = (d) => T.altAt(T.hy[T.idx(T.startS + d)]);
 
 // 1. the track: an open road, four ways to drive it, its checkpoints; at full scale, 3-8 km (the group's rule); its name as the rules want it;
 // no fall off the edge (the rule: only Killarney)
-check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 3 checkpoints, named "Kraj, Država"',
-  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 3 && def.name === 'Tatev, Armenija' && def.en.name === 'Tatev, Armenia',
+check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 3 checkpoints, named "Kraj, Država", a real track (confirmed by the user 26. 11. 2026: not test, not pending)',
+  def.open && !def.test && !def.pending && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 3 && def.name === 'Tatev, Armenija' && def.en.name === 'Tatev, Armenia',
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, ${def.alt[0]} -> ${def.alt[1]} m, modes ${(def.modes || []).join(',')}`);
 let top = -1e9, low = 1e9, sLow = 0;
 for (let i = T.startIdx; i <= T.finishIdx; i++) { const a = T.altAt(T.hy[i]); if (a < low) { low = a; sLow = i * T.ds - T.startS; } top = Math.max(top, a); }

@@ -2,7 +2,7 @@
 
 [← Vse proge](../../README.md#proge) · proga `tatev` (`js/tracks/tatev.js`)
 
-**Na odločanju** (`pending: true`, od 26. 11. 2026): odsek je izbrala seja proge (naročilo uporabnika »naredi vseh 26 prog«); na strani Odločitve je kartica z načrtom, uporabnik ga potrdi ali zamenja. V meniju je do potrditve za gumbom NEUPORABNO, z oznako PENDING.
+**Potrjena** (26. 11. 2026, ob 4.15): odsek je izbrala seja proge (naročilo uporabnika »naredi vseh 26 prog«), uporabnik ga je potrdil na strani Odločitve (kartica `proga-1097-tatev-pot`, možnost a). Prava proga, brez oznake PENDING.
 
 Cesta H-46 v soteski reke Vorotan (pokrajina Sjunik, jug Armenije), v pravem merilu, ~7,2 km: od zahodnega roba soteske nad Halidzorjem (1215 m, 39,396° S, 46,266° V) se s tremi serpentinami spusti po pobočju na dno soteske, kjer gre čez naravni skalni most nad reko (Hudičev most, 1013 m, najnižja točka), pelje mimo toplega izvira ob reki in se po serpentinah vzhodne stene vzpne proti Tatevu (cilj na 1440 m); skupaj 19 ostrih ovinkov. Najbolj ovinkast kos ceste v soteski; padca čez rob ni (pravilo: samo Killarney).
 
