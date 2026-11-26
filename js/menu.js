@@ -745,7 +745,10 @@
   function tlenOn() {
     const st = app && $('#track-stage', app), e = st && $(':scope > .tlen', st), a = st && $(':scope > .tcount', st), c = st && $(':scope > .cams', st); if (!e || !a || !c) return;
     const sr = st.getBoundingClientRect(), ar = a.getBoundingClientRect(), cr = c.getBoundingClientRect();
-    e.style.left = ((ar.right + cr.left) / 2 - sr.left) + 'px'; e.hidden = cr.left - ar.right < e.offsetWidth + 8;
+    // (one line: the flag, the country, the length; a long country in a smaller type, down to 9 px, then hidden)
+    const room = cr.left - ar.right - 8; e.hidden = false; e.style.fontSize = ''; let f = parseFloat(getComputedStyle(e).fontSize);
+    while (e.offsetWidth > room && f > 9) { f -= 0.5; e.style.fontSize = f + 'px'; }
+    e.style.left = ((ar.right + cr.left) / 2 - sr.left) + 'px'; e.hidden = e.offsetWidth > room;
   }
   window.addEventListener('resize', () => { if (screen === 'track') { fitWhere(); tlenOn(); graphOn(); } });
 
@@ -1264,7 +1267,7 @@
     // (on its side the weather is a row at the card's top: the chosen one first, the others after it in their order: --wx, the drawing's px)
     const wo = WX5.filter(w => w[0] !== W), wxX = (id) => id === W ? 0 : (wo.length < WX5.length ? 4 : -40) + 40 * (wo.findIndex(w => w[0] === id) + 1);
     h += '<div class="stage' + (isRoute(t) ? ' route' : '') + (tallOf(t) ? ' tall' : '') + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
-      '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' + (t.test ? '' : '<div class="tlen" role="note" aria-label="Length ' + t.km.toFixed(2) + ' km">' + t.km.toFixed(2) + ' km</div>') +
+      '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' + (t.test ? '' : '<div class="tlen" role="note" aria-label="' + esc((ctry ? ctry + ', ' : '') + 'length ' + t.km.toFixed(2) + ' km') + '">' + (fl ? '<img src="' + fl + '" alt="">' : '') + '<span>' + esc(ctry ? ctry + ' \u00b7 ' : '') + t.km.toFixed(2) + ' km</span></div>') +
       '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '" style="--wx:' + wxX(w[0]) + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the room under the picture: the row of numbers, the yard, the neighbours, Race!

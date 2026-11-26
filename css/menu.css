@@ -494,10 +494,11 @@ svg { display: block; }
 /* the track's place among the real tracks of the list (17 / 26; a test track: TEST), at the picture's bottom left */
 .tcount { position: absolute; left: 10px; bottom: calc(var(--ov, 0px) + 10px); z-index: 4; height: 38px; padding: 0 11px; display: flex; align-items: center; border-radius: 8px; background: rgba(10, 14, 20, .45); pointer-events: none;
   color: #fff; font: 800 italic 16px/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: .2px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
-/* the track's length at the picture's foot, between the counter and the cameras (js/menu.js tlenOn puts it in the middle of that room) */
+/* the flag, the country and the track's length at the picture's foot (one line), between the counter and the cameras (js/menu.js tlenOn puts it in the middle of that room) */
 .tlen { position: absolute; left: 50%; bottom: calc(var(--ov, 0px) + 10px); z-index: 4; transform: translateX(-50%); height: 38px; padding: 0 11px; display: flex; align-items: center; border-radius: 8px; background: rgba(10, 14, 20, .45); pointer-events: none;
   color: #fff; font: 800 italic 15px/1 var(--f-ui); font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
 .tlen[hidden] { display: none; }
+.tlen { gap: .4em; } .tlen img { height: .87em; width: auto; flex: none; border-radius: 2px; }
 /* the weather: down the right side under the globe, no frames; the chosen one 52 px in its colours with its name, the others 40 px grey;
    the more options (···) under them */
 .wxv { position: absolute; right: 14px; top: calc(84px + var(--st, 0px)); width: 52px; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 8px; }
