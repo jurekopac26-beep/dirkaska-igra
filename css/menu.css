@@ -440,13 +440,11 @@ svg { display: block; }
 #s-track .stage { flex: 0 1 58.3%; min-height: 150px; overflow: hidden; }
 #s-track .stage .empty { position: absolute; left: 0; right: 0; top: 45%; margin: 0; text-align: center; font: 800 italic 16px/1.3 var(--f-ui); color: var(--lbl); }
 /* the height graph in its frame under the back button at its left (js/menu.js graphOf): as wide as the arrow was before Back came on it, 78, 0.6 of it high; the part driven (to the point)
-   its line coloured by the steepness over the colours of the height above the sea, strong, the rest a thin white line over the same, faint; the track's length in a dark band along the bottom (.band, .len) */
+   its line coloured by the steepness over the colours of the height above the sea, strong, the rest a thin white line over the same, faint */
 .hgraph { position: absolute; left: 14px; top: calc(88px + var(--st, 0px)); width: 78px; height: 47px; padding-top: 6px; z-index: 4; pointer-events: none; overflow: hidden; border-radius: 8px; background: rgba(10, 14, 20, .45); }
 .hgraph svg { display: block; }
 .hgraph .ah { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 1.8; stroke-linejoin: round; }
 .hgraph .ln { fill: none; stroke-width: 3.4; stroke-linejoin: round; stroke-linecap: round; }
-.hgraph .band { fill: rgba(10, 14, 20, .55); }   /* (the length's band along the bottom, the user's choice C of 23. 11.) */
-.hgraph text { font: 800 italic 10px var(--f-ui); fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .55); stroke-width: 2.4px; font-variant-numeric: tabular-nums; }
 .hgraph .pt circle { fill: #fff; stroke: #ffd23a; stroke-width: 1.6; }
 .hgraph .pt .halo { fill: rgba(255, 236, 170, .32); stroke: none; }
 /* the track's place among the real tracks of the list (17 / 26; a test track: TEST), at the picture's bottom left */
