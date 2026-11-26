@@ -23,6 +23,10 @@
 #        RAW: mapa ZUNAJ repozitorija za surove prenose (npr. scratchpad seje): RAW/osm/ (kosi), RAW/<id>-osm.json, RAW/<id>-route.json,
 #        RAW/<id>-ground.npz (predpomnilnik tal). Korak data piše tools/<id>/<id>.json (opis vsakega ključa v njegovem "about") ter
 #        dem.png, far.png, lc.png, lu.png, chm.png. Ponovni zagon prenese samo, česar še ni v RAW.
+#   3b. Plasti tal (Grafika AAA, SR3'; docs/grafika-aaa.md): python3 -I tools/proga-podatki.py --plasti js/tracks/<id>.js LAT LON OUT.json
+#        LAT LON: izhodišče proge (štart; ne natančno: zamik se poišče z ujemanjem gozda WorldCover z gozdom def.lc). Na mreži def.lc
+#        (16 m) speče deleže štirih plasti (trava, zemlja, gramoz, skala) iz celic ESA WorldCover 2021 (10 m), jih mehko zgladi in obdrži
+#        največ dve na celico; izpiše vrstico `plasti: { ... }` za js/tracks/<id>.js (OUT.json: isto z ujemanjem in zamikom).
 #   4. Preveri pot na sliki (npr. preprost izris `line` in `places`) in v viru o progi; popravi točke v config.json in ponovi route + data.
 #
 # Kaj nastane (podrobno v "about" izhoda): sredinska črta vsakih ~5 m (OSM, vogali zaobljeni), višine ceste (Copernicus DEM GLO-30, ki je
@@ -881,7 +885,60 @@ def step_data(raw):
         f.write('{\n' + ',\n'.join(json.dumps(k) + ': ' + json.dumps(v, ensure_ascii=False, separators=(',', ':')) for k, v in data.items()) + '\n}\n')
     print('wrote', path, os.path.getsize(path) // 1024, 'KB; grids:', ', '.join('%s %d KB' % (g['file'], os.path.getsize(os.path.join(out_dir, g['file'])) // 1024) for g in grids.values()))
 
+# ---- plasti tal (SR3'): ESA WorldCover -> največ dve plasti na celico def.lc ----
+# Razredi WorldCover v plasti 0 trava, 1 zemlja, 2 gramoz, 3 skala. Skala samo, kjer WorldCover kaže golo ali redko poraslo površje (60);
+# naklon ni uporabljen (predpostavka, zapisana v docs/proge/<id>.md: strma pobočja so v Ardenih porasla, gola so le, kjer to kaže WorldCover).
+PLASTI = {10: (0, 1, 0, 0), 20: (.5, .5, 0, 0), 30: (1, 0, 0, 0), 40: (1, 0, 0, 0), 50: (0, 0, 1, 0), 60: (0, 0, 0, 1), 70: (0, 0, 0, 1),
+          80: (0, 1, 0, 0), 90: (1, 0, 0, 0), 95: (0, 1, 0, 0), 100: (1, 0, 0, 0)}
+A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+def lc_grid(js):
+    import re
+    m = re.search(r"lc: \{ x0: (-?\d+), z0: (-?\d+), nx: (\d+), nz: (\d+), cell: (\d+), rle: '([^']+)'", open(js).read())
+    x0, z0, nx, nz, cell = map(int, m.groups()[:5]); rle = m.group(6); lc = np.zeros(nx * nz, np.uint8); p = k = 0
+    while k < lc.size:
+        v = A64.index(rle[p]); p += 1; n = (v & 15) + 1
+        if (v & 15) == 15:
+            while True:
+                e = A64.index(rle[p]); p += 1; n += e
+                if e != 63: break
+        lc[k:k + n] = v >> 4; k += n
+    return x0, z0, nx, nz, cell, lc.reshape(nz, nx)
+def plasti_bake(js, lat0, lon0):
+    x0, z0, nx, nz, cell, lc = lc_grid(js); F = Frame(lat0, lon0); M = 400
+    la, lo = F.ll(np.array([x0 - M, x0 + nx * cell + M]), np.array([z0 - M, z0 + nz * cell + M]))
+    a, T, _ = read_mosaic(wc_urls(la.min(), lo.min(), la.max(), lo.max()), la.min(), lo.min(), la.max(), lo.max()); inv = ~T
+    def cls(dx, dz, sub=1):   # the WorldCover class at sub x sub points of every cell
+        o = (np.arange(nx * sub) + .5) * cell / sub, (np.arange(nz * sub) + .5) * cell / sub
+        X, Z = np.meshgrid(x0 + dx + o[0], z0 + dz + o[1]); la, lo = F.ll(X, Z); c, r = inv * (lo, la)
+        return a[np.clip(np.floor(r).astype(int), 0, a.shape[0] - 1), np.clip(np.floor(c).astype(int), 0, a.shape[1] - 1)]
+    fo = lc == 1; agree = lambda dx, dz: ((cls(dx, dz) == 10) == fo).mean()
+    best = max((agree(dx, dz), dx, dz) for dx in range(-400, 401, 24) for dz in range(-400, 401, 24))   # the shift: the forests agree best
+    best = max((agree(dx, dz), dx, dz) for dx in range(best[1] - 24, best[1] + 25, 2) for dz in range(best[2] - 24, best[2] + 25, 2))
+    c = cls(best[1], best[2], 4); W = np.zeros((4,) + c.shape)
+    for k, w in PLASTI.items():
+        for l in range(4): W[l][c == k] = w[l]
+    W = W.reshape(4, nz, 4, nx, 4).mean(axis=(2, 4))   # the shares in every 16 m cell
+    W = np.stack([ndimage.gaussian_filter(W[l], 0.6, mode='nearest') for l in range(4)])   # soft over the cells' edges (~10 m)
+    o = np.argsort(-W, axis=0); d, s = o[0], o[1]; wd, ws = np.take_along_axis(W, o[:1], 0)[0], np.take_along_axis(W, o[1:2], 0)[0]
+    q = np.clip(np.rint(ws / np.maximum(wd + ws, 1e-6) * 6), 0, 3).astype(int); s = np.where(q == 0, d, s)
+    v = (d * 16 + s * 4 + q).ravel(); out = []; i = 0   # one character a cell; '.' + k: the last one k + 2 more times
+    while i < v.size:
+        j = i + 1
+        while j < v.size and v[j] == v[i]: j += 1
+        out.append(A64[v[i]]); n = j - i - 1
+        while n >= 2: k = min(n - 2, 63); out.append('.' + A64[k]); n -= k + 2
+        if n == 1: out.append(A64[v[i]])
+        i = j
+    share = [float(np.mean(d == l)) for l in range(4)]
+    return {'x0': x0, 'z0': z0, 'nx': nx, 'nz': nz, 'cell': cell, 'w': ''.join(out)}, {'agree': best[0], 'shift': best[1:], 'share': share}
+def step_plasti(js, lat0, lon0, out):
+    P, info = plasti_bake(js, lat0, lon0)
+    print('plasti: forest agreement %.3f at shift x %+d m, z %+d m; dominant share grass/earth/gravel/rock %s; %d chars' % (info['agree'], info['shift'][0], info['shift'][1], ' / '.join('%.3f' % v for v in info['share']), len(P['w'])))
+    json.dump({'plasti': P, 'info': info}, open(out, 'w'))
+    print("plasti: { on: 0, x0: %d, z0: %d, nx: %d, nz: %d, cell: %d, w: '%s' }," % (P['x0'], P['z0'], P['nx'], P['nz'], P['cell'], P['w'][:60] + '...'))
+
 def main():
+    if len(sys.argv) == 6 and sys.argv[1] == '--plasti': step_plasti(sys.argv[2], float(sys.argv[3]), float(sys.argv[4]), sys.argv[5]); return
     if len(sys.argv) < 3: print(__doc__ or 'usage: python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]'); sys.exit(2)
     C.update(load_config(sys.argv[1])); raw = sys.argv[2]; os.makedirs(raw, exist_ok=True)
     steps = [a for a in sys.argv[3:] if a in ('osm', 'route', 'data')] or ['osm', 'route', 'data']
