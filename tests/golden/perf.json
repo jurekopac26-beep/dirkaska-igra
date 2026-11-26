@@ -523,5 +523,12 @@
   "kverts": 426,
   "maxKverts": 632,
   "jsMs": 1.47
+ },
+ "elcastano": {
+  "calls": 115,
+  "maxCalls": 129,
+  "kverts": 312,
+  "maxKverts": 359,
+  "jsMs": 1.12
  }
 }

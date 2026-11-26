@@ -7054,5 +7054,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "elcastano/race/cs": {
+  "digest": "68316c818f7202f67ae52432",
+  "lead": 1549.1,
+  "car0": [
+   -737.74,
+   -317.44
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "elcastano/demo/cs": {
+  "digest": "273ed359806bd11efdc00a6d",
+  "lead": 1725.9,
+  "car0": [
+   -964.57,
+   -460.47
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "elcastano/upg/cs": {
+  "digest": "74a1f7f98d832f475714fb60",
+  "lead": 1702.1,
+  "car0": [
+   -885.99,
+   -384.33
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "elcastano/crash/cs": {
+  "digest": "abbda2ea7b4102c31902f5a0",
+  "lead": 1579.5,
+  "car0": [
+   -802.65,
+   -307.82
+  ],
+  "cover": {
+   "dmg": 0.72,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "elcastano/formula/cs": {
+  "digest": "0a5eca655a25053178b620ec",
+  "lead": 1761,
+  "car0": [
+   -897.13,
+   -393.91
+  ],
+  "cover": {
+   "dmg": 0.57,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "elcastano/lm/cs": {
+  "digest": "5a995dbe969bfa7687866369",
+  "lead": 1728.3,
+  "car0": [
+   -837.71,
+   -327.53
+  ],
+  "cover": {
+   "dmg": 0.57,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "elcastano/car/cs": {
+  "digest": "871e2bff53929e72c1b8334b",
+  "lead": 1539.9,
+  "car0": [
+   -699.72,
+   -315.52
+  ],
+  "cover": {
+   "dmg": 0.98,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

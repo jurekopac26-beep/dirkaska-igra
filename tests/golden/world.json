@@ -1933,5 +1933,29 @@
    "lifeShadow:MeshBasicMaterial": "b46a5933",
    "life:MeshBasicMaterial": "55cf5a12"
   }
+ },
+ "elcastano": {
+  "meshes": 906,
+  "verts": 910880,
+  "instances": 19712,
+  "props": 312,
+  "crowd": 51,
+  "world": "6e81e4d2",
+  "propsHash": "5802b953",
+  "floor": "d7b3cd7d/16660",
+  "groups": {
+   "-:MeshLambertMaterial": "f618a184",
+   "-:MeshPhongMaterial": "90f6928",
+   "-:MeshBasicMaterial": "e58ba41f",
+   "irFar:MeshLambertMaterial": "5fce813c",
+   "crowd:MeshLambertMaterial": "9c551f2",
+   "flags:MeshLambertMaterial": "936e029",
+   "ao:MeshBasicMaterial": "3f5cad75",
+   "tyremarks:MeshBasicMaterial": "f7f0f7c",
+   "roadwear:MeshLambertMaterial": "34ee0d8d",
+   "life:MeshLambertMaterial": "39381c24",
+   "lifeShadow:MeshBasicMaterial": "6b9fda58",
+   "life:MeshBasicMaterial": "54f4e429"
+  }
  }
 }
