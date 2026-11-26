@@ -127,10 +127,13 @@
   }
 
   // the circuit's other raceways (def.sk.race: [surface (0 asphalt, 5 gravel), [x, z, ...]]: OpenStreetMap; the layouts this lap leaves out,
-  // the pit lane), within 200 m of the road: ribbons on the ground (asphalt 8.2 m wide, white lines at its edges; gravel 9 m), every 1.5 m near
-  // the road and 3 m farther out, five points across; only past the barriers (the points inside them moved out to the barrier's back, the
-  // parts with none outside left out: the junctions closed by the lap's barriers); the trees and the crowds keep off them. In 512 m chunks
-  // (a few draws: the asphalt, the gravel)
+  // the pit lane), within 200 m of the road: ribbons on the ground as wide as the lap's own road (def.halfWidth; OSM has no width or lanes on
+  // any raceway, so their class gives it, as the lap's, the user's b of 23. 11.: KD_RACE_HW, which js/world-kildare-obcestje.js reads too; asphalt with white lines at
+  // its edges, or gravel), every 1.5 m near the road and 3 m farther out, five points across; only past the barriers (the points inside them
+  // moved out to the barrier's back, the parts with none outside left out: the junctions closed by the lap's barriers); the trees and the
+  // crowds keep off them. In 512 m chunks (a few draws: the asphalt, the gravel)
+  const KD_RACE_HW = () => API.T.def.halfWidth || 5.5;
+  API.kdRaceHW = KD_RACE_HW;
   function kdRace({ root, tex, exclPush, CR }, st) {
     const R0 = (API.T.def.sk || {}).race || []; if (!R0.length) return;
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
@@ -139,7 +142,7 @@
     const inside = (x, z) => { const q = nrNear(x, z); return q.i >= 0 && q.dd < 0.25; };
     const uv = (p, k) => [p[0] / k, -p[2] / k];
     for (const [sf, pts] of R0) {
-      const gv = sf === 5, hw = gv ? 4.5 : 4.1, C = gv ? CG : CA, col = gv ? GRV : ASP, UVK = gv ? 6 : 8;
+      const gv = sf === 5, hw = KD_RACE_HW(sf), C = gv ? CG : CA, col = gv ? GRV : ASP, UVK = gv ? 6 : 8;
       const P = []; for (let k = 0; k + 1 < pts.length; k += 2) P.push([pts[k], pts[k + 1]]);
       const cum = [0]; for (let k = 1; k < P.length; k++) cum.push(cum[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
       const Lr = cum[cum.length - 1]; if (Lr < 3) continue;
