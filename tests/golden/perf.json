@@ -225,10 +225,10 @@
  },
  "llogara": {
   "calls": 168,
-  "maxCalls": 180,
-  "kverts": 476,
-  "maxKverts": 590,
-  "jsMs": 1.29
+  "maxCalls": 181,
+  "kverts": 504,
+  "maxKverts": 625,
+  "jsMs": 1.51
  },
  "portomoniz": {
   "calls": 245,
@@ -259,11 +259,11 @@
   "jsMs": 1.02
  },
  "lombok": {
-  "calls": 219,
-  "maxCalls": 252,
-  "kverts": 644,
-  "maxKverts": 753,
-  "jsMs": 1.02
+  "calls": 227,
+  "maxCalls": 258,
+  "kverts": 669,
+  "maxKverts": 767,
+  "jsMs": 1.54
  },
  "buriram": {
   "calls": 207,
