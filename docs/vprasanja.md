@@ -116,6 +116,15 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-89`
+
+Kamera za avtom, skupina 89 (`js/world-chase-bt89.js`): Bathurst (ob robu asfalta obrabljene, zaprašene krpe, več jih je na cesti čez vrh hriba; na travi do zidu slamnate in olivne zaplate, pege rdeče-rjave prsti in nizki suhi šopi) in Biķernieki (v peščenih izletnih pasovih svetlejše in temnejše zaplate peska; v gozdu 18–60 m za ograjo zaplate iglic in mahu, mlade smreke in bori). Brez novih klicev risanja: Bathurst 175 od 300 in 518 tisoč oglišč, Biķernieki 195 in 497 tisoč. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Bathurst manj (pol gostote krp ob robu asfalta), Biķernieki tako.
+3. Biķernieki brez zaplat v pesku (samo gozd), Bathurst tako.
+4. Ne, odstrani skupino 89.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
