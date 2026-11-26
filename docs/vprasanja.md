@@ -116,6 +116,15 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-99`
+
+Kamera za avtom, skupina 99 (nadaljnji prehod, `js/world-chase-bt99.js`): Štajerska (samo pod gozdom od ~2 m za ograjo do ~60 m: rjave zaplate stelje iglic in bukovega listja, nizka temno zelena podrast, šopi senčne trave; pokošene trate ostanejo) in Sa Calobra (na obeh straneh, tudi kjer svet pada, do ~48 m: stoječi šopi trave càrritx, temne blazine makije, svetli apnenčasti kamni, malo rdeče zemlje na brežinah). Brez novih klicev risanja; Sa Calobra je redka, ker je na najgostejšem mestu pri 891 od 900 tisoč oglišč. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Sa Calobra tako, Štajerska brez (gozdni rob ostane, kot je).
+3. Štajerska tako, Sa Calobra brez.
+4. Ne, odstrani skupino 99.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
