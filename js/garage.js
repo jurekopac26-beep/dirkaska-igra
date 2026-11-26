@@ -322,9 +322,16 @@
     else { go.textContent = tr('Kupi · {0}', eur(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
     // the cars before and after it: their pictures (as they stand in their colour, half a metre further back), their names to the ear
     const i = ORDER.indexOf(S.car), pv = ORDER[(i - 1 + ORDER.length) % ORDER.length], nx = ORDER[(i + 1) % ORDER.length];
-    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : ''; el.querySelector('.nm').textContent = model(id).name;
+    // (a button's picture missing: drawn now, no show playing (the tap's moment, the page opened); else first in the queue, drawn the
+    // next frame even over a show; the car shown and the cars two before and after drawn ahead, when nothing moves: there at the next tap)
+    const at = (d) => ORDER[(i + d + 2 * ORDER.length) % ORDER.length];
+    // (a missing button picture: drawn now, unless a show runs and the button still shows one, then first in the queue, the next frame)
+    for (const [b, id] of [['g-prev', pv], ['g-next', nx]]) if (!thumbOf(id, S.cars[id].color)) { if (!G.ready || (G.busy && $(b).querySelector('.th img'))) queueThumbs([id], true); else try { drawThumb(id, S.cars[id].color); } catch (e) { console.error(e); queueThumbs([id], true); } }
+    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbOf(id, k.color), th = el.querySelector('.th'), was = th.firstElementChild;
+      if (!t) th.innerHTML = ''; else if (!was || was.getAttribute('src') !== t) th.innerHTML = '<img alt="" src="' + t + '">';   // (the same picture: not set again)
+      el.querySelector('.nm').textContent = model(id).name;
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
-    fitNames(); queueThumbs([pv, nx]);
+    fitNames(); queueThumbs([S.car, at(2), at(-2)]);
     // IZBERI PROGO: the flag, for the player's car or one rented; else grey, its words: buy or rent the car first (answer 3 of 2. 11.)
     const tb = $('g-track');
     if (own || rented) { tb.disabled = false; tb.classList.remove('not'); flagButton(); }
@@ -337,13 +344,22 @@
   function render() { head(); if (menu) drawMenu(); }
 
   /* ---------------- the car pictures for the buttons (drawn by Garage3D one at a time, between frames) ---------------- */
-  function queueThumbs(ids) {
-    for (const id of ids) { const k = S.cars[id]; if (!(thumbs[id] && thumbs[id][k.color]) && !thumbQ.some(q => q[0] === id && q[1] === k.color)) thumbQ.push([id, k.color]); }
+  // thumbs[id][colour]: a car's picture in that colour; thumbs[id].sig its stripe and upgrades (others: drawn again). Kept over a reset
+  // and another profile (the same car the same: not drawn again)
+  const tsig = (id) => { const k = S.cars[id], u = levels(k.parts); return stripeOf(k) + '|' + u.motor + u.gume + u.zavore + u.aero; };
+  const thumbOf = (id, col) => { const t = thumbs[id]; return t && t.sig === tsig(id) ? t[col] : null; };
+  function drawThumb(id, col) { const k = S.cars[id], sg = tsig(id); let t = thumbs[id]; if (!t || t.sig !== sg) t = thumbs[id] = { sig: sg };
+    t[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: stripeOf(k), upg: levels(k.parts) }, 160, 72, { back: 0.5 }); }
+  // (first: the buttons' pictures, at the queue's head (drawn over a show too, q[2]); the others after them, when no show plays)
+  function queueThumbs(ids, first) {
+    for (const id of first ? [...ids].reverse() : ids) { const col = S.cars[id].color; if (thumbOf(id, col)) continue;
+      const j = thumbQ.findIndex(q => q[0] === id && q[1] === col); if (j >= 0 && (!first || thumbQ[j][2])) continue; if (j >= 0) thumbQ.splice(j, 1);
+      if (first) thumbQ.unshift([id, col, 1]); else thumbQ.push([id, col]); }
   }
   function thumbStep() {
-    if (!thumbQ.length || G.busy || G.thumbed) return;
-    const [id, col] = thumbQ.shift(), k = S.cars[id];
-    try { (thumbs[id] = thumbs[id] || {})[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: stripeOf(k), upg: levels(k.parts) }, 160, 72, { back: 0.5 }); } catch (e) { console.error(e); return; }
+    if (!thumbQ.length || G.thumbed || (G.busy && !thumbQ[0][2])) return;
+    const [id, col] = thumbQ.shift(); if (thumbOf(id, col)) return;
+    try { drawThumb(id, col); } catch (e) { console.error(e); return; }
     head(); const pi = id === S.car && document.querySelector('#g-menu [data-col="' + col + '"] .pi'); if (pi) pi.innerHTML = '<img alt="" src="' + thumbs[id][col] + '">';   // (a paint card's car in its colour)
   }
 
@@ -384,9 +400,9 @@
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
     } else if (el === 'barva') {   // (plate an_barvanje 2/6: two tabs of four colours, each a card with the car in it; ⏱ the chamber's time; one price: the car's size)
       const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (m.ctab == null) m.ctab = CTAB.findIndex(g => g[1].includes(cur)); const g = CTAB[m.ctab][1];
-      for (const i of g) if (!(thumbs[S.car] && thumbs[S.car][i]) && !thumbQ.some(q => q[0] === S.car && q[1] === i)) thumbQ.push([S.car, i]);
+      for (const i of g) if (!thumbOf(S.car, i) && !thumbQ.some(q => q[0] === S.car && q[1] === i)) thumbQ.push([S.car, i]);
       html += '<div class="g-mh g-ch"><h3>' + esc(L2(EL.barva.n)) + '</h3>' + CTAB.map((q, i) => '<button class="g-cp' + (i === m.ctab ? ' sel' : '') + '" data-ctab="' + i + '">' + esc(tr(q[0])) + '</button>').join('') + '<span class="g-ct">⏱ 6 s</span></div><div class="g-mg g-mc">' +
-        g.map(i => { const q = COLORS[i], th = thumbs[S.car] && thumbs[S.car][i]; return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + esc(tr(i === c.color ? 'nameščeno' : 'brezplačno')) + '</i></div></button>'; }).join('') + '</div>';
+        g.map(i => { const q = COLORS[i], th = thumbOf(S.car, i); return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + esc(tr(i === c.color ? 'nameščeno' : 'brezplačno')) + '</i></div></button>'; }).join('') + '</div>';
       ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : p ? tr('KUPI IN NAMESTI · {0}', eur(p)) : tr('BARVAJ · BREZPLAČNO');
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
       const sc = c.stripe === false ? 'off' : c.sc >= 0 ? c.sc : -1;   // (V2: the stripes' colour and the car's number, free, at once: docs/novosti-e.md)
@@ -572,7 +588,7 @@
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
-      case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
+      case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
       case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); resize(); break;   // (the buttons at the top higher: the picture fitted again)
     }
   }
@@ -619,7 +635,7 @@
       if (t.dataset.sc) { G.sound(S.sound); doStripe(t.dataset.sc === 'off' ? 'off' : +t.dataset.sc); return; }
       if (t.dataset.num) { G.sound(S.sound); doNum(+t.dataset.num); return; }
       if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); else if (t.dataset.mact === 'aero') { menu = null; openMenu({ el: 'aero', key: null, car: true }); } return; }
-      if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
+      if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); closeMenu(); markMode(); render(); carAgain(); return; }
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
     window.addEventListener('resize', resize);
