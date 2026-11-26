@@ -100,6 +100,8 @@ En postopek velja za predelavo 15 prog in za vse nove proge. Je nov korak v `too
    - Streha, barve in material iz OSM.
    - Fasada iz atlasa regije, stavbe tik ob cesti po meri.
    - Ravni podrobnosti: do 60 m podrobno, do 300 m združene škatle, dlje obris na obzorju.
+   - **Kamera za avtom obzorja in neba ne vidi** (meritev 20. 11. 2026, `chasePose` v `js/render.js`): gleda 36° navzdol ležeče (39° pokonci), zgornji rob slike je 13° (10°) pod vodoravnico in na ravnem seže ~80 m (~125 m) pred kamero. Obris na obzorju, nebo in daljni griči se zato med vožnjo ne narišejo v kadru; daljava se vidi samo navzdol čez rob na gorskih progah (Killar, Ella, Llogara), kjer je danes bela praznina v barvi megle.
+   - **Dolina pod robom** (odločitev `obzorje-chase-1` = 1, 20. 11. 2026; `js/world-dolina-bt.js`): na sedmih pravih gorskih progah (Killar, Tianmen, Katu-Jaryk, Santo Antão, Sa Calobra, Ella, Llogara) je čez rob namesto praznine preprost teren doline iz višin proge v barvi kraja in megle, brez drobnih predmetov; ena mreža, +1 klic risanja na progo. Kjer ima proga daljni pogled, dolina prevzame njegove barve; pri Katu-Jaryku so normale obrnjene navzgor, da osojna stena kanjona ni temna ploskev. Fizika, ograje in druge proge nespremenjene.
 4. **Predmeti po državah.** Kompleti so ograje, smerniki, ogledala, jarki, svetilke, postajališča in table brez napisov. Postavijo se po podatkih in po pravilih (npr. ogledalo v ostrem ovinku). Rišejo se kot primerki iste mreže.
 5. **Stranske ceste in črte** (odločitev uporabnika 8. 11. ob ~23.10).
    - Iz OSM pride vsak odcep do ~60 m od proge, s pravim križiščem, črtami in znaki.
@@ -157,6 +159,7 @@ Mestne proge po središču velikih mest ostanejo generične (`CLAUDE.md`). Stavb
 | ZDA | Pikes Peak | ni preverjeno: §120(a), stavbe, vidne z javnega mesta, na slikah prosto; 3D ni potrjeno | stavba na vrhu poenostavljena, brez imena |
 | Brazilija | Rio do Rastro | ni preverjeno: čl. 48 zakona 9.610, dela na javnih mestih prosto | razgledišče generično |
 | Kitajska | Tianmen | ni preverjeno: čl. 24(10), dopolnitev 2020; prodajna raba ni potrjena | Nebeška vrata so naravna jama, ne delo |
+| Slovaška | Krásna Hôrka | ni preverjeno: §42 zakona 185/2015 (dela, trajno postavljena na javnem mestu); prodajna raba ni potrjena. Grad je srednjeveški (avtorske pravice so potekle), obnova po požaru 2012 še traja | grad po obrisu iz OSM in višinah, cel kot pred požarom, samo od zunaj, brez napisov, kipov, grbov in okrasja (odločitev 15. 11. 2026) |
 | Peru | Cusco | ni preverjeno: inkovski zidovi Sacsayhuamána (15. st.) niso avtorsko varovani; ali zakon o kulturni dediščini omejuje prodajno rabo podob, ni preverjeno | zidovi po poteku iz OSM, kamni izmišljeni; kipa nad mestom ni |
 
 Viri (8. 11. 2026):

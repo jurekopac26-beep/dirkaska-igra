@@ -2284,6 +2284,42 @@ const Core = (function () {
     if (e.brake) car.brakeG *= 1 + e.brake;
     return e;
   }
+  // a car's look without its effects (docs/novosti-e.md, Novost 1: the garage's parts and stripes in a championship, on a friend's car online
+  // and in a replay file): { deli: { element: option 1..16 }, stripe: false (stripes off), sc: the stripes' colour, hex (V2) }. lookWire(v) its
+  // short form for the wire and the .rrp file ({ d, s: 0, c } or null: nothing to show), lookRead(o) that form checked (unknown elements, options out of 1..16 and junk out;
+  // null: nothing, e.g. an older peer's or file's without one), dressOnly(car, v) puts it on a car: car.deli (the renderer draws it),
+  // dLower / dTint, stripe; the mass, power, grip, drag and brakes stay the model's (the physics as without parts)
+  const LOOK_ID = /^[a-z_]{2,24}$/;
+  function lookRead(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+    const d = {}, src = o.d && typeof o.d === 'object' && !Array.isArray(o.d) ? o.d : {}; let n = 0;
+    for (const k of Object.keys(src).slice(0, 64)) { const v = src[k]; if (LOOK_ID.test(k) && Number.isInteger(v) && v >= 1 && v <= 16 && n < 40) { d[k] = v; n++; } }
+    const D = typeof DELI !== 'undefined' ? DELI.clean(d, null) : d, v = {};
+    if (Object.keys(D).length) v.deli = D;
+    if (o.s === 0) v.stripe = false;
+    if (Number.isInteger(o.c) && o.c >= 0 && o.c <= 0xffffff) v.sc = o.c;
+    return Object.keys(v).length ? v : null;
+  }
+  function lookWire(v) {
+    if (!v || typeof v !== 'object') return null;
+    const D = v.deli && typeof v.deli === 'object' ? lookRead({ d: v.deli }) : null, w = {};
+    if (D && D.deli) w.d = D.deli;
+    if (v.stripe === false) w.s = 0;
+    if (Number.isInteger(v.sc) && v.sc >= 0 && v.sc <= 0xffffff) w.c = v.sc;
+    return Object.keys(w).length ? w : null;
+  }
+  function dressOnly(car, v) {
+    if (!v || typeof v !== 'object') return car;
+    if (v.stripe === false) car.stripe = false;
+    if (Number.isInteger(v.sc) && v.sc >= 0 && v.sc <= 0xffffff) car.stripeCol = v.sc;   // (the stripes' own colour: render.js kitRecolour)
+    const D = v.deli && typeof DELI !== 'undefined' ? DELI.clean(v.deli, null) : null;
+    if (!D || !Object.keys(D).length) return car;
+    let lower = 0, tint = 0;
+    for (const id in D) { const f = DELI.effect(id, D[id]); if (f) { lower += f.lower || 0; tint = Math.max(tint, f.tint || 0); } }
+    if (lower) car.dLower = lower;
+    if (tint) car.dTint = tint;
+    car.deli = D; return car;
+  }
   // the garage's tyres (car.dTy, applyDeli): their grip on the surface under a wheel. Snow: a winter race (Race opts.winter) or a stage's
   // gravel packed with snow (trk.snowK); gravel: the loose ground (grass, gravel, makadam); else the road, dry to wet by the rain's water
   // (the water under the car, Car.wx.w; a worn or cold tyre reads as a little water too, as ever: DELI_W0 of grip lost is a soaked road)
@@ -7249,11 +7285,13 @@ const Core = (function () {
         let c;
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup, slide: opts.playerSlide, deli: opts.playerDeli });
+          if (opts.playerLook) dressOnly(c, opts.playerDeli ? { stripe: opts.playerLook.stripe, sc: opts.playerLook.sc } : opts.playerLook);   // (the garage's look without its effects: a championship's, online; with the parts fitted only the stripes)
           this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
           if (opts.playerPolice) patrolCar(c);   // (online, beg s prijatelji: I drive the patrol car)
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
+          if (RM.look) dressOnly(c, RM.look);   // (the friend's garage look, Core.lookRead: drawn only, the physics the model's)
           c.netOf = { id: RM.id || 'h', num: RM.num || 2 }; this.remotes.push(c);   // (in an object: the golden references digest only the plain fields)
           if (RM.police) patrolCar(c);   // (online, beg s prijatelji: the friend drives the patrol car)
         } else {
@@ -9331,7 +9369,7 @@ const Core = (function () {
     return q;
   }
 
-  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, dressOnly, lookWire, lookRead, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };
