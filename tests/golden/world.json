@@ -1206,12 +1206,12 @@
   }
  },
  "killar": {
-  "meshes": 1650,
-  "verts": 1401443,
+  "meshes": 1677,
+  "verts": 1449779,
   "instances": 43063,
   "props": 95,
   "crowd": 146,
-  "world": "8d1f0b5c",
+  "world": "d2de9275",
   "propsHash": "5a404b3",
   "floor": "ab9d352f/9520",
   "groups": {
@@ -1221,7 +1221,7 @@
    "roadside-ways:MeshLambertMaterial": "711f7733",
    "roadside-ways:MeshPhongMaterial": "7456c5d0",
    "crowd:MeshLambertMaterial": "73fc1991",
-   "rob:MeshLambertMaterial": "4e1cf33c",
+   "rob:MeshLambertMaterial": "fe5b4564",
    "dolina:MeshLambertMaterial": "27ba5586",
    "ao:MeshBasicMaterial": "cd120927",
    "life:MeshLambertMaterial": "ccf078f7",
