@@ -136,6 +136,8 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 10.1 | #1075 | Popravek rdečega `main`: ploščica izbere progo pred izbrano (`pad.test`) | biketraveler | prvi v vrsti; CI zelen, združi seja Združevanje. |
+| 10.1a | zbirna/proge-partyslo-26-11 | Zbirka prog partyslo: #788, #791, #1090, #1118, #1091–#1097, #1122, #1099 (pred posameznimi PR) | partyslo | po #1115 in #1075; nato zbirka AAA. |
+| 10.1b | zbirna/grafika-aaa-26-11 | Zbirka grafike AAA: #1116, #1123, #1121, #1120, #1128, #1124, #1125, SR2 (pred posameznimi PR) | partyslo | po zbirki prog; nato #1119, #1048, #754, #1127. |
 | 10.2 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: takoj za #1075) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | Meteora, PR #1094. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | PR #1122 pripravljen. |
