@@ -6973,6 +6973,69 @@ const Garage3D = (function () {
     const m = new V3(x, (G.b + G.t) / 2, G.zf(x)).applyMatrix4(MF), p = new V3(q[0], q[1], q[2]).applyMatrix4(MF).addScaledVector(D.dir, D.out);
     return { m, p, stop: [m.x + D.dir.x * (D.out + 0.42), m.z + D.dir.z * (D.out + 0.42)] }; }
 
+  // THE REGAL'S SMALL PARTS by both arms (#1084: the springs, the dampers, the anti-roll bars, the fuel cap, the tyre smoke; by the wing's
+  // template): roka 1 takes the old part off the car as roka 2 lifts the new one off the regal, the bridge's half turn, roka 1 stands the
+  // old one in the empty place, roka 2 puts the new one on; a part by a wheel: the car up on the lift meanwhile (its place planned as it
+  // stands there). regalTwoPlan: null (FIT.why) when there is no clear way for the two: the one arm as before
+  const RGL_TWO = ['vzmeti', 'amortizerji', 'stabilizatorji', 'zamasek', 'dim_gum'];
+  function regalTwoPlan(cv, el, sd, grab, hs) {
+    if (!RGL_TWO.includes(el) || !grab || !grab.pre) return null;
+    const up = PART_AT.wheel.includes(el) ? FIT.lift : 0, l0 = lift, f0 = BRG.free, G = cv.v.grp;
+    if (up) setLift(up);
+    const gq = G.getWorldQuaternion(new THREE.Quaternion()), yA = new V3(0, 1, 0).applyQuaternion(gq), S = partSpot(cv, el, sd), NC = { k: 160 }, clr = (tip, s) => clearOf(G, tip, s, NC);
+    let PL = null;
+    if (S.out.y <= 0.7) { const face = S.out.clone(), cT = S.p.clone().addScaledVector(S.out, hs.z + 0.03), pd = S.out.clone().multiplyScalar(0.5).add(yA).normalize(), dirs = inDirs(S.out);
+      BRG.free = true; for (const q of [pd, yA]) if (!PL) PL = placePlan(1, 'reach', grab.off, cT, face, false, dirs, q, 0.3, clr); BRG.free = f0; if (PL) PL.cT = cT; }
+    if (up) setLift(l0);
+    const gp = grab.pre, pp = PL && PL.pre, gd = ARM.gap + 0.02;
+    const sg = (a, b, q) => { const vx = b.s.x - a.s.x, vz = b.s.z - a.s.z, l = vx * vx + vz * vz, t = l > 1e-9 ? clamp(((q.s.x - a.s.x) * vx + (q.s.z - a.s.z) * vz) / l, 0, 1) : 0; return Math.hypot(a.s.x + vx * t - q.s.x, a.s.z + vz * t - q.s.z) >= gd; };
+    if (PL && pp && [[PL, gp], [pp, gp], [pp, grab]].every(([a, b]) => tyreGap(a, b)) && sg(pp, PL, gp) && sg(gp, grab, pp)) return { gp, pp, PL, S, cT: PL.cT, up };
+    FIT.why = PL ? 'regal2:gap' : 'regal2:plan'; return null;
+  }
+  function* regalTwoShow(C) {
+    const { cv, nw, el, o, pc, grab, tool, hs, V1, R } = C, { gp, pp, PL, S, cT, up } = R, cpS = (q) => Object.assign({}, q), pk = (j) => ({ s: Object.assign({ y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }, ARM.park[j]), ext: 0 });
+    const hr = Math.min(0.3, Math.max(hs.y, hs.z) + 0.04), V2 = spotView(S);
+    const VW = view({ at: [(pp.s.x + gp.s.x) / 2, 1.5, (pp.s.z + gp.s.z) / 2], yaw: -0.75, pitch: 0.32, dist: 6.4, fov: 42 });
+    BRG.free = true; poseBridge(); BRG.p.copy(BRG.c); FIT.pass = [];
+    const ps = (j) => RB[j].tool === tool ? cpS(RB[j].s) : Object.assign(cpS(RB[j].s), { y: ARM.Y0, pitch: 0 }), e0 = (j) => RB[j].tool === tool ? RB[j].ext : 0;
+    const P0 = passMk([ps(0), ps(1)], [e0(0), e0(1)], [pp, gp], [0, 0]);
+    const PS = passMk([cpS(pp.s), cpS(gp.s)], [pp.ext, gp.ext], [gp, pp], [hr, hr]);
+    const PK = passMk([cpS(gp.s), cpS(pp.s)], [gp.ext, pp.ext], [pk(0), pk(1)], [0, 0]);
+    let fin = false, raised = !up; spawn((function* () { for (const P of [P0, PS, PK]) while (!P.r && !P.sync && !fin) { P.g.next(); yield; } })());
+    const puff = () => { for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, S.out.x * rnd(0.2, 0.8) + rnd(-0.3, 0.3), rnd(0.1, 0.6), S.out.z * rnd(0.2, 0.8) + rnd(-0.3, 0.3), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02); };
+    // (the old part in roka 1's hand: the regal's piece, a stock one greyed as a worn one)
+    const old = () => { const g = rglCopy(pc); if (!o.from) g.traverse((m) => { const c = m.isMesh && m.geometry.attributes.color; if (!c) return; const A = c.array, n = c.itemSize;
+      for (let v = 0; v < A.length; v += n) { const l = 0.25 + (A[v] * 0.3 + A[v + 1] * 0.59 + A[v + 2] * 0.11) * 0.45; A[v] = l; A[v + 1] = l * 1.01; A[v + 2] = l * 1.04; } c.needsUpdate = true; }); return g; };
+    // 1: the car up by its wheel (a wheel's part), both arms awake, the bridge round: roka 1 to the part's place, roka 2 over the regal
+    if (up) spawn((function* () { yield* liftUp(cv, up, false, 0.35); raised = true; })());
+    yield* par(armTool(0, tool, 4), armTool(1, tool, 4));
+    yield* par(tyrePass(pp, gp, 0.8, null, P0), camTo(V2, 0.8));
+    yield* waitFor(() => raised, 8);
+    // 2: roka 1's reach onto the old part, off with it
+    yield* armExt(0, PL.s, PL.ext, 0.3, EZ.sine); poseArm(0); SFX.wrench();
+    const Mh = tipM(RB[0].s, tipLen(RB[0])).multiply(PL.off), so = old(); so.matrix.copy(Mh); so.matrixWorldNeedsUpdate = true;
+    puff(); hold(0, so, Mh); fitLog('off');
+    // 3: roka 1 out with it as roka 2 lifts the new one off the regal, the camera to the regal
+    yield* par(armExt(0, pp.s, pp.ext, 0.3), camTo(V1, 0.5), armExt(1, grab.s, grab.ext, 0.4));
+    { const cp = rglCopy(pc); rglHide(pc, true); pc.take = FIT.n; hold(1, cp, pc.M); } SFX.clunk(0.3); fitLog('grab', { rgl: +RGL.P.k.toFixed(2) });
+    yield* armExt(1, gp.s, gp.ext, 0.3);
+    // 4: the bridge half round, each part turned in its hand as it is to go
+    fitLog('pass'); yield* par(camTo(VW, 0.5), tyrePass(gp, pp, 0.9, [[0, grab.off, hr], [1, PL.off, hr]], PS));
+    // 5: roka 1 stands the old one in the empty place
+    yield* par(camTo(V1, 0.45), armExt(0, grab.s, grab.ext, 0.4)); poseArm(0); RGL.ret.push(letGo(0)); SFX.clunk(0.3); fitLog('put', { where: 'regal' });
+    // 6: roka 1 back as roka 2 puts the new one on (the car the new one's from here)
+    yield* par(camTo(V2, 0.45), armExt(0, gp.s, gp.ext, 0.3), armExt(1, PL.s, PL.ext, 0.45, EZ.sine));
+    puff(); SFX.clunk(0.5); disposeTree(letGo(1)); fitSwap(cv, nw, true); if (!up) spawn(settle(cur, 0.01));
+    fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: 'regal' });
+    // 7: roka 2 out, the car down onto its wheels (the lift stowed after), the arms home with the bridge, KONČANO
+    yield* wait(0.15); SFX.wrench(); yield* armExt(1, pp.s, pp.ext, 0.3, EZ.sine);
+    let stowed = !up, off = false;
+    if (up) spawn((function* () { yield* lowerCar(cur, false, 0.5); yield* armsTo(0, 1.1); yield* carriageTo(LIFT.c0, 0.25); stowed = true; })());
+    spawn((function* () { yield* tyrePass(PK.Q[0], PK.Q[1], 1.0, null, PK); bridgeRest(); yield* par(armRest(0, 2.0), armRest(1, 2.0)); off = true; })());
+    if (up) { yield* waitFor(() => lift < 1e-3, 3); fitLog('down'); }
+    SFX.ping(1760); hud('done', { kind: el });
+    yield* waitFor(() => off && stowed, 6); fin = true; yield* par(home(1.4), rglUnstay(1.4));
+  }
   // the show: el an element (not the wheels' two, not the paint), spec the car with its new part (spec.upg: the levels before, when the
   // part changes one: o.up [kind, level], its upgrade's show at the end, its chips), o.src its thing ('rgl:NAME', 'drw:el', none: the trolley), o.from o.to the old
   // and the new option's numbers (0: stock), o.fromK o.toK their places in the drawer (-1: not in it)
@@ -7158,6 +7221,7 @@ const Garage3D = (function () {
       let PL = null; BRG.free = true; for (const q of [pd, ax(0, 1, 0)]) if (!PL) PL = placePlan(1, 'reach', grab.off, cT, face, false, dirs, q, 0.3, clr); BRG.free = f0;
       const pp = PL && PL.pre;
       if (PL && pp && [[PL, gp], [pp, gp], [pp, grab]].every(([a, b]) => tyreGap(a, b)) && sg(pp, PL, gp) && sg(gp, grab, pp)) wing.R = { gp, pp, PL, nb, ng0, ND: NK }; else FIT.why = PL ? 'wing:gap' : 'wing:plan'; }
+    const rg2 = regal && i === 1 && plan && grab && !toss && !o.up && !o.more && !o.np ? regalTwoPlan(cv, el, sd, grab, hs) : null;   // (#1084: the regal's small parts by both arms)
     if (ex) setLift(l0);
     // THE HEADLAMP's frame by its plate (roka 1 zamenja vijačnik za prijemalo): the near arm's wrench at the old lamp's face first (its
     // screws out), then up into its housing for the gripper that draws the lamp out; no clear way for the wrench: the gripper alone as before
@@ -7186,7 +7250,7 @@ const Garage3D = (function () {
       for (const k of [0, 0.25, 0.5, 0.75, 1]) if (!G.pose(tb, (tb.up + 0.12) * k) || !G.pose(tb, (tb.up + 0.12) * k, 0.15)) return null;
       return G; })() : null;
     const gripTo = (B, th, up) => { const p = LG.pose(B, th, up); if (!p) return; const A = RB[0]; Object.assign(A.s, p.s); A.ext = 0; A.rest = false; clampArm(0, A.s); A.dirty = true; };
-    { const SP = exS && exS.R ? exS.R.S1 : S; fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, sill: !!o.sill, lid: !!tb, lg: tb ? !!LG : null, kind: np && np.kind || null, exact, real: !!(np && np.real), hop: toss && !(exS && exS.R) ? +toss.d.toFixed(2) : 0, caps: wing ? wing.caps.length : 0, lift: exS ? FIT.lift : 0, wrench: !!(exS && exS.wr) || !!lampW, two: !!(exS && exS.R) || !!(wing && wing.R), lamp: !!lampO, side: SP.sd, hit: SP.hit, at: SP.p.toArray().map(q => +q.toFixed(2)), out: SP.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +(exS && exS.R ? exS.R.PL : plan).turn.toFixed(2) }); }
+    { const SP = exS && exS.R ? exS.R.S1 : S; fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, sill: !!o.sill, lid: !!tb, lg: tb ? !!LG : null, kind: np && np.kind || null, exact, real: !!(np && np.real), hop: toss && !(exS && exS.R) ? +toss.d.toFixed(2) : 0, caps: wing ? wing.caps.length : 0, lift: exS ? FIT.lift : rg2 ? rg2.up : 0, wrench: !!(exS && exS.wr) || !!lampW, two: !!(exS && exS.R) || !!(wing && wing.R) || !!rg2, lamp: !!lampO, side: SP.sd, hit: SP.hit, at: SP.p.toArray().map(q => +q.toFixed(2)), out: SP.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +(exS && exS.R ? exS.R.PL : plan).turn.toFixed(2) }); }
     if (regal) RGL.P.stay = true;   // (the regal in the picture till the part is back on it)
     // (the camera at the part's own place when it goes on exactly where the car draws it: a flat one (a decal on the bonnet) from over the top)
     const PX = exact ? new V3().setFromMatrixPosition(inCar(np)) : null, flat = exact && np.hs.y < 0.06 && np.hs.y * 3 < Math.min(np.hs.x, np.hs.z);
@@ -7328,6 +7392,7 @@ const Garage3D = (function () {
       // 13: home
       yield* waitFor(() => stowed, 4); fin = true; yield* par(home(1.4), rglUnstay(1.4), waitFor(() => exS.off, 6)); return;
     }
+    if (rg2) { yield* regalTwoShow({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }); return; }
     // THE WING with an old one on the lid by both arms: roka 1 to the lid as roka 2 goes over the regal, the old one off (the car the new
     // one's, its wing folded away), roka 2 lifts the new one off the regal, the bridge's half turn, roka 1 stands the old one in the empty
     // place, roka 2 down to 12 cm over the lid, a breath, the snap (the car dipping); the look from behind, KONČANO

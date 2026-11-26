@@ -656,7 +656,8 @@
     def: { plan: [1, 'Kupljeno · roki se zbudita'], cart_in: [1, 'Voziček pripelje nov del'], bonnet_up: [1, 'Hauba je gor, podpira jo drog'], old_out: [1, 'Roka {0} sname stari del', null],
       grab: (d) => [2, d.rgl != null ? 'Roka {0} vzame nov del z regala' : 'Roka {0} vzame nov del z vozička', null],
       hop: [3, 'Roka {0} namesti nov del', null], swap: [3, 'Roka {0} namesti nov del', null], snap: [3, 'Del zaskoči'], screws: [3, 'Vijaki so priviti'], hoses: [3, 'Cevi so priklopljene'],
-      put: (d) => d.where === 'regal' ? [3, 'Roka {0} postavi stari del na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari del na voziček', null] : null,
+      off: [1, 'Roka {0} sname stari del', 1], pass: [2, 'Most se zavrti za pol kroga: stari del k regalu, nov k avtu'],   // (the regal's small parts by both arms, #1084)
+      put: (d, B) => d.where === 'regal' ? [3, 'Roka {0} postavi stari del na prazno mesto v regalu', B.P && B.P.two ? 1 : null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari del na voziček', null] : null,
       down: [3, 'Avto dol · roki gresta počivat'], revs: [3, 'Motor zaturira'], lights: [3, 'Preizkus luči'], cart_out: [3, 'Voziček odpelje'] },
     // (the tyres by the plate: both arms on one wheel (the bridge turns between them), its number and the place of the next ones; the
     // wheels one by one (the rims, a tyre without the regal): the arm, the old one off, onto the regal or the trolley, the new one on)

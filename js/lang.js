@@ -638,6 +638,7 @@
     'Voziček pripelje nov del': 'A trolley brings the new part', 'Hauba je gor, podpira jo drog': 'The bonnet is up, a prop holds it', 'Roka {0} sname stari del': 'Arm {0} takes the old part off',
     'Roka {0} vzame nov del z regala': 'Arm {0} takes the new part from the rack', 'Roka {0} vzame nov del z vozička': 'Arm {0} takes the new part from the trolley', 'Roka {0} namesti nov del': 'Arm {0} fits the new part',
     'Del zaskoči': 'The part clicks into place', 'Vijaki so priviti': 'The screws are tightened', 'Cevi so priklopljene': 'The hoses are connected',
+    'Most se zavrti za pol kroga: stari del k regalu, nov k avtu': 'The bridge turns half a circle: the old part to the rack, the new one to the car',
     'Roka {0} postavi stari del na prazno mesto v regalu': 'Arm {0} puts the old part in an empty place on the rack', 'Roka {0} odloži stari del na voziček': 'Arm {0} puts the old part on the trolley',
     'Avto dol · roki gresta počivat': 'The car comes down · both arms go to rest', 'Voziček odpelje': 'The trolley drives off', 'Kupljeno · avto gre na dvigalko, roki se zbudita': 'Bought · the car goes up on the lift, both arms wake up',
     'Vozička pripeljeta nova platišča': 'The trolleys bring the new rims', 'Vozička pripeljeta nove gume': 'The trolleys bring the new tyres', 'spredaj desno': 'front right', 'spredaj levo': 'front left', 'zadaj desno': 'rear right',
