@@ -6,6 +6,7 @@
    ========================================================================= */
 const Core = (function () {
   'use strict';
+  const VV = typeof VelikaVozila !== 'undefined' ? VelikaVozila : null;   // the heavy vehicles' shared model (js/velika-vozila.js; absent: no heavy vehicle)
   const G = 9.81;
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -2708,8 +2709,8 @@ const Core = (function () {
     if (!isObj(D)) return 'trailer: an object';
     const ok = isNum(D.mass, 500, 40000) && isNum(D.len, 4, 16) && isNum(D.wid, 1.5, 2.6) && isNum(D.ht, 1, 4.5) && isNum(D.f, 0, 3) && isNum(D.rw, 0.25, 0.7)
       && isNum(D.mu, 0.5, 2.5) && isNum(D.brk, 0, 14) && Array.isArray(D.ax) && D.ax.length >= 1 && D.ax.length <= 4 && D.ax.every(x => isNum(x, -D.len + D.f + 0.3, -1))
-      && Array.isArray(D.kp) && D.kp.length === 2 && isNum(D.kp[0], -4, 0) && isNum(D.kp[1], 0.5, 1.6) && (D.look == null || isObj(D.look));
-    if (!ok) return 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, look }';
+      && Array.isArray(D.kp) && D.kp.length === 2 && isNum(D.kp[0], -4, 0) && isNum(D.kp[1], 0.5, 1.6) && (D.look == null || isObj(D.look)) && (D.tail == null || isNum(D.tail, 0, 14));
+    if (!ok) return 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, tail, look }';
     if (D.next == null) return '';
     // the road train's second tank (docs/zrcalni-vlak.md): on the dolly's fifth wheel, kp[0] behind the first kingpin; dax the dolly's axles
     // (rigid to the first tank: a B-dolly), lim its fold against the first tank
@@ -2724,7 +2725,7 @@ const Core = (function () {
     const T = { tl: true, D, id: c.id, x: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, y: 0, vy: 0, px: 0, pz: 0, ph: 0, py: 0,
       m: { mass: D.mass, len: L, wid: W, a: L / 2, b: L / 2, kI: Math.sqrt((L * L + W * W) / 12) }, I: D.mass * (L * L + W * W) / 12,
       cx, xa: xa - cx, axS: cx / xa,   // (the box's middle from the kingpin, < 0; the axles' middle from the box's; the axles' share of its weight)
-      back: -D.kp[0] + L - D.f - c.m.len / 2, kd2: xa * xa,   // (the AI's: its tail past the tractor's own, straight behind (m); the kingpin to the axles, squared: how far in it cuts a bend)
+      back: -D.kp[0] + L - D.f + (D.tail || 0) - c.m.len / 2, kd2: xa * xa,   // (the AI's: its tail past the tractor's own, straight behind (m); the kingpin to the axles, squared: how far in it cuts a bend)
       rel: 0, yA: 0, vyA: 0, airA: 0, yK: 0, pit: 0, slide: 0, fold: 0, fall: null, torn: 0,
       q: { i: -1 }, qa: { i: -1 }, corners: [], circles: [], rad: W * 0.5 + 0.02, phys: 'nova', dmgMode: 0, dmg: 0, dz: [0, 0, 0, 0], cd: [0, 0, 0, 0],
       isPlayer: c.isPlayer, net: false, air: 0, xgl: 0, fuelKg: 0, inPit: false, pitWant: false, pitG: false, speed: 0, csKc: 0,
@@ -2883,7 +2884,7 @@ const Core = (function () {
   // the load the kingpin puts on the tractor's fifth wheel (kg; over its drive axle: its traction, stepCS); none torn off
   const tlKing = (c) => c.tl.fall ? 0 : c.tl.m.mass * (1 - c.tl.axS);
   // a rig's tail behind its tractor's middle (m; the grid, the open road's finish parking): its trailer's, a road train's second tank's (tlChain)
-  const tlTail = (M) => { const D = M.trailer, N = D.next; return N ? -D.kp[0] - N.kp[0] + N.len - N.f : D.len - D.f - D.kp[0]; };
+  const tlTail = (M) => { const D = M.trailer, N = D.next; return N ? -D.kp[0] - N.kp[0] + N.len - N.f : D.len - D.f - D.kp[0] + (D.tail || 0); };
   // the trailer's step (Car.step, after the tractor's): see above
   function tlStep(c, dt, trk) {
     const T = c.tl, D = T.D, T2 = T.next;
@@ -3046,6 +3047,7 @@ const Core = (function () {
       this.upg = U ? { motor: upgLv(opts.upg, 'motor'), gume: upgLv(opts.upg, 'gume'), zavore: upgLv(opts.upg, 'zavore'), aero: upgLv(opts.upg, 'aero') } : null;
       this.upgGrip = U ? U.grip : 0;   // autopilot / AI corner-speed scale (0 = stock car)
       this.m = model;
+      this.vv = VV ? VV.za(this, model) : null;   // (a heavy vehicle's shared model: js/velika-vozila.js, only with model.heavy)
       this.id = opts.id || 0;
       this.isPlayer = !!opts.isPlayer;
       if (opts.slide) this.nvSl = true;   // (the new physics' sliding style, Nastavitve → Slog nove fizike: Drseč; NVK.slide)
@@ -3631,7 +3633,7 @@ const Core = (function () {
       if (F.brT > BRK_FADE[0] && !F.brH) { F.brH = true; F.ev = 'brakes'; } else if (F.brT < BRK_FADE[0] - 120) F.brH = false;
       if (F.enT > ENG_HOT[0] && !F.enH) { F.enH = true; F.ev = 'engine'; } else if (F.enT < ENG_HOT[0] - 15) F.enH = false;
     }
-    step(dt, trk) { const r = this.phys === 'nova' ? this.stepNova(dt, trk) : this.stepCS(dt, trk); if (this.tl) tlStep(this, dt, trk); return r; }   // (a semi-trailer behind it: its own step on the kingpin, tlStep)
+    step(dt, trk) { if (this.vv) VV.pred(this, dt, trk); const r = this.phys === 'nova' ? this.stepNova(dt, trk) : this.stepCS(dt, trk); if (this.vv) VV.po(this, dt, trk); if (this.tl) tlStep(this, dt, trk); return r; }   // (a semi-trailer behind it: its own step on the kingpin, tlStep)
   }
   // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
   const wreck0 = (W) => { if (W.rule) W.rule.burn = 0; return Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
@@ -8111,6 +8113,7 @@ const Core = (function () {
         // (a rescue would cost it the stop; the player's car too, spared backing out of the jam)
         if (c.inPit && !c.net && c.pitState !== 'repair' && c.speed < 1.2 && fwd < 0.85 && (this.state === 'racing' || this.state === 'done')) c.wedgeT = (c.wedgeT || 0) + cdt; else if (c.wedgeT) c.wedgeT = 0;   // (the timer only on a car that got knocked across)
         if (c.wedgeT > 2) { const y = c.y, i = q.i; c.place(c.x, c.z, Math.atan2(q.tz, q.tx)); c.y = c.py = y; c.q.i = i; c.wedgeT = 0; }   // (where it stands: its height and its road sample kept, the autopilot steers from it before the next step)
+        if (c.vv && c.vv.pad && !c.net) { c.falls = (c.falls || 0) + 1; applyDamage(c, 0.2); c.tfPen = (c.tfPen || 0) + VV.K.kazen; this.rescue(c); VV.reset(c); }   // (a heavy vehicle rolled over: back on the road with a time penalty, js/velika-vozila.js)
         // stuck detection (AI auto-rescue)
         if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished) && !(c.fl && c.fl.rw)) c.stuckT += cdt; else c.stuckT = Math.max(0, c.stuckT - cdt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
         if (!c.isPlayer && (c.stuckT > (c.inPit && c.fuel != null ? 30 : c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished) && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason, behind one filling up longer still; not a car pulled up past the finish of an open road, nor a retired one or one the marshals are fixing)
@@ -9131,7 +9134,7 @@ const Core = (function () {
     car: { pico: 48000, p206: 36000, kaze: 62000, muscle: 68000, strega: 95000, vortex: 78000, truck: 350000, rally: 400000, ev: 160000, formula: 650000, lm: 600000,
       miska: 35000, kolibri: 12000, raketa: 22000, levs: 36000, levk: 40000, lisica: 18000, sokol: 65000, panter: 125000, jelen: 280000, modras: 260000, perun: 500000,
       skorpijon: 1400000, jastreb: 130000, gad: 190000, blisk: 450000, lev: 800000, zmaj: 1200000, hrosc: 28000, medved: 190000, gozdar: 300000, pescenjak: 500000,
-      mravlja: 7500, kozorog: 140000, strelica: 350000, tornado: 400000, bizon: 500000, tiger: 550000, titan: 500000, kamen: 800000, cisterna: 850000, zrcalni: 1000000, jezek: 35000, predsednik: 150000,
+      mravlja: 7500, kozorog: 140000, strelica: 350000, tornado: 400000, bizon: 500000, tiger: 550000, titan: 500000, kamen: 800000, cisterna: 850000, zrcalni: 1000000, avtovoz: 650000, vetrnica: 700000, hrast: 750000, lastovka: 900000, gasilec: 950000, jezek: 35000, predsednik: 150000,
       goljat: 300000, superkombi: 450000 },
     upg: [0, 4000, 7000, 12000],
     place: [15000, 11250, 8750, 7000, 5750, 4750, 4000, 3250, 2750, 2250, 1750, 1250, 750],
@@ -9231,7 +9234,7 @@ const Core = (function () {
       else if (k === 'idle') { if (!isNum(P.idle, 0, 8000)) return 'phys.idle not 0..8000'; }
       else if (!isNum(P[k], 1e-6, 1e6)) return 'phys.' + k + ' not a number > 0';
     }
-    if (P.len > 6.4 || P.wid > 3.2) return 'phys: longer than 6.4 m or wider than 3.2 m';
+    if (P.len > 13 || P.wid > 3.2) return 'phys: longer than 13 m or wider than 3.2 m';   // (the longest: the coach, js/cars/lastovka.js; the garage shows one over 6.4 m scaled down, Render.garageK)
     if (!(P.a + P.b < P.len)) return 'phys: the wheelbase (a + b) as long as the vehicle';
     if (!(P.redline > P.idle) || P.redline > 25000) return 'phys.redline not above idle (and up to 25000)';
     if (P.rw > 1.1 || P.kI > 3 || P.cDrag > 3 || P.steerMax > 1.2) return 'phys: rw, kI, cDrag or steerMax out of range';
