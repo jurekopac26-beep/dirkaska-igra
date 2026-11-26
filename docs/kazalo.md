@@ -354,6 +354,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | cusco | Cusco, Peru | cusco | `js/world-cusco.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | haivan | Hải Vân, Vietnam | haivan | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.haivan`: tropski gozd, `L.trop`, brez snega in ovc) |
 | mapileng | Mã Pí Lèng, Vietnam | mapileng | `js/world-kratke.js` (`buildKratke`, slog `KR.mapileng`: kraški apnenec, skalni stolpiči, koruza, spomenik s svetiščem, muzej, kavarna, razgledišče) |
+| tatev | Tatev, Armenija | tatev | `js/world-kratke.js` (`buildKratke`, slog `KR.tatev`: soteska Vorotana, suha trava, sipari in skalne stene, kamniti parapeti, ruševine nad sotesko, kavarna, tabla) |
 | longyearbyen | Longyearbyen, Norveška | longyearbyen | `js/world-longyearbyen.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | savusavu | Savusavu, Fidži | savusavu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.savusavu`: tropski gozd, `L.trop`, bela sredinska črta, brez snega in ovc) in `js/world-savusavu-obcestje.js` (stranske ulice in dovozi iz OSM prek `L.pre`, `L.gravel`, `L.railGap` in `L.extra`: makadam v mreži bankine, samo grafika) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |

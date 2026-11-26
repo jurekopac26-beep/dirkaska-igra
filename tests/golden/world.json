@@ -1934,6 +1934,28 @@
    "life:MeshBasicMaterial": "55cf5a12"
   }
  },
+ "tatev": {
+  "meshes": 1501,
+  "verts": 1000289,
+  "instances": 22644,
+  "props": 151,
+  "crowd": 106,
+  "world": "207f7c55",
+  "propsHash": "e55177a6",
+  "floor": "f945bb48/15260",
+  "groups": {
+   "-:MeshLambertMaterial": "27c655dc",
+   "-:MeshBasicMaterial": "a2a09153",
+   "irFar:MeshLambertMaterial": "638ea2b0",
+   "crowd:MeshLambertMaterial": "4f1fd533",
+   "ao:MeshBasicMaterial": "643b4554",
+   "tyremarks:MeshBasicMaterial": "92d261e1",
+   "roadwear:MeshLambertMaterial": "45cc0281",
+   "life:MeshLambertMaterial": "cdaea084",
+   "lifeShadow:MeshBasicMaterial": "6fa98f18",
+   "life:MeshBasicMaterial": "29dc330"
+  }
+ },
  "trebevic": {
   "meshes": 2135,
   "verts": 882855,
