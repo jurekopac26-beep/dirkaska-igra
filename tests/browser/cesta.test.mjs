@@ -561,6 +561,7 @@ try {
   // across each mouth (a ray down at the line's place in the mouth's middle meets no paint) and whole beside it (12 m before or after the
   // mouth it meets the paint's material); no paint at a mouth (Bahrain's and Malaysia's rows are service roads, Korea has no row of
   // markings in CRTE); the track's model as a track built alone has it; no errors
+  // (Sepang one row: its other 3 are drawn by main's js/world-sepang.js, no double drawing, decision of 26. 11.)
   for (const [id, name] of [['sakhir', 'Sakhir'], ['sepang', 'Sepang'], ['seoul', 'Seoul']]) {
     await startTrack(page, id);
     const sx = await page.evaluate((id) => {
@@ -602,7 +603,7 @@ try {
         whole, broken, paint: !!(line && line.isMeshLambertMaterial && !line.map && line !== W.asphaltMat), model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
     }, id);
     T.check(`${name}: OpenStreetMap's side roads for the look (every row of the track's data: a strip of asphalt through an opening at each mouth, 3 to 40 m wide, a row of orange posts across it, evenly on the fence line, each on the surface drawn under it, none within 1 m of the road's asphalt)${id === 'seoul' ? '; the white edge line broken across each mouth and whole beside it' : ''}; the track's model as a track built alone has it`,
-      sx.osm >= 3 && sx.n === sx.osm && sx.stats === sx.n && sx.mouths === sx.n && sx.wMin >= 3 && sx.wMax <= 40 && sx.strips >= 1 && sx.stripV > sx.n * 20 && sx.stripV <= sx.worldV * 0.05 && sx.far === 0 &&
+      sx.osm >= (id === 'sepang' ? 1 : 3) && sx.n === sx.osm && sx.stats === sx.n && sx.mouths === sx.n && sx.wMin >= 3 && sx.wMax <= 40 && sx.strips >= 1 && sx.stripV > sx.n * 20 && sx.stripV <= sx.worldV * 0.05 && sx.far === 0 &&
       sx.posts === sx.np && sx.posts >= sx.n * 2 && sx.posts <= sx.n * 27 && sx.rows === sx.n && sx.lone === 0 && sx.gMin >= 1 && sx.gMax <= 2.2 && sx.none === 0 && sx.off <= 0.03 && sx.road >= 1 &&
       (id !== 'seoul' || (sx.whole === sx.n && sx.broken === sx.n && sx.paint)) && sx.model, JSON.stringify(sx));
   }
