@@ -6526,9 +6526,12 @@ const Garage3D = (function () {
   // it, on the hinge of the race's loose bonnet (render.js kitLoosen: across at its edge by the cabin, at its top there; its free edge up
   // along its face); the parts on it (their entry's on), the start number on it and the motor level's vents and scoop go with it, the bay
   // is drawn while it is up. set(th): open th radians (0: shut, all as it was); bay: the turbo's place in the bay (world); lid(P): a point
-  // of the bonnet (body frame) where it is now. null: no such bonnet (the turbo goes on through the closed one, a case, as before)
+  // of the bonnet (body frame) where it is now. A car with no bonnet of its own (no kit, or a kit with no range 'hood'; J2, 26. 11.): a lid
+  // of its own skin over its engine (at the front; a car with its engine behind (MR, RR): behind the cabin), free(). null: no such bonnet
+  // (the long cars (J4) and the open racers: the turbo goes on through the closed one, a case, as before)
   function bonnet(cv) {
     const v = cv.v, b = v.body, G = b && b.geometry, U = G && G.userData, R = U && U.ranges && U.ranges.hood;
+    if (G && (!U || !U.kit || !R || !(R.o[1] > R.o[0]))) return free();
     if (!U || !U.kit || !R || !(R.o[1] > R.o[0]) || !U.engN || G.index || !G.attributes.normal || typeof Core === 'undefined' || !Core.partsOf) return null;
     const pa = G.attributes.position.array, na = G.attributes.normal.array, PT = Core.partsOf(cv.M), VK = v.kit || {}, E = VK.E, dead = VK.dead || {};
     const rs = [R.o, R.i]; for (const n in U.ranges) if (PT[n] && PT[n].on === 'hood' && !dead[n]) { const Q = U.ranges[n]; rs.push(Q.o, Q.i); }
@@ -6582,6 +6585,87 @@ const Garage3D = (function () {
         if (dec && C.dec) { dec.position.copy(C.dec[0]); dec.quaternion.copy(C.dec[1]); if (th > 0) { dec.position.sub(Av).applyAxisAngle(Ua, t).add(Av); dec.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(Ua, t)); } } },
       close() { L.set(0); } };
     return L;
+    // (THE LID OF ITS OWN SKIN: the body's top over the engine felt from above (its upward faces), along the middle from the engine's end
+    // in: the bonnet's face till it rises to the screen (the hinge) and till it falls to the nose (the free edge), across till it falls to
+    // the wing; a copy of that face (its colours) on the hinge, the bay under it dark with the engine's top, both drawn only while it is
+    // open (shut: gone, nothing more drawn); the hinge, the edge, the prop, the bay's floor as the kit's)
+    function free() {
+      const M = cv.M || {}, NOT = ['tur', 'titan', 'kamen', 'cisterna', 'zrcalni', 'predsednik', 'formula', 'lm'];   // (none: the long cars (J4), the open racers)
+      if (NOT.includes(M.id) || G.index || !G.attributes.color || !b.material || Array.isArray(b.material)) return null;
+      const pa = G.attributes.position.array, ca = G.attributes.color.array, sx = M.drive === 'MR' || M.drive === 'RR' ? -1 : 1;
+      if (!G.boundingBox) G.computeBoundingBox(); const bb = G.boundingBox, T = [];
+      for (let i = 0; i + 8 < pa.length && i < G.attributes.position.count * 3; i += 9) {   // (the upward faces on the engine's half)
+        const ax = pa[i], ay = pa[i + 1], az = pa[i + 2], ux = pa[i + 3] - ax, uy = pa[i + 4] - ay, uz = pa[i + 5] - az, wx = pa[i + 6] - ax, wy = pa[i + 7] - ay, wz = pa[i + 8] - az;
+        const nx = uy * wz - uz * wy, ny = uz * wx - ux * wz, nz = ux * wy - uy * wx, nl = Math.hypot(nx, ny, nz);
+        if (nl > 1e-9 && Math.abs(ny) / nl > 0.3 && (ax + pa[i + 3] + pa[i + 6]) * sx > -0.9) T.push(i);
+      }
+      const hAt = (x, z) => { let y = -1e9, c = null;   // (the top at x, z: [its height, its colour]; null: none)
+        for (const i of T) { const ax = pa[i], az = pa[i + 2], bx = pa[i + 3], bz = pa[i + 5], qx = pa[i + 6], qz = pa[i + 8];
+          if (x < Math.min(ax, bx, qx) || x > Math.max(ax, bx, qx) || z < Math.min(az, bz, qz) || z > Math.max(az, bz, qz)) continue;
+          const d = (bz - qz) * (ax - qx) + (qx - bx) * (az - qz); if (Math.abs(d) < 1e-12) continue;
+          const l0 = ((bz - qz) * (x - qx) + (qx - bx) * (z - qz)) / d, l1 = ((qz - az) * (x - qx) + (ax - qx) * (z - qz)) / d, l2 = 1 - l0 - l1;
+          if (l0 < -1e-6 || l1 < -1e-6 || l2 < -1e-6) continue;
+          const py = l0 * pa[i + 1] + l1 * pa[i + 4] + l2 * pa[i + 7]; if (py > y) { y = py; c = [ca[i], ca[i + 1], ca[i + 2]]; } }
+        return c ? [y, c] : null; };
+      // (along the middle from the engine's end in, 3 cm a step: the face's height (the median a little in from the first top), the hinge
+      // where it rises 12 cm, the free edge where it falls 10 cm (or ends))
+      const xe = sx > 0 ? bb.max.x : bb.min.x, st = 0.03, H = []; for (let k = 0; k < 80; k++) { const s = hAt(xe - sx * st * k, 0); H.push(s ? s[0] : null); }
+      const i0 = H.findIndex(h => h !== null); if (i0 < 0) return null;
+      const ref = H.slice(i0 + 5, i0 + 15).filter(h => h !== null).sort((p, q) => p - q); if (ref.length < 5) return null;
+      let hh = ref[ref.length >> 1], iw = -1, iff = i0, s0 = i0 + 5;
+      // (a wing over the end: the face is the lower even run behind it, 8 steps or more)
+      for (let k = i0 + 5; k < i0 + 30 && k + 8 <= H.length; k++) { const w = H.slice(k, k + 8);
+        if (w.every(h => h !== null && h < hh - 0.15 && h > hh - 0.5 && Math.abs(h - w[0]) < 0.06)) { s0 = k; hh = w.slice().sort((p, q) => p - q)[4]; break; } }
+      for (let k = s0; k < H.length; k++) if (H[k] === null || H[k] > hh + 0.12 || H[k] < hh - 0.25) { iw = k - 1; break; }
+      if (s0 > i0 + 5) iff = s0; else for (let k = s0; k >= i0; k--) if (H[k] === null || H[k] < hh - 0.1) break; else iff = k;
+      if (iw < 0) iw = Math.min(H.length - 1, iff + 47);
+      const xf = xe - sx * st * iff, xw = xe - sx * st * Math.min(iw, iff + 50), len = Math.abs(xw - xf); if (len < 0.35) return null;
+      const wAt = (x) => { const c = hAt(x, 0); if (!c) return 0; let w = 0; for (let z = st; z < bb.max.z; z += st) { const s = hAt(x, z), s2 = hAt(x, -z); if (!s || !s2 || Math.abs(s[0] - c[0]) > 0.1 || Math.abs(s2[0] - c[0]) > 0.1) break; w = z; } return w; };
+      const zm = Math.min(wAt(xf + (xw - xf) * 0.3), wAt(xf + (xw - xf) * 0.7), 0.92 * bb.max.z) * 0.9; if (zm < 0.25) return null;
+      // (the face's grid: its heights and colours; holes from their neighbour)
+      const NX = 12, NZ = 8, F = [];
+      for (let i = 0; i <= NX; i++) { const x = xf + (xw - xf) * i / NX; F.push([]); for (let j = 0; j <= NZ; j++) { const z = -zm + 2 * zm * j / NZ, s = hAt(x, z);
+        F[i].push(s ? [x, s[0], z, s[1]] : [x, (j ? F[i][j - 1][1] : i ? F[i - 1][j][1] : hh), z, j ? F[i][j - 1][3] : i ? F[i - 1][j][3] : [0.6, 0.6, 0.6]]); } }
+      const ye = F[NX][NZ >> 1][1] + 0.016, A = [xw, ye, -zm], sg = Math.sign(xf - xw) || 1, Ua = new V3(0, 0, 1), Av = new V3(A[0], A[1], A[2]);
+      const grid = (dy, dark, flip) => { const P = [], C = []; const pt = (q) => { P.push(q[0], q[1] + dy, q[2]); const c = dark || q[3]; C.push(c[0], c[1], c[2]); };
+        for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) { const a = F[i][j], q = F[i + 1][j], e = F[i + 1][j + 1], d = F[i][j + 1];
+          const up = ((q[0] - a[0]) * (d[2] - a[2]) - (q[2] - a[2]) * (d[0] - a[0])) > 0 !== !!flip; (up ? [a, d, e, a, e, q] : [a, q, e, a, e, d]).forEach(pt); }
+        return [P, C]; };
+      const geo = (parts) => { const P = [], C = []; for (const [p, c] of parts) { P.push(...p); C.push(...c); } const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.computeVertexNormals(); return g; };
+      const DK = [0.13, 0.13, 0.14], EN = [0.42, 0.43, 0.45];
+      // (the lid: its face 16 mm over the skin, its underside 15 mm under that, the rim between them)
+      const rim = () => { const P = [], C = [], top = 0.016, bot = 0.001, ring = [];
+        for (let i = 0; i < NX; i++) ring.push(F[i][0]); for (let j = 0; j < NZ; j++) ring.push(F[NX][j]); for (let i = NX; i > 0; i--) ring.push(F[i][NZ]); for (let j = NZ; j > 0; j--) ring.push(F[0][j]);
+        for (let k = 0; k < ring.length; k++) { const a = ring[k], e = ring[(k + 1) % ring.length], c = a[3].map(x => x * 0.8);
+          for (const [q, y] of [[a, top], [e, top], [e, bot], [a, top], [e, bot], [a, bot], [a, top], [e, bot], [e, top], [a, top], [a, bot], [e, bot]]) { P.push(q[0], q[1] + y, q[2]); C.push(...c); } }
+        return [P, C]; };
+      const xc = xw + (xf - xw) * 0.45, xs = len * 0.5, yb = Math.max(F[Math.round(NX * 0.55)][NZ >> 1][1], hh) + 0.07, ez = zm * 0.6;
+      const block = () => { const g = new THREE.BoxGeometry(xs, 0.12, ez * 2).toNonIndexed().translate(xc, yb - 0.06, 0), n = g.attributes.position.count;
+        const P = Array.from(g.attributes.position.array), C = []; for (let k = 0; k < n; k++) C.push(...EN); g.dispose(); return [P, C]; };
+      // (the prop: its foot on the bay's floor near the free edge on the far side, its top under the lid's face there)
+      const xp = xw + (xf - xw) * 0.85, zp = -0.6 * zm, sp = hAt(xp, zp), yt = sp ? sp[0] : hh;
+      b.updateMatrix(); const Mb = b.matrix.clone(), Mi = Mb.clone().invert();
+      const lidM = (th) => Mb.clone().multiply(new THREE.Matrix4().makeTranslation(A[0], A[1], A[2])).multiply(new THREE.Matrix4().makeRotationAxis(Ua, th)).multiply(new THREE.Matrix4().makeTranslation(-A[0], -A[1], -A[2])).multiply(Mi);
+      const items = () => { const g = cv.parts && cv.parts.motor; return g ? g.userData.items.filter(q => q.from === 'up').map(q => [q, g]) : []; };
+      const pr = [new V3(xp, yt + 0.01, zp).applyMatrix4(Mb), new V3(xp, yt + 0.002, zp).applyMatrix4(Mb), new V3(xp, yt + 0.01, zp + 0.5).applyMatrix4(Mb)];
+      let lm = null, bm = null; const gone = () => { for (const o of [lm, bm]) if (o) { if (o.parent) o.parent.remove(o); o.geometry.dispose(); } lm = bm = null; };
+      const L = { th: 0, sd: sg, hx: xw, fx: xf, z: zm, yb, ye, rm: len, G: {}, Mb, pr, free: true,
+        loc: (x, y, z) => new V3(x, y, z).applyMatrix4(Mb),
+        bay: (W) => new V3(xc, yb, 0.12).applyMatrix4(Mb).applyMatrix4(W),
+        edge: (zq) => { const x = xf - sx * 0.02, s = hAt(x, zq); return new V3(x, (s ? s[0] : hh) + 0.016, zq).applyMatrix4(Mb); },
+        lid: (P, th) => new V3(P[0], P[1], P[2]).applyMatrix4(Mi).sub(Av).applyAxisAngle(Ua, sg * (th == null ? L.th : th)).add(Av).applyMatrix4(Mb),
+        set(th) { L.th = th; const t = sg * th;
+          if (th > 0 && !lm) { lm = new THREE.Mesh(geo([grid(0.016), grid(0.001, DK, true), rim()]), b.material); bm = new THREE.Mesh(geo([grid(0.01, DK), block()]), b.material);
+            lm.matrixAutoUpdate = false; lm.castShadow = true; bm.receiveShadow = true; b.add(lm, bm); }
+          if (th > 0) lm.matrix.makeTranslation(A[0], A[1], A[2]).multiply(new THREE.Matrix4().makeRotationAxis(Ua, t)).multiply(new THREE.Matrix4().makeTranslation(-A[0], -A[1], -A[2])), lm.matrixWorldNeedsUpdate = true;
+          else gone();
+          const Lb = lidM(t);
+          for (const [q, g] of items()) { g.updateMatrix(); const o = q.o; if (th > 0) { o.matrixAutoUpdate = false; o.position.copy(q.home); o.rotation.copy(q.rot); o.updateMatrix(); o.matrix.premultiply(g.matrix.clone().invert().multiply(Lb).multiply(g.matrix)); o.matrixWorldNeedsUpdate = true; }
+            else { o.matrixAutoUpdate = true; o.position.copy(q.home); o.rotation.copy(q.rot); } } },
+        close() { L.set(0); } };
+      return L;
+    }
   }
   // A PANEL OPENED BY A TAP (the garage's menu of the hood, the doors, the boot lid, garage.js onTap): of a car drawn from a kit the range a
   // vertex of its body is in: [the tap's key, the range's name] (a boot lid or a tailgate: car:trunk); null: none of those (or no kit)
