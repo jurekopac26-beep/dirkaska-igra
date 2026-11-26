@@ -1946,15 +1946,15 @@
   }
  },
  "meteora/car/cs": {
-  "digest": "8751ddeec4cb690f298df784",
-  "lead": 1847.2,
+  "digest": "9231ca24241503993d1faa99",
+  "lead": 1847.6,
   "car0": [
-   635.94,
-   -983.78
+   588.15,
+   -1002.88
   ],
   "cover": {
    "dmg": 1,
-   "loose": 3,
+   "loose": 4,
    "rescues": 0,
    "repairs": 0
   }

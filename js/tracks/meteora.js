@@ -27,6 +27,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: 'Meteora, skalni stebri iz peščenjaka in konglomerata nad ravnino Tesalije, severno od Kalambake: 5,9 km ceste od vasi Kastraki na 254 m med golimi sivimi stebri in hrastovim grmičevjem, skozi ozke ovinke in dve serpentini, mimo samostanov na vrhovih skal, čez sedlo na 538 m do konca ceste pod zadnjim samostanom na 504 m. Po en pas v vsako smer, ob prepadu nizek kamnit zid ali jeklena ograja.',
     en: { name: 'Meteora, Greece', desc: 'Meteora, the sandstone and conglomerate pillars above the plain of Thessaly, north of Kalambaka: 5.9 km of road from the village of Kastraki at 254 m between the bare grey pillars and the oak scrub, through tight bends and two hairpins, past the monasteries on the rock tops, over the saddle at 538 m to the end of the road below the last monastery at 504 m. One lane each way, a low stone wall or a steel barrier on the drop side.' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
+    maxRivals: 45,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): ~180 m of a 7 m road past the line, the slots in one row a side
     elev: METEORA_H.map((h, i) => [i / (METEORA_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
     medals: { cs: [200, 210, 226], wet: { cs: [241, 253, 272] } },

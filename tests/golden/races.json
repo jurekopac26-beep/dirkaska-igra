@@ -992,12 +992,12 @@
  "meteora/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 209.54,
-  "spins": 1,
-  "walls": 6,
+  "winner": 209.83,
+  "spins": 0,
+  "walls": 19,
   "rescues": 0,
   "nan": false,
-  "digest": "6f17512d631a4b4c4c6fb2fb"
+  "digest": "97f0e5af25633748c1db705f"
  },
  "silkeborg/cs": {
   "finished": 13,
