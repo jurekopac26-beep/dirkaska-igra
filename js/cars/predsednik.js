@@ -246,7 +246,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(1.25, 0.6, 0, 1.75, 0.66, [0.1, 0.1, 0.105], { part: 'body' });             // (the firewall: the engine bay's back)
           for (const sd of [-1, 1]) K.plate([[1.75, 0.74, sd * 0.2], [2.5, 0.74, sd * 0.2], [2.5, 0.84, sd * 0.33], [1.75, 0.84, sd * 0.33]], 0.03, [0.62, 0.62, 0.64], { part: 'body' });   // (the V8's rocker covers)
         });
-        K.engine(2.12, 0.38, 0, { l: 0.85, w: 0.68, h: 0.46, col: [0.3, 0.31, 0.33], cover: [0.12, 0.12, 0.13] });
+        DELI.bayMap(K, P, L, { x0: 1.3, x1: 2.78, sz: 1.18, sy: 1.12, kind: 'v12', cover: [0.2, 0.2, 0.22] });
         K.tyre(-2.68, 0.45, 0.28, { axis: 'y', r: 0.3, inner: true, part: 'body' });
         for (const id of ['filter_zraka', 'akumulator', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});   // (the garage's hidden parts: mounts)
       },

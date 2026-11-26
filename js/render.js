@@ -1158,8 +1158,8 @@ const Render = (function () {
   // goes to the bucket of the current target (kx.target: the block, the part, the sub-range, the flags), its corners from look units to metres
   class KitGB {
     constructor(kx) { this.kx = kx; this.n = 0; }   // (n: the triangles so far)
-    tri(a, b, c, ca, cb, cc) { this.n++; this.kx.emit(a, b, c, ca, cb || ca, cc || ca, null); }
-    triN(a, b, c, na, nb, nc, ca, cb, cc) { this.n++; this.kx.emit(a, b, c, ca, cb || ca, cc || ca, [na, nb, nc]); }
+    tri(a, b, c, ca, cb, cc) { this.n++; const f = this.kx.xf; if (f) { a = f(a); b = f(b); c = f(c); } this.kx.emit(a, b, c, ca, cb || ca, cc || ca, null); }
+    triN(a, b, c, na, nb, nc, ca, cb, cc) { this.n++; const f = this.kx.xf; if (f) { a = f(a); b = f(b); c = f(c); na = f(na, 1); nb = f(nb, 1); nc = f(nc, 1); } this.kx.emit(a, b, c, ca, cb || ca, cc || ca, [na, nb, nc]); }
   }
   for (const k of ['triO', 'quadO', 'triON', 'quadON', 'quadUp']) KitGB.prototype[k] = GB.prototype[k];
 
@@ -1785,6 +1785,7 @@ const Render = (function () {
     // scopes
     K.part = (name, fn, o) => { kx.partOk(name); o = o || {}; if (o.hinge) K.hinge(name, o.hinge[0], o.hinge[1]);
       kx.scope('pr', null, () => kx.scope('ex', { part: name, sub: o.sub || '', inner: !!o.inner || !!(kx.ex && kx.ex.inner), nc: !!o.noCrush, nd: !!o.noDent }, fn)); };
+    K.xf = (f) => { kx.xf = f || null; };
     K.inner = (fn) => { kx.inner++; try { fn(); } finally { kx.inner--; } };
     K.at = (x, y, z, fn, o) => kx.prim(x, y, z, fn, o);
     // the main loft's top at (x, z) (look units: what lies on the roof, a part's wing); the parts fitted (js/deli.js): K.deli(id, stock) draws
@@ -1952,6 +1953,7 @@ const Render = (function () {
       kx.prim(x, y + h / 2, z, () => { World.box(g, x, y, z, l, h * 0.72, w, 0, col); World.box(g, x, y + h * 0.72, z, l * 0.86, h * 0.16, w * 0.62, 0, o.cover || [0.6, 0.12, 0.1]);
         tubeX(g, x + l * 0.3, x - l * 0.2, y + h * 0.95, z + w * 0.18, h * 0.18, 8, [0.12, 0.12, 0.13], [0.3, 0.3, 0.32]); }, Object.assign({ part: kx.ex ? null : 'body' }, o, { inner }));
       kx.engineAt = [x, y + h];
+      if (!o.bare && typeof DELI !== 'undefined' && DELI.bayExtra) DELI.bayExtra(K, x, y, z, l, w, h, M);
       if (!(M.def && M.def.mounts && M.def.mounts.filter_zraka) && !o.bare && typeof DELI !== 'undefined' && DELI.stockBay) DELI.stockBay(K, x, y, z, l, w, h, M);   // (no mounts: the stock filter, battery and control box beside the block)
     };
     K.cage = (bars, r, col, o) => {   // a roll cage (or a buggy's frame): bars [[a, b], ...] of radius r
@@ -10976,6 +10978,7 @@ const Render = (function () {
       if (o.open === true) for (const n in U.ranges) if (/^(hood|trunk|tailgate|cover|door)/.test(n)) O[n] = KIT_LOOSE[n] ? KIT_LOOSE[n][1] : /^door/.test(n) ? 62 : 70;   // (the race's loose angles; a further door, a boot's second leaf: as its kind)
       if (!car.glassTris) car.glassTris = [0, 0, 0, 0]; if (!car.winBroken) car.winBroken = [0, 0, 0, 0];
       for (const n in O) if (U.ranges[n] && !car.kit.ajar[n]) kitLoosen(car, fk, n, O[n]);
+      if (o.cut) { const pa = g2.attributes.position.array; for (const n of o.cut) { const R = U.ranges[n]; if (R) for (const [x, y] of [R.o, R.i]) for (let i = x * 3; i < y * 3; i++) pa[i] = 0; } g2.attributes.position.needsUpdate = true; }
       car.opened = true; }
     let gh = null;   // o.ghost: [id, n] the garage's part alone, whole and solid, on the car drawn see-through (a hidden part under the bonnet, in a wheel arch)
     if (o.ghost && M.kit) { const part = deliMesh(M, o.ghost[0], o.ghost[1], o.color != null ? o.color : 0xc0392b); gh = { part, mats: [] };

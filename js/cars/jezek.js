@@ -212,7 +212,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.box(0.2, 0.24, 0, 0.56, 0.24, 0.22, 0, DK, null, false, { inner: true, part: 'body' });
         // (the bay: the motor and its gearbox low between the front wheels, the inverter on it, the orange high-voltage cables from it down to
         // the battery under the floor, the 12 V battery, the coolant tank, the radiator behind the fascia)
-        K.engine(1.4, 0.28, 0, { l: 0.46, w: 0.66, h: 0.34, col: [0.58, 0.59, 0.62], cover: [0.34, 0.35, 0.38] });
+        DELI.bayMap(K, P, L, { x0: 1.05, x1: 1.74, sz: 1.08, sy: 1.12, kind: 'ev' });
         const OR = K.rgb(0xf07818), IN = { inner: true, part: 'body' };
         K.box(1.42, 0.62, 0, 0.36, 0.1, 0.46, 0, [0.72, 0.73, 0.76], null, false, IN);
         for (const z of [-0.12, 0.12]) { K.bar([1.6, 0.73, z], [1.26, 0.73, z], 0.02, OR, Object.assign({ n: 4 }, IN)); K.bar([1.26, 0.73, z], [0.98, 0.34, z], 0.022, OR, Object.assign({ n: 4 }, IN)); }

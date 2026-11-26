@@ -215,7 +215,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [[-0.95, yH, -0.6], [-1.85, 0.6, -0.6]], [[-0.95, yH, 0.6], [-1.85, 0.6, 0.6]], [[-0.95, yH, -0.6], [-0.95, 0.2, 0.8]],
         ], 0.024, cg, { n: 4 });
         // the V8 (its block, the intake between the banks), the valve covers on its banks, the round air cleaner on top
-        K.engine(1.55, 0.22, 0, { l: 0.72, w: 0.46, h: 0.42, cover: CF });
+        DELI.bayMap(K, P, L, { x0: 0.9, x1: 2.1, sz: 1.2, sy: 1.0, kind: 'v8carb', cover: [0.82, 0.83, 0.86] });
         for (const sd of [-1, 1]) K.plate([[1.88, 0.6, sd * 0.1], [1.22, 0.6, sd * 0.1], [1.22, 0.5, sd * 0.3], [1.88, 0.5, sd * 0.3]], 0.06, [0.72, 0.1, 0.08], { inner: true, part: 'body' });
         K.deli('filter_zraka', () => K.cyl([1.55, 0.64, 0], [1.55, 0.71, 0], 0.17, B, { n: 8, capB: CH, inner: true, part: 'body' }));   // (the garage's filter in its place: mounts.filter_zraka)
         K.box(2.18, 0.14, 0, 0.06, 0.42, 1.3, 0, D, null, false, { inner: true, part: 'body' });

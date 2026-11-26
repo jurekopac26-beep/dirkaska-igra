@@ -226,7 +226,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.seat(-0.92, 0.4, sd * 0.37, { w: 0.5, back: 0.62, tilt: 0.3, col: [0.5, 0.32, 0.19] });   // (tan hide)
         K.box(-0.05, 0.6, 0, 0.36, 0.25, 1.5, 0, D, null, false, { inner: true, part: 'body' });
         K.box(-0.55, 0.2, 0, 1.2, 0.24, 0.24, 0, D, null, false, { inner: true, part: 'body' });
-        K.engine(0.98, 0.26, 0, { l: 0.92, w: 0.62, h: 0.46 });
+        DELI.bayMap(K, P, L, { x0: 0.3, x1: 1.75, sz: 1.15, sy: 1.0, kind: 'v12', cover: [0.7, 0.71, 0.74] });
         for (const sd of [-1, 1]) {
           K.cyl([0.58, 0.7, sd * 0.15], [1.38, 0.7, sd * 0.15], 0.05, [0.62, 0.63, 0.66], { n: 6, inner: true, part: 'body' });
           K.box(1.42, 0.715, sd * 0.76, 0.8, 0.04, 0.3, 0, D, null, false, { inner: true, part: 'body' });

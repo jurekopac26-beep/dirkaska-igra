@@ -241,7 +241,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         cg.push([[-0.66, 1.2, -0.56], [-0.66, 1.2, 0.56]], [[-0.02, 1.2, -0.56], [-0.02, 1.2, 0.56]], [[-0.66, 0.26, -0.7], [-0.66, 1.2, 0.56]]);
         K.cage(cg, 0.022, [0.78, 0.79, 0.82], { n: 4, noCrush: true, noDent: true });   // (the main hoop, the A-pillar bars, the roof rails, the door bars, a diagonal)
         K.cyl([0.12, 0.3, 0.3], [0.12, 0.3, 0.02], 0.06, K.rgb(0xc81e1e), { n: 6, inner: true, part: 'body' });   // (the fire extinguisher on the floor)
-        K.engine(1.38, 0.3, 0, { l: 0.62, w: 0.4, h: 0.4 });
+        DELI.bayMap(K, P, L, { x0: 0.75, x1: 1.75, sz: 1.08, sy: 1.05, kind: 'i5', cover: [0.75, 0.12, 0.1] });
         K.box(1.78, 0.5, 0, 0.1, 0.22, 0.62, 0, [0.55, 0.56, 0.58], null, false, { inner: true, part: 'body' });   // (the intercooler)
         // (stock: none of the garage's hidden parts; theirs in their places: K.deli, js/deli/skriti.js)
         for (const id of ['filter_zraka', 'akumulator', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});

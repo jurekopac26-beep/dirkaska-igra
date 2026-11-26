@@ -254,7 +254,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.box(0.38, 0.6, 0, 0.44, 0.23, 1.5, 0, K.lining, null, false, { part: 'body' });
         K.cyl([0.13, 0.72, -0.36], [0.16, 0.735, -0.36], 0.17, B, { n: 8, inner: true, part: 'body' });
         K.box(-0.05, 0.22, 0, 0.7, 0.24, 0.2, 0, D, null, false, { inner: true, part: 'body' });
-        K.engine(1.0, 0.26, 0, { l: 0.44, w: 0.5, h: 0.36 });
+        DELI.bayMap(K, P, L, { x0: 0.7, x1: 1.75, sz: 1.05, sy: 0.92, kind: 'rotary' });
         K.cyl([1.14, 0.47, 0.32], [0.94, 0.47, 0.32], 0.08, [0.5, 0.5, 0.52], { n: 6, inner: true, part: 'body' });
         K.box(1.98, 0.22, 0, 0.06, 0.2, 0.8, 0, [0.3, 0.31, 0.33], null, false, { inner: true, part: 'body' });
         for (const id of ['filter_zraka', 'akumulator', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});   // (the hidden parts: mounts)

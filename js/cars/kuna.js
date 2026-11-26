@@ -116,7 +116,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const sd of [-1, 1]) K.seat(-0.3, 0.42, sd * 0.38, { w: 0.48, back: 0.7 });
         K.seat(-1.15, 0.42, 0, { w: 1.2, back: 0.6 });
         K.box(0.7, 0.6, 0, 0.3, 0.22, 1.5, 0, D, null, false, { inner: true, part: 'body' });
-        K.engine(1.45, 0.34, 0, { l: 0.56, w: 0.7, h: 0.46 });
+        DELI.bayMap(K, P, L, { x0: 1.0, x1: 1.86, sz: 1.1, sy: 1.08, cover: [0.72, 0.1, 0.08] });
       },
     },
   });

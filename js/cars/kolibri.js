@@ -345,6 +345,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-1.0, 0.3, 0, 0.42, 0.15, 1.0, 0, SEAT2, SEAT, true, IN);
           K.plate([[-1.2, 0.45, -0.5], [-1.2, 0.45, 0.5], [-1.3, 0.98, 0.49], [-1.3, 0.98, -0.49]], 0.08, SEAT, IN);
           for (const sd of [-1, 1]) K.plate([[-1.29, 0.93, sd * 0.28 - 0.09], [-1.29, 0.93, sd * 0.28 + 0.09], [-1.31, 1.02, sd * 0.28 + 0.085], [-1.31, 1.02, sd * 0.28 - 0.085]], 0.06, SEAT2, IN);
+          if (DELI.PRT) K.plate([[-1.34, 0.93, -0.53], [-1.34, 0.93, 0.53], [-1.554, 1.11, 0.52], [-1.554, 1.11, -0.52]], 0.014, PL, IN); else
           K.face([[-1.34, 0.93, 0.62], [-1.34, 0.93, -0.62], [-1.62, 0.93, -0.6], [-1.62, 0.93, 0.6]], PL, IN);
           // the console: the gear lever (its gaiter, the knob), the hand brake
           K.box(0.18, 0.32, 0, 0.32, 0.1, 0.2, 0, PL2, PL, true, IN);
@@ -367,6 +368,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.bar([-0.385, 0.87, sd * 0.68], [-0.385, 1.32, sd * 0.56], 0.035, D, { n: 4, inner: true, part: 'body' });
           K.bar([-1.47, 0.87, sd * 0.66], [-1.5, 1.31, sd * 0.52], 0.04, D, { n: 4, inner: true, part: 'body' });
         }
+        if (DELI.kolibriBoot) DELI.kolibriBoot(K, P);
+        if (DELI.BK) DELI.kolibriBay(K, P, L); else {
         K.engine(1.24, 0.3, 0, { l: 0.4, w: 0.62, h: 0.36 });
         K.box(1.24, 0.69, 0, 0.3, 0.05, 0.42, 0, [0.62, 0.63, 0.66], null, false, { inner: true, part: 'body' });
         { const o = { inner: true, part: 'body' };   // (round the engine: the battery, the air filter's drum, the strut tops, the brake fluid's reservoir)
@@ -375,6 +378,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const id of ['turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});
           for (const sd of [-1, 1]) K.box(1.15, 0.5, sd * 0.56, 0.1, 0.3, 0.1, 0, [0.2, 0.2, 0.22], [0.5, 0.5, 0.53], true, o);
           K.box(0.92, 0.6, -0.2, 0.06, 0.1, 0.06, 0, [0.9, 0.82, 0.4], [0.12, 0.12, 0.13], true, o); }
+        }
         // ---- the front's structure behind the bumper (seen once the bumper hangs or is off, as in a real car with its bumper torn away):
         //      the radiator support's panel across the nose, its posts by the fenders, the radiator in front of it (fins across), the
         //      frame rails' ends with the steel crash bar on them, the cross member under it, the inner aprons closing the arches' fronts:

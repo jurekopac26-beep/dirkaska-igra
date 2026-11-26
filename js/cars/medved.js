@@ -267,7 +267,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // rear wheels (the tubs are seen from outside only: from the load bay they would show the tyres)
         for (const sd of [-1, 1]) K.box(-1.35, 0.46, sd * 0.75, 0.92, 0.42, 0.26, 0, K.lining, null, true, { inner: true, part: 'body' });
         K.box(-1.62, 0.47, -0.36, 0.48, 0.34, 0.5, 0, [0.42, 0.33, 0.22], null, true, { inner: true, part: 'body' });   // (clear of the wheel's tub)
-        K.engine(1.68, 0.62, 0, { l: 0.72, w: 0.66, h: 0.46 });
+        DELI.bayMap(K, P, L, { x0: 1.1, x1: 2.1, sz: 1.2, sy: 1.15, y0: 0.5, kind: 'v8', cover: [0.3, 0.32, 0.3] });
         // (none stock: the garage's exhaust, tow points, kit, stripes, decals, sun strip and calipers where mounts has them; the hidden parts)
         for (const id of ['auspuh', 'vlecne_kljuke', 'aero', 'crte', 'nalepke', 'soncni_pas', 'celjusti']) K.deli(id, () => {});
         for (const id of ['akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});
