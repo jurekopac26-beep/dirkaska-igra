@@ -116,6 +116,15 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-102`
+
+Kamera za avtom, skupina 102 (`js/world-chase-bt102.js`): Vaoala (prvi prehod: na travi do ~60 m zaplate bujne in blede trave, šopi in nizki temni grmi, ob gozdu listje in praprot, na strminah rdečerjava prst in bazaltni kamni; +7 klicev, 154 od 300, 371 tisoč oglišč) in Zandvoort (četrti prehod, 4,5–30 m za ograjo: na travi temnejše in suhe zaplate ter nepokošeni šopi, na sipinah siva sipina z mahom in peščeni žepi; brez novih klicev, 212 od 300, 714 tisoč oglišč). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Vaoala manj (pol gostote), Zandvoort tako.
+3. Samo Vaoala, Zandvoort brez četrtega prehoda.
+4. Ne, odstrani skupino 102.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
