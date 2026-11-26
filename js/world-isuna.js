@@ -60,6 +60,7 @@
       m.castShadow = m.receiveShadow = true; m.matrixAutoUpdate = false; ctx.root.add(m);
       ctx.out.bridge = m; ctx.out.marks = Object.assign(ctx.out.marks || {}, { Most: info.mid.slice() });
       if (World.znamenitost) World.znamenitost.add('isuna', ctx.root, { x: info.mid[0], z: info.mid[1], fallback: m, out: ctx.out });
+      if (World.ext.goreRob) World.ext.goreRob(ctx, 'isuna');   // (the roadside ground from the chase camera: js/world-chase-bt11.js)
     },
   });
 })();

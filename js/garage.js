@@ -246,6 +246,11 @@
         camo: '<path d="M8 12c6-3 10 2 15 0s9 2 12 6c-4 3-9 0-13 3s-10 3-14-1z" fill="#5d6b3a"/><path d="M10 30c4-4 9-1 13-3s8 1 11 4c-5 3-9 1-13 2s-8 0-11-3z" fill="#3e4a26"/>',
         custom: ['#d8261d', '#ffc21a', '#2fbf5a', '#47a3ff'].map((c, q) => '<circle cx="' + (15 + (q & 1) * 14) + '" cy="' + (15 + (q >> 1) * 14) + '" r="5.5" fill="' + c + '"/>').join('') }[k];
       return '<svg viewBox="0 0 44 44"><rect x="6" y="6" width="32" height="32" rx="3" fill="#eef0f3"/>' + (sm ? '<g transform="translate(6.6 6.6) scale(.7)">' + M + '</g>' : M) + '</svg>'; },
+    // (the car's panels: the hood, a door, the boot lid seen from the side, open; their colour by the tab: steel, light, carbon, racing)
+    hauba: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-5l6-2 6-7h12l8 6 6 2v6z" fill="#9aa2ae"/><path d="M33 22l5-12 3 1-5 12z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
+    vrata: (t) => '<svg viewBox="0 0 44 44"><path d="M8 36V14l8-8h18v30z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><path d="M11 18l7-8h13v8z" fill="#8fc3ef"/><rect x="24" y="22" width="7" height="2.6" rx="1.3" fill="#e0e4ea"/></svg>',
+    prtljaznik: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-6l6-2 6-7h12l8 6 6 2v7z" fill="#9aa2ae"/><path d="M9 23L4 12 1 13l5 11z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
+    ogledala: (t) => '<svg viewBox="0 0 44 44"><path d="M6 30l6-4h4v6h-6z" fill="#6b7380"/><path d="M14 12h20a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6H18a8 8 0 0 1-8-8v-6a4 4 0 0 1 4-4z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><path d="M16 15h17a4 4 0 0 1 4 4v4a4 4 0 0 1-4 4H19a5 5 0 0 1-5-5v-5a2 2 0 0 1 2-2z" fill="#8fc3ef"/></svg>',   // (the mirrors: a housing in the tab's shade, its glass; garaza-klik-deli, 24. 11.)
     celjusti: (t, j, hex) => { const c = [['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', '#d8261d'], ['#e0362c', '#2f7fe0', '#e0b030', '#e0e4ea']][t][j] || CSS(hex || 0x3b78d8);
       return '<svg viewBox="0 0 44 44"><circle cx="22" cy="25" r="15" fill="#7b8594"/><circle cx="22" cy="25" r="5" fill="#4a5160"/><path d="M8 19.5a15 15 0 0 1 28 0l-6 2.6a8.6 8.6 0 0 0-16 0z" fill="' + c + '"/>' +
         (t === 2 && j === 3 ? '<path d="M22 10a15 15 0 0 1 14 9.5l-6 2.6A8.6 8.6 0 0 0 22 16.4z" fill="#1d1f24"/>' : '') + '</svg>'; },
@@ -317,9 +322,16 @@
     else { go.textContent = tr('Kupi · {0}', eur(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
     // the cars before and after it: their pictures (as they stand in their colour, half a metre further back), their names to the ear
     const i = ORDER.indexOf(S.car), pv = ORDER[(i - 1 + ORDER.length) % ORDER.length], nx = ORDER[(i + 1) % ORDER.length];
-    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : ''; el.querySelector('.nm').textContent = model(id).name;
+    // (a button's picture missing: drawn now, no show playing (the tap's moment, the page opened); else first in the queue, drawn the
+    // next frame even over a show; the car shown and the cars two before and after drawn ahead, when nothing moves: there at the next tap)
+    const at = (d) => ORDER[(i + d + 2 * ORDER.length) % ORDER.length];
+    // (a missing button picture: drawn now, unless a show runs and the button still shows one, then first in the queue, the next frame)
+    for (const [b, id] of [['g-prev', pv], ['g-next', nx]]) if (!thumbOf(id, S.cars[id].color)) { if (!G.ready || (G.busy && $(b).querySelector('.th img'))) queueThumbs([id], true); else try { drawThumb(id, S.cars[id].color); } catch (e) { console.error(e); queueThumbs([id], true); } }
+    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbOf(id, k.color), th = el.querySelector('.th'), was = th.firstElementChild;
+      if (!t) th.innerHTML = ''; else if (!was || was.getAttribute('src') !== t) th.innerHTML = '<img alt="" src="' + t + '">';   // (the same picture: not set again)
+      el.querySelector('.nm').textContent = model(id).name;
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
-    fitNames(); queueThumbs([pv, nx]);
+    fitNames(); queueThumbs([S.car, at(2), at(-2)]);
     // IZBERI PROGO: the flag, for the player's car or one rented; else grey, its words: buy or rent the car first (answer 3 of 2. 11.)
     const tb = $('g-track');
     if (own || rented) { tb.disabled = false; tb.classList.remove('not'); flagButton(); }
@@ -332,13 +344,22 @@
   function render() { head(); if (menu) drawMenu(); }
 
   /* ---------------- the car pictures for the buttons (drawn by Garage3D one at a time, between frames) ---------------- */
-  function queueThumbs(ids) {
-    for (const id of ids) { const k = S.cars[id]; if (!(thumbs[id] && thumbs[id][k.color]) && !thumbQ.some(q => q[0] === id && q[1] === k.color)) thumbQ.push([id, k.color]); }
+  // thumbs[id][colour]: a car's picture in that colour; thumbs[id].sig its stripe and upgrades (others: drawn again). Kept over a reset
+  // and another profile (the same car the same: not drawn again)
+  const tsig = (id) => { const k = S.cars[id], u = levels(k.parts); return stripeOf(k) + '|' + u.motor + u.gume + u.zavore + u.aero; };
+  const thumbOf = (id, col) => { const t = thumbs[id]; return t && t.sig === tsig(id) ? t[col] : null; };
+  function drawThumb(id, col) { const k = S.cars[id], sg = tsig(id); let t = thumbs[id]; if (!t || t.sig !== sg) t = thumbs[id] = { sig: sg };
+    t[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: stripeOf(k), upg: levels(k.parts) }, 160, 72, { back: 0.5 }); }
+  // (first: the buttons' pictures, at the queue's head (drawn over a show too, q[2]); the others after them, when no show plays)
+  function queueThumbs(ids, first) {
+    for (const id of first ? [...ids].reverse() : ids) { const col = S.cars[id].color; if (thumbOf(id, col)) continue;
+      const j = thumbQ.findIndex(q => q[0] === id && q[1] === col); if (j >= 0 && (!first || thumbQ[j][2])) continue; if (j >= 0) thumbQ.splice(j, 1);
+      if (first) thumbQ.unshift([id, col, 1]); else thumbQ.push([id, col]); }
   }
   function thumbStep() {
-    if (!thumbQ.length || G.busy || G.thumbed) return;
-    const [id, col] = thumbQ.shift(), k = S.cars[id];
-    try { (thumbs[id] = thumbs[id] || {})[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: stripeOf(k), upg: levels(k.parts) }, 160, 72, { back: 0.5 }); } catch (e) { console.error(e); return; }
+    if (!thumbQ.length || G.thumbed || (G.busy && !thumbQ[0][2])) return;
+    const [id, col] = thumbQ.shift(); if (thumbOf(id, col)) return;
+    try { drawThumb(id, col); } catch (e) { console.error(e); return; }
     head(); const pi = id === S.car && document.querySelector('#g-menu [data-col="' + col + '"] .pi'); if (pi) pi.innerHTML = '<img alt="" src="' + thumbs[id][col] + '">';   // (a paint card's car in its colour)
   }
 
@@ -367,7 +388,7 @@
     if (!b) { if (t) t.classList.remove('on'); return; }
     if (!t) { t = document.createElement('div'); t.id = 'g-tag'; t.className = 'g-tag'; $('g-stage').appendChild(t); }
     t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); const hw = t.offsetWidth / 2 + 4, W = $('g-stage').clientWidth; t.style.left = Math.round(Math.max(hw, Math.min(W - hw, b.x + b.w / 2))) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }   // (kept on the screen)
-  function closeMenu() { if (!menu) return; menu = null; colTag(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
+  function closeMenu() { if (!menu) return; menu = null; colTag(null); G.openPart(null); G.bayCam(false); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -379,9 +400,9 @@
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
     } else if (el === 'barva') {   // (plate an_barvanje 2/6: two tabs of four colours, each a card with the car in it; ⏱ the chamber's time; one price: the car's size)
       const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (m.ctab == null) m.ctab = CTAB.findIndex(g => g[1].includes(cur)); const g = CTAB[m.ctab][1];
-      for (const i of g) if (!(thumbs[S.car] && thumbs[S.car][i]) && !thumbQ.some(q => q[0] === S.car && q[1] === i)) thumbQ.push([S.car, i]);
+      for (const i of g) if (!thumbOf(S.car, i) && !thumbQ.some(q => q[0] === S.car && q[1] === i)) thumbQ.push([S.car, i]);
       html += '<div class="g-mh g-ch"><h3>' + esc(L2(EL.barva.n)) + '</h3>' + CTAB.map((q, i) => '<button class="g-cp' + (i === m.ctab ? ' sel' : '') + '" data-ctab="' + i + '">' + esc(tr(q[0])) + '</button>').join('') + '<span class="g-ct">⏱ 6 s</span></div><div class="g-mg g-mc">' +
-        g.map(i => { const q = COLORS[i], th = thumbs[S.car] && thumbs[S.car][i]; return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + esc(tr(i === c.color ? 'nameščeno' : 'brezplačno')) + '</i></div></button>'; }).join('') + '</div>';
+        g.map(i => { const q = COLORS[i], th = thumbOf(S.car, i); return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + esc(tr(i === c.color ? 'nameščeno' : 'brezplačno')) + '</i></div></button>'; }).join('') + '</div>';
       ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : p ? tr('KUPI IN NAMESTI · {0}', eur(p)) : tr('BARVAJ · BREZPLAČNO');
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
       const sc = c.stripe === false ? 'off' : c.sc >= 0 ? c.sc : -1;   // (V2: the stripes' colour and the car's number, free, at once: docs/novosti-e.md)
@@ -418,6 +439,9 @@
     box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330, dw = !!kb && kb.startsWith('drw:') && G.drawerBox(kb.slice(4));
     let drop = 0; if (dw) { const need = Math.ceil(top + h + 8 - dw.y); if (need > 0 && dw.y + dw.h + need <= $('g-stage').clientHeight - 4) drop = need; }
     G.drop(drop); box.classList.toggle('bot', !dw && !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
+    // (a panel of the car tapped (the hood, a door, the boot lid): standing, the menu at the bottom; lying, small at the bottom right, the
+    // open panel in sight)
+    const side = !!m.panel && innerWidth > innerHeight; box.classList.toggle('side', side); if (m.panel && !side) box.classList.add('bot');
   }
   function tile(t, j) { if (!menu) return; menu.sel = [t, j]; drawMenu(); }
   // buying the chosen option: paid, fitted, the menu closed; the car's upgrade played when one of its four levels changes, else a word
@@ -537,12 +561,16 @@
     if (h.kind === 'service') m = { el: 'servis', key: h.key };
     else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
+    else if (h.key === 'car:el' && EL[h.el]) m = { el: h.el, key: null, car: true, part: h.part || null, panel: !!h.part };   // (a part on the car the shop sells: its menu; under the open bonnet the bay's (the bonnet stays up, its menu at the foot as the bonnet's); garaza-klik-deli, 24. 11.)
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
+    else if (h.key === 'car:hood' || h.key === 'car:door' || h.key === 'car:trunk') m = { el: { 'car:hood': 'hauba', 'car:door': 'vrata', 'car:trunk': 'prtljaznik' }[h.key], key: null, car: true, part: h.part || null, panel: true };   // (the panel opens on its hinge, a car with a kit; garaza-klik-deli-izbira, 23. 11.)
     else if (h.key === 'car:body') m = { el: 'barva', key: null, car: true, sel: [0, 0] };   // (the paint: a tap on the car's body (plate barvni_krogi_B f, 15. 11.); the aero kits: AERO › in its menu)
     else if (h.name && sold(h.name)) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];
-    G.markOff(); G.ghostOff(); menu = null; openMenu(m);
+    G.markOff(); G.ghostOff(); menu = null; G.openPart(null); openMenu(m);
+    if (menu && m.part) G.openPart(m.part);
+    G.bayCam(!!(menu && m.part === 'hood'));   // (into the bay with the bonnet up, home again otherwise)
   }
   function onAct(act) {
     G.sound(S.sound);
@@ -560,7 +588,7 @@
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
-      case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
+      case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
       case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); resize(); break;   // (the buttons at the top higher: the picture fitted again)
     }
   }
@@ -607,7 +635,7 @@
       if (t.dataset.sc) { G.sound(S.sound); doStripe(t.dataset.sc === 'off' ? 'off' : +t.dataset.sc); return; }
       if (t.dataset.num) { G.sound(S.sound); doNum(+t.dataset.num); return; }
       if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); else if (t.dataset.mact === 'aero') { menu = null; openMenu({ el: 'aero', key: null, car: true }); } return; }
-      if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
+      if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); closeMenu(); markMode(); render(); carAgain(); return; }
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
     window.addEventListener('resize', resize);

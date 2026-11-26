@@ -98,20 +98,20 @@ def scenery():
     lo, step = -42.0, 0.25; dem = np.clip(np.round((hv - lo) / step), 0, 255)
     D = dict(x0=x0, z0=z0, nx=nx, nz=nz, cell=c, lo=lo, step=step, base=0, noise=0.12, b64=b64bytes(dem))
     # land cover, 16 m cells: 0 open (grass, fields, sand), 1 forest (the plantations), 2 heath and scrub, 3 built-up and car parks;
-    # OSM's land use first (the circuit's grass and sand are OSM's), ESA WorldCover and the canopy height for the rest
-    g1, a1 = grid('lc'); g2, a2 = grid('lu'); g3, a3 = grid('chm')
+    # the trees only from OSM (landuse=forest, natural=wood: the user's choice b, 23. 11. 2026, no canopy model); OSM's land use first (the
+    # circuit's grass and sand are OSM's), ESA WorldCover only for the heath and the built-up ground where OSM has nothing
+    g1, a1 = grid('lc'); g2, a2 = grid('lu')
     lnx = nx - 1; lnz = nz - 1; votes = np.zeros((4, lnz, lnx), np.float32)
     for fz in (-0.25, 0.25):
         for fx in (-0.25, 0.25):
             X, Z = np.meshgrid(x0 + (np.arange(lnx) + 0.5 + fx) * c, z0 + (np.arange(lnz) + 0.5 + fz) * c)
-            wc = sample(g1, a1, X, Z, False); lu = sample(g2, a2, X, Z, False); ch = sample(g3, a3, X, Z, False)
+            wc = sample(g1, a1, X, Z, False); lu = sample(g2, a2, X, Z, False)
             cls = np.zeros(wc.shape, np.int8)
-            cls[(wc == 10) | (ch > 5)] = 1
             cls[(wc == 20) | (wc == 90) | (wc == 100)] = 2
-            cls[(wc == 50) & (ch <= 6)] = 3
-            cls[lu == 9] = 1; cls[(lu == 8) & (ch <= 6)] = 2; cls[(lu == 8) & (ch > 6)] = 1
+            cls[wc == 50] = 3
+            cls[lu == 9] = 1; cls[lu == 8] = 2
             cls[(lu == 4) | (lu == 3) | (lu == 12) | (lu == 10)] = 0
-            cls[((lu == 1) | (lu == 2) | (lu == 14)) & (ch <= 6)] = 3
+            cls[(lu == 1) | (lu == 2) | (lu == 14)] = 3
             for k in range(4): votes[k] += (cls == k)
     lc = votes.argmax(0).astype(np.uint8)
     LC = dict(x0=x0, z0=z0, nx=lnx, nz=lnz, cell=c, rle=rle_lc(lc))
@@ -160,13 +160,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // start line, decimetres above it (61.7 m a.s.l.): nearly flat, the south loop 3 m lower.
   // Scenery data for the world builder (js/world-silkeborg.js on js/world-rbring.js): terrain (dem: the same model, 16 m cells, heights above the
   // start line in 0.25 m steps), land cover (lc, 16 m cells: 0 grass, fields and sand, 1 the pine and spruce plantations, 2 heath and scrub,
-  // 3 built-up and car parks: OSM, ESA WorldCover, the canopy), and sk: the sand round the circuit ([x, z, ...] outlines: OSM natural=sand), the
+  // 3 built-up and car parks; the plantations only OSM's landuse=forest and natural=wood, the rest OSM and ESA WorldCover),
+  // and sk: the sand round the circuit ([x, z, ...] outlines: OSM natural=sand), the
   // three burial mounds of the Bronze Age ([x, z, radius, height]: OSM historic=archaeological_site), the buildings by the circuit ([x, z,
   // length, width, angle (deg), height]: OSM outlines as boxes, not the pit building and the grandstands, which the builder makes), the fences.
   // The names: plain descriptions only (no names of people, firms, events or the circuit).
   // Data: the OSM-derived data in this file under the ODbL 1.0; the heights: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and
   // © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; the land cover:
-  // ESA WorldCover 2021 (CC BY 4.0); the canopy: Meta and World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0).
+  // ESA WorldCover 2021 (CC BY 4.0); the canopy height (only taken off the heights): Meta and World Resources Institute, High Resolution
+  // Canopy Height Maps (CC BY 4.0).
   const SK_H = [%(skh)s];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
