@@ -1,11 +1,11 @@
 # Fizika 7 velikih vozil: raziskava in zasnova
 
-Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7138172424): polna posodobitev fizike velikih vozil. Izjema pri pravilu »fizika vožnje se ne spreminja« velja **samo** za teh 7 vozil; trki se ne spreminjajo. **Stanje: izbrana možnost 2** (»Resnična teža, dirkalni motor«; uporabnik 24. 11. 2026 ob 23.28, stran Odločitve, `velika-vozila-1`). Kode fizike še ni: začne se po združitvi Trkov #608 na `main` (zbirka `cakanje`, `pr-608-velika-vozila`).
+Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7138172424): polna posodobitev fizike velikih vozil. Izjema pri pravilu »fizika vožnje se ne spreminja« velja **samo** za teh 7 vozil; trki se ne spreminjajo. **Stanje: izbrana možnost 2** (»Resnična teža, dirkalni motor«; uporabnik 24. 11. 2026 ob 23.28, stran Odločitve, `velika-vozila-1`). Viri preverjeni 26. 11. (razdelek »Preverjanje virov«). Kode fizike še ni: `js/core.js` in datoteke 7 vozil spreminjajo tudi drugi odprti PR (#608, #685, #480, #679, #949); koda počaka na odločitev na strani Odločitve.
 
 ## Predaja (25. 11. 2026)
 
 - Veja `fizika/velika-vozila-bt`, osnutek PR #1061; narejena samo raziskava in zasnova (ta dokument).
-- Naslednja seja (nova, s to predajo), ko je #608 na `main`: spoji svež `main`; z viri potrdi ocene iz razdelka »Ni še potrjeno z virom«; nato skupni model po možnosti 2 (stolpec 2 v tabeli), uglasitev 7 vozil, AI, testi (`npm run test:related`), slike zdaj in potem pred `main`.
+- Naslednja seja (nova, s to predajo), ko je #608 na `main`: spoji svež `main`; z viri potrdi ocene (narejeno 26. 11., razdelek »Preverjanje virov«); nato skupni model po možnosti 2 (stolpec 2 v tabeli), uglasitev 7 vozil, AI, testi (`npm run test:related`), slike zdaj in potem pred `main`.
 - Parametri možnosti 2 iz računa (izhodišče za uglasitev): mase 37,3 / 60 / 25,3 / 29,3 / 40 / 18 / 16 t (cisterna, vlak, avtovoz, krilo, hlodi, avtobus, gasilec); `vLim` 130; pragovi prevrnitve 0,42 / 0,40 / 0,38 / 0,45 / 0,31 / 0,53 / 0,50 g; pojemek 6,5 m/s²; slabljenje zavor med 350 in 550 °C (`FADE_K` 0,55); motorna zavora odvzame polovico dela; po prevrnitvi časovna kazen.
 - Fizika drugih vozil in trki se ne spreminjajo.
 
@@ -35,7 +35,46 @@ Potrjeno z iskanjem (24. 11. 2026):
 - **Omejevalniki hitrosti**: Direktiva 92/6/EGS (sprememba 2002/85/ES): tovornjaki N3 90 km/h, avtobusi M3 100 km/h: <https://eur-lex.europa.eu/eli/dir/1992/6/oj/eng>.
 - **Slabljenje zavor**: mehanizem (raztezanje bobna, padec trenja obloge) in delovno območje bobnov 150–450 °F: <https://www.fleetequipmentmag.com/truck-brake-fade-why-how-minimize/>; spusti in ocena strmine: FHWA, <https://rosap.ntl.bts.gov/view/dot/30251/dot_30251_DS1.pdf>.
 
-**Ni še potrjeno z virom (ocene, preveriti pred kodo)**: polne mase posameznih vozil (40 t skupine, 60 t dvojna cisterna, avtovoz, prevoz krila, avtobus 18 t, gasilec 16 t), pragovi prevrnitve za avtovoz, krilo, avtobus in gasilca (ocenjeni iz razpona UMTRI), moči cestnih motorjev, pojemki na cesti, preskus zavor na spustu (UNECE R13). Te številke v grafih so računske ocene; v kodo gredo samo z virom.
+## Preverjanje virov (26. 11. 2026, korak 1)
+
+Iskanje 26. 11. 2026; neposredno branje strani v tej seji ni bilo mogoče (omrežje), zato so številke iz izvlečkov javnih virov. Pred uporabo v kodi jih ni treba več preverjati, razen tistih z oznako **brez vira**.
+
+### Mase (t)
+
+| vozilo | ocena | stanje | vir |
+|---|---|---|---|
+| TITAN CISTERNA | 37,3 | **potrjeno kot zgornja meja**: 5-osni sklop 2 + 3 osi največ 40 t | Direktiva 96/53/ES, Priloga I, 2.2.2 (a): <https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A01996L0053-20190814> |
+| ZRCALNI VLAK | 60 | **potrjeno**: modularni sistem (EMS) do 25,25 m in 60 t, kjer ga država dovoli (Švedska, Finska od 1993) | 96/53/ES, čl. 4(4)(b); povzetek ITF: <https://www.itf-oecd.org/sites/default/files/docs/weights-2021.pdf>; PIARC: <https://proceedings-paris2007.piarc.org/ressources/files/5/SP11-Berndtsson-E.pdf> |
+| TITAN AVTOVOZ | 25,3 | delno: prazen polpriklopnik za 8 avtov 9–10,4 t, višina ~4 m (tehnični listi brez znamk); masa naloženih avtov **brez vira** (ocena 8 × ~1,4 t) | tehnični listi polpriklopnikov; meja višine 4 m: 96/53/ES, Priloga I, 1.2 |
+| KRILO VETRNICE | 29,3 | delno: krilo 61,5 m ima 17,74 t (referenčna turbina 5 MW); masa prevoznega polpriklopnika **brez vira** | NREL/TP-500-38060 (Jonkman in sod., 2009), preglednica lastnosti krila |
+| HRAST | 40 | **potrjeno kot zgornja meja**: 40 t (kot cisterna) | 96/53/ES, Priloga I |
+| LASTOVKA | 18 | **potrjeno**: dvoosno motorno vozilo največ 18 t | 96/53/ES, Priloga I, 2.3.1 |
+| GASILEC | 16 | **potrjeno kot meja razreda**: razred M (srednji) do 16 t, S nad 16 t | EN 1846-1:2011, razdelek 3 (povzetek sprememb DIN) |
+
+### Pragovi prevrnitve (bočni pospešek)
+
+| vozilo | prag (g) | stanje | vir |
+|---|---|---|---|
+| TITAN CISTERNA | 0,42 | **potrjeno**: nagibna miza najmanj 23° (tan 23° = 0,42) | UNECE R111 |
+| ZRCALNI VLAK | 0,40 | **brez vira** (ocena: zadnji priklopnik dvojnega sklopa nekoliko pod enojnim) | razpon UMTRI-99-19 do 0,5 g |
+| TITAN AVTOVOZ | 0,38 | **brez vira** (ocena: visoko težišče zgornje etaže, blizu presejalne meje 0,35 g) | razpon UMTRI-99-19 |
+| KRILO VETRNICE | 0,45 | **brez vira** (ocena: dolg, a nizek in lahek tovor) | razpon UMTRI-99-19 |
+| HRAST | 0,31 | **potrjeno**: tovornjaki za hlodovino 0,23–0,31 g | UMTRI-99-19 |
+| LASTOVKA | 0,53 | **potrjeno**: nagib 28° brez izgube stika koles (tan 28° = 0,53) | UNECE R107 (preskus stabilnosti); opis postopka: <https://www.vti.se/en/research-areas/stability-and-rollover-testing/>, <https://www.tuvsud.com/en-us/knowledge-hub/technical-updates/automotive-essentials/physical-testing-of-buses> |
+| GASILEC | 0,50 | **brez vira**: EN 1846-2 predpisuje statični kot nagiba, številke v javnih povzetkih ni (standard je plačljiv) | EN 1846-2:2009+A1:2013 |
+
+### Zavore (UNECE R13, kategoriji N3 in M3)
+
+- **Preskus tip 0** (hladne zavore, motor odklopljen): N3 in M3 iz 60 km/h, pojemek najmanj **5,0 m/s²**; z motorjem iz 80 % najvišje hitrosti (največ 90 km/h) najmanj 4,0 m/s². Vir: UNECE R13, Priloga 4 (EUR-Lex: <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX%3A42016X0218%2801%29>; <https://unece.org/fileadmin/DAM/trans/main/wp29/wp29regs/r013r7e.pdf>).
+- **Preskus tip II** (spust): povprečno 30 km/h po 6 % klancu, 6 km; **tip IIA** (vzdržljivostna zavora, dolgoprogovni avtobusi M3 in N3 s priklopniki O4): 7 % klanec, 30 km/h, 6 km. Vir: UNECE R13, Priloga 4 (EUR-Lex, zgoraj).
+- **Vroče zavore**: po preskusu zavorna sila najmanj 60 % hladne (tip 0) pri isti hitrosti (sekundarni vir: <https://www.sciencedirect.com/topics/engineering/braking-rate>); pojemek po spustu N3 3,3 m/s², M3 3,75 m/s² (predstavitev OICA, ne besedilo predpisa: <https://www.unece.org/fileadmin/DAM/trans/doc/2019/wp29grva/GRVA-04-30.pdf>).
+- **Brez vira**: pojemek 6,5 m/s² za dirkalne zavore (ocena nad zakonskim minimumom 5,0); temperaturi slabljenja 350 in 550 °C (vir navaja samo delovno območje bobnov 150–450 °F); delež motorne zavore (polovica dela na spustu); moči cestnih motorjev (možnost 3 ni izbrana).
+
+### Posledica za uglasitev (možnost 2)
+
+- Mase iz preglednice veljajo; brez vira ostanejo samo deli mas avtovoza in krila (tovor, polpriklopnik) in so v kodi označeni kot ocena.
+- Pragovi z virom: cisterna, hlodi, avtobus. Ostali štirje so ocene v razponu UMTRI in v kodi označeni kot ocena.
+- Hladni pojemek ne sme pasti pod 5,0 m/s², vroči ne pod 60 % hladnega (R13).
 
 ## Skupni model (pri vseh možnostih)
 
