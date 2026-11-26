@@ -6613,18 +6613,20 @@ const Garage3D = (function () {
       const i0 = H.findIndex(h => h !== null); if (i0 < 0) return null;
       const ref = H.slice(i0 + 5, i0 + 15).filter(h => h !== null).sort((p, q) => p - q); if (ref.length < 5) return null;
       let hh = ref[ref.length >> 1], iw = -1, iff = i0, s0 = i0 + 5;
-      // (a wing over the end: the face is the lower even run behind it, 8 steps or more)
+      // (a wing over the end (up to 70 cm over it: the bizon's): the face is the lower even run behind it, 8 steps or more)
       for (let k = i0 + 5; k < i0 + 30 && k + 8 <= H.length; k++) { const w = H.slice(k, k + 8);
-        if (w.every(h => h !== null && h < hh - 0.15 && h > hh - 0.5 && Math.abs(h - w[0]) < 0.06)) { s0 = k; hh = w.slice().sort((p, q) => p - q)[4]; break; } }
+        if (w.every(h => h !== null && h < hh - 0.15 && h > hh - 0.7 && Math.abs(h - w[0]) < 0.06)) { s0 = k; hh = w.slice().sort((p, q) => p - q)[4]; break; } }
       for (let k = s0; k < H.length; k++) if (H[k] === null || H[k] > hh + 0.12 || H[k] < hh - 0.25) { iw = k - 1; break; }
       if (s0 > i0 + 5) iff = s0; else for (let k = s0; k >= i0; k--) if (H[k] === null || H[k] < hh - 0.1) break; else iff = k;
       if (iw < 0) iw = Math.min(H.length - 1, iff + 47);
       const xf = xe - sx * st * iff, xw = xe - sx * st * Math.min(iw, iff + 50), len = Math.abs(xw - xf); if (len < 0.35) return null;
-      const wAt = (x) => { const c = hAt(x, 0); if (!c) return 0; let w = 0; for (let z = st; z < bb.max.z; z += st) { const s = hAt(x, z), s2 = hAt(x, -z); if (!s || !s2 || Math.abs(s[0] - c[0]) > 0.1 || Math.abs(s2[0] - c[0]) > 0.1) break; w = z; } return w; };
-      const zm = Math.min(wAt(xf + (xw - xf) * 0.3), wAt(xf + (xw - xf) * 0.7), 0.92 * bb.max.z) * 0.9; if (zm < 0.25) return null;
+      // (across: till it falls or rises 10 cm; a narrow ridge on it (up to 15 cm in all, the bizon's two) not an end)
+      const wAt = (x) => { const c = hAt(x, 0); if (!c) return 0; let w = 0, bump = 0; for (let z = st; z < bb.max.z; z += st) { const s = hAt(x, z), s2 = hAt(x, -z); if (!s || !s2 || s[0] < c[0] - 0.1 || s2[0] < c[0] - 0.1) break;
+        if (s[0] > c[0] + 0.1 || s2[0] > c[0] + 0.1) { bump += st; if (bump > 0.15) break; continue; } w = z; } return w; };
+      const zm = Math.min(wAt(xf + (xw - xf) * 0.3), wAt(xf + (xw - xf) * 0.7), 0.92 * bb.max.z) * 0.9; if (zm < 0.15) return null;   // (the narrow round bonnets: the blisk's, the strelica's)
       // (the face's grid: its heights and colours; holes from their neighbour)
       const NX = 12, NZ = 8, F = [];
-      for (let i = 0; i <= NX; i++) { const x = xf + (xw - xf) * i / NX; F.push([]); for (let j = 0; j <= NZ; j++) { const z = -zm + 2 * zm * j / NZ, s = hAt(x, z);
+      for (let i = 0; i <= NX; i++) { const x = xf + (xw - xf) * i / NX; F.push([]); const c0 = hAt(x, 0); for (let j = 0; j <= NZ; j++) { const z = -zm + 2 * zm * j / NZ, s0 = hAt(x, z), s = s0 && c0 && s0[0] > c0[0] + 0.1 ? c0 : s0;   // (a ridge: the middle's)
         F[i].push(s ? [x, s[0], z, s[1]] : [x, (j ? F[i][j - 1][1] : i ? F[i - 1][j][1] : hh), z, j ? F[i][j - 1][3] : i ? F[i - 1][j][3] : [0.6, 0.6, 0.6]]); } }
       const ye = F[NX][NZ >> 1][1] + 0.016, A = [xw, ye, -zm], sg = Math.sign(xf - xw) || 1, Ua = new V3(0, 0, 1), Av = new V3(A[0], A[1], A[2]);
       const grid = (dy, dark, flip) => { const P = [], C = []; const pt = (q) => { P.push(q[0], q[1] + dy, q[2]); const c = dark || q[3]; C.push(c[0], c[1], c[2]); };
