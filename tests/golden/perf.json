@@ -266,11 +266,11 @@
   "jsMs": 1.02
  },
  "buriram": {
-  "calls": 207,
-  "maxCalls": 257,
-  "kverts": 719,
-  "maxKverts": 879,
-  "jsMs": 1.05
+  "calls": 213,
+  "maxCalls": 262,
+  "kverts": 721,
+  "maxKverts": 881,
+  "jsMs": 1.86
  },
  "sakhir": {
   "calls": 209,
@@ -427,11 +427,11 @@
   "jsMs": 0.09
  },
  "canaries": {
-  "calls": 210,
-  "maxCalls": 223,
-  "kverts": 682,
-  "maxKverts": 803,
-  "jsMs": 1.06
+  "calls": 215,
+  "maxCalls": 229,
+  "kverts": 687,
+  "maxKverts": 809,
+  "jsMs": 1.43
  },
  "savusavu": {
   "calls": 191,
