@@ -33,13 +33,13 @@ try {
   });
   const PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
-  // 1. the choice of a series: the cups of version 1.0 (Kratko prvenstvo first), their hidden tracks left out; behind NEUPORABNO the two of the test tracks
+  // 1. the choice of a series: the cups of version 1.0 (Kratko prvenstvo first, Legende chosen), their hidden tracks left out; behind NEUPORABNO the two of the test tracks
   const cards = () => page.evaluate(() => ({ screen: window.__game.screen, cards: [...document.querySelectorAll('[data-champ]')].map(b => b.dataset.champ + (b.classList.contains('sel') ? '*' : '')),
     go: document.getElementById('ch-go').textContent, quit: document.getElementById('ch-quit').classList.contains('off'),
     hid: [...document.querySelectorAll('[data-champ] .ttracks')].flatMap(e => e.textContent.split(' · ')).filter(n => Core.TRACKS.some(d => (d.test || d.pending) && Lang.of(d, 'name') === n)) }));
   await act('to-champ'); await page.waitForTimeout(300);
   const pick = await cards();
-  T.check('Prvenstvo: the series to choose from (the first one chosen), not Domači pokal nor Kratke proge, no hidden track in a series; no "Opusti" before one starts', pick.screen === 'champ' && pick.cards.length >= 3 && pick.cards[0] === 'kratko*' &&
+  T.check('Prvenstvo: the series to choose from (Kratko prvenstvo first, Legende chosen), not Domači pokal nor Kratke proge, no hidden track in a series; no "Opusti" before one starts', pick.screen === 'champ' && pick.cards.length >= 3 && pick.cards[0] === 'kratko' && pick.cards.includes('legende*') &&
     !pick.cards.some(c => /^(domaci|superstars)\b/.test(c)) && !pick.hid.length && pick.go === 'Začni prvenstvo' && pick.quit, JSON.stringify(pick));
   await act('to-title'); await act('to-champ-nu'); await page.waitForTimeout(300);
   const nu = await cards();
