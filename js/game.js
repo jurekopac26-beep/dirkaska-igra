@@ -6440,7 +6440,15 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function padMove(dir) {
     const items = padItems(); if (!items.length) return;
     if (!items.includes(padSel)) { padFocus(padHome()); return; }
-    const r0 = padSel.getBoundingClientRect(), x0 = r0.left + r0.width / 2, y0 = r0.top + r0.height / 2, h = dir === 'left' || dir === 'right';
+    const h = dir === 'left' || dir === 'right';
+    // a track card in a list on its side (one row): left / right the card before / after it in the list, not a button that the options
+    // below it reach into (on a low screen the row is squeezed and the options overlap the cards' lower part)
+    const lst = h && padSel.classList.contains('track-card') && padSel.closest('.track-list');
+    if (lst && getComputedStyle(lst).flexDirection === 'row') {
+      const cards = [...lst.querySelectorAll('.track-card')].filter(e => items.includes(e)), i = cards.indexOf(padSel), nx = cards[i + (dir === 'left' ? -1 : 1)];
+      if (nx) { padFocus(nx); return; }
+    }
+    const r0 = padSel.getBoundingClientRect(), x0 = r0.left + r0.width / 2, y0 = r0.top + r0.height / 2;
     // the nearest that way: first among those within about 55 degrees of it (a wide card's neighbour before a button just beside and
     // below it), else any that way
     let best = null;
