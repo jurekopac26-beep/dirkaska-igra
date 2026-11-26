@@ -96,6 +96,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: 'Cesta iz Killarja v dolini Pangi (Himačal Pradeš, Indija) ob reki Chenab proti Kishtwarju: en sam pas makadama na polici, vklesani v strmo pobočje visoko nad reko, nad prepadom le lesena ograja. Od vasi na 2.402 m vzdolž pečin, v stransko dolino Hangrung Nale čez most in nazaj nad prepad, 4,4 km. Dirka z 21 tekmeci, vožnja proti uri ali dvoboj z enim tekmecem v prometu.',
     en: { name: 'Killar, India', desc: 'The road from Killar in the Pangi Valley (Himachal Pradesh, India) along the Chenab towards Kishtwar: a single lane of gravel on a shelf cut into the steep mountainside high above the river, with only a wooden fence along the drop. From the village at 2,402 m along the cliffs, into the side valley of the Hangrung Nala, over its bridge and back above the drop, 4.4 km. A race against 21 rivals, a time trial or a duel with one rival in the traffic.' },
     realKm: 4.4, alt: [2402,2412],
+    // the sun and the haze (Grafika AAA H3, H4; js/render-sonce.js, js/render-megla.js): the place (OSM), a September afternoon (the assumption: docs/proge/killar.md)
+    sonce: { lat: 33.09397, lon: 76.3751, datum: '09-15', ura: 15, tz: 5.5 }, megla: { vid: 23, H: 1200 },
     start: [0.0,-0.0], finish: [-403.4,-2421.6], cps: [[-675.7,-457.8],[-1226.2,-1055.7],[-1309.4,-1800.7],[-554.4,-2183.6]],
     roadSurface: 'makadam', runoff: 0.25, inner: 2.0, side: 2.2, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
     elev: KILLAR_H.map((h, i) => [i / (KILLAR_H.length - 1), h / 10]),
