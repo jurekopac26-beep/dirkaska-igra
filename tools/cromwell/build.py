@@ -380,6 +380,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: %(turns)s,   // the 22 corners' apexes: the chicane (4), the south-east loop (2), the esses (3), the loop by the karting track and the right after it, the right before the long straight, the right by the pines, the west hairpin, the right before the south hairpin, the south hairpin, the left in the bends to the bridge, the left-right before the bridge (2), the long left, the north hairpin, the long right
     pit: %(pit)s,   // pit lane on the left of the main straight: [centre offset to the right (negative: the left), from, to, the player's box] (metres from the start line)
     pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the pit building's 13 garages: js/world-cromwell.js)
+    pitLanes: [60, 110],   // the deceleration lane 60 m (the way in at the end of the 228 m straight after the last corner: with 110 m the cars ran into the barrier at the lane's start, tests/pits.test.js), the acceleration lane 110 m (Core.Track.pitJ)
+    brakeBoards: { d: [150, 100, 50], at: [164, 1026, 1910, 2608] },   // (no straight of 290 m before a heavy braking: the longest 276 m before the chicane; none at 4022 m, the way into the pits on the left; Core.Track.brakeBoards)
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered one across the straight from the pits
     stands: %(stands)s,

@@ -63,6 +63,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     pit: [-14, -170, 90, 0],   // pit lane on the left of the main straight: [centre offset to the right (negative: the left), from, to, the player's box] (metres from the start line)
     pitRow: [-65, 55],   // the first and the last of the 13 crews' boxes (the pit building's 13 garages: js/world-cromwell.js)
     zaslon: { d: -77, side: 1, off: 17 },   // the big screen (js/world-zaslon.js) by the grandstand on the right, turned towards the cars coming (node tools/zaslon-mesto.mjs cromwell)
+    pitLanes: [60, 110],   // the deceleration lane 60 m (the way in at the end of the 228 m straight after the last corner: with 110 m the cars ran into the barrier at the lane's start, tests/pits.test.js), the acceleration lane 110 m (Core.Track.pitJ)
+    brakeBoards: { d: [150, 100, 50], at: [164, 1026, 1910, 2608] },   // (no straight of 290 m before a heavy braking: the longest 276 m before the chicane; none at 4022 m, the way into the pits on the left; Core.Track.brakeBoards)
     walls: [[-170, 90, -1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the covered one across the straight from the pits
     stands: [[-70,10,1,10,1,3,0,"CROMWELL"]],
