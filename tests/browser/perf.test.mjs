@@ -178,5 +178,7 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
+// ('izjema-…' entries: the user's recorded exceptions to the budget, with their reason; not measured here, so an update keeps them)
+const izjeme = Object.fromEntries(Object.entries(golden).filter(([k]) => k.startsWith('izjema-')));
+if (update) { fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : Object.assign(out, izjeme), null, 1) + '\n'); console.log('written ' + FILE); }
 else T.done();

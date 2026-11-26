@@ -553,5 +553,12 @@
   "fill": 2.9,
   "maxFill": 4.3,
   "jsMs": 1.41
+ },
+ "izjema-gneca-spa-visoka": {
+  "detail": "high",
+  "cars": 101,
+  "maxCalls": 293,
+  "maxKverts": 1078,
+  "razlog": "Odlocitev uporabnika 26. 11. 2026 (kartica gneca-spa-klici, moznost 1): Spa s 101 avtom pri visoki podrobnosti sme cez mejo 300 klicev in 900 tisoc oglisc (izmerjeno 219-293 klicev, prej 274-310; do 1078 tisoc oglisc). Samo na najvisji nastavitvi; samodejna kakovost pod 50 slicic/s jo zmanjsa. Test meri nizko podrobnost, ta vnos je zapis izjeme in se ne preverja."
  }
 }
