@@ -15,7 +15,7 @@ Cesta na Stavrovouni, osamljen suh hrib na vzhodnem robu gričevja pod Troodosom
 Okolica (skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom `PL_LOOK.stavrovouni` in lastnimi deli v `js/world-stavrovouni.js`):
 
 - **Suh otok**: slamnata suha trava, sivo zeleno grmičevje, bel apnenec in kreda, alepski borovci (`forest: 'med'`); raba tal iz ESA WorldCover in Sentinel-2: grmičevje 62 %, trava 28 %, gozd 6 %, melišča 5 %, pozidano pod 1 %.
-- **Samostan na vrhu**: obrisi stavb iz OpenStreetMap do 260 m od cilja, narisani generično: bele kamnite stene na podstavku, nizke opečnate dvokapne strehe, temna okna ob cesti, kupola cerkve in majhen zvonik, nizek kamnit zid okoli dvorišča (prekinjen ob cesti). Brez napisov, simbolov in imen.
+- **Samostan na vrhu**: obrisi stavb iz OpenStreetMap do 260 m od cilja, narisani generično: bele kamnite stene na podstavku, nizke opečnate dvokapne strehe, temna okna ob cesti. Glavna stavba (OSM, kraj čaščenja) po svojem obrisu kot dva bloka z visokimi belimi zunanjimi zidovi in dvema obokanima vratoma na mestih vrat iz OSM; kupola in majhen zvonik na cerkvi (OSM `building=church`); okoli dvorišča cerkve ograja po črti iz OSM (`barrier=fence`): nizek kamnit podstavek z jekleno ograjo, odprta ob cesti (odločitev uporabnika: možnost a in zid kot v resnici; OSM nima zidu `barrier=wall`, zato po ograji in obrisih). Brez napisov, simbolov in imen.
 - **Ob vznožju**: kamnite hiše vasi po obrisih iz OSM (skupni graditelj).
 - **Obzorje**: pravi teren ~9 km naokoli (Copernicus DEM): gričevje, ravnina z meglico.
 - **Približki**: grmičevje, borovci, skale in gledalci so razporejeni po rabi tal in legi ob cesti, ne po resničnih legah; stavbe so preproste oblike po obrisih.

@@ -24,6 +24,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Stavrovouni',
     zivali: { a: ['goatW', 'sheep', 'hare'], t: ['beehive', 'waterTank', 'signPost'], open: true },   // (the goats on the bare slopes, a flock below, the beehives in the scrub)
     id: 'stavrovouni', pending: true, name: 'Stavrovouni, Ciper', theme: 'stavrovouni', open: true, leftHand: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.0,
+    maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): ~20 m of road past the line to the monastery's gate; a bigger field's parking would stand car on car (the game's own 21 fit)
     desc: 'Stavrovouni, osamljen suh hrib na vzhodnem robu gričevja pod Troodosom, med Nikozijo in Larnako: 4,5 km ozke ceste od vznožja na 325 m po golih pobočjih z grmičevjem in redkimi borovci, v zadnjem kilometru v serpentinah, do samostana na vrhu na 640 m. Po en pas v vsako smer, ob prepadu nizek zid ali jeklena ograja.',
     en: { name: 'Stavrovouni, Cyprus', desc: 'Stavrovouni, a lone dry hill at the eastern edge of the foothills below Troodos, between Nicosia and Larnaca: 4.5 km of a narrow road from the foot at 325 m over the bare slopes of scrub and the odd pine, in hairpins through the last kilometre, to the monastery on the summit at 640 m. One lane each way, a low wall or a steel barrier on the drop side.' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
