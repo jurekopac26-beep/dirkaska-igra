@@ -11,7 +11,7 @@ Cesta H-46 v soteski reke Vorotan (pokrajina Sjunik, jug Armenije), v pravem mer
 - **Promet**: dvoboj z enim tekmecem po odprti cesti: največ avtomobilov, kombiji, avtobusi in tovornjaki, nekaj motoristov in kolesarjev; v obe smeri.
 - **Policija**: beg pred policijo, v rezultatih pobega piše »Do Tateva v …«.
 - **Imena v HUD** (po vrsti): Ruševine nad sotesko, Hudičev most · 1.013 m, Reka Vorotan, Topli izvir, Serpentina 1 · 1.042 m, Serpentina 5 · 1.135 m, Studenec, Serpentina 10 · 1.296 m, Zadnja serpentina · 1.379 m. Serpentine na pravi cesti niso oštevilčene; igra jih šteje od dna soteske navzgor. V angleščini prek `js/lang.js`.
-- **Oblika in višine**: sredinska črta je iz OpenStreetMap (vsakih 5 m, zglajena). Višine iz Copernicus DEM GLO-30 (tla brez krošenj in stavb), profil zglajen; največji naklon 12,4 %. Prava cesta je ozka dvopasovnica, v igri 7,6 m.
+- **Oblika in višine**: sredinska črta je iz OpenStreetMap (vsakih 5 m, zglajena). Višine iz Copernicus DEM GLO-90 (GLO-30 za Armenijo ni javen; tla brez krošenj in stavb), profil zglajen; največji naklon 12,4 %. Prava cesta je ozka dvopasovnica, v igri 7,6 m.
 
 Okolica (skupni graditelj kratkih prog `buildKratke` v `js/world-kratke.js`, slog `KR.tatev`):
 
