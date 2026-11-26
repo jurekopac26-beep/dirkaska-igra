@@ -79,9 +79,10 @@
       const r = (base ? base.call(this, ctx) : null) || {};
       try {
         const T = API.T, pd = T && T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0, { nrGround, nrSlope, nrLC, nrNear } = API;
-        const bad = (x, z) => { if (!ps) return false; const q = nrNear(x, z); return q.i >= 0 && Math.sign(q.lat) === ps && !!T.pitAt(q.i * T.ds); };
+        const hit = (s) => !!T.pitAt(s) || (T.pitLead ? T.pitLead(s) >= 0 : false);   // (the pit road's junctions too, as js/world-chase-bt21.js)
+        const bad = (x, z) => { if (!ps) return false; const q = nrNear(x, z); return q.i >= 0 && Math.sign(q.lat) === ps && hit(q.i * T.ds); };
         r.robBt33 = World.ext.goreRob({ excluded: ctx.excluded, root: ctx.root, out: ctx.out }, id, { gH: nrGround, slope: nrSlope, lc: nrLC, near: nrNear, bad });
-        far2(id, ctx, { near: nrNear, excluded: (x, z) => ctx.excluded(x, z) || bad(x, z), pit: (s, sd) => !!ps && sd === ps && !!T.pitAt(s) }, r.robBt33);
+        far2(id, ctx, { near: nrNear, excluded: (x, z) => ctx.excluded(x, z) || bad(x, z), pit: (s, sd) => !!ps && sd === ps && hit(s) }, r.robBt33);
       } catch (e) { console.error('chase-bt33 (' + id + '):', e); }
       return r;
     };
