@@ -280,11 +280,11 @@
   "jsMs": 1.3
  },
  "lusail": {
-  "calls": 182,
-  "maxCalls": 241,
-  "kverts": 593,
-  "maxKverts": 896,
-  "jsMs": 1.1
+  "calls": 190,
+  "maxCalls": 249,
+  "kverts": 596,
+  "maxKverts": 898,
+  "jsMs": 1.13
  },
  "riohondo": {
   "calls": 214,
@@ -378,11 +378,11 @@
   "jsMs": 0.94
  },
  "mapileng": {
-  "calls": 141,
-  "maxCalls": 171,
-  "kverts": 242,
-  "maxKverts": 281,
-  "jsMs": 0.89
+  "calls": 155,
+  "maxCalls": 188,
+  "kverts": 278,
+  "maxKverts": 319,
+  "jsMs": 1.11
  },
  "batangas": {
   "calls": 244,

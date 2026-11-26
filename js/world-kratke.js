@@ -1402,6 +1402,7 @@
     /* ---- the view beyond the corridor (def.farDem: the hills and the valleys round; irFar, World.update moves it with the camera); finish
        the meshes ---- */
     const FAR = API.irFar ? API.irFar(LK.far, LK.farWet) : null; if (FAR) { FAR.th = 4; FAR.mesh.visible = false; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; th: moved on again once the camera is 4 m on, as Mount Baldy's, not every frame: the lines of sight to the hills hardly change)
+    if (World.ext.kratkeRob) try { World.ext.kratkeRob({ id: def.id, scen, excluded, root, matV, out }); } catch (e) { console.error('kratkeRob:', e); }   // (the roadside ground from the camera behind the car: js/world-chase-bt96.js; before the scenery chunks are closed)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true); ledg.addTo(sceneryGroup, matV, false, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: krAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
