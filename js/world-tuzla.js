@@ -216,17 +216,29 @@
     const rb = new RB(true), eb = new RB(true), col = [0.9, 0.9, 0.92], EA = [0.6, 0.47, 0.34], EM = [0.7, 0.57, 0.42];
     for (const W of TZ_WAYS) {
       const kind = W[0], HW = kind === 2 ? 1.75 : kind === 1 ? 3 : 2.5, B = kind === 2 ? eb : rb, C = kind === 2 ? [EA, EM, EA] : [col, col, col];
-      const pts = tzPts(W.slice(1), false);
-      let prev = -1, along = 0;
+      const pts = tzPts(W.slice(1), false), rows = [];
+      let along = 0;
       for (let q = 0; q < pts.length; q++) {
         const [x, z] = pts[q], a = pts[Math.max(0, q - 1)], b = pts[Math.min(pts.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
         if (q) along += Math.hypot(x - pts[q - 1][0], z - pts[q - 1][1]);
-        const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4 + HW) { prev = -1; continue; }
-        const nx = -dz / dl, nz = dx / dl, row = [-HW, 0, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; });   // (left to right in the way's direction: (nx, nz) its right)
-        const r = B.row(row, C, row.map((e, j) => [j * HW / 4, along / 4]));
-        if (prev >= 0) B.link(prev, r, 0, 2); prev = r;
+        const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4 + HW) { rows.push(null); continue; }
+        const nx = -dz / dl, nz = dx / dl;
+        rows.push({ row: [-HW, 0, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; }), along });   // (left to right in the way's direction: (nx, nz) its right)
         if (q % 2 === 0) { exclPush(x, z, HW + 1.5); if (nn.i >= 0 && nn.dd < 70) CR.avoid(x, z, HW + 0.5); }
         st[kind === 2 ? 'track' : 'road'] += 4;
+      }
+      // the rows kept: from one kept row the next is the farthest (up to 24 m on) that the straight surface between them leaves within 3 cm
+      // of every 4 m row between (its three points: the ground and the way's line), so a straight way over even ground takes few rows and a
+      // bend or a hump all it has (the 8 cm lift never under the ground)
+      const fits = (i, j) => { for (let k = i + 1; k < j; k++) { const t = (rows[k].along - rows[i].along) / (rows[j].along - rows[i].along || 1);
+        for (let c = 0; c < 3; c++) for (let d = 0; d < 3; d++) if (Math.abs(lerp(rows[i].row[c][d], rows[j].row[c][d], t) - rows[k].row[c][d]) > 0.03) return false; } return true; };
+      let prev = -1;
+      for (let q = 0; q < rows.length;) {
+        if (!rows[q]) { prev = -1; q++; continue; }
+        const R = rows[q], r = B.row(R.row, C, R.row.map((e, j) => [j * HW / 4, R.along / 4]));
+        if (prev >= 0) B.link(prev, r, 0, 2); prev = r;
+        let j = q + 1; while (j + 1 < rows.length && rows[j + 1] && rows[j + 1].along - R.along <= 24 && fits(q, j + 1)) j++;
+        q = j;
       }
     }
     if (!eb.empty) { const m = new THREE.Mesh(eb.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
