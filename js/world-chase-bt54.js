@@ -110,6 +110,6 @@
       if (wood > 0.2 && r < 0.6) return SP.wet(R);
       if (r < 0.03 + 0.1 * l) return SP.lat(R);
       return r < 0.45 ? SP.light(R) : r < 0.7 ? SP.wet(R) : SP.lawn(R);
-    }, null, 0.02, 0.08, 2);   // (few: Sepang's busiest place had ~3k vertices left of the 900k budget)
+    }, null, 0.005, 0.015, 2);   // (few: Sepang's busiest place had ~3k vertices left of the 900k budget; thinned 26. 11. to stay under it)
   });
 })();

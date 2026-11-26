@@ -979,15 +979,15 @@
  },
  "sepang": {
   "meshes": 586,
-  "verts": 986438,
+  "verts": 984653,
   "instances": 6296,
   "props": 86,
   "crowd": 30,
-  "world": "943a9f95",
+  "world": "e9beb8a1",
   "propsHash": "3f2c7418",
   "floor": "9ca322ac/11060",
   "groups": {
-   "-:MeshLambertMaterial": "b079d417",
+   "-:MeshLambertMaterial": "d8285145",
    "-:MeshBasicMaterial": "2a57e1c7",
    "sepang service roads:MeshLambertMaterial": "3f18857b",
    "rob:MeshLambertMaterial": "a7b6b8bd",
