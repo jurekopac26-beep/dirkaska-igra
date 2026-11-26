@@ -98,11 +98,11 @@
   "jsMs": 1.22
  },
  "livorno": {
-  "calls": 155,
+  "calls": 156,
   "maxCalls": 185,
-  "kverts": 370,
-  "maxKverts": 461,
-  "jsMs": 2.88
+  "kverts": 374,
+  "maxKverts": 468,
+  "jsMs": 2.72
  },
  "balea": {
   "calls": 166,

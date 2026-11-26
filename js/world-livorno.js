@@ -160,11 +160,14 @@
        a catch fence and the crowd behind it ---- */
     const bridgeAt = new Uint8Array(N); for (const [a, b] of BR) for (let s = a - 4; s <= b + 4; s += ds / 2) bridgeAt[T.idx(s)] = 1;
     const startArea = (i) => { const d = dS(i * ds); return d > L - 320 || d < 140; };
-    const kindAt = (i) => (bridgeAt[i] ? 2 : startArea(i) ? 1 : 0);   // 0 stone wall, 1 white wall and fence, 2 parapet
+    const OG = World.ograje && World.ograje.za('livorno') ? World.ograje : null;   // (OSM's guard rails, fences and avenues: js/world-ograje.js, only the look)
+    const GV = OG ? OG.varnostne(T, LD.walls, nrNear) : null, PF = OG ? OG.proste(T, LD.walls, nrNear, nrGround) : null;
+    const kindAt = (i, side) => (bridgeAt[i] ? 2 : startArea(i) ? 1 : GV && GV.at(i, side) ? 3 : 0);   // 0 stone wall, 1 white wall and fence, 2 parapet, 3 OSM's guard rail
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const stone = [0.8, 0.72, 0.6], stoneD = [0.62, 0.55, 0.46], stoneT = [0.86, 0.8, 0.7], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72], par = [0.82, 0.8, 0.76];
     const wallRow = (gr, i, side, k) => {
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : k === 2 ? 1.05 : 0.85, tone = 0.92 + crH(i >> 3, side, 71) * 0.16;
+      const bar = side > 0 ? T.br[i] : T.bl[i]; if (k === 3) { OG.stebri(gr, T, i, side, bar); return OG.vrsta(gr, Pt, i, side, bar); }
+      const o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : k === 2 ? 1.05 : 0.85, tone = 0.92 + crH(i >> 3, side, 71) * 0.16;
       const c0 = k === 1 ? whD : k === 2 ? whD : stoneD.map(v => v * tone), c1 = k === 1 ? wh : k === 2 ? par : stone.map(v => v * tone), c2 = k === 0 ? stoneT : k === 1 ? wh : par;
       let p = [Pt(i, o, -0.5), Pt(i, o, h - 0.08), Pt(i, o, h), Pt(i, o2, h)], c = [c0, c1, c2, c2];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
@@ -175,11 +178,12 @@
       for (const side of [-1, 1]) {
         let prev = -1, pk = -1;
         for (let ii = c0; ii <= Math.min(c0 + RC, N); ii++) {
-          const i = ii % N, k = kindAt(i);
+          const i = ii % N, k = kindAt(i, side);
           if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, i, side, pk), 0, 3); prev = -1; }
           const r = wallRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
         }
       }
+      if (PF) PF.dodaj(gr, c0, Math.min(c0 + RC, N));
       addM(gr, rMat, true);
     }
     {   // the catch fence along the start's white walls
@@ -375,6 +379,7 @@
         const hq = crH(x, z, 28), sp = k === 'c' ? 2 : k === 'p' ? 0 : 1, hgt = sp === 2 ? 10 + hq * 5 : sp === 0 ? 12 + hq * 5 : 6 + hq * 4, wid = sp === 2 ? hgt * 0.17 : sp === 0 ? hgt * 0.85 : hgt * 0.9;
         plant(sp, x, z, hgt, wid, [0.95, 1, 0.95]);
       }
+      if (OG && LD.treeRows) OG.drevoredi(LD.treeRows, nrNear, excluded, plant, (sp, x, z) => { const c = TK[sp === 2 ? 2 : sp === 1 || sp === 4 ? 1 : 0]; return c.map.has(Math.floor(x / c.size) + ',' + Math.floor(z / c.size)); }, crH);   // (OSM's avenues)
     }
     for (const t of TK) t.addTo(root, true);
 
