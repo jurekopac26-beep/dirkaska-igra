@@ -35,7 +35,7 @@ try {
   // Nastavitve: Zavetrje off: a race with rivals without the slipstream, no car with a tow (race.slip null), the choice kept
   const def = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings') || '{}').slip);
   await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="slip"] button[data-v="0"]').click(); g.onAction('settings-done'); });
-  await startTrack(page, 'rbring');
+  await startTrack(page, 'rbring', 'race');   // (the race: the way chosen last, Pikes Peak's time trial, is the circuit's too, Kronometer na vseh progah)
   const off = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(3, true); g.resume(); const R = g.race;
     return { slip: R.slip, cars: R.cars.length, tow: R.cars.filter(c => 'tow' in c).length, stored: JSON.parse(localStorage.getItem('tdgp-settings')).slip }; });
   T.check('Nastavitve: Zavetrje on by default; off: a race with rivals without it (race.slip null, no car with a tow), the choice kept',
