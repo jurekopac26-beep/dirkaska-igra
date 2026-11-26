@@ -7582,19 +7582,33 @@ const Garage3D = (function () {
       const VC = view(GLW.near(el, PL, sd) || (TAIL.on(el) ? { at: [PL.x + 0.1, PL.y + 0.1, PL.z * 0.6], yaw: Math.atan2(-0.68, 0.73 * sd), pitch: 0.28, dist: 3.4, fov: 36 } : { at: [PL.x - 0.1, PL.y + 0.1, PL.z * 0.6], yaw: 0.75 * sd, pitch: 0.28, dist: 3.4, fov: 36 }));
       const VD = view({ at: [(DN.p.x + PL.x) / 2, 0.95, (DN.p.z + PL.z) / 2], yaw: 0.35, pitch: 0.42, dist: 5.6, fov: 42 });
       const tipOf = (i, s, e) => at(tipM(s, TL[RB[i].tool] + (RB[i].tool === 'reach' ? e || 0 : 0)));
-      // 1. the arms down: roka 1 before the old lamp, roka 2 (its reach) over the drawer; the drawer out (its cell 35 cm)
+      // (the head lamps by the plate an_zarometi 3/6 and 4/6: roka 1 at the old one with its wrench first (the ring's three screws out),
+      // then the wrench changed for the gripper that draws it out (W: the wrench's way to the lamp's face, lampW; none: the gripper
+      // alone as before); roka 2 waits on the bridge's other end, turned off the drawer, and the bridge turns about roka 1's carriage
+      // (»most se obrne«) till roka 2 is over the drawer (TW: where it waits; none: straight to the drawer as before))
+      const ZR = el === 'zarometi', W = ZR ? lampW : null; let TW = null;
+      if (ZR && P2) { const C = plan.pre.s, dx = P2.s.x - C.x, dz = P2.s.z - C.z, l = Math.hypot(dx, dz), far = (x, z, q) => !q || Math.hypot(x - q.x, z - q.z) >= ARM.gap + 0.05;
+        for (const a of [0.9, -0.9, 0.6, -0.6]) { const cs = Math.cos(-a), sn = Math.sin(-a), x = C.x + dx * cs + dz * sn, z = C.z - dx * sn + dz * cs;
+          if (l > ARM.gap + 0.1 && Math.abs(x) <= ARM.x1 - 0.1 && Math.abs(z) <= ARM.zf - 0.1 && far(x, z, plan.s) && far(x, z, W && W.s) && far(x, z, W && W.pre.s)) { TW = { a, s: { ...P2.s, x, z, yaw: P2.s.yaw - a } }; break; } } }
+      const turn2 = function* (T) { const A = RB[1], C = { x: RB[0].s.x, z: RB[0].s.z }, q = { ...A.s }, dx = q.x - C.x, dz = q.z - C.z; SFX.servo(T * 0.8 / showRate());
+        yield* tween(T, (k) => { const t = TW.a * k, cs = Math.cos(t), sn = Math.sin(t); A.s.x = C.x + dx * cs + dz * sn; A.s.z = C.z - dx * sn + dz * cs; A.s.yaw = q.yaw + t; clampArm(1, A.s); A.dirty = true; }, EZ.io); };
+      // 1. the arms down: roka 1 before the old lamp (its wrench, or its gripper), roka 2 (its reach) over the drawer, or waiting for the
+      // turn; the drawer out (its cell 35 cm)
       if (DRW.k[dI] > 0) { DRW.want = -1; yield* waitFor(() => DRW.k[dI] === 0, 1); }
       DRW.out = OUT; DRW.want = dI; scene.add(np.o); np.o.matrixAutoUpdate = false; ride(np.o, F_D);
-      yield* par(camTo(VC, 1.0), (function* () { yield* armTool(0, 'gripper', 2); yield* armCarry(0, plan.pre.s, plan.pre.ext, 0.7); })(),
-        (function* () { yield* armTool(1, 'reach', 2); if (P2) yield* armCarry(1, Object.assign({}, P2.s), 0, 0.7); })(),
+      yield* par(camTo(VC, 1.0), (function* () { if (W) { yield* armTool(0, 'wrench', 2); yield* armCarry(0, W.pre.s, 0, 0.7); } else { yield* armTool(0, 'gripper', 2); yield* armCarry(0, plan.pre.s, plan.pre.ext, 0.7); } })(),
+        (function* () { yield* armTool(1, 'reach', 2); const q = TW ? TW.s : P2 && P2.s; if (q) yield* armCarry(1, Object.assign({}, q), 0, 0.7); })(),
         (function* () { yield* waitFor(() => { ride(np.o, F_D); return DRW.k[dI] >= 1; }, 1.2); })());
       // 2. the old one out (0,8 s): roka 1 to it, its screws out, drawn out of its seat (the seat dark, its light out)
       const STK = el === 'nalepke', mO = STK ? stkMask(cv, sd, lampO.c.x) : null;   // (the decals: no screws, no seat; peeled off the side as the sheet comes away)
-      yield* armExt(0, plan.s, plan.ext, 0.3); if (!STK) screws(2); yield* wait(0.12);
+      if (W) { yield* armExt(0, W.s, 0, 0.18); fitLog('wrench', { i: 0, n: 3 }); for (let k = 0; k < 3; k++) { screws(1); yield* wait(0.1); }
+        yield* armExt(0, W.pre.s, 0, 0.15); yield* armTool(0, 'gripper', 2.5); yield* armCarry(0, plan.pre.s, plan.pre.ext, 0.45); }
+      yield* armExt(0, plan.s, plan.ext, 0.3); if (!STK && !W) screws(2); yield* wait(0.12);
       const sock = STK ? null : lampSocket(cv, lampO), gN = el === 'zarometi' && cv.head ? cv.head[sd > 0 ? 1 : 0] : null; if (gN) { gN.material.opacity = 0; gN.visible = false; }
       scene.add(lampO.o); hold(0, lampO.o, Fo); yield* (mO ? par(armExt(0, plan.pre.s, plan.pre.ext, 0.3), tween(0.3, (k) => mO.set(1 - k))) : armExt(0, plan.pre.s, plan.pre.ext, 0.3)); fitLog('old.out', { i: 0 });
       // 3. the LED one taken (1,2 s): roka 2's reach out to it in the drawer; roka 1 lays the old one on the bonnet meanwhile
       const ptH = { ...plan.pre.s };
+      if (TW) yield* par(camTo(VD, 0.6), turn2(0.55));   // (the bridge turns: roka 1 holds the old one on its half, roka 2 swung over the drawer)
       yield* par(camTo(VD, 0.7), (function* () {
         if (PH) { const b = inv(tipM(PH.s, TL.gripper + PH.ext)).multiply(HOOD); yield* par(armCarry(0, PH.s, PH.ext, 0.7), holdTo(0, b, 0.6)); }
         const q = letGo(0); if (q) { q.matrix.copy(HOOD); q.matrixWorldNeedsUpdate = true; } SFX.clunk(0.3);
@@ -7656,14 +7670,14 @@ const Garage3D = (function () {
       if (el !== 'zarometi') { if (TAIL.on(el)) yield* TAIL.show(el, PL, FO); if (GLW.on(el)) yield* GLW.show(el, cur); if (el === 'zmigavci') { const fP = PL.clone(); fP.z = -fP.z;
           for (const k of [1, 0, 1, 0, 1]) { if (k) { glint(PL, 0.3, 0xffa020); if (FO) glint(fP, 0.3, 0xffa020); SFX.click(); } yield* wait(k ? 0.28 : 0.2); } fitLog('lights'); }
         SFX.ping(1760); done(); yield* wait(0.5);
-        FIT.lamp = { pod: P2 ? +P2.ext.toFixed(2) : -1, kN, kO, hood: !!PH, pass: !!P2H, back: !!(P2B && P2O), far: !!(FO && okF), hold2: !!P2F };
+        FIT.lamp = { pod: P2 ? +P2.ext.toFixed(2) : -1, kN, kO, hood: !!PH, pass: !!P2H, back: !!(P2B && P2O), far: !!(FO && okF), hold2: !!P2F, wr: !!W, turn: TW ? TW.a : 0 };
         yield* par(home(1.1), waitFor(() => parked, 4)); POD.on = false; return; }
       const pool = mainOnly(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: TX.glow, color: cur.head[0] ? cur.head[0].material.color.getHex() : 0xffffff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })));
       pool.material.userData.own = true; pool.rotation.x = -Math.PI / 2; pool.position.set(K.front + 1.25, 0.03, 0); pool.scale.set(3.2, 2.4 + K.hw, 1); pool.renderOrder = 9; cur.root.add(pool);
       const lit = (k) => { lamps(cur, k > 0 ? 1 : 0, 0.35); pool.material.opacity = 0.6 * k; for (const q of cur.head) q.scale.setScalar(0.9 * (1 + 0.7 * k)); };
       for (const k of [1, 0, 1]) { lit(k); if (k) SFX.click(); yield* wait(k ? 0.32 : 0.16); }
       fitLog('lights'); SFX.ping(1760); done(); yield* wait(0.5);
-      FIT.lamp = { pod: P2 ? +P2.ext.toFixed(2) : -1, kN, kO, hood: !!PH, pass: !!P2H, back: !!(P2B && P2O), far: !!(FO && okF), hold2: !!P2F };
+      FIT.lamp = { pod: P2 ? +P2.ext.toFixed(2) : -1, kN, kO, hood: !!PH, pass: !!P2H, back: !!(P2B && P2O), far: !!(FO && okF), hold2: !!P2F, wr: !!W, turn: TW ? TW.a : 0 };
       yield* par(home(1.1), tween(0.8, (k) => { pool.material.opacity = 0.6 * (1 - k); for (const q of cur.head) q.scale.setScalar(0.9 * (1 + 0.7 * (1 - k))); }), waitFor(() => parked, 4));
       POD.on = false;
       disposeTree(pool); return;
