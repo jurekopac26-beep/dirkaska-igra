@@ -42,7 +42,19 @@ JS = celotna sličica (povprečje / p95 / najdaljša). Fizika = vsi koraki (fizi
 | Pembrey, 101, dohit | **72,5 / 120,7 / 172,8** | **39,4 (75,8)** | 2,4 | 25,7 (40,7) | 4,9 | 201 | 629 k | 33,1 | 25 × 4,9; 2 × 7,7 |
 | Pembrey, 101, sence | 39,3 / 60,7 / 92,4 | 11,6 | 1,8 | 23,5 | 2,4 | 153 | 533 k | 27,2 | 11 × 4,6; 2 × 10,9 |
 | Pembrey, 101, delci | 39,7 / 61,0 / 93,2 | 11,1 | 1,8 | 24,6 | 2,3 | 205 | 708 k | 27,1 | 11 × 5,1; 2 × 10,2 |
-DOHIT4
+
+**Predlog 1 izmerjen** (drugi zagon, prehod `dohit4`: koraki po času prejšnje sličice, največ 4):
+
+| Proga, avti | prehod | JS povp. / p95 / max | fizika (p95) | risanje | HUD | korakov na sl. |
+|---|---|---|---|---|---|---|
+| Spa, 101 | osnova (ponovitev) | 46,2 / 74,3 / 118,5 | 12,1 (21,8) | 28,7 | 2,8 | 2 |
+| Spa, 101 | dohit (meja 10, kot zdaj) | 79,9 / 136,5 / 178,1 | 40,2 (72,0) | 33,0 | 3,6 | 8,4 |
+| Spa, 101 | **dohit4** (meja 4) | **56,6 / 86,8 / 151,7** | 20,1 (34,2) | 28,7 | 4,8 | 4,0 |
+| Pembrey, 101 | osnova (ponovitev) | 39,2 / 61,0 / 113,8 | 11,0 (17,8) | 24,4 | 2,1 | 2 |
+| Pembrey, 101 | dohit (meja 10, kot zdaj) | 72,5 / 120,7 / 172,8 | 39,4 (75,8) | 25,7 | 4,9 | 7,9 |
+| Pembrey, 101 | **dohit4** (meja 4) | **54,8 / 82,4 / 135,6** | 22,3 (39,8) | 25,9 | 4,4 | 4,0 |
+
+Ponovitev iste meritve se razlikuje do ~10 % (Spa 101 osnova: 51,3 in 46,2 ms).
 
 Vsi klici risanja (do 262) in oglišča (do 760 k) so pod mejo `tests/golden/perf.json` (~300, ~900 k).
 
@@ -62,14 +74,15 @@ Največ časa pri Spa 101: `updateCars` (render.js, 2,2 ms), množenje matrik in
 - Spa 6: sličica 91 = 138,8 ms, od tega fizika 112,7 ms; v isti sličici je velik GC 105,9 ms (smeti nalaganja proge). Sličica 0 po zelenem = 106,5 ms: zvok 27,9, HUD 20,4, risanje 46,1.
 - Spa 22: sličica 259 = 112,9 ms, od tega risanje 101,7 ms. Spa 101: konice risanja do 96,6 ms, fizike do 47 ms.
 - Killarney: konice HUD do 24 ms (`placeNote`). Pembrey 22: velik GC 35,2 ms.
-SPIKES
+- **Novi senčilniki med dirko** (beleženje `renderer.info.programs`, drugi zagon): na Spa se v prvih 5 s po zelenem prevede **6 novih programov** v 5 sličicah; 3 od 6 najdaljših sličic (103–152 ms, risanje 85–114 ms) imajo nov program. Pembrey: 1 nov program. Ob nalaganju proge `Render.precompile()` (game.js `ensureTrack`) prevede samo svet, avti in učinki (dim, iskre, sledi) pridejo pozneje.
+- **Nove geometrije**: 74–165 v 5 s (sledi gum, delci), kar daje smeti za GC. Pembrey (drugi zagon): 4 veliki GC, povprečno 31 ms, največ 67 ms (sličica 42: fizika 82 ms).
 
 ## Predlogi
 
 | # | Predlog | Prihranek (izmerjeno ali ocena) | Kaj pridobimo | Kaj izgubimo | Fizika vožnje |
 |---|---|---|---|---|---|
-| 1 | **Manj korakov lovljenja na sličico** (sam igralec: meja 10 → 4; na spletu ostane 64) | REZ1 | Ni več začaranega kroga: počasna sličica ne pomeni še počasnejše naslednje | Na zelo počasni napravi gre dirka malo počasneje od ure (igra to že dela pri meji 10, le bolj) | **Ne**: isti korak 1/120 s, isti model; časi krogov se merijo v času dirke |
-| 2 | **Ogrevanje pred zelenim**: `Render.precompile()` še enkrat po postavitvi avtov (zdaj samo ob nalaganju proge, pred avti), med lučmi en skrit izris dimov, isker in dežja; čiščenje smeti (GC) med nalaganjem, ne po zelenem | REZ2 | Brez konic 70–140 ms v prvih sekundah (prva sličica, GC, prvo prevajanje) | Luči trajajo enako; nalaganje proge lahko traja ~0,1 s dlje | Ne |
+| 1 | **Manj korakov lovljenja na sličico** (sam igralec: meja 10 → 4; na spletu ostane 64) | **Izmerjeno**: Spa 101 povp. 79,9 → 56,6 ms (−23), p95 136,5 → 86,8 (−50); Pembrey 101 povp. 72,5 → 54,8 (−18), p95 120,7 → 82,4 (−38) | Ni več začaranega kroga: počasna sličica ne pomeni še počasnejše naslednje | Do 30 sl./s se nič ne spremeni (4 koraki = 1/30 s). Pod 30 sl./s gre dirka počasneje od ure: pri tej meritvi ~0,6× namesto ~0,9×. Igra že zdaj tako dela pri meji 10, le pozneje | **Ne**: isti korak 1/120 s, isti model; časi krogov se merijo v času dirke |
+| 2 | **Ogrevanje pred zelenim**: `Render.precompile()` še enkrat po postavitvi avtov (zdaj samo ob nalaganju proge, pred avti), med lučmi en skrit izris dimov, isker in dežja; čiščenje smeti (GC) med nalaganjem, ne po zelenem | Ocena: konice 100–150 ms (6 programov na Spa, 1 na Pembreyju, veliki GC 35–106 ms) na pod ~60 ms; povprečje ~1–2 ms | Brez konic 70–140 ms v prvih sekundah (prva sličica, GC, prvo prevajanje) | Luči trajajo enako; nalaganje proge lahko traja ~0,1 s dlje | Ne |
 | 3 | **Prva sličica po zelenem razbremenjena**: zvoki starta in elementi HUD pripravljeni med lučmi | ~40 ms v prvi sličici (zvok 28 + HUD 20 → ~3 + ~2) | Brez sunka točno ob zelenem, ko so vsi avti skupaj | Nič opaznega | Ne |
 | 4 | **HUD brez prisilne postavitve**: `placeNote` naj ključ preveri brez branja `offsetWidth` vsako sličico (samo ob spremembi razreda HUD ali zaslona) | ~5 ms na sličico na Killarneyju (HUD 7,5 → ~2,5), konice HUD do 24 ms | Killarney in proge z znaki ovinkov tečejo enako gladko kot Spa | Nič | Ne |
 | 5 | **Sence na startu ugasnjene na počasni napravi** (samodejno, ko je sličica več kot 25 ms) | 2,3–3,4 ms, 36–53 klicev risanja manj | Manj dela pri risanju, kar je največji stalni strošek | Prve sekunde brez senc avtov na počasnih napravah | Ne |
@@ -78,4 +91,11 @@ Drugo: delci brez dima prihranijo 1,7–2,3 ms (manj od senc, izgubimo pa dim na
 
 ## Priporočilo
 
-PRIPOROCILO
+**Predloge 1 + 2 + 3 + 4 izvesti skupaj** (nobeden ne spremeni fizike vožnje; v kodi so to `game.js` `frame`, `ensureTrack` ali začetek luči, `Render.precompile`, `placeNote`).
+
+- 1 odpravi začarani krog (izmerjeno −18 do −23 ms povprečno, −38 do −50 ms p95 pri 101 avtu) in je največji prihranek.
+- 2 in 3 odpravita konice v prvih sekundah, ki jih manj tekmecev ne odpravi (prevajanje senčilnikov, GC po nalaganju, prva sličica po zelenem).
+- 4 je samo Killarney in proge z znaki ovinkov, ~5 ms na sličico.
+- 5 (sence) samo, če po 1–4 še zatika: prihrani 2–3 ms, a vidno vzame sence.
+
+Stalni strošek risanja (22–32 ms pri CPU 4×) ostane; to je tema grafike (#1069 in nadaljnje), ne starta.
