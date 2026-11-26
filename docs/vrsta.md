@@ -138,6 +138,8 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 |---|---|---|---|---|
 | 10.1 | #1075 | Popravek rdečega `main`: ploščica izbere progo pred izbrano (`pad.test`) | biketraveler | prvi v vrsti; CI zelen, združi seja Združevanje. |
 | 10.2 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: takoj za #1075) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
+| 10.3 | #1012 | Meni ležeče: brez odrezanih »Best race/lap«, imen in držav na kartah sosedov | biketraveler | osnutek, CI zelen; »Ready for review« ob mestu med prvima dvema. |
+| 10.4 | #1112 | Meni: barve po vrsti proge (okvir kartice, države na Zemlji); veja iz #1012 (Matej 26. 11., #1162: takoj za #1012) | biketraveler | osnutek; šele po #1012, nato spoji svež `main`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 
