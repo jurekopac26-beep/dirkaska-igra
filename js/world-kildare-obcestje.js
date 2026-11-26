@@ -30,7 +30,6 @@
   const COL = [[0.95, 0.95, 0.97], [1.485, 1.406, 1.247], [1.2, 1.08, 0.86]];   // asphalt, pale gravel (as #854), earth
   const LIFT = [0.052, 0.044, 0.044];   // over the ground: above #854's ribbons (0.03 to 0.042), whose fades the joins cover
   const UVK = [8, 6, 6], LINE = [2.6, 2.6, 2.6], DLIFT = 0.012, DASH = 3, GAP = 9, DHW = 0.05;
-  const YEL = [2.6 * 0.95, 2.6 * 0.74, 2.6 * 0.14], EDASH = 2, EGAP = 2, EHW = 0.06, EIN = 0.3;   // H2′: the yellow edge line (RRM 025), its middle EIN m in from the asphalt's edge
   const STEP = 3, FADE = [0, 20, 6], VERGE = 2.9;
 
   function sections(P, hw) {   // a way's cross sections: mitred at its bends, every STEP m between them
@@ -71,8 +70,7 @@
     };
     const keep = (x, z, r) => { o.exclPush(x, z, r); if (nrDist(x, z) < 60) o.CR.avoid(x, z, r); };   // no trees, no spectators
     const g = new GB(true);
-    const rob = World.cesta && World.cesta.oznake ? World.cesta.oznake(API.T, 'robRumena') : 0;   // H2′ gate (default 0)
-    let ways = 0, metres = 0, dashes = 0, edges = 0;
+    let ways = 0, metres = 0, dashes = 0;
     for (const w of WAYS) {
       const width = w[1], sf = w[2], cl = w[3], e0 = w[4], e1 = w[5], P = [];
       for (let k = 6; k + 1 < w.length; k += 2) P.push([w[k], w[k + 1]]);
@@ -116,25 +114,8 @@
         }
         dashes++;
       }
-      if (!rob) continue;
-      // H2′: the broken yellow edge line on both sides (S.I. 205/2026, RRM 025), one quad a dash
-      const ept = (q, off) => { const x = q.x + q.nx * off, z = q.z + q.nz * off; return [x, nrGround(x, z) + lift + DLIFT, z]; };
-      const egood = (q, off) => { const x = q.x + q.nx * off, z = q.z + q.nz * off; return !onRace(x, z) && !onLap(x, z); };
-      for (const sd of [1, -1]) {
-        const mid = sd * (hw - EIN);
-        for (let u0 = EGAP / 2; u0 + EDASH <= U; u0 += EDASH + EGAP) {
-          const m = 1;   // (one piece: 2 m of chord on a road whose tightest bend here is some 100 m)
-          for (let q = 0; q < m; q++) {
-            const ua = u0 + EDASH * q / m, ub = u0 + EDASH * (q + 1) / m, qa = at(ua), qb = at(ub);
-            if (!egood(qa, mid) || !egood(qb, mid)) continue;
-            const ca = tint(YEL, qa.x, qa.z, fade(ua)), cb = tint(YEL, qb.x, qb.z, fade(ub));
-            g.quadUp(ept(qa, mid + EHW), ept(qa, mid - EHW), ept(qb, mid - EHW), ept(qb, mid + EHW), [ca, ca, cb, cb]);
-          }
-          edges++;
-        }
-      }
     }
-    st.obcestje = ways; st.obcestjeM = Math.round(metres); st.obcestjeDash = dashes; st.obcestjeRob = edges;
+    st.obcestje = ways; st.obcestjeM = Math.round(metres); st.obcestjeDash = dashes;
     if (!g.empty) {
       const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ map: o.tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
       m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'kdObcestje'; o.root.add(m);

@@ -592,11 +592,11 @@
  },
  "kildare": {
   "meshes": 206,
-  "verts": 297324,
+  "verts": 294888,
   "instances": 1293,
   "props": 61,
   "crowd": 4,
-  "world": "10e534e4",
+  "world": "cf0b43ff",
   "propsHash": "f99bc922",
   "floor": "ddcb77c9/2296",
   "groups": {
@@ -604,7 +604,7 @@
    "-:MeshPhongMaterial": "4656b0ee",
    "-:MeshBasicMaterial": "f488fa01",
    "rsFar:MeshBasicMaterial": "633e48c1",
-   "kdObcestje:MeshLambertMaterial": "e8c35abf",
+   "kdObcestje:MeshLambertMaterial": "65fe6e76",
    "rob:MeshLambertMaterial": "7605368b",
    "crowd:MeshLambertMaterial": "d702ffe4",
    "flags:MeshLambertMaterial": "d0981cf8",
