@@ -231,7 +231,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   const TZ_H = [%(tzh)s];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
-    look: { fog: 0xd9d6cf, sun: 0xffdcaa, sunI: 1.45, sky: 0xa6c1ea, gnd: 0x7c7448, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, haze: 0.1, hazeCol: [1, 0.82, 0.58], sunOff: [-108, 54, 32], split: [[0.96, 0.99, 1.05], [1.05, 1.0, 0.93]] },   // Istanbul in early September at five in the afternoon: the sun 26 degrees up in the west-south-west (its place worked out for the circuit's latitude and the date), long shadows across the track, a warm haze over the hills, the grass gone gold
+    look: { fog: 0xd3d9e1, sun: 0xfff0d2, sunI: 1.1, sky: 0xa9c5e8, gnd: 0x7c7448, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 0.98, sunOff: [-58, 74, 66], split: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]] },   // Istanbul in late summer: a strong afternoon sun from the south-west, a warm haze over the hills, the grass gone gold
     say: 'Tuzla',
     grassNat: 0.55, lawn: [1.03, 1.0, 0.86],
     zivali: { a: ['fox', 'hare', 'stork'], t: ['signPost', 'waterTank'], open: true },
