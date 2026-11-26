@@ -615,7 +615,7 @@ svg { display: block; }
 .fl.fin .ck { fill: #10151d; stroke: none; }
 /* the route on the map: gold, orange with a white centre line on a rally stage; a point runs along it */
 .rt-o { fill: none; stroke: rgba(8, 12, 20, .75); stroke-width: 11; stroke-linejoin: round; stroke-linecap: round; }
-path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: rtdraw 1.6s ease-out forwards; }
+path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
 .rally path.rt { stroke: #ff8a2a; }
 .rt-c { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 10 9; opacity: .9; }
 .rt-dot .c { fill: #fff8d0; }
@@ -625,9 +625,6 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .topmap path.rt { stroke-width: calc(6px * var(--k, 1)); }
 /* (fitMaps: the same width on the screen at any zoom) */
 .topmap .rt-c { stroke-width: calc(1.6px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(9px * var(--k, 1)); }
-@keyframes rtdraw { to { stroke-dashoffset: 0; } }
-/* (a map that comes in during a run, or whose route has been drawn: the route whole, not drawn again) */
-.topmap.drawn path.rt { animation: none; stroke-dashoffset: 0; }
 /* the cameras 1 and 2: the other view of the same run waits for its picture over the one shown (pend), then fades in; the one under it then goes */
 .stage .dio.fly, .stage .dio.topmap { transition: opacity .3s ease; }
 .stage .dio.pend { opacity: 0; pointer-events: none; }
@@ -792,8 +789,6 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .ix-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .ix-stage.rainy video { filter: saturate(.72) brightness(.8) contrast(1.05); }
 .ix-stage .ixmap { position: absolute; inset: 0; z-index: 3; background: #1a2634; }
-.ix-stage .ixmap path.rt { animation: none; stroke-dashoffset: 0; }
-/* (the route already drawn: the map as the track screen left it) */
 .ix-stage .jlabels { z-index: 4; }
 .ix-stage .jcredit { z-index: 6; }
 .ix-pins { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
