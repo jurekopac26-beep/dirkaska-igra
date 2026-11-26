@@ -315,11 +315,11 @@
   "jsMs": 0.81
  },
  "ujarras": {
-  "calls": 156,
-  "maxCalls": 211,
-  "kverts": 310,
-  "maxKverts": 371,
-  "jsMs": 0.82
+  "calls": 170,
+  "maxCalls": 219,
+  "kverts": 352,
+  "maxKverts": 427,
+  "jsMs": 1.11
  },
  "ghoufi": {
   "calls": 143,
