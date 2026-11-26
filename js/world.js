@@ -4508,7 +4508,7 @@ const World = (function () {
     // height of the road's zero, if not 300 m a.s.l. as on the Nordschleife)
     const D = def.dem, bin = atob(D.b64), dem = new Float32Array(D.nx * D.nz), base = D.base != null ? D.base : 300;
     for (let k = 0; k < dem.length; k++) dem[k] = D.lo + bin.charCodeAt(k) * D.step - base;
-    P.dem = dem; P.D = D;
+    P.dem = dem; P.D = D; P.fine = def.demFine ? fineBand(def.demFine) : null;   // (the band beside the road on a finer grid: Spa, Pembrey)
     // distance to the road centre line on a 16 m grid (chamfer transform seeded with the road samples)
     const dc = 16, dnx = Math.ceil((x1 - x0) / dc) + 1, dnz = Math.ceil((z1 - z0) / dc) + 1, dist = new Float32Array(dnx * dnz).fill(1e9);
     for (let i = 0; i < N; i++) { const a = Math.round((T.px[i] - x0) / dc), b = Math.round((T.pz[i] - z0) / dc); dist[b * dnx + a] = 0; }
@@ -4587,7 +4587,21 @@ const World = (function () {
     return NRN;
   }
   function nrBankY(i, o) { const b = T.bank ? T.bank[i] : 0; return b > 0 ? -b * clamp(o * T.bankSide[i], -T.w, T.w + 6) : 0; }   // banked corner: height offset at lateral offset o (as Track.bankAt)
-  function nrFar(x, z) { const P = NR, k = P.D.noise != null ? P.D.noise : 1; return nrDem(x, z) + (P.n1(x, z) - 0.5) * 6 * k + (P.n2(x, z) - 0.5) * 2.2 * k; }   // the landscape away from the road (D.noise: less made-up relief on a finer grid)
+  function nrFar(x, z) {   // the landscape away from the road (D.noise: less made-up relief on a finer grid)
+    const P = NR, k = P.D.noise != null ? P.D.noise : 1, f = nrDem(x, z) + (P.n1(x, z) - 0.5) * 6 * k + (P.n2(x, z) - 0.5) * 2.2 * k;
+    return P.fine ? fineMix(P.fine, x, z, nrDist(x, z), f, nrDem(x, z)) : f;
+  }
+  function fineBand(F) {   // def.demFine (AAA V3', tools/teren-pas.py): the real terrain's detail on a finer grid in the blocks along the road, a residual over the coarse grid
+    const B = F.B, nx = F.bx * B, nz = F.bz * B, r = new Float32Array(nx * nz), m = atob(F.m), b = atob(F.b64); let q = 0;
+    for (let bj = 0; bj < F.bz; bj++) for (let bi = 0; bi < F.bx; bi++) { const k = bj * F.bx + bi; if (!((m.charCodeAt(k >> 3) >> (k & 7)) & 1)) continue;
+      for (let j = 0; j < B; j++) for (let i = 0; i < B; i++) r[(bj * B + j) * nx + bi * B + i] = (b.charCodeAt(q++) - 128) * F.step; }
+    return { F, nx, nz, r };
+  }
+  function fineMix(Q, x, z, d, f, dem) {   // within 60 m of the line (fading out to 72 m) the coarse grid plus the real detail instead of the made-up relief f; farther out f as it was
+    const w = sstep(72, 60, d); if (w <= 0) return f;
+    const F = Q.F, gx = clamp((x - F.x0) / F.cell, 0, Q.nx - 1.001), gz = clamp((z - F.z0) / F.cell, 0, Q.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, W = Q.nx, a = Q.r;
+    return lerp(f, dem + (a[j * W + i] * (1 - u) + a[j * W + i + 1] * u) * (1 - v) + (a[(j + 1) * W + i] * (1 - u) + a[(j + 1) * W + i + 1] * u) * v, w);
+  }
   function nrH(x, z) {   // terrain height
     const n = nrNear(x, z), i = n.i, dd = n.dd, hn = n.hn; let h;
     if (i < 0) h = nrFar(x, z);
@@ -5220,7 +5234,7 @@ const World = (function () {
   const SYNC = [];
   const API = {
     Chunks, GB, GRASS_GLSL, HC, ICO1, ICO_F, ICO_V, IChunks, NRC, NRN, NRT, NR_A64, RB, TAU, WSKY, addShore, atS, atSf, box, brookMat, clamp,
-    campLot, carParkMat, clearance, cone, crAt, crH, crowdAt, parkedCar, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
+    campLot, carParkMat, clearance, cone, crAt, crH, crowdAt, parkedCar, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, fineBand, fineMix, gable,
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
     nrTileOn, nrTreeGeo, nringProps, ownRnd, parkOn, pikesProps, pitExcl, pitJunction, pitKerbs, pitLaneScenery, pitOpen, pitRoadAt, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
