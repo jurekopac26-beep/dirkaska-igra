@@ -109,4 +109,19 @@ Odločitev uporabnika 26. 11. ob 11.10: DA, s pogojem (korak, sile in vožnja os
 - **3**: zvok in HUD se na `main` že zaženeta v `newRace` (pred lučmi, `Sfx.setRunning`). Prva sličica po zelenem: dohitevanje fizike (27–31 ms, s 4 koraki pol manj), `Render.frame` 20–22, prisilna postavitev HUD (`h-map`, ~20 ms), zvok starta 4–5 ms. Preostanek ni vreden tveganja v HUD.
 - **4 ni izveden** (`placeNote`, Killarney): ni del te odločitve.
 
-Meritve ZDAJ/POTEM: spodaj.
+
+### Meritve ZDAJ/POTEM
+
+`node tools/zatikanje-start.mjs --zanka --proge=spa,pembrey --naprava=telefon,racunalnik --ponovi=2` (ZDAJ: `main`, `GAME_ROOT`; POTEM: ta veja). 22 avtov, prvih 5 s po zelenem po uri, ms na sličico (JS z umetno uro, kot zgoraj). Povprečje in prva sličica: povprečje dveh zagonov; najdaljša: največja od dveh.
+
+| Naprava, proga | povp. ZDAJ → POTEM | prva po zelenem | najdaljša | najdaljša med uvodom in lučmi | čas dirke v 5 s |
+|---|---|---|---|---|---|
+| telefon (CPU 4×), Spa | 43,3 → 42,0 | 94,9 → 82,8 | 135,4 → 102,5 | 786 → 732 | 4,9 → 3,8 s |
+| telefon (CPU 4×), Pembrey | 47,4 → 31,5 | 116,6 → 64,4 | 146,8 → 179,8 | 1370 → 654 | 4,9 → 4,4 s |
+| računalnik, Spa | 7,4 → 7,5 | 22,7 → 19,4 | 60,9 → 44,7 | 602 → 586 | 5,0 → 5,0 s |
+| računalnik, Pembrey | 7,1 → 6,5 | 17,4 → 19,0 | 32,3 → 25,7 | 707 → 496 | 5,0 → 5,0 s |
+
+- Telefon: prva sličica po zelenem krajša (−12 do −52 ms), največ korakov na sličico 10 → 4. Pembrey povprečje −16 ms (ni več začaranega kroga). Spa povprečje skoraj enako: risanje ostane (22–32 ms).
+- Pembrey POTEM 179,8 ms: ena sličica v enem zagonu (drugi zagon 61,2 ms), verjetno GC; GC ostaja (predlog 2 ga samo premakne v nalaganje).
+- Čas dirke 3,8–4,4 s v 5 s na telefonu: pod 30 sličicami na sekundo gre dirka počasneje od ure (posledica meje 4, odločitev). Računalnik: brez spremembe, 60 sličic na sekundo.
+- Uvod in luči: najdaljša sličica (prva sličica uvoda, prevajanje in nalaganje slik) na Pembreyju 1370 → 654 ms, drugje −16 do −211 ms.
