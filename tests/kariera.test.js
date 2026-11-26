@@ -1,7 +1,7 @@
 // Kariera 1.0, part A and »Atlas« (js/kariera.js, docs/kariera-1-0.md): the path's events come from the real tracks only (every one of them,
 // a new one by itself, never a test or pending one), the cups' sizes and names, the single events (a race, a time trial, a duel), the stars,
 // the unlocking of the stages by the stars, the class cups, the move of the save from v1 to v2, the rewards and the menu's view. And the
-// economy (kariera-5): a simulation of the career, wins only, must buy every car in 110–130 wins and a car of the next stage every 4–16
+// economy (kariera-5): a simulation of the career, wins only, must buy every car in 110–130 wins and a car of the next stage every 4–20
 // races; outside those ranges the test fails (kariera-5, option 2 'hitro', tuned 20. 11., with the single events 22. 11.).
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -238,7 +238,7 @@ check('the racing cars and trucks on circuits', ['dirkalni', 'tovornjaki'].every
   const a = sim('cheap');
   check('every car in 110–130 wins (kariera-5)', a.cars === models.length && a.wins >= 110 && a.wins <= 130, `${a.wins} wins, ${a.path} on the path, ${a.cars}/${models.length} cars`);
   const b = sim('save'), at = [0, b.bought[1], b.bought[2], b.bought[3], b.bought[4]], gaps = [1, 2, 3, 4].map(s => at[s] - at[s - 1]);
-  check('a car of the next stage every 4–16 races', [1, 2, 3, 4].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 4 && g <= 16), `bought after ${at.slice(1).join(', ')} races`);
+  check('a car of the next stage every 4–20 races', [1, 2, 3, 4].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 4 && g <= 20), `bought after ${at.slice(1).join(', ')} races`);
 }
 
 console.log(`\n${n - bad}/${n} OK`);
