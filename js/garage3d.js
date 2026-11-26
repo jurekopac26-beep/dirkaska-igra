@@ -7491,6 +7491,7 @@ const Garage3D = (function () {
       // 13: home
       yield* waitFor(() => stowed, 4); fin = true; yield* par(home(1.4), rglUnstay(1.4), waitFor(() => exS.off, 6)); return;
     }
+    if (rg2 && el === 'vzmeti' && self.GarazaAnim && GarazaAnim.vzmeti) { yield* GarazaAnim.vzmeti({ THREE, EZ, ARM, BRG, RB, RGL, FIT, LIFT, SFX, puffs, rnd, poseBridge, passMk, spawn, par, wait, tween, waitFor, armTool, tyrePass, camTo, armExt, poseArm, tipM, tipLen, rglCopy, rglHide, hold, letGo, disposeTree, fitSwap, settle, deliKey, lowerCar, armsTo, carriageTo, bridgeRest, armRest, hud, home, rglUnstay, liftUp, spotView, view, fitLog, get cur() { return cur; }, get lift() { return lift; } }, { cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }); return; }   // (I1: vzmeti, js/garaza-anim/vzmeti.js)
     if (rg2) { yield* regalTwoShow({ cv, nw, el, o, pc, grab, tool, hs, V1, R: rg2 }); return; }
     // THE WING with an old one on the lid by both arms: roka 1 to the lid as roka 2 goes over the regal, the old one off (the car the new
     // one's, its wing folded away), roka 2 lifts the new one off the regal, the bridge's half turn, roka 1 stands the old one in the empty
