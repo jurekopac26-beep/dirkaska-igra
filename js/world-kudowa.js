@@ -15,7 +15,7 @@
   /* ---- the look: the Stołowe Mountains in high summer: the deep green of the spruce, the brighter beech by the stream, the lush meadows of
      the clearings, the sandstone pale grey and ochre, the ridges blue in the haze beyond, no snow ---- */
   const LOOK = API.PL_LOOK.kudowa = {
-    seed: 3871, board: 'KUDOWA-ZDRÓJ', sub: 'POLSKA', banner: ['PRZEŁĘCZ · DOLINA', '779 M → 435 M · 7.5 KM'],
+    seed: 3871, board: 'KUDOWA-ZDRÓJ', sub: 'POLSKA', banner: ['PRZEŁĘCZ · DOLINA', '779 M → 432 M · 7.5 KM'],
     grass: [0.36, 0.46, 0.22], grassDry: [0.5, 0.52, 0.3], grassLush: [0.28, 0.44, 0.18], shrub: [0.24, 0.34, 0.16],
     rock: [0.66, 0.63, 0.56], rockWarm: [0.7, 0.62, 0.48], lichen: [0.56, 0.58, 0.5], scree: [0.6, 0.57, 0.5],
     bank: [0.44, 0.38, 0.28], flowers: 0.3,
