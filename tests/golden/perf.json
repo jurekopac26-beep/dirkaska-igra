@@ -238,11 +238,11 @@
   "jsMs": 0.97
  },
  "seoul": {
-  "calls": 137,
+  "calls": 138,
   "maxCalls": 149,
-  "kverts": 593,
-  "maxKverts": 721,
-  "jsMs": 0.63
+  "kverts": 675,
+  "maxKverts": 818,
+  "jsMs": 0.72
  },
  "tuzla": {
   "calls": 204,
@@ -434,11 +434,11 @@
   "jsMs": 1.06
  },
  "savusavu": {
-  "calls": 191,
-  "maxCalls": 226,
-  "kverts": 507,
-  "maxKverts": 610,
-  "jsMs": 0.98
+  "calls": 197,
+  "maxCalls": 230,
+  "kverts": 576,
+  "maxKverts": 709,
+  "jsMs": 1.11
  },
  "koror": {
   "calls": 161,
