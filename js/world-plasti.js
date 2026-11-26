@@ -49,7 +49,7 @@
     const wrap = (px, py, f) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) f(ox + px + a * S, oy + py + b * S); };   // (across the edges: tileable)
     if (kind === 1) {   // needles and twigs, a few pebbles
       x.lineWidth = 1;
-      for (const [st, n, len] of [['rgba(150,84,48,0.55)', 900, 3], ['rgba(70,48,32,0.6)', 260, 6], ['rgba(186,150,110,0.4)', 220, 2]]) {
+      for (const [st, n, len] of [['rgba(150,90,56,0.35)', 700, 3], ['rgba(84,60,42,0.35)', 200, 5], ['rgba(186,150,110,0.3)', 220, 2]]) {
         x.strokeStyle = st; x.beginPath();
         for (let k = 0; k < n; k++) { const px = r() * S, py = r() * S, an = r() * Math.PI, l = len * (0.6 + r() * 0.8); wrap(px, py, (qx, qy) => { x.moveTo(qx, qy); x.lineTo(qx + Math.cos(an) * l, qy + Math.sin(an) * l); }); }
         x.stroke(); }
@@ -60,8 +60,9 @@
       x.fillStyle = 'rgba(60,58,54,0.35)'; for (let k = 0; k < 500; k++) { const px = r() * S, py = r() * S; wrap(px, py, (qx, qy) => x.fillRect(qx, qy, 1, 1)); }
     } else if (kind === 3) {   // cracks
       x.strokeStyle = 'rgba(52,50,48,0.6)'; x.lineWidth = 1;
-      for (let k = 0; k < 40; k++) { let px = r() * S, py = r() * S; x.beginPath(); wrap(px, py, (qx, qy) => x.moveTo(qx, qy));
-        for (let s = 0; s < 6; s++) { const nx = px + (r() - 0.5) * 18, ny = py + (r() - 0.3) * 10; wrap(nx, ny, (qx, qy) => x.lineTo(qx, qy)); px = nx; py = ny; }
+      for (let k = 0; k < 40; k++) { const pts = [[r() * S, r() * S]];
+        for (let s = 0; s < 6; s++) { const [px, py] = pts[s]; pts.push([px + (r() - 0.5) * 18, py + (r() - 0.3) * 10]); }
+        x.beginPath(); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) pts.forEach(([px, py], s) => x[s ? 'lineTo' : 'moveTo'](ox + px + a * S, oy + py + b * S));
         x.stroke(); }
     }
     x.restore();
@@ -87,7 +88,7 @@
   const GLSL_F = [
     'varying vec4 vPl; varying vec2 vPw; uniform sampler2D uPlMac; uniform float uPlOne; uniform vec3 uPlAvg[4];',
     'vec4 plFirst(vec4 e) { return e.x > 0.5 ? vec4(1.0, 0.0, 0.0, 0.0) : e.y > 0.5 ? vec4(0.0, 1.0, 0.0, 0.0) : e.z > 0.5 ? vec4(0.0, 0.0, 1.0, 0.0) : vec4(0.0, 0.0, 0.0, 1.0); }',
-    'vec4 plTex(float k, vec2 f, vec2 gx, vec2 gy) { vec2 o = vec2(mod(k, 2.0), floor(k * 0.5)) * 0.5;',
+    'vec4 plTex(float k, vec2 f, vec2 gx, vec2 gy) { vec2 o = vec2(mod(k, 2.0), 1.0 - floor(k * 0.5)) * 0.5;',   // (the canvas' rows upside down: flipY)
     '#ifdef PL_GRAD',
     '  return texture2DGradEXT(map, o + f, gx, gy);',
     '#else',
