@@ -34,7 +34,7 @@
     seed: 6730, snow: 'none',
     ground: { grass: [0.36, 0.5, 0.22], forest: [0.14, 0.27, 0.11], shrub: [0.26, 0.4, 0.16], built: [0.5, 0.46, 0.4], rock: [0.44, 0.42, 0.38], dry: [0.48, 0.42, 0.28] },
     road: { line: 'none', gravel: [0.5, 0.45, 0.38] },   // (the narrow road without lines; the grey-brown shoulder)
-    trees: { kinds: ['broad'], forest: 0.42, open: 0.05, near: 2.0, h: [10, 22] },
+    trees: { kinds: ['broad'], forest: 0.8, open: 0.05, near: 1.6, h: [10, 22], young: 0.2 },   // (the cloud forest close by the road, the Odločitve card's A)
     poles: null, posts: true, signs: 'diamond', skiers: 0, nets: false, snowbanks: false, lifts: false,
     boards: { banner: 'HILL CLIMB' },
     animals: [{ kind: 'parrot', n: 10 }],
