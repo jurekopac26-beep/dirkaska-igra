@@ -137,16 +137,17 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 
 ## Predaja (naslednja seja)
 
-1. **Omrežje:** okolje »Koordinacija« dovoli samo `overpass-api.de` in `api.openstreetmap.org`; strani virov [19]–[38] se 25. 11. niso odprle
-   (preverjeno osem naslovov). Dokler koordinacija ne dovoli gostiteljev (savingcranes.org, www.euronews.com, www.wwt.org.uk, sora.unm.edu,
+1. **Odločitvi uporabnika (25. 11.):** škorci `ptice-skorci-1060` = **a**: navadna ptica, razmaknjena jata kot zdaj; brez gostega oblaka in
+   brez novega razreda. Pembrey in italijanske proge torej ostanejo brez polja `ptice`. Viri `ptice-viri-1060` = **1**: gostitelji naj bodo
+   dovoljeni v okolju; seja sprememb okolja ne predlaga sama, javi koordinaciji.
+2. **Omrežje:** okolje »Koordinacija« dovoli samo `overpass-api.de` in `api.openstreetmap.org`. Tudi 26. 11. se strani virov niso odprle
+   (14 naslovov, zavrnitev posrednika 403). Potrebni gostitelji: savingcranes.org, www.euronews.com, www.wwt.org.uk, sora.unm.edu,
    birdlife.org.au, pmc.ncbi.nlm.nih.gov, www.audubon.org, www.romania-insider.com, visitqatar.com, en.wikipedia.org, hww.ca,
-   datazone.birdlife.org), točka »preveri vsako številko na strani« ni izvedljiva. Iskanje vrne samo izpise.
-2. Iz izpisov iskanja 25. 11.: [26] drži za 1 % mahanja in osem ptic, kraj je Argentina (popravljeno zgoraj). Drugi viri [19]–[38] niso preverjeni.
-3. **Vprašanje za uporabnika (prek koordinacije):** škorec je potrjen za Združeno kraljestvo [6] in Rim pozimi [20], a jata šteje povprečno
-   30 000 ptic; `Birds` jih ima 16. Možnosti: (a) ostane sedanja ptica, (b) gost oblak 16 ptic, (c) nov razred z več sto pikami (nov klic risanja).
-   Do odgovora Pembrey in italijanske proge ostanejo pri sedanji ptici.
-4. Naslednje vrste, ko bodo viri prebrani: siva gos (NL, DK; klin: formacija `wedge` je že v kodi), kanadska gos, črni škarnik (Japonska; `soar`),
+   datazone.birdlife.org, www.nabu.de, www.allaboutbirds.org. Javljeno koordinaciji biketraveler; do takrat samo žerjav in črni jastreb.
+3. Iz izpisov iskanja 25. 11.: [26] drži za 1 % mahanja in osem ptic, kraj je Argentina (popravljeno zgoraj). Drugi viri [19]–[38] niso preverjeni.
+4. **Kartica `ptice-vrste-1060`** (26. 11.): slike zdaj/potem za žerjave (Kågeröd) in jastrebe (Aguascalientes); pred `main` počakaj »ok«.
+5. Naslednje vrste, ko bodo viri prebrani: siva gos (NL, DK; klin: formacija `wedge` je že v kodi), kanadska gos, črni škarnik (Japonska; `soar`),
    bela štorklja (Romunija; `soar`), rumenokljuni škarnik (Južna Afrika). Nova vrsta = vnos v `BIRD_KIND` in polje `ptice` v progi.
-5. Sepang: na `main` je pri 899 od 900 tisoč oglišč; ptice tega ne spreminjajo (Sepang nima polja `ptice`). Rezerva zahteva poseg v progo: ločena tema.
-6. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena (odločeno 24. 11.); zvonci: »1 · Ok, brez zvoncev«.
-7. Viri v kodi so v `README.md`, »Zasluge« (vrstica »Ptice po državi proge«); ob novi vrsti jo dopolni.
+6. Sepang: na `main` je pri 899 od 900 tisoč oglišč; ptice tega ne spreminjajo (Sepang nima polja `ptice`). Rezerva zahteva poseg v progo: ločena tema.
+7. Zamrznjena dirkališča (Crystal Palace, London, Marrakech) ostanejo nespremenjena (odločeno 24. 11.); zvonci: »1 · Ok, brez zvoncev«.
+8. Viri v kodi so v `README.md`, »Zasluge« (vrstica »Ptice po državi proge«); ob novi vrsti jo dopolni.

@@ -127,6 +127,14 @@ Ptice so zdaj ploščat trikotnik s kriloma (3 trikotniki). Tri podrobnejše obl
 
 Odgovor (uporabnik, 24. 11.): **3 · C, 22 trikotnikov.** Izvedeno na veji PR #1060.
 
+### `ptice-skorci-1060`, `ptice-viri-1060`
+
+Odgovora (uporabnik, 25. 11.): škorci **a** (navadna ptica, brez oblaka in novega razreda); viri **1** (gostitelji iz `docs/ptice.md` naj bodo dovoljeni v okolju; seja jih javi koordinaciji).
+
+### `ptice-vrste-1060`
+
+Slike zdaj/potem: žerjavi v klinu (Kågeröd), črni jastrebi v kroženju (Aguascalientes). Možnosti: 1 · ok, na `main` (priporočeno); 2 · popravi; 3 · brez vrst. Odprto od 26. 11.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
