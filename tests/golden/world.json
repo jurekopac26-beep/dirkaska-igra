@@ -1146,12 +1146,12 @@
   }
  },
  "riohondo": {
-  "meshes": 758,
-  "verts": 722717,
+  "meshes": 781,
+  "verts": 779378,
   "instances": 6346,
   "props": 70,
   "crowd": 43,
-  "world": "811eeb9b",
+  "world": "fac5a298",
   "propsHash": "fb5fac24",
   "floor": "32c58a94/9632",
   "groups": {
@@ -1162,7 +1162,7 @@
    "riohondo lake:MeshPhongMaterial": "630a19ec",
    "-:MeshPhongMaterial": "c944c85c",
    "rsFar:MeshBasicMaterial": "ce2a70b3",
-   "rob:MeshLambertMaterial": "60e57576",
+   "rob:MeshLambertMaterial": "e57cee3d",
    "crowd:MeshLambertMaterial": "93ef2d55",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "8d18c822",
@@ -1471,12 +1471,12 @@
   }
  },
  "batangas": {
-  "meshes": 421,
-  "verts": 485291,
+  "meshes": 430,
+  "verts": 500246,
   "instances": 7858,
   "props": 53,
   "crowd": 15,
-  "world": "8b833490",
+  "world": "aaa7062d",
   "propsHash": "39305b14",
   "floor": "68505fb2/7196",
   "groups": {
@@ -1485,6 +1485,7 @@
    "roadside-orchard:MeshLambertMaterial": "927fd400",
    "batangas service roads:MeshLambertMaterial": "de62ed5d",
    "rsFar:MeshBasicMaterial": "2f3c909",
+   "rob:MeshLambertMaterial": "2ea68911",
    "crowd:MeshLambertMaterial": "b5067e87",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "ea4100a6",
