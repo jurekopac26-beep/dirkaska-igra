@@ -37,6 +37,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     traffic: { mix: [0.58, 0.16, 0.08, 0.12, 0.06], bike: 5000 },
     // the police of the run (their patrol cars: the label on the band along both sides, its colour, the text's): generic, no agency's name or badge
     police: { label: 'POLICE', band: '#1d3f8a', text: '#ffffff' }, escTo: 'Do Plaine Champagne',
+    maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): ~74 m of road past the line, a bigger field's slots would stand on each other
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Case Noyale", "d": 120.0, "say": ["Away from the coast at Case Noyale, the hills ahead!", "Up from Case Noyale, the sea behind you!"]},
