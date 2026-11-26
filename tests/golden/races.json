@@ -4848,5 +4848,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "0cafdaaaa930a1818f3cb9d2"
+ },
+ "kudowa/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 198.54,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1bcebd43929ea3763399d8ea"
+ },
+ "kudowa/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 195.43,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9ed47ffd3a1bd6212b56f738"
+ },
+ "kudowa/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 174.02,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a05e685d8a199e7cd1f0e6c2"
+ },
+ "kudowa/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 176.5,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9009985b744f8e7abec50899"
+ },
+ "kudowa/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 235.26,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "351b7bbb5635f80117d65f53"
  }
 }

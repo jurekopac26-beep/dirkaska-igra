@@ -348,6 +348,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | chamarel | Chamarel, Mavricij | chamarel | `js/world-chamarel.js` (`PL_LOOK.chamarel` za `buildPrelaz`: tropski gozd `L.trop`, rdeče-rjave brežine, razgledišče z zidcem iz bazalta `L.pre`, sladkorni trs `L.extra`; levi promet `def.leftHand`) |
 | meteora | Meteora, Grčija | meteora | `js/world-meteora.js` (`PL_LOOK.meteora` za `buildPrelaz`: sivi konglomeratni stebri na skalnih celicah rabe tal, samostani po obrisih iz OSM: kamnite stene, opečnate strehe, kupola na skupino) |
 | stavrovouni | Stavrovouni, Ciper | stavrovouni | `js/world-stavrovouni.js` (`PL_LOOK.stavrovouni` za `buildPrelaz`: samostan na vrhu po obrisih iz OSM: bele kamnite stavbe, opečnate strehe, kupola, zvonik, zid okoli dvorišča) |
+| kudowa | Kudowa-Zdrój, Poljska | kudowa | `js/world-kudowa.js` (`PL_LOOK.kudowa` za `buildPrelaz`: smrekov in bukov gozd tik ob cesti, jase, peščenjak, hiše Kudowe Górne s strmimi strehami) |
 | gudauri | Gudauri, Gruzija | gudauri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.gudauri`: hoteli in apartmajski bloki (`hotels`), sedežnice s sedeži (`chairs`), daljnovod, plazovna galerija (`portal: 2`), ovce) |
 | kanaba | Kanaba, Uganda | kanaba | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kanaba`: zelena polja na rdeči prsti, pločevinaste strehe, drobnica; vožnja po levi) |
 | sipka | Šipka, Bolgarija | sipka | `js/world-sipka.js` (`PL_LOOK.sipka` za `buildPrelaz`: bukov gozd z redkimi iglavci, kamnit stolp na vrhu po obrisu iz OSM; vožnja po desni) |

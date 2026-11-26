@@ -2528,5 +2528,28 @@
    "lifeShadow:MeshBasicMaterial": "425fcb45",
    "life:MeshBasicMaterial": "4117ff9"
   }
+ },
+ "kudowa": {
+  "meshes": 3010,
+  "verts": 1356562,
+  "instances": 84849,
+  "props": 3,
+  "crowd": 176,
+  "world": "a21d55fb",
+  "propsHash": "3b1b2d6e",
+  "floor": "18763a70/15708",
+  "groups": {
+   "-:MeshLambertMaterial": "8117bf2e",
+   "-:MeshPhongMaterial": "5b24f718",
+   "-:MeshBasicMaterial": "5facaa6a",
+   "irFar:MeshLambertMaterial": "c19b27bf",
+   "crowd:MeshLambertMaterial": "f52fa79f",
+   "ao:MeshBasicMaterial": "d61cd071",
+   "tyremarks:MeshBasicMaterial": "8549129b",
+   "roadwear:MeshLambertMaterial": "bbdf89c2",
+   "life:MeshLambertMaterial": "4b7d9928",
+   "lifeShadow:MeshBasicMaterial": "8d916988",
+   "life:MeshBasicMaterial": "aae86921"
+  }
  }
 }

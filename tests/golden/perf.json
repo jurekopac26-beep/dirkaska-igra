@@ -691,5 +691,12 @@
   "kverts": 427,
   "maxKverts": 550,
   "jsMs": 1.16
+ },
+ "kudowa": {
+  "calls": 165,
+  "maxCalls": 192,
+  "kverts": 416,
+  "maxKverts": 456,
+  "jsMs": 1.48
  }
 }
