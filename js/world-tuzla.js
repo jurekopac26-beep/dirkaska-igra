@@ -13,7 +13,7 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
-  const { GB, RB, box, cyl, ico, lerp, nrGround, nrLCf, nrLump, nrNear, rng, sstep } = API;
+  const { GB, RB, box, clamp, cyl, ico, lerp, nrGround, nrLCf, nrLump, nrNear, rng, sstep } = API;
   // the text boards: place names (the town, the city, the country, the villages and the district round the circuit, the region, the province
   // next door), the grandstands' names (def.stands), the start line's, the DRS boards
   const TZ_BAN = [['TUZLA', '#c8102e', '#fff', '#fff'], ['İSTANBUL', '#16213e', '#fff', '#c8102e'], ['BAŞLANGIÇ · BİTİŞ', '#16181c', '#fff', '#c8102e'], ['TÜRKİYE', '#c8102e', '#fff', '#fff'],
@@ -274,10 +274,102 @@
     return st;
   }
 
+  /* ---- the ground (LK.ground): Tuzla's own, in place of World's grassLook (which leaves alone a material it finds marked) ----
+     The chase camera looks down at the ground 5-80 m ahead: what counts there is the grain. One tileable 256 px detail picture, read in world
+     space at two scales (2.3 m: the stalks and the grit under the car; 9 m: the same further out, bent by the patches' noise so that the tile
+     does not show): r the grain (dry stalks lying every way, the gaps between them), g and b the relief's slope (clods, tussocks, stones: lit
+     on the sun's side, dark on the far side, none in shadow), a the stones. No extra draw, no extra vertices: the shared builder's one ground
+     material (the terrain's tiles, the mown verges). */
+  let tzGPix = null, tzGMean = 0.5;
+  function tzTex() {
+    const S = 256;
+    if (!tzGPix) {
+      const R = rng(9041), A = new Float32Array(S * S), H = new Float32Array(S * S), B = new Float32Array(S * S);
+      const pn = (cells, seed) => { const r = rng(seed), g = new Float32Array(cells * cells); for (let k = 0; k < g.length; k++) g[k] = r();   // (value noise that wraps: tileable)
+        return (u, v) => { const fx = u * cells, fz = v * cells, i = Math.floor(fx), j = Math.floor(fz), a = fx - i, b = fz - j, sa = a * a * (3 - 2 * a), sb = b * b * (3 - 2 * b), i0 = i % cells, j0 = j % cells, i1 = (i0 + 1) % cells, j1 = (j0 + 1) % cells;
+          return lerp(lerp(g[j0 * cells + i0], g[j0 * cells + i1], sa), lerp(g[j1 * cells + i0], g[j1 * cells + i1], sa), sb); }; };
+      const n1 = pn(5, 9042), n2 = pn(13, 9043), n3 = pn(37, 9044), n4 = pn(90, 9045);
+      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = j * S + i, u = i / S, v = j / S;
+        A[k] = 0.5 + (n3(u, v) - 0.5) * 0.16 + (n4(u, v) - 0.5) * 0.14 + (R() - 0.5) * 0.1;
+        H[k] = n1(u, v) * 6 + n2(u, v) * 4 + n3(u, v) * 1.6 + n4(u, v) * 0.5; }   // (the heights in texels: the clods)
+      const at = (u, v) => (((v % S) + S) % S) * S + ((u % S) + S) % S;   // (wrapped at the edges)
+      const dot = (px, py, w) => { const i = Math.floor(px), j = Math.floor(py), a = px - i, b = py - j;   // a soft point of a stalk: the grain, and a little height where it is a pale one
+        for (const [di, dj, q] of [[0, 0, (1 - a) * (1 - b)], [1, 0, a * (1 - b)], [0, 1, (1 - a) * b], [1, 1, a * b]]) { const k = at(i + di, j + dj); A[k] += w * q; if (w > 0) H[k] += w * q * 1.3; } };
+      for (const [n, len, w] of [[1500, 26, 0.2], [1300, 20, -0.17], [260, 34, 0.34], [240, 12, -0.3]])   // the dry stalks: pale ones lying every way, the dark gaps between them
+        for (let k = 0; k < n; k++) { let x = R() * S, y = R() * S, a = R() * Math.PI * 2; const l = len * (0.45 + R() * 0.9), bend = (R() - 0.5) * 0.05, ww = w * (0.6 + R() * 0.8) * 0.7;
+          for (let t = 0; t < l; t += 0.7) { a += bend; x += Math.cos(a) * 0.7; y += Math.sin(a) * 0.7; dot(x, y, ww); } }
+      const mound = (px, py, rr, ht, stone) => {   // a tussock or a clod (a soft mound, paler on its top), or a stone (a dome, in the stones' channel, its own even tone)
+        const tone = 0.46 + R() * 0.12;
+        for (let v = Math.floor(py - rr - 1); v <= Math.ceil(py + rr + 1); v++) for (let u = Math.floor(px - rr - 1); u <= Math.ceil(px + rr + 1); u++) {
+          const q = Math.hypot(u + 0.5 - px, v + 0.5 - py) / rr; if (q >= 1) continue;
+          const k = at(u, v), dm = stone ? Math.sqrt(1 - q * q) : (1 - q * q) ** 2; H[k] += ht * dm;
+          if (stone) { const cov = clamp((1 - q) * rr, 0, 1); B[k] = Math.max(B[k], cov); A[k] = lerp(A[k], tone, cov); } else A[k] += (dm - 0.3) * 0.1; } };
+      for (let k = 0; k < 260; k++) { const rr = 2.5 + R() * 4.5; mound(R() * S, R() * S, rr, rr * (0.2 + R() * 0.25), false); }   // tussocks and clods
+      for (let k = 0; k < 14; k++) { const rr = 1.6 + R() * 2; mound(R() * S, R() * S, rr, rr * 0.8, true); }   // stones
+      for (let k = 0; k < 90; k++) { const rr = 0.7 + R() * 0.7; mound(R() * S, R() * S, rr, rr * 0.8, true); }   // grit
+      const d = new Uint8Array(S * S * 4); let sum = 0;
+      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const k = j * S + i, o = k * 4, gx = (H[at(i + 1, j)] - H[at(i - 1, j)]) * 0.5, gz = (H[at(i, j + 1)] - H[at(i, j - 1)]) * 0.5;   // (the slope along the picture's u and v: the world's x and z)
+        d[o] = Math.round(clamp(A[k], 0, 1) * 255); d[o + 1] = Math.round(clamp(0.5 + gx * 0.5, 0, 1) * 255); d[o + 2] = Math.round(clamp(0.5 + gz * 0.5, 0, 1) * 255); d[o + 3] = Math.round(B[k] * 255); sum += d[o]; }
+      tzGPix = d; tzGMean = sum / (S * S) / 255;
+    }
+    const t = new THREE.DataTexture(tzGPix, S, S, THREE.RGBAFormat);   // (a DataTexture: a canvas would premultiply the stones' alpha into the other channels; its rows are the picture's v as they are)
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = 4; t.needsUpdate = true; return t;
+  }
+  const TZ_GLSL = [
+    'varying vec2 vTzW; varying float vTzD; uniform vec3 uTzAvg; uniform sampler2D uTzT; uniform float uNat; uniform float uPat;',
+    'float tzHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
+    'float tzNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(tzHash(i), tzHash(i + vec2(1.0, 0.0)), u.x), mix(tzHash(i + vec2(0.0, 1.0)), tzHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+  function tzGround(m, ownTex) {
+    const avg = (m.map && m.map.avgCol) || [0.35, 0.49, 0.22], t = ownTex(tzTex()), mean = tzGMean.toFixed(3), nat = (API.T && API.T.def && API.T.def.grassNat) || 0;
+    m.userData.grassLook = true;
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uTzAvg = { value: new THREE.Vector3(avg[0], avg[1], avg[2]) }; sh.uniforms.uTzT = { value: t }; sh.uniforms.uNat = { value: nat }; sh.uniforms.uPat = m.userData.uPat || (m.userData.uPat = { value: 1 });
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vTzW; varying float vTzD;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvTzW = (modelMatrix * vec4(transformed, 1.0)).xz; vTzD = -mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + TZ_GLSL).replace('#include <color_fragment>', `#include <color_fragment>
+        float tzE = 0.0;
+        {
+          const vec3 LUM = vec3(0.3, 0.59, 0.11);
+          vec3 base = vColor * uTzAvg, gc = diffuseColor.rgb;   // (base: the colour the vertex colours mean, over the grass picture's average)
+          float gg = clamp((base.g - max(base.r, base.b)) * 8.0, 0.0, 1.0), near = (1.0 - smoothstep(30.0, 90.0, vTzD)) * uPat, mid = (1.0 - smoothstep(110.0, 300.0, vTzD)) * uPat;
+          float n1 = tzNoise(vTzW * 0.025) * 0.65 + tzNoise(vTzW * 0.07 + 13.1) * 0.35, n2 = tzNoise(vTzW * 0.045 + 57.3);
+          vec2 uC = vTzW * 0.11 + (vec2(n1, n2) - 0.5) * 0.35 + vec2(0.61, 0.17), uD = vTzW * 0.43 + vec2(0.23, 0.71);
+          vec4 tC = texture2D(uTzT, uC), tD = texture2D(uTzT, uD);
+          float grain = (tD.r - ${mean}) * near, grainC = (tC.r - ${mean}) * mid;
+          if (gg > 0.0) {   // the mown lawns (green vertex colours): grassLook's lighter, darker and drier patches, its clumps and its tone; the blades' grain on top
+            gc *= mix(1.0, 0.84 + 0.3 * n1, gg * uPat);
+            gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), gg * smoothstep(0.62, 0.95, n2) * 0.6 * uPat);
+            float cl = tzNoise(vTzW * 0.55 + 3.7) * 0.6 + tzNoise(vTzW * 1.7 + 9.1) * 0.4;
+            gc *= 1.0 + gg * (cl - 0.5) * 0.22 * (1.0 - smoothstep(70.0, 160.0, vTzD));
+            if (uNat > 0.0) { float L = dot(gc, LUM); gc = mix(gc, mix(vec3(L), gc, 0.72) * vec3(1.04, 0.96, 0.86), gg * uNat); }
+            gc *= 1.0 + grain * vec3(0.44, 0.5, 0.3) + grainC * 0.22;
+          }
+          vec3 dry = gc;
+          if (gg < 1.0) {   // the dry hills: paler and deeper patches tens of metres across, soil where the grass is thin, pale stones on it, the stalks
+            float n3 = tzNoise(vTzW * 0.19 + 21.7) * 0.6 + tzNoise(vTzW * 0.53 + 5.3) * 0.4;
+            float tl = dot(texelColor.rgb, LUM) / dot(uTzAvg, LUM), bare = smoothstep(0.54, 0.72, n3 * 0.62 + n2 * 0.3 + grainC * 0.5) * uPat;
+            dry = diffuse * base * mix(1.0, 0.9 + 0.2 * n1, uPat); float dl = dot(dry, LUM);
+            dry = mix(dry, dl * vec3(1.08, 0.9, 0.7) * 0.82, bare * 0.7);
+            dry = mix(dry, dl * vec3(1.2, 1.17, 1.08), max(tD.a * near, tC.a * mid * 0.8) * (0.2 + 0.8 * bare) * 0.85);
+            dry *= mix(1.0, tl, 0.3) * (1.0 + grain * vec3(0.62, 0.6, 0.42) * mix(1.0, 0.6, bare) + grainC * vec3(0.34, 0.33, 0.24));
+          }
+          diffuseColor.rgb = mix(dry, gc, gg);
+          #if NUM_DIR_LIGHTS > 0
+            vec3 tzL = (vec4(directionalLights[0].direction, 0.0) * viewMatrix).xyz; float tzOl = length(tzL.xz);   // (the sun's direction in the world)
+            vec2 tzS = ((tD.gb - 0.502) * near + (tC.gb - 0.502) * mid * 0.8) * 2.0;   // (the relief's slope along the world's x and z)
+            tzE = -dot(tzS, tzL.xz / max(tzOl, 1e-3)) * min(tzOl / max(tzL.y, 0.2), 2.5) * mix(1.0, 0.45, gg);
+          #endif
+        }`)
+        .replace('reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();', 'reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask() * clamp( 1.0 + tzE, 0.45, 1.6 );');
+    };
+    m.customProgramCacheKey = () => 'tzGroundN';   // (N: the lawn toned as grassLook's natural grass; the look's test counts it)
+    m.needsUpdate = true;
+  }
+
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     tuzla: { ban: TZ_BAN, at: TZ_AT, nums: 14, numC: ['#c8102e', '#fff', '#fff'], shirts: TZ_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.1, 1.02, 0.84], gravel: false, noVid: true,
       pitBox: [-260, 90, -1], mow: 0.7,   // (the pit building on the left of the main straight, its garages from the pit entry's end to Turn 1's brakes; fainter mowing stripes; no farms on the circuit's hills)
-      woods: TZ_WOODS, extra: tzExtra, build: tzKeep, lane: true, fl: { tr: TR }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: TZ_WOODS, extra: tzExtra, build: tzKeep, ground: tzGround, lane: true, fl: { tr: TR }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
       flags: { stand: [{ tr: 0.8, tm: 0.2 }, { tr: 0.7, tm: 0.2, rb: 0.1 }], ga: { tr: 0.75, tm: 0.25 }, camp: { tr: 0.85, tm: 0.15 }, pole: 'tr', podium: 'tr' },
       vid: [], poles: [-240, 120, 1], runoff: ['TUZLA', 'İSTANBUL', 'TÜRKİYE'], straight: [-300, 130, 1],
       farm: { wall: [0.93, 0.9, 0.84], roof: [0.62, 0.32, 0.22], end: [0.9, 0.87, 0.8], barn: [0.55, 0.45, 0.35], barnRoof: [0.62, 0.32, 0.22], barnEnd: [0.52, 0.42, 0.32] },
