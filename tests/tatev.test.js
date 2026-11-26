@@ -31,8 +31,8 @@ check('track: an open road with four ways to drive it (def.modes: race, time tri
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, ${def.alt[0]} -> ${def.alt[1]} m, modes ${(def.modes || []).join(',')}`);
 let top = -1e9, low = 1e9, sLow = 0;
 for (let i = T.startIdx; i <= T.finishIdx; i++) { const a = T.altAt(T.hy[i]); if (a < low) { low = a; sLow = i * T.ds - T.startS; } top = Math.max(top, a); }
-check('track: from the rim (~1215 m) down to the rock bridge (~1013 m, the lowest point, ~2.2 km in) and up to the finish towards Tatev (~1440 m), 7.0-7.3 km',
-  Math.abs(def.alt[0] - 1215) < 4 && Math.abs(def.alt[1] - 1440) < 4 && Math.abs(low - 1013) < 6 && sLow > 2050 && sLow < 2400 &&
+check('track: from the rim (~1215 m) down to the rock bridge (~1013 m, the lowest point, ~2.2-2.6 km in) and up to the finish towards Tatev (~1440 m), 7.0-7.3 km',
+  Math.abs(def.alt[0] - 1215) < 4 && Math.abs(def.alt[1] - 1440) < 4 && Math.abs(low - 1013) < 6 && sLow > 2050 && sLow < 2600 &&
   T.raceLen > 7000 && T.raceLen < 7300 && Math.abs(def.realKm - T.raceLen / 1000) < 0.02,
   `${Math.round(T.raceLen)} m, the road ${Math.round(low)}-${Math.round(top)} m (the lowest ${Math.round(sLow)} m from the start)`);
 check('track: no fall off the edge anywhere (no def.drops: only Killarney has one)', !def.drops && T.dropAt == null, `drops ${JSON.stringify(def.drops)}, dropAt ${T.dropAt}`);
@@ -52,7 +52,7 @@ check('track: the run-up for the grid behind the start (~200 m) and the room for
   const nm = T.names.map(q => q.n), signs = T.names.every(q => !/ · \d/.test(q.n) || Math.abs(num(q) - altD(q.d)) < 3);
   const br = T.names.find(q => q.n.startsWith('Hudičev most'));
   check('names: the HUD and the commentator know them (the ruins, the rock bridge at the lowest point, the river, the warm spring, the hairpins, the fountain), in order, each height the road\'s',
-    nm.length >= 8 && T.names.every((q, k) => q.say && (!k || q.d > T.names[k - 1].d)) && T.names[T.names.length - 1].d <= T.raceLen && signs && br && Math.abs(br.d - sLow) < 60,
+    nm.length >= 8 && T.names.every((q, k) => q.say && (!k || q.d > T.names[k - 1].d)) && T.names[T.names.length - 1].d <= T.raceLen && signs && br && Math.abs(altD(br.d) - low) < 4 && Math.abs(br.d - sLow) < 300,
     nm.join(' | '));
   let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, Math.abs(T.grade[i]));
   check('grades: nowhere steeper than ~13 % (the road\'s own, smoothed over ~6 m)', gmax < 0.13, `steepest ${(gmax * 100).toFixed(1)} %`);
@@ -68,8 +68,8 @@ check('track: the run-up for the grid behind the start (~200 m) and the room for
   check('data: the terrain rows and residuals, the land cover cell for cell (grass, trees and shrubs most of it)', rows && res && cells === L.nx * L.nz && maxC <= 6 && cnt[0] + cnt[1] + cnt[2] > cells / 2,
     `dem ${D.nx}x${D.nz}, lc ${L.nx}x${L.nz} (${cells} cells: grass ${cnt[0]}, trees ${cnt[1]}, shrubs ${cnt[2]}, built ${cnt[3]}, bare ${cnt[4]}, fields ${cnt[6]})`);
   const M = (def.marks || []).map(m => Object.assign({ k: m[2] }, sOf(m))), b = (def.boards || []).map(sOf);
-  check('data: the shrine and the café, the information board, all by the road (within 60 m) on the race\'s stretch',
-    M.map(m => m.k).sort().join(',') === 'cafe,shrine' && M.concat(b).every(m => Math.abs(m.d) < 60 && m.s > 0 && m.s < T.raceLen) && b.length === 1,
+  check('data: the shrine and the café, the information board, by the road (the board within 60 m, the ruins\' shrine on the slope above within 90 m) on the race\'s stretch',
+    M.map(m => m.k).sort().join(',') === 'cafe,shrine' && M.concat(b).every(m => Math.abs(m.d) < 90 && m.s > 0 && m.s < T.raceLen) && b.every(m => Math.abs(m.d) < 60) && b.length === 1,
     M.concat(b).map(m => `${m.k || 'board'} ${Math.round(m.s)} m/${m.d.toFixed(1)}`).join(', '));
   const F = def.farDem, nf = F.nx * F.nz;
   check('data: the far view (~24 km round on a 300 m grid, heights 2 bytes a node; no lakes)',

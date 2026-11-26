@@ -31,7 +31,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: TATEV_H.map((h, i) => [i / (TATEV_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.06 (silver), x 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [300, 315, 339], wet: { cs: [330, 346, 372] } },
+    medals: { cs: [230, 241, 259], wet: { cs: [273, 287, 308] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // road to the monastery: the visitors' cars and minibuses above all, vans, a few lorries, rare motorbikes and cyclists
     traffic: { mix: [0.62, 0.16, 0.12, 0.04, 0.06], bike: 8000 },
@@ -40,7 +40,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Ruševine nad sotesko", "d": 2048.0, "say": ["Past the old ruins, and the gorge opens below!", "The ruins on the left, and down to the river we go!"]},
-      {"n": "Hudičev most · 1.013 m", "d": 2223.0, "say": ["Over the natural rock bridge, the lowest point of the road!", "Across the rock bridge, the river right underneath!"]},
+      {"n": "Hudičev most · 1.013 m", "d": 2465.0, "say": ["Over the natural rock bridge, the lowest point of the road!", "Across the rock bridge, the river right underneath!"]},
       {"n": "Reka Vorotan", "d": 2543.0, "say": ["Along the Vorotan, right at the water!", "The river beside you, and the climb starts now!"]},
       {"n": "Topli izvir", "d": 2674.0, "say": ["Past the warm spring by the road!", "The warm spring on the side, and into the hairpins!"]},
       {"n": "Serpentina 1 · 1.042 m", "d": 2828.0, "say": ["First of the hairpins up the gorge wall!", "Hairpin one, and the long climb to Tatev begins!"]},
