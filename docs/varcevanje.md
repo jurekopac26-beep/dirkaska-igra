@@ -224,6 +224,19 @@ Matejevi predlogi 1–10; večina že velja, novo so 2, 8 in 10.
 9. **Tabla 2× na dan in samo novi komentarji** (že velja, »Tabla« in točka 15).
 10. **Vprašanja enkrat na dan (novo):** seja vprašanje zapiše na stran Odločitve takoj; uporabnik jih dobi zbrana v dnevnem stanju; odgovor seja bere ob 23.20, največ dvakrat (`docs/vprasanja.md`).
 
+## Varčevanje brez izgube kakovosti (odločitev uporabnika 25. 11. 2026 ob ~18.55, »vseh 10«)
+
+1. **Dolgi testi v CI:** brskalniški testi in celoten krog tečejo v GitHub Actions (`tests.yml`); seja jih požene s pushem, se naroči na PR (`subscribe_pr_activity`) in konča potezo.
+2. **Kratek izpis testov:** seja bere samo neuspele teste in zadnjih ~20 vrstic izpisa (`| tail -20`, filter na napake), ne celotnega izpisa.
+3. **Pregled = popravek:** kdor najde napako in ima popravek, ga v isti seji uveljavi, preveri s povezanimi testi in commita; »pripravljenih popravkov« za naslednjo sejo ni.
+4. **`main` v vejo največ enkrat na dan** (po svežnju ob 5.00); `golden` se preračuna samo ob združitvi (Združevanje).
+5. **Ena koordinacijska seja na račun na dan** (Matej ali koordinacija), poleg majhnih sej table po urniku; ostale koordinacijske seje se arhivirajo.
+6. **Posnetki porabe v enem kosu:** več posnetkov v ~30 min je en vpis in en graf; posnetek samo porabe, seznam sej samo na prošnjo.
+7. **Komentar na tabli največ 5 vrstic**, podrobnosti v PR ali `docs/vrsta.md`.
+8. **Pregledi na razliki:** pregled (tudi 5 agentov za Trke) bere `git diff main...HEAD` in seznam testov, ne celih datotek.
+9. **Pomočniki na Haiku:** pomočnik za iskanje in branje (Explore) teče na Haiku in vrne največ 10 vrstic; odločitve ostanejo na velikem modelu.
+10. **Slike s številko:** seja svoje slike preveri z razliko v pikslih pri majhni ločljivosti; uporabnik dobi samo končne slike, enkrat na skupino.
+
 ## Stanje
 
 - 3. 11. 2026: uvedeni a–e, okno za povzetek in pravilo za svež `main`; obvestili (`trig_01EXowtvXGXmqji2E2QtKhYd`, `trig_014yjhh3oDoyL7yFFPU8nwY9`) tečeta na modelu Haiku in bereta samo odprta vprašanja. Okolje »Koordinacija« čaka na uporabnika (vsi računi).
