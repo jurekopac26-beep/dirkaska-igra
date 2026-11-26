@@ -407,7 +407,7 @@
       // carousel's arrows (it may reach in beside them where it is narrow), in the middle or a little to a side; where the land makes it
       // bigger than the room between them (sMin), smaller (the land narrower than the card), else where it lies under the fewest of them
       if (tall) {
-        const fb = box.getBoundingClientRect(), O = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .hgraph, :scope > .wxv > button'), ...app.querySelectorAll('#s-track .rarw')]
+        const fb = box.getBoundingClientRect(), O = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .tlen, :scope > .hgraph, :scope > .wxv > button'), ...app.querySelectorAll('#s-track .rarw')]
           .map(e => e.getBoundingClientRect()).filter(r => r.width > 0).map(r => [r.left - fb.left - 8, r.top - fb.top - 8, r.right - fb.left + 8, r.bottom - fb.top + 8]), P = routeTurned(T, a);
         const hits = (c, most) => { let n = 0; for (const [x, y] of P) { const X = (x - c.vx) * c.s, Y = (y - c.vy) * c.s; if ((X < 10 || X > W - 10 || Y < 10 || Y > H - 10 || O.some(o => X > o[0] && X < o[2] && Y > o[1] && Y < o[3])) && ++n >= most) break; } return n; };   // (nor out to the card's edges)
         // (the nearest places first: a little to a side, or up into the finish's name's room, its name then beside its flag: mapLabels)
@@ -437,7 +437,7 @@
     const hit = (r) => !!r && r.width > 0 && r.bottom > b.top + 1 && r.top < b.bottom - 1 && r.right > b.left + 1 && r.left < b.right - 1;
     const hr = hd && hd.getBoundingClientRect(); if (hit(hr)) K.top = hr.bottom - b.top;
     const w = !isLand() && $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;   // (on its side: a row at the card's top, the route goes under it)
-    for (const e of st.querySelectorAll(':scope > .cams, :scope > .tcount')) { const r = e.getBoundingClientRect(); if (hit(r)) K.bottom = Math.max(K.bottom, b.bottom - r.top); }
+    for (const e of st.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .tlen')) { const r = e.getBoundingClientRect(); if (hit(r)) K.bottom = Math.max(K.bottom, b.bottom - r.top); }
     return K;
   }
   // the names of the map's flags as the flyover's: the name in a box (the finish's dark), its height in a small gold box under it at the
@@ -450,7 +450,7 @@
       return '<div class="fl-s ' + (g.classList.contains('f') ? 'finish' : 'start') + '"><b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub.textContent) + '</small>' : '') + '</div>'; }).join('');
     const fb = box.getBoundingClientRect(), W = fb.width;
     // the cameras' buttons, the weather, the height graph, the counter and (upright) the head lie over the picture: a name keeps out from under them
-    const hd = $('#s-track .thead', app), over = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount')].concat(hd ? [...hd.children] : []);
+    const hd = $('#s-track .thead', app), over = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount, :scope > .tlen')].concat(hd ? [...hd.children] : []);
     const keep = over.map(e => { const r = e.getBoundingClientRect(); return [r.left - fb.left - 4, r.right - fb.left + 4, r.top - fb.top - 4, r.bottom - fb.top + 4]; }).filter(k => k[1] > k[0] + 8 && k[3] > 0);
     const M = mks.map((g, i) => { const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(); return { el, f, x: f.left - fb.left, w0: el.offsetWidth, h0: el.offsetHeight, right: g.classList.contains('f') }; });
     // every clear place of a name, in the order it is wanted: over the flag from its pole (a start's to the right, a finish's to the left),
@@ -740,7 +740,14 @@
     };
     frame();
   }
-  window.addEventListener('resize', () => { if (screen === 'track') { fitWhere(); graphOn(); } });
+  // the track's length on the chosen card: at its foot, in the middle of the room between the counter and the cameras (the user's choice
+  // of 26. 11., card meni-1012-izbrana-drzava: the length only, once on the card; #954 takes it out of the height graph's frame)
+  function tlenOn() {
+    const st = app && $('#track-stage', app), e = st && $(':scope > .tlen', st), a = st && $(':scope > .tcount', st), c = st && $(':scope > .cams', st); if (!e || !a || !c) return;
+    const sr = st.getBoundingClientRect(), ar = a.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    e.style.left = ((ar.right + cr.left) / 2 - sr.left) + 'px'; e.hidden = cr.left - ar.right < e.offsetWidth + 8;
+  }
+  window.addEventListener('resize', () => { if (screen === 'track') { fitWhere(); tlenOn(); graphOn(); } });
 
 
 
@@ -1031,7 +1038,7 @@
     rested = null;
     const s = screen === 'track' && shown === 'track' && app && $('#s-track', app); if (!s) return;
     s.classList.remove('rested');
-    flyLabels(); mapDots(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
+    flyLabels(); mapDots(); tlenOn(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
     for (const v of s.querySelectorAll('video')) if (v.__due) { v.__due = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }   // (a flyover that was ready only while the screen rested)
   }
@@ -1257,7 +1264,7 @@
     // (on its side the weather is a row at the card's top: the chosen one first, the others after it in their order: --wx, the drawing's px)
     const wo = WX5.filter(w => w[0] !== W), wxX = (id) => id === W ? 0 : (wo.length < WX5.length ? 4 : -40) + 40 * (wo.findIndex(w => w[0] === id) + 1);
     h += '<div class="stage' + (isRoute(t) ? ' route' : '') + (tallOf(t) ? ' tall' : '') + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
-      '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' +
+      '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' + (t.test ? '' : '<div class="tlen" role="note" aria-label="Length ' + t.km.toFixed(2) + ' km">' + t.km.toFixed(2) + ' km</div>') +
       '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '" style="--wx:' + wxX(w[0]) + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the room under the picture: the row of numbers, the yard, the neighbours, Race!
@@ -1544,7 +1551,7 @@
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
     if (screen === 'track') ringFit();   // (on its side: the carousel's scale before anything measures the screen)
-    fitWhere(); signOn(); flyLabels(); mapDots(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
+    fitWhere(); signOn(); flyLabels(); mapDots(); cornerOn(); fitMaps(); globe.on(); tlenOn(); graphOn(); carOn();
     const M = MV(), ts = M && screen === 'track' && $('#s-track', app);   // (the weather over the screen, after the car: its outline)
     if (ts) M.on(ts, wxLook(), { entering: shown !== 'track', tap: wxTap, app }); else if (M) M.off();
     wxTap = null;
