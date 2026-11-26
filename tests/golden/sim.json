@@ -1861,6 +1861,104 @@
    "repairs": 0
   }
  },
+ "kudowa/race/cs": {
+  "digest": "606a8515f70542fea5fe7083",
+  "lead": 2339.6,
+  "car0": [
+   -1889.83,
+   11.03
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kudowa/demo/cs": {
+  "digest": "2f62361ab18e9a9efbbddc71",
+  "lead": 2508.8,
+  "car0": [
+   -2102.83,
+   96.63
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kudowa/upg/cs": {
+  "digest": "103a646998d3c84cb9d1ca2a",
+  "lead": 2524,
+  "car0": [
+   -2106.8,
+   110.14
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kudowa/crash/cs": {
+  "digest": "62c8320188a6953898626297",
+  "lead": 2296.2,
+  "car0": [
+   -1771.34,
+   49.66
+  ],
+  "cover": {
+   "dmg": 0.59,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kudowa/formula/cs": {
+  "digest": "3a134913554b0dab9f7216cf",
+  "lead": 2656.4,
+  "car0": [
+   -2114.82,
+   132.04
+  ],
+  "cover": {
+   "dmg": 0.81,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kudowa/lm/cs": {
+  "digest": "4f0d8f9c2a3da7d3a512f7db",
+  "lead": 2630.1,
+  "car0": [
+   -2115.52,
+   131.13
+  ],
+  "cover": {
+   "dmg": 0.73,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kudowa/car/cs": {
+  "digest": "c982512bebf6f2efdf036246",
+  "lead": 2303.9,
+  "car0": [
+   -1813.31,
+   36.86
+  ],
+  "cover": {
+   "dmg": 0.67,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "silkeborg/race/cs": {
   "digest": "f051e55e7f289c8eedd061c8",
   "lead": 1703.1,
