@@ -1,6 +1,19 @@
-{"id":"tatev","about":"Tatev, Armenija (id tatev): the serpentines of road H-46 from the natural rock bridge over the Vorotan up towards Tatev","box":[39.375,46.23,39.41,46.275],"closed":false,
+{"id":"tatev","about":"Tatev, Armenija (id tatev): road H-46 down into the Vorotan gorge, over the natural rock bridge and up the serpentines towards Tatev","box":[39.37,46.225,39.413,46.28],"closed":false,
  "route":[
-  [39.395639,46.258691,null,"start"],
+  [39.394887,46.267364,null,"run-up for the grid | primary H-46, 220 m before the start line"],
+  [39.395359,46.26643,null,"primary H-46, 110 m before the start line"],
+  [39.395985,46.265501,null,"start | primary H-46, s 0 m"],
+  [39.397392,46.263892,null,""],
+  [39.399208,46.263192,null,""],
+  [39.399506,46.262781,null,""],
+  [39.397753,46.263,null,""],
+  [39.395993,46.263307,null,""],
+  [39.394193,46.264262,null,""],
+  [39.392731,46.263473,null,""],
+  [39.392061,46.261472,null,""],
+  [39.392963,46.260184,null,""],
+  [39.394466,46.260507,null,""],
+  [39.395639,46.258691,null,""],
   [39.39454,46.258802,null,""],
   [39.395154,46.257962,null,""],
   [39.395555,46.257303,null,""],
@@ -33,6 +46,8 @@
   [39.392607,46.245524,null,""],
   [39.391355,46.246161,null,""],
   [39.390405,46.24732,null,""],
-  [39.389217,46.24906,null,"finish"]
+  [39.389217,46.24906,null,"finish | primary H-46, s 7208 m"],
+  [39.388212,46.249601,null,"primary H-46, 125 m past the finish line"],
+  [39.387138,46.249032,null,"past the finish | primary H-46, 250 m past the finish line"]
  ],
  "prefer":["Շինուհայր-Տաթև մայրուղի"],"geoRoads":[],"geoWater":[],"marks":[],"places":[]}
