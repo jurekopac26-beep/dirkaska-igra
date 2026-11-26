@@ -129,7 +129,7 @@
 
     for (let k = 0; k < later.length; k += 3) exclPush(later[k], later[k + 1], later[k + 2]);
     tiles.forEach((T, s) => {
-      const mat = new THREE.MeshLambertMaterial({ map: s ? tex.asphalt : tex.sand, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 });
+      const mat = new THREE.MeshLambertMaterial({ map: s ? tex.asphalt : o.out && o.out.season === 'rb-winter' ? tex.makadam : tex.sand, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 });
       for (const rb of T.values()) { if (rb.empty) continue; const m = new THREE.Mesh(rb.geometry(), mat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'roadside-ways'; root.add(m); st.meshes++; }
     });
     return st;

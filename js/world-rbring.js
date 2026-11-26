@@ -1400,7 +1400,14 @@
 
     const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
     const xScen = garZ.length ? Object.assign(Object.create(scen), { get(x, z) { for (let k = 0; k < garZ.length; k += 2) if ((x - garZ[k]) ** 2 + (z - garZ[k + 1]) ** 2 < 49) return xScen.off || (xScen.off = new GB()); return scen.get(x, z); } }) : scen;   // (not where a garage stands: Batangas' OSM pit building, its front 0.8 m before the player's garage; the piece is built and dropped)
+    const ziC0 = ZI ? new Map([...scen.map].map(([k, g]) => [k, g.C.length])) : null, ziR0 = ZI ? root.children.length : 0;   // (winter: what the world's own scenery adds is snowed in below)
     const xSt = LK.extra ? LK.extra({ root, tex, scen: xScen, exclPush, excluded, CR, out, matV }) : null;   // (a world's own scenery, before the crowds and the trees keep clear of it: Silkeborg's mounds, buildings, fences)
+    if (ZI) {   // the snow blanket over what LK.extra put on the land (roadside tufts, flowers, leaf litter, soil and field patches): what lies flat is snow, what stands shows as dry stalks through it (only the plants' greens and, lying flat, the soil's and the litter's browns and the heather's purple: not walls, posts, boards)
+      const sn = [0, 0, 0], snow = (x, z, up, c, o) => { const r = c[o], g = c[o + 1], b = c[o + 2]; if (!((g > r * 1.08 && g > b * 1.15) || (up && r > b * 1.25 && g > b * 1.1 && g > r * 0.62) || (up && r > g * 1.2 && r < 0.7 && g < 0.45 && b > g * 0.7))) return; snowC(x, z, sn); const k = up ? 1 : 0.72, d = up ? 1 : 0.93; c[o] = lerp(c[o], sn[0] * d, k); c[o + 1] = lerp(c[o + 1], sn[1] * d * 0.99, k); c[o + 2] = lerp(c[o + 2], sn[2] * d * 0.95, k); };
+      for (const [k, g] of scen.map) { const st = g.A ? 4 : 3; for (let o = ziC0.get(k) || 0, v = o / st; o < g.C.length; o += st, v++) snow(g.P[v * 3], g.P[v * 3 + 2], g.N[v * 3 + 1] > 0.8, g.C, o); }
+      for (let q = ziR0; q < root.children.length; q++) root.children[q].traverse(m => { const G = m.geometry, a = G && m.name === 'rob' && !m.isInstancedMesh && G.attributes.color, p = a && G.attributes.position, nr = a && G.attributes.normal; if (!a || !p) return;
+        for (let v = 0; v < a.count; v++) snow(p.getX(v), p.getZ(v), !!nr && nr.getY(v) > 0.8, a.array, v * a.itemSize); a.needsUpdate = true; });
+    }
 
     /* ---- spectators on the grass (the hill between Turns 3 and 4, the infield), fans along the fences, a few everywhere ---- */
     {
