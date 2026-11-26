@@ -39,7 +39,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - **Več agentov samo za trke** (do 5, preverjanje enkrat pred `main`).
 - **Poraba 100 % 24 h pred iztekom**: pod ciljem seje dodajaj (največ 10), nad ciljem nobene nove; zaostanek več kot 5 točk = do 10 sej s kodo, sicer 2.
 - **Varčevanje** (`docs/varcevanje.md`, »Varčevanje 17. 11.«): seja brez commita 2 h ali ponavljajoča: ustavi, sveža s predajo; tabla `since=`; brez preverjanja v zanki; deset pravil 22. 11. (`zetoni-5`: zastareli PR, slike enkrat na skupino, vprašanja enkrat na dan). Deset pravil 25. 11. (`docs/varcevanje.md`): dolgi testi v CI; izpis testov samo napake; pregled = popravek v isti seji; `main` v vejo 1× na dan; ena koordinacija na račun na dan; tabla do 5 vrstic; pregledi na razliki; pomočniki Haiku; slike s številko.
-- **Fizika vožnje se ne spreminja** (samo trki; izjemi: »Dež in sneg«, #605).
+- **Fizika vožnje se ne spreminja** (samo trki; izjeme: »Dež in sneg«, #605, #783 s pregledom Trki #608).
 - Čakanje: `subscribe_pr_activity`; drugo `cakanje`; brez `sleep`.
 
 ## Tabla (issue #382) in račun
