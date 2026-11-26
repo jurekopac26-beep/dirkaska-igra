@@ -498,7 +498,7 @@
     'Zahodna zanka': 'West Loop', 'Levi za zanko': 'Left after the Loop', 'Srednji esi': 'Middle Esses', 'Vzhodna zanka': 'East Loop', 'Povratna ravnina': 'Return Straight',
     'Južna lasnica': 'South Hairpin',   // (Tocancipá: its corners by plain descriptions)
     'Jugovzhodna zanka': 'South-east Loop', 'Levi proti mostu': 'Left to the Bridge', 'Zanka ob kartingu': 'Karting Loop', 'Desni pred lasnico': 'Right before the Hairpin',
-    'Ovinki proti mostu': 'Bends to the Bridge', 'Levi-desni pred mostom': 'Left-right before the Bridge', 'Most': 'The Bridge', 'Severni levi': 'North Left', 'Ob ribniku': 'By the Pond',   // (Cromwell: its corners by plain descriptions)
+    'Ovinki proti mostu': 'Bends to the Bridge', 'Levi-desni pred mostom': 'Left-right before the Bridge', 'Severni levi': 'North Left', 'Ob ribniku': 'By the Pond',   // (Cromwell: its corners by plain descriptions; 'Most' is shared with El Castaño, below)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)
