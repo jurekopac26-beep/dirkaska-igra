@@ -26,6 +26,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Kågeröd',
     grassNat: 0.35, lawn: [0.96, 1.02, 0.94],
     zivali: { a: ['roe', 'boar', 'fox', 'hare'], t: ['huntStand', 'logPile', 'fallenTree'], open: true },
+    ptice: 'zerjav',   // (the birds over it: the common crane, a wedge; BIRD_KIND in js/render.js, the sources in docs/ptice.md)
     id: 'kagerod', name: 'Kågeröd, Švedska', theme: 'kagerod', laps: 6, halfWidth: 5.5,
     maxRivals: 80,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the shortest circuit, its flying start's column (4/5 of a lap at most) would stand car on car with more (85 already do, the formula cars)
     desc: "Kratko dirkališče v gozdu ob reki Vege å pri Kågerödu v Skåniji: 2,1 km v smeri urinega kazalca, z vzponi in spusti. Ciljna ravnina ob reki, dvojni desni na njenem koncu, dolgi desni okoli depoja, ostri levi pod klancem, vzpon do lasnice na vrhu in spust, nato dvakrat čez reko skozi gozdni ovinek in zadnji ovinek nazaj na ravnino. Ob progi bukov in smrekov gozd, reka, travniki in polja, boksi ob ciljni ravnini (zapelji vanje in mehaniki ti popravijo avto).",

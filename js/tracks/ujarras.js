@@ -7,6 +7,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // under ODbL 1.0. One card, four ways to drive it (def.modes), as Vršič: a race against the rivals over the closed road, a time trial, a duel in
   // the traffic and a run from the police.
   TRACK_DEFS.push({
+    ptice: 'jastreb',   // (the birds over it: the black vulture, circling; BIRD_KIND in js/render.js, the sources in docs/ptice.md)
     id: 'ujarras', name: 'Ujarrás, Kostarika', theme: 'ujarras', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 3.3,
     desc: 'Ujarrás (Kostarika): kratek zavit vzpon skozi tropski gozd nad dolino Orosi. Na sredini proge greš tik mimo razgledišča s teraso, belo balustrado in nadstreškom. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Ujarrás, Costa Rica', desc: 'Ujarrás (Costa Rica): a short, twisting climb through the tropical forest above the Orosi valley. Halfway up you pass right by a lookout with a terrace, a white balustrade and a shelter. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },

@@ -3283,20 +3283,62 @@ const Render = (function () {
   }
 
   /* ---------------- birds: now and then a small flock flies across the view a little above the trees (gulls by the sea), its shadows
-     sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: three triangles a bird, written
-     every frame ---------------- */
+     sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: 22 triangles a bird (a body with
+     a back, a head with a crown, a beak, a fanned tail, each wing an arm, a hand beating after it and its fingers; the user's choice of
+     three, docs/ptice.md), written every frame. The colours are the vertices' own: shades of the bird's one colour (a kind's own colours
+     only by a source) ---------------- */
+  const BIRD_ST = 22 * 9;
+  // the kind of bird over a track (its def's ptice, in the track's own file), by what the sources of docs/ptice.md say of its country (the
+  // user, 24. 11. 2026: »vrsta ptice po državi: število v jati, formacija, let, vse po virih«); a track without it keeps the plain bird:
+  //   zerjav   the common crane over Germany and Sweden: a wedge (V) with the lead bird at its point, every bird beating all the way
+  //            ([1] [2] [3]; the real wedges are of up to 400, here as many as the 16 birds allow)
+  //   jastreb  the black vulture from Mexico to Brazil: a few to some dozens circling in a thermal on flat wings, a few quick shallow
+  //            beats, then gliding again; black, white patches by the wingtips ([10] [11] [12])
+  const BIRD_KIND = {
+    zerjav: { form: 'wedge', n: [9, 16], sp: [13, 3], alt: [26, 14], rate: 8 },
+    jastreb: { form: 'soar', n: [3, 7], sp: [2, 1.5], alt: [26, 12], col: [0.075, 0.075, 0.085], tip: [0.84, 0.84, 0.82] },
+  };
   class Birds {
     constructor(n) {
-      this.n = n; this.pos = new Float32Array(n * 27);
-      const g = new THREE.BufferGeometry(); this.attr = new THREE.BufferAttribute(this.pos, 3); this.attr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('position', this.attr);
+      this.n = n; this.st = BIRD_ST;
+      this.mat = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide });
+      const g = new THREE.BufferGeometry(); this.pos = new Float32Array(n * BIRD_ST); this.col = new Float32Array(n * BIRD_ST);
+      this.attr = new THREE.BufferAttribute(this.pos, 3); this.attr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('position', this.attr);
+      this.cattr = new THREE.BufferAttribute(this.col, 3); this.cattr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('color', this.cattr);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
-      this.mat = new THREE.MeshBasicMaterial({ color: 0x2a2c31, side: THREE.DoubleSide });
       this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.castShadow = true; this.mesh.visible = false;
       this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] }));
     }
-    reset(gull) { this.gull = !!gull; this.mat.color.setHex(gull ? 0xe6e9ec : 0x2a2c31); for (const f of this.flocks) { f.on = false; f.wait = (2 + Math.random() * 8) * (this.rare || 1); } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; }
+    reset(gull, kind) { this.gull = !!gull; this.kind = kind === undefined ? this.kind || null : kind; for (const f of this.flocks) { f.on = false; f.wait = (2 + Math.random() * 8) * (this.rare || 1); } this.vx = this.vz = 0; this.cx = this.cz = null; this.mesh.geometry.setDrawRange(0, 0); }
+    // one bird into the buffers at o: its place (x, y, z), heading (ch, sh), size sc, half span, the arm's and the hand's angle
+    _bird(o, x, y, z, ch, sh, sc, span, a1, a2, bk) {
+      const P = this.pos, C = this.col, gull = this.gull, K = this.kind, kc = K && K.col;
+      const R = kc ? kc[0] : gull ? 0.9 : 0.165, G = kc ? kc[1] : gull ? 0.914 : 0.173, B = kc ? kc[2] : gull ? 0.925 : 0.192;
+      let k = 1, tip = null;   // (tip: the colour of the wing's fingers where the kind has its own, the black vulture's white patches)
+      bk = bk || 0;   // (the bank of a circling bird: its inner wing lower, its outer one higher)
+      const v = (fw, sd, up) => { P[o] = x + ch * fw * sc - sh * sd; P[o + 1] = y + up + sd * bk; P[o + 2] = z + sh * fw * sc + ch * sd;
+        if (tip) { C[o] = tip[0]; C[o + 1] = tip[1]; C[o + 2] = tip[2]; } else { C[o] = Math.min(1, R * k); C[o + 1] = Math.min(1, G * k); C[o + 2] = Math.min(1, B * k); } o += 3; };
+      const w = 0.07 * sc, hw = 0.045 * sc, up = 0.05 * sc;
+      // the body with its back
+      v(0.2, 0, 0); v(-0.02, -w, 0); v(0, 0, up); v(0.2, 0, 0); v(0, 0, up); v(-0.02, w, 0); k = 0.88; v(-0.02, -w, 0); v(-0.26, 0, 0); v(0, 0, up); v(0, 0, up); v(-0.26, 0, 0); v(-0.02, w, 0);
+      // the head with its crown, the beak
+      k = gull ? 1.04 : 0.86;
+      v(0.34, 0, 0.01 * sc); v(0.2, -hw, 0); v(0.26, 0, up); v(0.34, 0, 0.01 * sc); v(0.26, 0, up); v(0.2, hw, 0);
+      k = gull ? 0.72 : 1.9; v(0.43, 0, 0); v(0.31, -0.016 * sc, 0.012 * sc); v(0.31, 0.016 * sc, 0.012 * sc);
+      // the tail: a fan of three
+      k = gull ? 0.93 : 0.8;
+      v(-0.22, 0, 0); v(-0.43, -0.11 * sc, 0); v(-0.46, -0.035 * sc, 0); v(-0.22, 0, 0); v(-0.46, -0.035 * sc, 0); v(-0.46, 0.035 * sc, 0); v(-0.22, 0, 0); v(-0.46, 0.035 * sc, 0); v(-0.43, 0.11 * sc, 0);
+      // the wings: the arm to the elbow (angle a1), the hand beyond it (a2), the fingers; the tip swept back
+      const r0 = 0.05 * sc, r1 = span * 0.46, r2 = span * 0.8;
+      const s1 = r0 + Math.cos(a1) * (r1 - r0), u1 = Math.sin(a1) * (r1 - r0), s2 = s1 + Math.cos(a2) * (r2 - r1), u2 = u1 + Math.sin(a2) * (r2 - r1), s3 = s1 + Math.cos(a2) * (span - r1), u3 = u1 + Math.sin(a2) * (span - r1);
+      for (let q = -1; q <= 1; q += 2) {
+        k = gull ? 0.8 : 1.18; v(0.12, q * r0, 0); v(-0.14, q * r0, 0); v(-0.15, q * s1, u1); v(0.12, q * r0, 0); v(-0.15, q * s1, u1); v(0.1, q * s1, u1);
+        k = gull ? 0.62 : 0.84; v(0.1, q * s1, u1); v(-0.15, q * s1, u1); v(-0.17, q * s2, u2); v(0.1, q * s1, u1); v(-0.17, q * s2, u2); v(0.02, q * s2, u2);
+        k = gull ? 0.2 : 0.66; tip = (K && K.tip) || null; v(0.02, q * s2, u2); v(-0.07, q * s2, u2); v(-0.06, q * s3, u3); v(-0.07, q * s2, u2); v(-0.17, q * s2, u2); v(-0.16, q * (s2 + (s3 - s2) * 0.8), u2 + (u3 - u2) * 0.8); tip = null;
+      }
+    }
     update(dt, cx, cz, gH) {
-      const P = this.pos; let b = 0;
+      const P = this.pos, K = this.kind; let b = 0;
       // the view moves as fast as the cars: a new flock appears ahead of it (the cars then pass under it), else anywhere around
       if (dt > 0) { const k = Math.min(1, dt * 2); this.vx = (this.vx || 0) + ((cx - (this.cx == null ? cx : this.cx)) / dt - (this.vx || 0)) * k; this.vz = (this.vz || 0) + ((cz - (this.cz == null ? cz : this.cz)) / dt - (this.vz || 0)) * k; }
       this.cx = cx; this.cz = cz;
@@ -3305,9 +3347,18 @@ const Render = (function () {
           const vv = Math.hypot(this.vx, this.vz), moving = vv > 8, a = moving ? Math.atan2(this.vz, this.vx) + (Math.random() - 0.5) * 0.9 : Math.random() * Math.PI * 2;
           const r = moving ? 70 + Math.min(90, vv * 1.6) * Math.random() : 75 + Math.random() * 25, tx = cx + (Math.random() - 0.5) * 60, tz = cz + (Math.random() - 0.5) * 60;
           f.x = cx + Math.cos(a) * r; f.z = cz + Math.sin(a) * r; f.h = moving ? a + Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1) + (Math.random() - 0.5) * 0.8 : Math.atan2(tz - f.z, tx - f.x);   // (ahead of the view: flying across the cars' way)
-          f.turn = 0; f.sp = this.gull ? 9 + Math.random() * 3 : 11 + Math.random() * 4;
-          f.alt = 15 + Math.random() * 11; f.y = gH(f.x, f.z) + f.alt; f.on = true; f.dur = 0;
-          const n = 4 + Math.floor(Math.random() * 4); f.m = [];
+          const free = this.n - this.flocks.reduce((s, g) => s + (g.on ? g.m.length : 0), 0);
+          if (K && free < K.n[0]) { f.wait = 4; continue; }   // (a kind's flock whole or not at all: a wedge of two is none)
+          f.turn = 0; f.sp = K ? K.sp[0] + Math.random() * K.sp[1] : this.gull ? 9 + Math.random() * 3 : 11 + Math.random() * 4;
+          f.alt = K ? K.alt[0] + Math.random() * K.alt[1] : 15 + Math.random() * 11; f.y = gH(f.x, f.z) + f.alt; f.on = true; f.dur = 0;
+          const n = K ? Math.min(free, K.n[0] + Math.floor(Math.random() * (K.n[1] - K.n[0] + 1))) : 4 + Math.floor(Math.random() * 4); f.m = [];
+          if (K && K.form === 'wedge') {   // the lead at the point, the others behind it in turn on the left and on the right, each beating in its own time
+            for (let k = 0; k < n; k++) { const rank = Math.ceil(k / 2), side = k % 2 ? 1 : -1;
+              f.m.push({ fw: -rank * 2 + (k ? (Math.random() - 0.5) * 0.4 : 0), sd: side * rank * 1.5 + (k ? (Math.random() - 0.5) * 0.3 : 0), up: (Math.random() - 0.5) * 0.5, ph: Math.random() * 6.28, bob: Math.random() * 6.28, fl: 1 }); }
+          } else if (K && K.form === 'soar') {   // each on its own circle of the thermal, all turning the same way, at its own height
+            const dir = Math.random() < 0.5 ? 1 : -1;
+            for (let k = 0; k < n; k++) f.m.push({ r: 7 + Math.random() * 12, a: Math.random() * 6.28, dir, v: 8 + Math.random() * 2, up: (Math.random() - 0.5) * 9, ph: 0, bob: Math.random() * 6.28, fl: -Math.random() * 6, gl: 4 + Math.random() * 5 });
+          } else
           for (let k = 0; k < n; k++) f.m.push({ fw: -Math.abs(k - (n - 1) / 2) * (1.6 + Math.random() * 1.2) + (Math.random() - 0.5), sd: (k - (n - 1) / 2) * (1.3 + Math.random() * 0.8), up: (Math.random() - 0.5) * 1.5, ph: Math.random() * 6.3, fl: Math.random() * 2, bob: Math.random() * 6.3 });
         }
         if (f.on) {
@@ -3320,20 +3371,22 @@ const Render = (function () {
           const ch = Math.cos(f.h), sh = Math.sin(f.h), sc = this.gull ? 2.1 : 1.8, span = (this.gull ? 0.75 : 0.62) * sc;   // (a little larger than life: they are seen from far above)
           for (const m of f.m) {
             if (b >= this.n) break;
+            if (K && K.form === 'soar') {   // circling: flat wings, now and then a second of quick shallow beats
+              m.a += m.dir * m.v / m.r * dt; m.fl -= dt; if (m.fl < -m.gl) { m.fl = 1; m.gl = 4 + Math.random() * 5; }
+              const ca = Math.cos(m.a), sa = Math.sin(m.a), fp = m.fl > 0 ? Math.sin(m.ph += dt * 17) * 0.22 : 0.03;
+              this._bird(b * this.st, f.x + ca * m.r, f.y + m.up + Math.sin((m.bob += dt * 0.6)) * 0.4, f.z + sa * m.r, -sa * m.dir, ca * m.dir, sc, span, fp, fp, -0.3 * m.dir); b++; continue;
+            }
+            if (K && K.form === 'wedge') { m.fl = 1; const fp = Math.sin(m.ph += dt * K.rate) * 0.5;   // (beating all the way, the hand a little behind the arm)
+              this._bird(b * this.st, f.x + ch * m.fw - sh * m.sd, f.y + m.up + Math.sin((m.bob += dt * 1.3)) * 0.12, f.z + sh * m.fw + ch * m.sd, ch, sh, sc, span, fp, Math.sin(m.ph - 0.7) * 0.7); b++; continue; }
             m.fl -= dt; if (m.fl < -1.6) m.fl = 1 + Math.random() * 1.6;   // beating (fl > 0), then gliding
-            const flap = m.fl > 0 ? Math.sin(m.ph += dt * (this.gull ? 9 : 13)) * 0.55 : 0.12, lift = Math.sin(flap) * span;
+            const flap = m.fl > 0 ? Math.sin(m.ph += dt * (this.gull ? 9 : 13)) * 0.55 : 0.12;
             const x = f.x + ch * m.fw - sh * m.sd, z = f.z + sh * m.fw + ch * m.sd, y = f.y + m.up + Math.sin((m.bob += dt * 1.3)) * 0.25;
-            const pt = (fw, sd, up, o) => { P[o] = x + ch * fw - sh * sd; P[o + 1] = y + up; P[o + 2] = z + sh * fw + ch * sd; };
-            const o = b * 27;
-            pt(0.34 * sc, 0, 0, o); pt(-0.3 * sc, -0.06 * sc, 0, o + 3); pt(-0.3 * sc, 0.06 * sc, 0, o + 6);                     // body
-            pt(0.13 * sc, 0.04 * sc, 0, o + 9); pt(-0.15 * sc, 0.04 * sc, 0, o + 12); pt(-0.08 * sc, span, lift, o + 15);          // right wing
-            pt(0.13 * sc, -0.04 * sc, 0, o + 18); pt(-0.15 * sc, -0.04 * sc, 0, o + 21); pt(-0.08 * sc, -span, lift, o + 24);      // left wing
-            b++;
+            this._bird(b * this.st, x, y, z, ch, sh, sc, span, flap, m.fl > 0 ? Math.sin(m.ph - 0.7) * 0.8 : flap * 1.3); b++;
           }
         }
       }
-      for (let k = b * 27; k < this.n * 27; k++) P[k] = 0;
-      this.attr.needsUpdate = true;
+      this.mesh.geometry.setDrawRange(0, b * this.st / 3);   // (only the birds in the air are drawn: none, no vertices)
+      this.attr.needsUpdate = true; this.cattr.needsUpdate = true;
     }
   }
 
@@ -3460,7 +3513,7 @@ const Render = (function () {
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.rare = World.noAnimals && World.noAnimals(track.def) ? 5 : 1;   // (a circuit: birds a fifth of the time, the user's choice of 24. 11. 2026)
-    birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
+    birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')), (track.def && !track.def.test && !track.def.pending && BIRD_KIND[track.def.ptice]) || null);   // (gulls by the sea; the kind of the track's country, its ptice)
     birds.off = !!(track.def && track.def.noBirds);   // (def.noBirds: a world without birds)
     valleyFog(); rainbow(false); setMarks(null);   // (the morning mist, no rainbow or school marks from the last world)
     return world;
@@ -11072,6 +11125,6 @@ const Render = (function () {
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
   // the dirt on a race car's body now (0..1; null: none drawn), for the career's garage (game.js careerAfter)
   const dirtOf = (c) => { const v = views && views.find(w => w.car === c); return v && v.dirtU ? v.dirtU.value : null; };
-  return { ext: EXT, dirtOf, garageCar, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { ext: EXT, birdsInfo: () => ({ kind: birds.kind ? birds.kind.form : null, rare: birds.rare, flocks: birds.flocks.map(f => ({ on: f.on, x: f.x, z: f.z, h: f.h, dur: f.dur, m: f.m.map(m => Object.assign({}, m)) })), drawn: birds.mesh.geometry.drawRange.count, step: (dt, x, z) => birds.update(dt, x, z, () => 0), col: (i) => Array.from(birds.col.subarray(i, i + 3)) }), dirtOf, garageCar, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
