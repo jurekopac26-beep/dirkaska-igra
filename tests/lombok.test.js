@@ -2,8 +2,8 @@
 // The layout at its real length, clockwise; its 17 corners by plain descriptions in their order round the lap, each turning its way (the
 // tight right of Turn 16 the tightest); the heights (a coastal plain: under 5 m from the lowest to the highest, the main straight level);
 // the pits on the left of the main straight; the wide run-offs; the scenery data (terrain, land cover, the sea to the south, the hills on
-// the horizon, the ten grandstands named after the places round it, the service roads; no names of the circuit); a whole AI race in the
-// dry and in the rain.
+// the horizon, the ten grandstands named after the places round it, the service roads, the streams and the bridges; no names of the
+// circuit); a whole AI race in the dry and in the rain.
 //   node tests/lombok.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -74,8 +74,8 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
 }
 // 5. the scenery data (tools/lombok/build.py): terrain and land cover round the track, the sea (its level the finish line's height below it,
 // the terrain's sea cells under it all south of the circuit), the hills on the horizon, the ten grandstands (named after the places round
-// it: the main one roofed) back from the road (the barrier in front of each moved out: def.wide), the building, the service roads and the dirt tracks (OSM);
-// only place names
+// it: the main one roofed) back from the road (the barrier in front of each moved out: def.wide), the building, the service roads and the dirt tracks,
+// the streams and the bridges (OSM); only place names
 {
   const sk = def.sk, inGrid = (g) => { const x1 = g.x0 + g.nx * g.cell, z1 = g.z0 + g.nz * g.cell; for (let i = 0; i < T.N; i++) if (T.px[i] < g.x0 + 300 || T.px[i] > x1 - 300 || T.pz[i] < g.z0 + 300 || T.pz[i] > z1 - 300) return false; return true; };
   const names = 'LOMBOK,KUTA,PRAYA,PUJUT,SEGER,SENGKOL,GERUPUK,MERESE,TANJUNG,RINJANI', roofed = def.stands.filter(s => s[4]).map(s => s[7]).join();
@@ -91,6 +91,11 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
   const sv = ways(sk.svc), tr = ways(sk.trk);
   check('scenery: 20 or more service roads and 3 or more dirt tracks (OSM), each of 2 points or more, at most 6 % of their points inside the barriers (the marshals\' ways to the track, the perimeter road behind the moved-out barrier of the main straight: none of it drawn there, World draws the roads only past the barriers)',
     sv.nr >= 20 && tr.nr >= 3 && !sv.short && !tr.short && (sv.inb + tr.inb) / (sv.np + tr.np) <= 0.06, `${sv.nr} roads, ${tr.nr} tracks, ${sv.np + tr.np} points, ${sv.inb + tr.inb} inside the barriers`);
+  const st = { nr: 0, cul: 0, inb: 0, short: 0 }, S = sk.str, bg = ways(sk.brg);
+  for (let k = 0; k < S.length;) { const m = S[k], cul = S[k + 1]; st.nr++; if (m < 2) st.short++; if (cul) st.cul++;
+    for (let q = 0; q < m && !cul; q++) { const qq = near(S[k + 2 + q * 2], S[k + 3 + q * 2]); if (Math.abs(qq.lat) < (qq.lat > 0 ? T.br[qq.i] : T.bl[qq.i])) st.inb++; } k += 2 + m * 2; }
+  check('scenery: 10 or more streams (OSM waterway=stream), each of 2 points or more, 5 or more of them in culverts under the roads, no open stream inside the barriers; 1 or more bridges (bridge=yes), each of 2 points or more',
+    st.nr >= 10 && !st.short && st.cul >= 5 && !st.inb && bg.nr >= 1 && !bg.short, `${st.nr} streams, ${st.cul} in culverts, ${st.inb} open points inside the barriers, ${bg.nr} bridges`);
   const words = JSON.stringify([def.name, def.desc, def.en, def.names, def.stands.map(s => s[7])]);
   check('names: only places and plain descriptions (no name of the circuit, its area, its races or sponsors)', !/mandalika|pertamina|formula|grand prix|\bgp\b|motogp|superbike|sirkuit/i.test(words));
 }
