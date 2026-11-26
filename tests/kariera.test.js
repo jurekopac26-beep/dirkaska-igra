@@ -19,7 +19,7 @@ const onPath = new Set(P.pokali.flatMap(c => c.tracks)), inClass = new Set(P.raz
 check('every real track is on the path', real.every(d => onPath.has(d.id)), real.filter(d => !onPath.has(d.id)).map(d => d.id).join(', '));
 const nu = [...onPath, ...inClass].filter(id => !byId.has(id) || byId.get(id).test || byId.get(id).pending);
 check('no test or pending track on the path or in a class cup', !nu.length, nu.join(', '));
-check('5 stages of 7/8/9/10/10 events (44), stages 1–4 with 2 cups at least, stage 5 the final', P.stopnje.length === 5 && P.vse.length === 44
+check('5 stages of 7/8/10/10/10 events (45), stages 1–4 with 2 cups at least, stage 5 the final', P.stopnje.length === 5 && P.vse.length === 45
   && P.stopnje.every((s, i) => s.dogodki.length === K.VELIKOST[i] && (s.n === 5 ? s.pokali.join() === 's4-finale' : s.pokali.length >= 2)), P.stopnje.map(s => s.dogodki.length + ':' + s.pokali.length).join('/'));
 const sizes = P.pokali.filter(c => c.vrsta !== 'finale').filter(c => c.tracks.length < 3 || c.tracks.length > K.NAJVEC);
 check('a stage cup has 3–6 races', !sizes.length, sizes.map(c => c.id + ':' + c.tracks.length).join(', '));
@@ -62,7 +62,7 @@ for (const id of ['kildare', 'tianmen', 'livorno']) {
   const up = P.vse.filter(x => { const k = K.kovanci(x); return !(k[0] > 0 && k[0] < k[1] && k[1] < k[2]); });
   check('the coins: 1★ < 2★ < 3★ for every event', !up.length, up.map(x => x.id).join(', '));
   check('the coins grow with the stage', [2, 3, 4, 5].every(s => K.NAGRADE.posamezna[s].every((x, i) => x > K.NAGRADE.posamezna[s - 1][i])));
-  check('the thresholds: 0/9/21/36/54 of 132 stars', P.max === 132 && P.pragovi.join('/') === '0/9/21/36/54', P.max + ': ' + P.pragovi.join('/'));
+  check('the thresholds: 0/9/21/37/55 of 135 stars', P.max === 135 && P.pragovi.join('/') === '0/9/21/37/55', P.max + ': ' + P.pragovi.join('/'));
   const cene = {}; for (const m of C.MODELS) { const pr = C.CAREER.car[m.id]; if (pr && !m.retired && !(cene[m.cat] <= pr)) cene[m.cat] = pr; }
   const Q = K.pot(C.TRACKS, C.CATS, cene), rs = Q.razredi.slice().sort((a, b) => a.stopnja - b.stopnja);
   check('the class cups: two a stage, by the price of the class\'s cheapest car', P.stopnje.every(s => Q.razredi.filter(r => r.stopnja === s.n).length === 2)
