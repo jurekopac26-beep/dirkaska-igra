@@ -460,9 +460,9 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
 
   /* ---- Grafika AAA, H2′ (docs/grafika-aaa.md, N1-N9): the road markings a builder adds by sources, gated per track. OZNAKE[id]: the
      markings switched on for the track (default none: 0); a frozen track (test, pending) never takes any, whatever the table says.
-     kildare: 'robRumena' the broken yellow edge line (S.I. 205/2026, RRM 025: about 2 m of line, 2 m of gap, 0.1-0.15 m wide) on the
-     two-lane regional road beside the circuit (js/world-kildare-obcestje.js), not on the circuit itself ---- */
-  const OZNAKE = { kildare: { robRumena: 1 } };
+     Empty: Kildare's yellow edge line on the R409 was taken out on 26. 11. (no public source reachable for RRM 025's sizes, and OSM has
+     no markings on that way) ---- */
+  const OZNAKE = {};
   function oznake(T, kljuc) {
     const d = T && T.def; if (!d || d.test || d.pending) return 0;
     const z = OZNAKE[d.id]; return z && z[kljuc] ? 1 : 0;
