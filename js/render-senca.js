@@ -22,7 +22,7 @@
   'use strict';
   if (typeof Render === 'undefined' || !Render.ext || typeof THREE === 'undefined') return;
   const ROB = new Set(['spa', 'killar']);   // (H6 on these tracks: the pilot, N4; the others in G0, each with its own look)
-  const FIT = new Set();   // (H7 on these tracks, SREDNJA and VISOKA; NIZKA fits its box everywhere, as before)
+  const FIT = new Set();   // (H7 on these tracks, SREDNJA and VISOKA; NIZKA fits its box everywhere, as before. Empty after H0, tests/golden/perf-h0.json: 0–6 % fewer calls, no track brought under 300 / 900k)
   const ROB_M = 12;   // (the fade's width, m: NIZKA's margin round the view's corners, so on the ground the camera sees the shadows stay whole)
   const uniform = { value: new THREE.Vector2(0, 0) };
   const debug = { fit: null, rob: null };
