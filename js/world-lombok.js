@@ -15,7 +15,7 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
-  const { Chunks, GB, IChunks, NRC, RB, TAU, addShore, atSf, box, brookMat, clamp, cyl, ico, lerp, nrDem, nrDist, nrGH, nrGround, nrLCf, nrNear, puff, rng, shoreBand, sstep, waterMat, waterline } = API;
+  const { Chunks, GB, IChunks, NRC, RB, TAU, addShore, atSf, box, brookMat, clamp, cyl, ico, lerp, nrDem, nrDist, nrGH, nrGround, nrLC, nrLCf, nrNear, puff, rng, shoreBand, sstep, waterMat, waterline } = API;
   // the text boards: place names (the island, the village by the circuit, the country, the province's towns and villages, the bays, the hill
   // and the cape by the circuit, the volcano), the grandstands' names (def.stands), the start line's, the DRS boards
   const LB_BAN = [['LOMBOK', '#ce1126', '#fff', '#fff'], ['KUTA', '#0f3d5e', '#fff', '#ce1126'], ['START · FINIS', '#16181c', '#fff', '#ce1126'], ['INDONESIA', '#ce1126', '#fff', '#fff'],
@@ -237,10 +237,160 @@
     return c.map((v, k) => lerp(v, [0.78, 0.84, 0.88][k], f));
   };
 
+  // The plain's own ground (LK.ground: the builder's ground material for the terrain, the verges and the mown bands). Its texture: 256 px,
+  // tileable, a fresh one per build (the world owns and frees it): r the dry grass's grain, g the relief (tussocks as domes: the sun-side
+  // emboss and the tint read it), b the bare earth's grit with pale pebbles, a soft blotches (4..16 cells across the tile)
+  function lbGTex() {
+    const S = 256, d = new Uint8Array(S * S * 4), R = rng(7341);
+    const lat = (P, seed) => { const r = rng(seed), v = new Float32Array(P * P); for (let k = 0; k < v.length; k++) v[k] = r();
+      return (x, y) => { const a = x * P / S, b = y * P / S, i = Math.floor(a), j = Math.floor(b), fu = a - i, fv = b - j, su = fu * fu * (3 - 2 * fu), sv = fv * fv * (3 - 2 * fv), at = (p, q) => v[(q % P) * P + (p % P)];
+        return lerp(lerp(at(i, j), at(i + 1, j), su), lerp(at(i, j + 1), at(i + 1, j + 1), su), sv); }; };
+    const f32 = lat(32, 7342), f64 = lat(64, 7343), f128 = lat(128, 7344), e64 = lat(64, 7345), e128 = lat(128, 7346), a4 = lat(4, 7347), a8 = lat(8, 7348), a16 = lat(16, 7349);
+    const H = new Float32Array(S * S), PB = new Float32Array(S * S);
+    const dome = (A, cx, cy, r, h, pw) => { const r0 = Math.ceil(r); for (let dy = -r0; dy <= r0; dy++) for (let dx = -r0; dx <= r0; dx++) { const q = (dx * dx + dy * dy) / (r * r); if (q >= 1) continue;
+      const k = (((Math.round(cy) + dy) % S + S) % S) * S + ((Math.round(cx) + dx) % S + S) % S, v = h * Math.pow(1 - q, pw); if (v > A[k]) A[k] = v; } };
+    for (let k = 0; k < 120; k++) dome(H, R() * S, R() * S, 7 + R() * 13, 0.45 + R() * 0.55, 0.7);   // the tussocks
+    for (let k = 0; k < 260; k++) dome(H, R() * S, R() * S, 2 + R() * 3, 0.2 + R() * 0.3, 0.8);      // small clods between them
+    for (let k = 0; k < 420; k++) dome(PB, R() * S, R() * S, 1 + R() * 1.5, 0.5 + R() * 0.5, 0.6);   // pale pebbles
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const k = y * S + x, o = k * 4;
+      d[o] = clamp(0.5 + (f64(x, y) - 0.5) * 0.5 + (f128(x, y) - 0.5) * 0.7, 0, 1) * 255;
+      d[o + 1] = clamp(0.12 + H[k] * 0.7 + (f128(x, y) - 0.5) * 0.14 + (f32(x, y) - 0.5) * 0.12, 0, 1) * 255;
+      d[o + 2] = clamp(0.42 + (e64(x, y) - 0.5) * 0.45 + (e128(x, y) - 0.5) * 0.5 + PB[k] * 0.5, 0, 1) * 255;
+      d[o + 3] = clamp(0.5 + (a4(x, y) - 0.5) * 0.9 + (a8(x, y) - 0.5) * 0.55 + (a16(x, y) - 0.5) * 0.3, 0, 1) * 255; }
+    const t = new THREE.DataTexture(d, S, S, THREE.RGBAFormat, THREE.UnsignedByteType);   // (a DataTexture: a canvas would premultiply the alpha)
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = 4; t.needsUpdate = true;
+    return t;
+  }
+  // The ground's look, by the vertex colours' hue (so the seasons' repainting switches it off by itself): the watered lawns keep the shared
+  // grassLook's look (the same numbers, its noises from the texture); the dry grass gets blotches, paler straw in patches, tussocks lit from
+  // the sun's side (three scales of the texture: 120 m, 23 m turned against the first, 5 m near the car) and a grain; the red earth bare with
+  // crisp, ragged edges inside the vertex colours' soft patches
+  function lbGround(m, ownTex) {
+    const t = ownTex(lbGTex()), nat = API.T.def.grassNat || 0;
+    m.userData.grassLook = true;   // (the shared grassLook keeps off this material: its look is done here)
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uLbT = { value: t }; sh.uniforms.uLbN = { value: nat }; sh.uniforms.uPat = m.userData.uPat || (m.userData.uPat = { value: 1 });
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vLbW; varying float vLbD;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvLbW = (modelMatrix * vec4(transformed, 1.0)).xz; vLbD = -mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vLbW; varying float vLbD; uniform sampler2D uLbT; uniform float uLbN; uniform float uPat;')
+        .replace('#include <color_fragment>', '#include <color_fragment>\n' + [
+          'float lbE = 0.0;',
+          '{ vec3 gc = diffuseColor.rgb, vc = vColor.rgb;',
+          '  float gg = clamp((gc.g - max(gc.r, gc.b)) * 8.0, 0.0, 1.0);',
+          '  float rg = vc.r / max(vc.g, 0.01), bg = vc.b / max(vc.g, 0.01), pale = smoothstep(1.15, 1.3, bg);',
+          '  float dry = smoothstep(1.03, 1.2, rg) * (1.0 - pale), rr = clamp((rg - 1.42) / 0.3, 0.0, 1.0) * (1.0 - pale);',
+          '  vec2 lbUB = vec2(vLbW.x * 0.8 - vLbW.y * 0.6, vLbW.x * 0.6 + vLbW.y * 0.8) * 0.043;',
+          '  vec4 lA = texture2D(uLbT, vLbW * 0.0083), lB = texture2D(uLbT, lbUB), lC = texture2D(uLbT, vLbW * 0.19);',
+          '  float nearM = 1.0 - smoothstep(90.0, 200.0, vLbD), nearF = 1.0 - smoothstep(22.0, 60.0, vLbD);',
+          '  float lw = gg * (1.0 - dry);',
+          '  if (lw > 0.0) {',
+          '    gc *= mix(1.0, 0.84 + 0.3 * lA.a, lw * uPat);',
+          '    gc = mix(gc, gc * vec3(1.12, 1.04, 0.7), lw * smoothstep(0.62, 0.95, lA.a * 0.5 + lB.a * 0.5) * 0.6 * uPat);',
+          '    gc *= 1.0 + lw * (lC.a - 0.5) * 0.22 * (1.0 - smoothstep(70.0, 160.0, vLbD));',
+          '    if (uLbN > 0.0) { float L = dot(gc, vec3(0.3, 0.59, 0.11)); gc = mix(gc, mix(vec3(L), gc, 0.72) * vec3(1.04, 0.96, 0.86), lw * uLbN); } }',
+          '  if (dry > 0.0) {',
+          '    float bl = lB.a * 0.6 + lA.a * 0.4;',
+          '    gc *= mix(1.0, 0.86 + 0.3 * bl, dry);',
+          '    float L = dot(gc, vec3(0.3, 0.59, 0.11));',
+          '    gc = mix(gc, L * vec3(1.2, 1.0, 0.62), dry * 0.5 * smoothstep(0.35, 0.7, bl));',
+          '    float hh = mix(lB.g, lB.g * 0.45 + lC.g * 0.55, nearF);',
+          '    gc *= mix(vec3(1.0), mix(vec3(0.84, 0.78, 0.7), vec3(1.2, 1.17, 1.05), hh), dry * nearM);',
+          '    gc *= 1.0 + dry * (lC.r - 0.5) * 0.35 * nearF; }',
+          '  float e = 0.0;',
+          '  if (rr > 0.0) {',
+          '    e = smoothstep(-0.08, 0.08, rr - (0.35 + (lB.a - 0.5) * 0.9 + (lC.b - 0.5) * 0.25)) * smoothstep(0.02, 0.12, rr);',
+          '    gc *= mix(vec3(1.0), vec3(0.87, 1.15, 1.22), rr * (1.0 - e));',
+          '    vec3 earth = mix(vec3(0.6, 0.35, 0.25), vec3(0.68, 0.5, 0.36), lA.a) * (0.78 + 0.24 * lB.b + 0.2 * lC.b) * diffuse;',
+          '    gc = mix(gc, earth, e); }',
+          '  #if NUM_DIR_LIGHTS > 0',
+          '  { vec3 lbL = ( vec4( directionalLights[ 0 ].direction, 0.0 ) * viewMatrix ).xyz; vec2 lbO = vec2( lbL.x, lbL.z ); float lbOl = length( lbO ); lbO /= max( lbOl, 1e-3 );',
+          '    float eM = ( lB.g - texture2D( uLbT, lbUB + vec2( lbO.x * 0.8 - lbO.y * 0.6, lbO.x * 0.6 + lbO.y * 0.8 ) * 0.01 ).g ) * 1.5 * nearM;',
+          '    float eF = ( lC.g - texture2D( uLbT, vLbW * 0.19 + lbO * 0.012 ).g ) * 1.3 * nearF;',
+          '    lbE = ( eM + eF ) * min( lbOl / max( lbL.y, 0.2 ), 2.5 ) * ( dry * ( 1.0 - e ) + e * 0.4 ); }',
+          '  #endif',
+          '  diffuseColor.rgb = gc; }',
+        ].join('\n'))
+        .replace('reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();', 'reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask() * clamp( 1.0 + lbE, 0.4, 1.7 );');
+    };
+    m.customProgramCacheKey = () => 'lbGroundN';   // (ends in N as the shared look's key of the natural grass: render.js look2Info)
+    m.needsUpdate = true;
+  }
+
+  // The plain's low growth (from lbExtra): tussocks of dry grass thick on the open land (the land cover's classes 0 and 2: grass, scrub) from
+  // the lawns' edge outwards, tall dark clumps among them in the scrub; none where the red earth lies bare, on the roads, round the buildings,
+  // in the streams' swales, on the beaches, by the pits. One clump geometry, an InstancedMesh per 32 m chunk under a THREE.LOD (gone past
+  // LBV_FAR, each clump shrinking into the ground before that), casting no shadows
+  const LBV_FAR = 105, LBV_C = 32, LBV_G = 8;
+  function lbClumpGeo() {   // a fan of 11 narrow blades from a small ring (6 leaning out, 5 steeper inside them): 11 triangles; the normals nearly upright (lit as the ground under them), dark at the foot (as its own shadow), pale at the tips
+    const P = [], N = [], C = [], R = rng(7351);
+    for (let k = 0; k < 11; k++) { const lo = k < 6, a = (lo ? k / 6 : (k - 6) / 5 + 0.1) * TAU + (R() - 0.5) * 0.6, c = Math.cos(a), s = Math.sin(a);
+      const r0 = lo ? 0.07 : 0.03, rt = lo ? 0.3 + R() * 0.14 : 0.1 + R() * 0.1, ht = lo ? 0.42 + R() * 0.16 : 0.7 + R() * 0.25, hw = lo ? 0.075 : 0.06, n = Math.hypot(c * 0.45, 1, s * 0.45);
+      P.push(c * r0 - s * hw, 0, s * r0 + c * hw, c * r0 + s * hw, 0, s * r0 - c * hw, c * rt, ht, s * rt);
+      for (let v = 0; v < 3; v++) { const sh = v < 2 ? 0.5 : 1.12; N.push(c * 0.45 / n, 1 / n, s * 0.45 / n); C.push(sh, sh, sh); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), LBV_C * 0.75 + 8);   // (a whole chunk's: the instances lie round the chunk's centre)
+    return g;
+  }
+  function lbVegMat() {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    m.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_INSTANCING\n{ vec4 lbP = modelMatrix * instanceMatrix * vec4( 0.0, 0.0, 0.0, 1.0 ); transformed *= 1.0 - smoothstep( ' + (LBV_FAR * 0.72).toFixed(1) + ', ' + LBV_FAR.toFixed(1) + ', distance( lbP.xyz, cameraPosition ) ); }\n#endif');
+      sh.fragmentShader = sh.fragmentShader.replace('( gl_FrontFacing ) ? vLightFront : vLightBack', 'vLightFront').replace('( gl_FrontFacing ) ? vIndirectFront : vIndirectBack', 'vIndirectFront');   // (both faces lit as the front: no dark backs of the blades)
+    };
+    m.customProgramCacheKey = () => 'lbVeg';
+    return m;
+  }
+  function lbVeg(o, st) {
+    const { root, excluded } = o, T = API.T, def = T.def, P = API.NR, SY = ((def.sk || {}).sea || {}).y, pd = def.pit, pitSide = pd ? (pd[0] < 0 ? -1 : 1) : 0, R = rng(7353);
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+    for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
+    x0 = Math.floor((x0 - 72) / LBV_C) * LBV_C; z0 = Math.floor((z0 - 72) / LBV_C) * LBV_C; x1 += 72; z1 += 72;
+    // the distance beyond the barriers on an 8 m lattice, filled as it is asked for (nrNear is dear), read bilinearly; by the pits: none
+    const gw = Math.ceil((x1 - x0) / LBV_G) + 2, gh = Math.ceil((z1 - z0) / LBV_G) + 2, DD = new Float32Array(gw * gh).fill(-1);
+    const ddOf = (x, z) => { const nn = nrNear(x, z); return nn.i < 0 || (pitSide && Math.sign(nn.lat) === pitSide && T.pitAt(nn.i * T.ds)) ? 99 : nn.dd; };
+    const node = (a, b) => { const k = b * gw + a; let v = DD[k]; if (v < 0) v = DD[k] = ddOf(x0 + a * LBV_G, z0 + b * LBV_G); return v; };
+    // (where the barrier's line crosses the cell the lattice would smear it: asked exactly there; 'far': the caller wants only the land past the bands)
+    const ddAt = (x, z, far) => { const fx = (x - x0) / LBV_G, fz = (z - z0) / LBV_G, a = Math.floor(fx), b = Math.floor(fz), u = fx - a, v = fz - b, n0 = node(a, b), n1 = node(a + 1, b), n2 = node(a, b + 1), n3 = node(a + 1, b + 1), lo = Math.min(n0, n1, n2, n3);
+      if (lo > 0.01) return lerp(lerp(n0, n1, u), lerp(n2, n3, u), v);
+      return Math.max(n0, n1, n2, n3) <= 0.01 || far ? 0 : ddOf(x, z); };
+    const SC = 16, NS = 9, STEP = SC / NS, chunks = new Map();
+    for (let cz = z0; cz < z1; cz += SC) for (let cx = x0; cx < x1; cx += SC) {
+      const dC = nrDist(cx + SC / 2, cz + SC / 2); if (dC > 64 + 50 + 12 || dC < 3) continue;
+      for (let b = 0; b < NS; b++) for (let a = 0; a < NS; a++) {
+        const x = cx + (a + R()) * STEP, z = cz + (b + R()) * STEP, lc = nrLC(x, z), u = R(), u2 = R(), u3 = R(), u4 = R(), u5 = R();   // (the same draws whatever is kept)
+        if (lc !== 0 && lc !== 2) continue;
+        const dryN = sstep(0.35, 0.7, P.n3(x * 0.7 + 90, z * 0.7 - 40));
+        let dens = 0.55 + 0.45 * dryN;
+        if (lc === 0) dens *= 1 - sstep(0.6, 0.72, P.n1(x * 1.3 + 40, z * 1.3 - 510));   // (the red earth bare: lbGround)
+        if (u > dens) continue;
+        const dd = ddAt(x, z, u > dens * 0.5); if (dd < 0.5 || dd >= 50) continue;
+        // (unmown at the barrier's foot, a stray one on the mown bands beyond it, thick from the lawns' edge on, thinning far out)
+        if (u > dens * (dd < 2.5 ? 0.5 : Math.max(0.06, sstep(9, 16, dd)) * (1 - 0.85 * sstep(28, 50, dd)))) continue;
+        if (excluded(x, z) || (LBS && lbCarve(x, z, 2) > 0) || (SY != null && nrDem(x, z) - SY < 2.2)) continue;
+        const q = sstep(0.3, 0.75, P.n1(x * 0.9 - 210, z * 0.9 + 75)), big = lc === 2 && u2 < 0.14, s = big ? 1.4 + u3 * 0.6 : 0.7 + u3 * 0.7, j = 0.9 + u4 * 0.2;
+        const gr = Math.max(sstep(15, 8, dd) * 0.8, big ? 0.75 : lc === 2 ? 0.25 : 0);   // (greener by the watered lawns; the scrub's tall clumps olive)
+        const key = Math.floor((x - x0) / LBV_C) * 4096 + Math.floor((z - z0) / LBV_C); let L = chunks.get(key); if (!L) chunks.set(key, L = []);
+        L.push(x, nrGround(x, z), z, u5 * TAU, s, s * (0.7 + u4 * 0.5), lerp(lerp(0.8, 0.88, q), big ? 0.42 : 0.5, gr) * j, lerp(lerp(0.72, 0.8, q), big ? 0.5 : 0.62, gr) * j, lerp(lerp(0.4, 0.5, q), big ? 0.24 : 0.26, gr) * j);
+      }
+    }
+    const geo = lbClumpGeo(), mat = lbVegMat(), M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0), C = new THREE.Color();
+    for (const [key, L] of chunks) {
+      const n = L.length / 9, cx = x0 + (Math.floor(key / 4096) + 0.5) * LBV_C, cz = z0 + (key % 4096 + 0.5) * LBV_C; let cy = 0; for (let q = 1; q < L.length; q += 9) cy += L[q]; cy /= n;
+      const mesh = new THREE.InstancedMesh(geo, mat, n);
+      for (let k = 0, q = 0; k < n; k++, q += 9) { M.compose(V.set(L[q] - cx, L[q + 1] - cy - 0.03, L[q + 2] - cz), Q.setFromAxisAngle(UP, L[q + 3]), S.set(L[q + 4], L[q + 5], L[q + 4]));
+        mesh.setMatrixAt(k, M); mesh.setColorAt(k, C.setRGB(L[q + 6], L[q + 7], L[q + 8])); }
+      mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true; mesh.instanceColor.ground = true;   // (the seasons paint the clumps as grass)
+      mesh.name = 'lombok tussocks'; mesh.castShadow = false; mesh.receiveShadow = true; mesh.matrixAutoUpdate = false;
+      const lod = new THREE.LOD(); lod.name = 'lombok tussocks'; lod.addLevel(mesh, 0); lod.addLevel(new THREE.Object3D(), LBV_FAR + LBV_C * 0.75);
+      root.add(lod); lod.position.set(cx, cy, cz); lod.matrixAutoUpdate = false; lod.updateMatrix(); lod.updateMatrixWorld(true);
+      st.tufts += n; st.tuftChunks++;
+    }
+  }
+
   // LK.extra: the service roads and the dirt tracks, the building past the pit lane (an OSM outline as a box: white render, a grey roof), the
-  // sea, the horizon; before the crowds and the trees, which keep clear of them
+  // sea, the horizon, the low growth; before the crowds and the trees, which keep clear of them
   function lbExtra(o) {
-    const { scen, exclPush, CR, root, out, tex } = o, sk = API.T.def.sk || {}, R = rng(7337), st = { road: 0, buildings: 0, sea: 0, far: 0, str: 0, culverts: 0, bridges: 0, bushes: 0 };
+    const { scen, exclPush, CR, root, out, tex } = o, sk = API.T.def.sk || {}, R = rng(7337), st = { road: 0, buildings: 0, sea: 0, far: 0, str: 0, culverts: 0, bridges: 0, bushes: 0, tufts: 0, tuftChunks: 0 };
     lbWays(o, sk.svc || [], 2.5, [0.9, 0.9, 0.92], tex.asphalt, 'lombok service roads', st);
     lbWays(o, sk.trk || [], 1.75, [0.98, 0.8, 0.66], tex.sand, 'lombok dirt tracks', st);
     const b6 = sk.bld || [], WALL = [[0.94, 0.93, 0.9], [0.9, 0.88, 0.82]], ROOF = [[0.5, 0.52, 0.54], [0.38, 0.4, 0.42]];
@@ -251,6 +401,7 @@
       exclPush(x, z, Math.hypot(L, W) / 2 + 2); CR.avoid(x, z, Math.hypot(L, W) / 2 + 1); st.buildings++;
     }
     lbStreams(o, st);
+    lbVeg(o, st);
     lbSea(o, st);
     if (API.T.def.far && API.rsFar) { out.dyn.far = API.rsFar(root, API.T.def.far, 'summer', 6, lbFarCol); st.far = 1; }   // (World.update: no car, back where it was built)
     return st;
@@ -259,7 +410,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     lombok: { ban: LB_BAN, at: LB_AT, nums: 17, numC: ['#ce1126', '#fff', '#fff'], shirts: LB_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.12, 1.02, 0.86], gravel: false, noVid: true,
       pitBox: [-230, 190, -1], mow: 0.7,   // (the pit building on the left of the main straight, its garages from the pit entry's end to Turn 1's brakes; fainter mowing stripes; no farms by the circuit)
-      woods: LB_WOODS, extra: lbExtra, lane: true, fl: { id: ID }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: LB_WOODS, extra: lbExtra, ground: lbGround, lane: true, fl: { id: ID }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
       pad: lbPad, padTrees: (x, z) => !!lbPad0 && lbPad0(x, z, 0) === 0,   // (the streams' swales cut into the plain; trees on their banks, not on the pit complex's pad)
       flags: { stand: [{ id: 0.8, rb: 0.2 }, { id: 0.7, tm: 0.15, rb: 0.15 }], ga: { id: 0.8, tm: 0.2 }, camp: { id: 0.85, tm: 0.15 }, pole: 'id', podium: 'id' },
       vid: [], poles: [-240, 130, 1], runoff: ['LOMBOK', 'KUTA', 'INDONESIA'], straight: [-300, 140, 1],
