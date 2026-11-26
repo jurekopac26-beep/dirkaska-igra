@@ -203,11 +203,11 @@
   "jsMs": 1.11
  },
  "ngorongoro": {
-  "calls": 161,
-  "maxCalls": 188,
-  "kverts": 396,
-  "maxKverts": 450,
-  "jsMs": 1.14
+  "calls": 168,
+  "maxCalls": 198,
+  "kverts": 433,
+  "maxKverts": 508,
+  "jsMs": 1.48
  },
  "medeu": {
   "calls": 181,

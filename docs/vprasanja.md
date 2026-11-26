@@ -116,6 +116,15 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-114`
+
+Kamera za avtom, skupina 114 (nadaljnji prehod, `js/world-chase-bt114.js`): Ngorongoro (na strminah stene kraterja do ~60 m sivo-rjave skale posamič in v skupinah, zaplate grušča in suhi šopi; v kotanjah zelenejše zaplate in šopi; na bankini drobni kamni; +7 klicev, 168 od 300, 433 tisoč oglišč od 900). Nürburg ni v skupini: njegovo obcestje spreminja #1078. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Skal pol manj, kotanje tako.
+3. Samo skale, brez zelenih kotanj.
+4. Ne, odstrani skupino 114.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
