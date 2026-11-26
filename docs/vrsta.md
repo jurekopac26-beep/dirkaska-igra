@@ -73,7 +73,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Realizem P · Poškodbe skupaj s Trki (#608), ~16 sej | biketraveler | takoj po #480, 30 avtih in #569 + #494; na `main` ~7. 12. |
 | Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo, croatiadata | potrjene 13. 11. (glej zgoraj); brez izletne cone se ne začnejo, razen 4 prog s prepadom (ograja na strani prepada) |
 | Vreme med dirko (`docs/vreme-med-dirko.md`) | partyslo | po kodi za Dež in sneg, #284 + #296, #390 |
-| Suzuka in Irohazaka v test (`test: true`, zbirna veja C #611) | partyslo | ko je prostor |
 | Hitro nalaganje, korak 2 (I17; #758 s #767 in #725; od 17. 11. ob ~2.57 prevzame croatiadata) | croatiadata | po zbirnih A (#583) in B (#579) |
 | Garaža z Dež in sneg v eni zbirni veji: animacije (8 plošč, #546) | biketraveler | prednost; pred `main` ok na posnetku |
 | **Prevzem dela 17. 11. 2026** (odločitev uporabnika 17. 11. 2026 ob ~2.57, tabla #382): KOLIBRI #480 (s #661 in #662) vodi **partyslo**; Hitro nalaganje #758 (s #767 in #725) vodi **croatiadata**; **biketraveler dela samo Trke #608** | partyslo, croatiadata, biketraveler | takoj; predaja v opisih PR |
@@ -92,17 +91,17 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
 | 10 novih prog z znamenitostjo ob cesti (model iz Blenderja, skupni nalagalnik `.glb`; odločitev uporabnika 15. 11. 2026 ob ~4.40 prek Mateja: »namesto 5 novih prog naredi 10 novih prog, vse naj imajo uporabo blenderja«): proga 1 Luanda in skupna pot (#711), proge 2–7 jure.kopac26 na veji `proge/luanda`, 8–10 biketraveler | jure.kopac26, biketraveler | v delu (#711) |
 | Odprte ceste: predaja na začetku ravnine, tik za tekmecem (popravek uporabnika 14. 11. ob ~16.45; Chapman's Peak, Bâlea, Tianmen in Rio do Rastro dobijo start na začetku ravnine, proge krajše) | jure.kopac26 | v delu (15. 11., `popravki/2026-11-15`) |
-| Kariera za 1.0 (odločitev uporabnika 19. 11. 2026 ob 10.35 prek Mateja, tabla #382, komentar 7005268592; načrt `docs/kariera-1-0.md`, zbirna veja `kariera-1-0`, deli A–D) | partyslo | del A (logika, #792) na `main` 23. 11. v zbirki meni #1022. Naslednja sta B in C. |
+| Kariera za 1.0 (odločitev uporabnika 19. 11. 2026 ob 10.35 prek Mateja, tabla #382, komentar 7005268592; načrt `docs/kariera-1-0.md`, zbirna veja `kariera-1-0`, deli A–D) | partyslo | deli A, B, C in testi na `main` (veje kariera-1-0* niso pred `main`); ostanek #1118. |
 | **Boksi na vseh krožnih progah** (odločitve uporabnika 13. 11. 2026 ob ~23.40 »vsa dirkališča naj imajo bokse« ter 14. 11. ob ~0.05 »samo dirkališča, ki so v krogu, imajo bokse« in »gorske in odprte ceste: tam jih ne delamo«): bokse (boksarska steza, stavba z boksi, mehaniki) po vzoru Spa (`pit`, `pitRow`) dobijo prave krožne proge brez njih: Livorno, Nürburg (na `main`), Hakone, Kildare, Sosnova (#569); odprte ceste in kronometri ne; start odprtih cest: 3 predlogi v slikah za uporabnika; testne in proge na odločanju ne; obremenitev v mejah; proge, Opus z eno sejo | jure.kopac26 | ko #569 pride na `main` in je prostor za sejo s kodo; pred `main` slike zdaj/potem (kamera za avtom) |
 | **Nova proga: Džebel Hafit, Združeni arabski emirati** (odločitev uporabnika 14. 11. 2026 ob ~1.55 »ok začni 1. Džebel Hafit«, po opozorilu o izletni coni, torej izjema): gorska cesta na Džebel Hafit (~12 km, ~60 ovinkov; navzgor 2 pasova, navzdol 1, smeri večinoma ločeni), odsek 1–5 km najbolj ovinkastega dela po OSM (`tools/proga-podatki.py`); ograja prepreči padec; nova država; preveri pasove in ograje v OSM; slike za meni; proge, Opus z eno sejo | jure.kopac26 | ko je prostor za sejo s kodo |
-| Nova proga: Poljska (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | v delu 25. 11. |
-| Nova proga: Chamarel, Mavricij (rezerva uporabnika 13. 11.; veja `proga/chamarel`) | partyslo (rezerva croatiadata) | raziskava 25. 11.; kartica na strani Odločitve |
-| Nova proga: Bosna in Hercegovina (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11.; kartica na strani Odločitve |
-| Nova proga: Ciper (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11.; kartica na strani Odločitve |
+| Nova proga: Poljska (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | Kudowa #1093 (glej 10.2). |
+| Nova proga: Chamarel, Mavricij (rezerva uporabnika 13. 11.; veja `proga/chamarel`) | partyslo (rezerva croatiadata) | PR #1091. |
+| Nova proga: Bosna in Hercegovina (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | Trebević, PR #1096. |
+| Nova proga: Ciper (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | Stavrovouni, PR #1092. |
 | Nova proga: Šipka, Bolgarija (A Šipka, B Trigrad, C Melnik na strani Odločitve) | partyslo (rezerva croatiadata) | PR #1095 (osnutek, podatki A); čaka »ok« (kartica proge-bolgarija-pot) |
-| Nova proga: Armenija (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11. |
+| Nova proga: Armenija (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | Tatev, PR #1097. |
 | Orodje za prekrivanje `tools/prekrivanje.mjs` (odprti PR z isto progo ali datoteko, račun lastnika; `docs/odlocitve.md`, »Brez dvojnega dela«, točka 3) | croatiadata | #1089 osnutek, test OK 25. 11. |
-| Nova proga: El Castaño, Venezuela (rezerva uporabnika 13. 11.; pot in zanimivosti na kartici Odločitve, veja `proga/el-castano`) | partyslo (rezerva croatiadata) | v delu od 25. 11. |
+| Nova proga: El Castaño, Venezuela (rezerva uporabnika 13. 11.; pot in zanimivosti na kartici Odločitve, veja `proga/el-castano`) | partyslo (rezerva croatiadata) | PR #1090. |
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
@@ -138,7 +137,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 |---|---|---|---|---|
 | 10.1 | #1075 | Popravek rdečega `main`: ploščica izbere progo pred izbrano (`pad.test`) | biketraveler | prvi v vrsti; CI zelen, združi seja Združevanje. |
 | 10.2 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: takoj za #1075) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
-| 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
-| 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
+| 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | Meteora, PR #1094. |
+| 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | PR #1122 pripravljen. |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
