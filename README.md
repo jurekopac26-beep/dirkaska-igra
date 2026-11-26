@@ -623,4 +623,5 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Barve tal Irishtowna (gozd, trava, prst): Contains modified Copernicus Sentinel data (2024): Sentinel-2 L2A, posnetek 29. 1. 2024 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
 - Drevesa Irishtowna (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Zastava Jamajke v meniju (`assets/flags/jamaica.svg`): državni simbol, narisan po uradnem opisu (1962), brez avtorskih pravic.
+- Pečeno senčenje terena (`js/world-sencenje.js`): iz istega višinskega modela kot teren proge, brez novih podatkov.
 - Lega sonca na pravih progah (`js/render-sonce.js`): obrazci NOAA Global Monitoring Laboratory, »General Solar Position Calculations« (javna domena). Višinska meglica (`js/render-megla.js`): meteorološka vidljivost (prag kontrasta 2 %) in standardni podeželski aerosolni model (Air Force Geophysics Laboratory, 1979); kraji po © [OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL).
