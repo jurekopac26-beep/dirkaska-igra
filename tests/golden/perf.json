@@ -18,14 +18,14 @@
   "maxCalls": 223,
   "kverts": 415,
   "maxKverts": 437,
-  "jsMs": 2.8
+  "jsMs": 2.85
  },
  "spa": {
   "calls": 197,
   "maxCalls": 238,
   "kverts": 511,
   "maxKverts": 631,
-  "jsMs": 1.7
+  "jsMs": 1.95
  },
  "rbring": {
   "calls": 222,
@@ -35,11 +35,11 @@
   "jsMs": 2.29
  },
  "caracoles": {
-  "calls": 180,
+  "calls": 181,
   "maxCalls": 230,
   "kverts": 379,
   "maxKverts": 555,
-  "jsMs": 1
+  "jsMs": 1.27
  },
  "katu": {
   "calls": 168,
@@ -102,7 +102,7 @@
   "maxCalls": 273,
   "kverts": 534,
   "maxKverts": 667,
-  "jsMs": 1.41
+  "jsMs": 1.22
  },
  "marrakesh": {
   "calls": 183,
@@ -116,7 +116,7 @@
   "maxCalls": 195,
   "kverts": 380,
   "maxKverts": 480,
-  "jsMs": 2.67
+  "jsMs": 2.75
  },
  "jezero": {
   "calls": 174,
@@ -137,7 +137,7 @@
   "maxCalls": 175,
   "kverts": 395,
   "maxKverts": 446,
-  "jsMs": 1.13
+  "jsMs": 1.2
  },
  "llogara": {
   "calls": 168,

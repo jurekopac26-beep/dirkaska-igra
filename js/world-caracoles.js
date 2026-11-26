@@ -265,12 +265,12 @@
     // lakes; the big unnamed blocks cut down to a size that reads as one building; the named ones get a level plot
     const blds = [];
     for (const b of def.bld || []) {
-      let [x, z, L, W, ang, hgt, kind, name] = b; name = name || '';
+      let [x, z, L, W, ang, hgt, kind, name] = b; name = name || ''; const Lf = L, Wf = W;
       if (!name) { L = Math.min(L, 48); W = Math.min(W, 26); }
       if (L < 2.5 || W < 2.5) continue;
-      const c = Math.cos(ang), s = Math.sin(ang), clear = () => { for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = API.vrNear(px, pz);
+      const c = Math.cos(ang), s = Math.sin(ang), clear = (L, W) => { for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = API.vrNear(px, pz);
         if ((n.i >= 0 && n.dd < 1.5) || API.vrWater(px, pz).e > -2) return false; } return true; };
-      if (clear()) blds.push({ x, z, L, W, ang, hgt, kind, name });
+      if (clear(L, W)) { const full = (Lf > L || Wf > W) && clear(Lf, Wf); blds.push({ x, z, L, W, L0: full ? Lf : L, W0: full ? Wf : W, ang, hgt, kind, name }); }   // (L0, W0: the whole footprint, where it too stays clear)
     }
     for (const b of blds) if (b.name) { b.pad = { x: b.x, z: b.z, r: Math.hypot(b.L, b.W) / 2 + 2, b: 14, h: caH(b.x, b.z) }; P.pads.push(b.pad); }
     // the car parks: at the finish (beside the road past the line, on the side where the ground lies nearer the road's height) and by the start
@@ -286,7 +286,7 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     API.stubExcl(exclPush);   // (nothing grows or stands on the side roads)
-    for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + (b.name ? 8 : 2.5));
+    for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L0, b.W0) / 2 + (b.name ? 8 : 2.5));
     out.marks = {};   // (where the landmarks stand: the tests look for them)
     for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
     exclPush(padF.x, padF.z, padF.r + 4); exclPush(padS.x, padS.z, padS.r + 4);
@@ -416,12 +416,36 @@
     /* ---- the buildings: the yellow Hotel Portillo by the lake, the Octagon, the lodges, staff houses and ski huts of Portillo (plastered walls with
        windows, metal roofs in red oxide, green or grey), corrugated sheds, the road camp by the river ---- */
     let nBld = 0;
+    // the lodges, staff houses and ski huts by the builder of houses where the track has it (js/world-stavbe.js: Chile's kit; docs/realizem/paket-s.md,
+    // S3), on their whole footprints; the hotel on its outline from the map (def.hotel); the Octagon and the sheds stay as below
+    const HS = typeof World !== 'undefined' && World.stavbe ? World.stavbe.setup({ Chunks, list: blds.map(b => [b.x, b.z, b.L0, b.W0, b.ang, b.hgt, b.kind]), T, near: API.vrNear, gH: caGround }) : null;
+    if (HS) for (const b of blds) if (!b.name && b.kind === 0) { b.L = b.L0; b.W = b.W0; }
     {
       const RB = rng(2921), walls = [[0.95, 0.94, 0.9], [0.93, 0.88, 0.76], [0.92, 0.92, 0.9], [0.86, 0.72, 0.52], [0.94, 0.9, 0.82]], roofs = [[0.52, 0.2, 0.14], [0.26, 0.4, 0.3], [0.42, 0.44, 0.46], [0.6, 0.24, 0.16], [0.3, 0.32, 0.36]], woods = [[0.42, 0.28, 0.16], [0.5, 0.34, 0.2], [0.36, 0.24, 0.15]];
       const lowHigh = (b) => { const c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9; for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = caGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); } return [lo, hi]; };
       for (const b of blds) {
         const g = scen.get(b.x, b.z), [lo, hi] = lowHigh(b), y = b.pad ? b.pad.h : hi;
-        if (b.name === 'Hotel Portillo') {   // the long yellow block (five storeys on a stone plinth), white bands between the floors, a dark low roof, a wing at the back
+        if (b.name === 'Hotel Portillo' && HS && def.hotel) {   // the long yellow block on its outline from the map: five storeys on a stone plinth, white bands
+          // between the floors, a flat dark roof behind a white cornice; the height from the data (def.bld)
+          const R = [], hr = def.hotel, F = fac.get(b.x, b.z), yel = [1.1, 0.84, 0.27], wh = [0.96, 0.95, 0.92], fl = 5, H = b.hgt > 0 ? b.hgt - 0.4 : 15.5, fh = H / fl;
+          for (let k = 0; k < hr.length; k += 2) R.push([hr[k], hr[k + 1]]);
+          let ar = 0, lo2 = lo; for (let k = 0; k < R.length; k++) { const [x0, z0] = R[k], [x1, z1] = R[(k + 1) % R.length]; ar += x0 * z1 - x1 * z0; lo2 = Math.min(lo2, caGround(x0, z0)); }
+          const yb = y + 0.4, top = yb + H, lk = P.lakes.reduce((a, q) => (!a || q.area > a.area ? q : a), null);
+          let bn = null, bv = 0;
+          for (let k = 0; k < R.length; k++) { const [x0, z0] = R[k], [x1, z1] = R[(k + 1) % R.length], len = Math.hypot(x1 - x0, z1 - z0); if (len < 0.3) continue;
+            const ox = (ar > 0 ? z1 - z0 : z0 - z1) / len, oz = (ar > 0 ? x0 - x1 : x1 - x0) / len, mx = (x0 + x1) / 2, mz = (z0 + z1) / 2, ins = (yy) => [mx - ox, yy, mz - oz];   // (ox, oz: out of this wall)
+            const O = (q, d) => [q[0] + ox * d, q[1] + oz * d], A = O(R[k], 0), B = O(R[(k + 1) % R.length], 0), bays = Math.max(1, Math.round(len / 3.2));
+            g.quadO([A[0], lo2 - 0.5, A[1]], [B[0], lo2 - 0.5, B[1]], [B[0], yb, B[1]], [A[0], yb, A[1]], [0.52, 0.5, 0.47], ins(yb));
+            if (len > 2.4) F.quadO([A[0], yb, A[1]], [B[0], yb, B[1]], [B[0], top, B[1]], [A[0], top, A[1]], yel, ins(yb), [[0, 0], [bays, 0], [bays, fl], [0, fl]]);
+            else g.quadO([A[0], yb, A[1]], [B[0], yb, B[1]], [B[0], top, B[1]], [A[0], top, A[1]], yel, ins(yb));
+            const A1 = O(R[k], 0.12), B1 = O(R[(k + 1) % R.length], 0.12);
+            for (let f = 1; f < fl; f++) { const yy = yb + f * fh - 0.2; g.quadO([A1[0], yy, A1[1]], [B1[0], yy, B1[1]], [B1[0], yy + 0.22, B1[1]], [A1[0], yy + 0.22, A1[1]], wh, ins(yy)); }
+            g.quadO([A1[0], top - 0.1, A1[1]], [B1[0], top - 0.1, B1[1]], [B1[0], top + 0.6, B1[1]], [A1[0], top + 0.6, A1[1]], wh, ins(top));   // (the cornice)
+            const v = lk ? ((lk.cx - mx) * ox + (lk.cz - mz) * oz) / Math.hypot(lk.cx - mx, lk.cz - mz) * len : 0; if (len > 18 && v > bv) { bv = v; bn = [mx, mz, ox, oz]; } }
+          for (const [a, c2, d] of THREE.ShapeUtils.triangulateShape(R.map(([x, z]) => new THREE.Vector2(x, z)), [])) { const Q = (p) => [p[0], top + 0.35, p[1]];
+            g.triO(Q(R[a]), Q(R[c2]), Q(R[d]), [0.24, 0.26, 0.3], [R[a][0], top - 2, R[a][1]]); }
+          if (bn) { const [bv0, bv1, bu0, bu1] = board(3); bannerQ(bn[0] + bn[2] * 0.3, top - 2.4, bn[1] + bn[3] * 0.3, bn[2], bn[3], 9, 2.2, bv0, bv1, bu0, bu1, ban2); }   // its name on the lake's side
+        } else if (b.name === 'Hotel Portillo') {   // the long yellow block (five storeys on a stone plinth), white bands between the floors, a dark low roof, a wing at the back
           const c = Math.cos(b.ang), s = Math.sin(b.ang), F = fac.get(b.x, b.z), yel = [1.1, 0.84, 0.27], fl = 5, H = fl * 3.1, yb = y + 0.4, lk = P.lakes.reduce((a, q) => (!a || q.area > a.area ? q : a), null);
           const fs = lk && (lk.cx - b.x) * -s + (lk.cz - b.z) * c < 0 ? -1 : 1, fx = -s * fs, fz = c * fs;   // (fx, fz: out of the long side that looks at the lake)
           box(g, b.x, lo - 0.5, b.z, b.L + 0.4, yb - lo + 0.5, b.W + 0.4, b.ang, [0.52, 0.5, 0.47], null, true);
@@ -441,6 +465,10 @@
         } else if (b.kind === 3) {   // a corrugated metal shed on a concrete base
           const mc = vary([[0.66, 0.68, 0.7], [0.62, 0.32, 0.22], [0.42, 0.5, 0.42]][Math.floor(RB() * 3)], RB, 0.12);
           box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 0.3 + 2.5, b.W, b.ang, mc, null, true); gable(g, b.x, hi + 2.2, b.z, b.L + 0.5, b.W + 0.5, Math.min(b.L, b.W) * 0.14, b.ang, vary(mc, RB, 0.15), mc);
+        } else if (HS) {   // (the builder's: RB's draws as below, so that the rest stays as it was; the storeys by the clipped footprint, as below)
+          walls[Math.floor(RB() * walls.length)]; vary(woods[Math.floor(RB() * 3)], RB, 0.1); vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1);
+          const Lc = Math.min(b.L, 48), Wc = Math.min(b.W, 26), fl = Lc * Wc > 600 ? 3 : Lc * Wc > 160 ? 2 : 1;
+          HS.put({ x: b.x, z: b.z, L: b.L, W: b.W, ang: b.ang, y0: hi, hh: b.hgt > 0 ? b.hgt : [3.6, 6.2, 9][fl - 1], fl, type: b.L * b.W < 25 ? 'small' : 'house', id: blds.indexOf(b) });
         } else {   // a lodge, staff house or ski hut: 1-3 storeys
           const fl = b.L * b.W > 600 ? 3 : b.L * b.W > 160 ? 2 : 1;
           API.vrHouse(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall: walls[Math.floor(RB() * walls.length)], wood: vary(woods[Math.floor(RB() * 3)], RB, 0.1), roof: vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1) });
@@ -753,6 +781,7 @@
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup, (m) => API.ouCutMat(m, cut));   // (the builder's houses: one material, the façade atlas; they fade between the camera and the car, as the rest)
     fac.addTo(sceneryGroup, API.ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: caAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: caAtlas2(def.curves || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
@@ -765,6 +794,7 @@
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'caracoles', { gH: caGround, slope: caSlope,
       bad: (x, z) => { const n = API.vrNear(x, z); return n.i >= 0 && galAt[n.i] !== 0 && n.dd < 1.2; } });   // (the roadside ground for the chase camera: js/world-chase-bt13.js; nothing in a gallery's parapet and pillars)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), railway: nRailway, galleries: GAL.length, sideRoads: out.stubStats.n };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats;
     return out;
   }
 
