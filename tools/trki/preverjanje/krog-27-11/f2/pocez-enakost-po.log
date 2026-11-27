@@ -1,0 +1,38 @@
+jezero 71 OK
+jezero 72 OK
+jezero 73 OK
+toskana 71 OK
+toskana 72 OK
+toskana 73 OK
+cusco 71 OK
+cusco 72 OK
+cusco 73 OK
+tianmen 71 OK
+tianmen 72 OK
+tianmen 73 OK
+hiva 71 OK
+hiva 72 OK
+hiva 73 OK
+spa 71 OK
+spa 72 OK
+spa 73 OK
+Enakost, cv 6: osnova (brez klica aiHazard) proti igri, celo stanje vseh avtov po vsakem koraku (do 240 s ali cilja)
+  proga    seme  do s  razhajanje s  prva nevarnost s  avto nevarnosti             bitno enako do nevarnosti
+  jezero   71    105   nikoli        nikoli            -                           da                       
+  jezero   72    105   nikoli        nikoli            -                           da                       
+  jezero   73    23    22.58         22.58             13.3 m/s, 137°, škoda 49 %  da                       
+  toskana  71    104   nikoli        nikoli            -                           da                       
+  toskana  72    104   nikoli        nikoli            -                           da                       
+  toskana  73    104   nikoli        nikoli            -                           da                       
+  cusco    71    33    nikoli        nikoli            -                           da                       
+  cusco    72    34    nikoli        nikoli            -                           da                       
+  cusco    73    36    nikoli        nikoli            -                           da                       
+  tianmen  71    204   nikoli        nikoli            -                           da                       
+  tianmen  72    205   nikoli        nikoli            -                           da                       
+  tianmen  73    206   nikoli        nikoli            -                           da                       
+  hiva     71    47    47.15         47.15             14.8 m/s, 82°, škoda 31 %   da                       
+  hiva     72    191   nikoli        nikoli            -                           da                       
+  hiva     73    190   nikoli        nikoli            -                           da                       
+  spa      71    240   nikoli        nikoli            -                           da                       
+  spa      72    240   nikoli        nikoli            -                           da                       
+  spa      73    240   nikoli        nikoli            -                           da                       
