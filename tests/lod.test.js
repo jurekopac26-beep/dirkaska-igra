@@ -27,10 +27,20 @@
 //      in all three of these races (35-57 rivals in reverse at once, the field 52-85 km on instead of 128 km) and in 6 of 20 after 30 s
 //      (seeds 1-20); at 30 Hz there (k2 4) in none of the three and in 1 of 20; with LOD off in 1 of 20 too (another seed): the jam
 //      itself is not the LOD's, the 15 Hz stage made it six times as common
+//   9. The player's car is no part of the LOD, and the quick search of the track's samples changes nothing. The player alone on the
+//      track (the time trial's drive: no rivals, the first place of the grid) on the autopilot for 60 s, on Spa (a circuit) and on Pikes
+//      (an open road): the same trace to the bit (every plain value of the race and of the car after every step, hashed) with LOD as
+//      the game has it, with LOD.off and with the LOD forced on for the one car (LOD.min 0: on the circuit the plan on and the player at
+//      the full rate, on the time trial's road no plan at all).
+//      And Track.query finds from every hint of both tracks the sample that the plain search finds: the 21 samples round the hint, the
+//      lap's wrap worked out at every sample (the search as it was before the quick one, which takes the same samples in the same
+//      order away from the ends of the lap). The traces as they were before a change: the golden net (tests/golden.test.js: every real
+//      track, the player alone on the time trial's tracks)
 //   node tests/lod.test.js
 'use strict';
+const crypto = require('crypto');
 const { loadCore } = require('./lib/core.js');
-const { DT, seeded } = require('./lib/sim.js');
+const { DT, seeded, raceState } = require('./lib/sim.js');
 
 const C = loadCore();
 let bad = 0, n = 0;
@@ -231,6 +241,47 @@ for (const seed of [9, 7]) {   // (the longest a rival stood: 0.7 and 0.6 s; 0.0
     check(`Spa, 101 cars from the grid, the player 50th, seed ${seed}, 45 s: no stall in the first corner (no safety car, at most 5 rivals in reverse at once, the field at least 0.95 of as far as with LOD off)`,
       a.n === 101 && a.lod && !b.lod && !a.sc && a.rev <= 5 && a.km > 0.95 * b.km,
       `LOD on: ${a.sc ? 'the safety car out, ' : ''}most in reverse ${a.rev}, the field ${a.km.toFixed(1)} km, the player at ${a.p.toFixed(0)} m; off: ${b.sc ? 'the safety car out, ' : ''}most in reverse ${b.rev}, ${b.km.toFixed(1)} km, the player at ${b.p.toFixed(0)} m`);
+  }
+}
+
+// ---- 9. the player alone (the time trial's drive): the same trace to the bit with and without the LOD; the quick search of the samples ----
+{
+  const alone = (id, set) => {
+    const keep = Object.assign({}, L); Object.assign(L, set);
+    try {
+      const r = race(id, 0, { playerGrid: 1 }), h = crypto.createHash('sha256'); r.start();
+      let on = 0;
+      drive(r, Math.round(60 / DT), () => { h.update(raceState(r)); if (r._lod && r._lod.on) on++; });
+      return { dig: h.digest('hex').slice(0, 24), d: r.player.dist, on, n: r.cars.length, tt: !!r.timeTrial };
+    } finally { Object.assign(L, keep); }
+  };
+  // the search before the quick one: the 21 samples round the hint, the lap's wrap worked out at every sample
+  const plain = (T, x, z, hint) => {
+    let bi = -1, bd = 1e18;
+    for (let o = -10; o <= 10; o++) {
+      const i = T.open ? hint + o : (hint + o + T.N) % T.N;
+      if (T.open && (i < 0 || i >= T.N)) continue;
+      const dx = x - T.px[i], dz = z - T.pz[i], d = dx * dx + dz * dz;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    return bi;
+  };
+  for (const [id, open] of [['spa', false], ['pikes', true]]) {
+    const a = alone(id, {}), b = alone(id, { off: true }), c = alone(id, { min: 0 });
+    check(`${id}, the player alone, 60 s: the same trace to the bit with LOD as the game has it, with LOD.off and with the LOD forced on for the one car`,
+      a.n === 1 && a.d > 500 && a.tt === open && !a.on && !b.on && (a.tt ? !c.on : c.on > 7000) && a.dig === b.dig && a.dig === c.dig,
+      `${a.d.toFixed(1)} m, trace ${a.dig} / off ${b.dig} / forced on ${c.dig} (the plan on in ${c.on} steps${a.tt ? ': a time trial has none' : ''})`);
+    // every hint of the track; the car at the hint's sample, a little off it, and at samples ahead of and behind the hint (the car has
+    // moved on since the hint was found; -10, 10: the ends of the search, 12: out of it)
+    const T = new C.Track(C.TRACKS.find(d => d.id === id)), N = T.N, out = {};
+    let m = 0, diff = 0, first = '';
+    for (let h = 0; h < N; h++) for (const [o, ox, oz] of [[0, 0, 0], [0, 1.6, -1.2], [7, 0, 0], [-9, -0.7, 0.4], [10, 0, 0], [-10, 0, 0], [12, 0.3, 0.3]]) {
+      const i = T.open ? Math.max(0, Math.min(N - 1, h + o)) : (h + o + N) % N, x = T.px[i] + ox, z = T.pz[i] + oz;
+      const want = plain(T, x, z, h), got = T.query(x, z, h, out).i;
+      m++; if (got !== want) { diff++; first = first || `hint ${h}, ${o} samples on: ${got}, the plain search ${want}`; }
+    }
+    check(`${id} (${T.open ? 'an open road' : 'a circuit'}, ${N} samples): Track.query finds from every hint the sample of the plain search of the 21 samples round it`,
+      T.open === open && !T.stubs && m === N * 7 && !diff, `${m} searches, ${diff} other${first ? ' (' + first + ')' : ''}`);
   }
 }
 

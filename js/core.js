@@ -1782,7 +1782,12 @@ const Core = (function () {
       out = out || {};
       let bi = -1, bd = 1e18;
       const open = this.open;
-      if (hint >= 0) {
+      if (hint >= 10 && hint < N - 10) {   // (away from the ends of the lap: the 21 samples round the hint with no wrap to work out, the same samples in the same order as below; a very big field asks hundreds of times a frame)
+        for (let i = hint - 10, e = hint + 10; i <= e; i++) {
+          const dx = x - px[i], dz = z - pz[i]; const d = dx * dx + dz * dz;
+          if (d < bd) { bd = d; bi = i; }
+        }
+      } else if (hint >= 0) {
         for (let o = -10; o <= 10; o++) {
           const i = open ? hint + o : (hint + o + N) % N;
           if (open && (i < 0 || i >= N)) continue;
