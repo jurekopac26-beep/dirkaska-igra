@@ -2495,5 +2495,87 @@
     "razmik": 13.0,
     "desetinka": true,
     "s2": "S2C_33TYJ_20250702_0_L2A"
+  },
+  "kudowa": {
+    "ime": "Kudowa-Zdrój, Poljska",
+    "okvir": [
+      50.434,
+      16.254,
+      50.478,
+      16.364
+    ],
+    "pot": [
+      [
+        50.46544,
+        16.34663
+      ],
+      [
+        50.46449,
+        16.34832
+      ],
+      [
+        50.46266,
+        16.3351
+      ],
+      [
+        50.46365,
+        16.31872
+      ],
+      [
+        50.45974,
+        16.30316
+      ],
+      [
+        50.45172,
+        16.29374
+      ],
+      [
+        50.45029,
+        16.27814
+      ],
+      [
+        50.44703,
+        16.26961
+      ],
+      [
+        50.44661,
+        16.2653
+      ]
+    ],
+    "start": [
+      50.46449,
+      16.34832
+    ],
+    "cilj": [
+      50.44703,
+      16.26961
+    ],
+    "zalet": 160,
+    "po_cilju": 200,
+    "polsirina": 3.5,
+    "gauss": 2.5,
+    "odpri": 9.0,
+    "lasnica": 145,
+    "desetinka": true,
+    "razredi": [
+      "primary",
+      "secondary",
+      "tertiary"
+    ],
+    "visine": {
+      "mediana": 50,
+      "glajenje": 40,
+      "naklon": 0.13,
+      "serpentine": 0.35,
+      "serpentine_m": 18,
+      "gor": false,
+      "tesno": true
+    },
+    "s2": "S2B_33UWR_20250812_1_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "KUDOWA_H",
+    "razmik": 15.0
   }
 }
