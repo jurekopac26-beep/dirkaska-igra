@@ -141,6 +141,15 @@ Kamera za avtom, skupina 91 (nadaljnji prehod, `js/world-chase-bt91.js`): Furka 
 2. Furka manj (pol zaplat pašnika), Gudauri tako.
 3. Ne, odstrani skupino 91.
 
+### `chase-skupina-92`
+
+Kamera za avtom, skupina 92 (nadaljnji prehod, `js/world-chase-bt92.js`): Izoard (na široki bankini med asfaltom in ograjo zaplate apnenčastega peska, okre in suhe trave, proti ograji nizki šopi, pod macesni iglice; od ~22 do ~60 m za ograjo stoječi suhi šopi, brin in apnenčasti kamni; +7 klicev, 197 od 300, 577 tisoč oglišč) in Kanaba (na široki bankini rdeč prah in prst, kratka trava in suhe zaplate, nizki šopi proti ograji; redkeje zaradi meje oglišč; +6 klicev, 214 od 300, 651 tisoč oglišč, največ 839 od 900). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Bankina pol redkeje na obeh, pas za ograjo na Izoardu tako.
+3. Samo bankina, brez pasu 22–60 m na Izoardu.
+4. Ne, odstrani skupino 92.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
