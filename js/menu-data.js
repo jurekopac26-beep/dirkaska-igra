@@ -101,6 +101,13 @@ window.MENU = {
   "palomar": 300,
   "riverside": 240,
   "uncompahgre": 300,
+  "medeu": 300,
+  "mombasa": 300,
+  "ngorongoro": 300,
+  "pembrey": 240,
+  "portobelo": 300,
+  "portomoniz": 300,
+  "quezaltepeque": 240,
   "iroha": 300,
   "harju": 300,
   "caracoles": 300,
@@ -502,6 +509,52 @@ window.MENU = {
     2543,
     2860
    ]
+  },
+  "medeu": {
+   "start": "Medeu",
+   "finish": "Kishi Almaty Gorge",
+   "alt": [
+    1669,
+    1966
+   ]
+  },
+  "mombasa": {
+   "start": "Mombasa",
+   "finish": "Likoni Channel",
+   "alt": [
+    23,
+    8
+   ]
+  },
+  "ngorongoro": {
+   "start": "Windy Gap",
+   "finish": "Crater Floor",
+   "alt": [
+    2169,
+    1818
+   ]
+  },
+  "pembrey": {
+   "base": 6
+  },
+  "portobelo": {
+   "start": "Portobelo Bay",
+   "finish": "East Shore",
+   "alt": [
+    4,
+    9
+   ]
+  },
+  "portomoniz": {
+   "start": "Santa",
+   "finish": "Porto Moniz",
+   "alt": [
+    465,
+    29
+   ]
+  },
+  "quezaltepeque": {
+   "base": 520
   },
   "iroha": {
    "start": "Umagaeshi",

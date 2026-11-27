@@ -28,9 +28,9 @@ SHADOW_K = 0.4   # how dark the sun's cast shadows are painted (the game's islan
 FEATHER = 18.0  # the island's soft edge: from opaque to clear over this many tile pixels
 RING_M = 150.0  # the made-up rim of ground-only cells round the island's trees, in metres: cut off before the soft edge starts
 RING_PX = {'monaco': 8, 'riviera': 18, 'montreal': 6, 'toronto': 8}   # (where the island is a whole town to the tile's edge, or narrow land between water: only a thin rim)
-WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal', 'detroit', 'bangsaen', 'livorno'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
-STRIP_M = {'chapman': 260}   # (a world whose own land fills the whole tile: only a strip this many metres either side of the road is the island)
-BEACH = {'bangsaen'}   # (a beach between the road and the sea: the island goes on to the shore there, no rim cut; the painted sea flat, no seabed in its shading)
+WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal', 'detroit', 'bangsaen', 'livorno', 'mombasa', 'portobelo'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
+STRIP_M = {'chapman': 260, 'mombasa': 110, 'portobelo': 90}   # (a world whose own land fills the whole tile: only a strip this many metres either side of the road is the island)
+BEACH = {'bangsaen', 'mombasa', 'portobelo'}   # (a beach between the road and the sea: the island goes on to the shore there, no rim cut; the painted sea flat, no seabed in its shading)
 H_SMOOTH = {'rastro': 5.0, 'tianmen': 6.0, 'bangsaen': 2.0, 'balea': 6.0}   # (output pixels: where the heights are coarse for the tile's scale, their steps would show in the shading)
 THEME = {'vrsic': 'vrsic', 'pikes': 'pikes', 'ouninpohja': 'ouni', 'nring': 'nring', 'spa': 'spa', 'rbring': 'rbring', 'suzuka': 'suzuka', 'monaco': 'monaco', 'riviera': 'city'}
 # the sun of each theme (routemap_page.js: THEMES sunOff, default [-80, 96, 70]; x east, y up, z south), its strength and the sky light
@@ -41,6 +41,7 @@ SUN.update({'medvode': ([-80, 84, 58], 1.18, 0.6), 'baldy': ([-78, 96, 50], 1.24
 SUN.update({'balea': ([-80, 86, 62], 1.24, 0.6), 'bathurst': ([-74, 86, -56], 1.22, 0.6)})   # (their looks in js/tracks/<id>.js; Livorno has none: the default)
 SUN.update({'furka': ([-84, 88, 50], 1.26, 0.6), 'gudauri': ([-82, 88, 56], 1.26, 0.6), 'ghoufi': ([-64, 96, -58], 1.28, 0.6)})   # (group 2 of the menu's maps, 27. 11.: js/tracks/<id>.js)
 SUN.update({'izoard': ([-80, 88, 56], 1.24, 0.6), 'kanaba': ([-76, 100, 50], 1.3, 0.6), 'koli': ([-70, 70, 70], 1.12, 0.62), 'isuna': ([-82, 92, 52], 1.26, 0.6)})   # (group 3 of the menu's maps, 27. 11.: js/tracks/<id>.js)
+SUN.update({'medeu': ([-88, 82, 44], 1.22, 0.6), 'mombasa': ([55, 86, 40], 1.24, 0.64), 'ngorongoro': ([-70, 110, -34], 1.28, 0.6), 'pembrey': ([-60, 66, 74], 0.98, 0.7), 'portobelo': ([-60, 84, 40], 1.2, 0.66), 'portomoniz': ([-58, 92, 66], 1.1, 0.6), 'quezaltepeque': ([-58, 88, -36], 1.12, 0.7)})   # (group 5 of the menu's maps, 27. 11.: js/tracks/<id>.js)
 
 def js_data(name, var):
     s = open(os.path.join(ROOT, 'js', name), encoding='utf-8').read()

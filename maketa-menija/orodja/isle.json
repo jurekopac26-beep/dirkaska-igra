@@ -390,6 +390,13 @@
    "skirt": false
   }
  ],
+["medeu", "top", "isle-medeu", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["mombasa", "top", "isle-mombasa", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["ngorongoro", "top", "isle-ngorongoro", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["pembrey", "top", "isle-pembrey", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["portobelo", "top", "isle-portobelo", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["portomoniz", "top", "isle-portomoniz", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["quezaltepeque", "top", "isle-quezaltepeque", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
  [
   "iroha",
   "top",
