@@ -86,8 +86,12 @@ try {
   const p1 = await hud();
   T.check('overtaking under the yellow flag: the countdown on the HUD, the rule told', /^on owe:VRNI MESTO · (9|10)$/.test(p1.flag) && /Spusti ga nazaj pred sabo v 10 sekundah/.test(p1.toast), JSON.stringify(p1));
   // (the place not given back: the car passed is held where it is, as the stopped car above, so that it cannot get past the autopilot
-  // again by itself and so take its place back)
-  let p2 = null; for (let k = 0; k < 12; k++) { await page.evaluate(() => { const A = window.__A; A.vx = A.vz = 0; A.locked = true; }); await sim(1); p2 = await hud(); if (p2.pen) break; }
+  // again by itself and so take its place back. Held every 0.05 s, not once a second: stood still once, it rolled on for 20 m and more
+  // over the next seconds, and on a slow machine (the CI) past the autopilot again: "MESTO VRNJENO" and no penalty)
+  const simHeld = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game, A = window.__A; g.pause();
+    for (let u = 0; u < t - 1e-9; u += 0.05) { A.vx = A.vz = 0; A.inThr = 0; A.locked = true; g.sim(0.05, true); }
+    A.vx = A.vz = 0; A.inThr = 0; g.resume(); requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
+  let p2 = null; for (let k = 0; k < 12; k++) { await simHeld(1); p2 = await hud(); if (p2.pen) break; }
   T.check('... not given back: "KAZEN +5 s"', p2.pen === 5 && /KAZEN \+5 s/.test(p2.msg), JSON.stringify(p2));
   await page.evaluate(() => { const g = window.__game, F = g.race.fl; F.yel = F.yel.filter(y => y !== window.__zone); window.__A.locked = false; g.pause(); for (let k = 0; k < 150 && g.phase === 'racing'; k++) g.sim(2, true); g.resume(); });   // (the made-up zone gone)
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
