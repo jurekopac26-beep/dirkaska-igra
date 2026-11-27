@@ -6661,9 +6661,9 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       // alone, a slow device plays in slow motion rather than in big jumps; online, the race keeps up with the clock the
       // phones share (slow frames and hitches up to 0.5 s are caught up), so a slower phone does not lose time. Alone at most 4 steps a
       // frame (1/30 s): a slow frame does not pile up more steps and a slower next one (the start with a full field, docs/zatikanje-start.md);
-      // only the catching up is capped, each step the same STEP as ever. A very big field (the rivals' LOD on, Core.LOD.fs): up to 10 steps
-      // a frame, so the race keeps the clock on a phone whose frame with a hundred cars takes longer than 4 steps (at 4 the race ran at two
-      // thirds of its speed there and the car answered that much slower than on the time trial); the time trial and the smaller fields 4 as ever
+      // only the catching up is capped, each step the same STEP as ever. A very big field (the rivals' LOD on) takes its cap from
+      // Core.LOD.fs: 4 as well (measured 27. 11., docs/zatikanje-start.md: more steps a frame bring the race nearer the clock on a slow
+      // phone, but every frame grows longer); the quick entry's koraki=4-10 sets it for the visit, to compare on a phone
       const on = mp && mp.race, big = !on && race._lod && race._lod.on, lim = on ? 64 : big ? Core.LOD.fs || 4 : 4;
       if (!restOn()) {   // (behind the results, every car home 3 s ago: no more steps, the cars stand as they were)
         if (on && on.late != null) { acc = on.late; on.late = null; } else acc += on ? dtNet : dt;   // (online: the lights went out this frame)
@@ -7147,6 +7147,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (q.weather) S.weather = q.weather;
     if (q.car) { if (owned(q.car)) S.car = Core.MODELS.findIndex(m => m.id === q.car); else toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); }
     if (q.lod != null) Core.LOD.off = q.lod === 0;   // (lod=0: a big field's cars all at the full rate for the visit)
+    if (q.steps != null) Core.LOD.fs = q.steps;   // (koraki=4-10: a big field's frame catches up at most that many steps for the visit)
     save(); refreshSegs();
     if (!owned(Core.MODELS[S.car].id)) { quick.done = true; return; }   // (a career's car not bought: the menus, as their Start)
     if (S.control === 'tilt') enableTilt(true);

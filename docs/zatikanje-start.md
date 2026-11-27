@@ -125,3 +125,18 @@ Odločitev uporabnika 26. 11. ob 11.10: DA, s pogojem (korak, sile in vožnja os
 - Pembrey POTEM 179,8 ms: ena sličica v enem zagonu (drugi zagon 61,2 ms), verjetno GC; GC ostaja (predlog 2 ga samo premakne v nalaganje).
 - Čas dirke 3,8–4,4 s v 5 s na telefonu: pod 30 sličicami na sekundo gre dirka počasneje od ure (posledica meje 4, odločitev). Računalnik: brez spremembe, 60 sličic na sekundo.
 - Uvod in luči: najdaljša sličica (prva sličica uvoda, prevajanje in nalaganje slik) na Pembreyju 1370 → 654 ms, drugje −16 do −211 ms.
+
+## 27. 11.: meja korakov v gneči z LOD (#1180)
+
+Z LOD (#1176) gre v korak fizike okoli 66 avtov namesto 101, zato je meja 4 izmerjena znova: Spa, 101 avto, start z mesta 50, telefon 844×390, procesor 4× počasnejši, 20 s, dva kroga izmenično (`tools/gneca-slicica.mjs`, `--lod='{"fs":N}'`).
+
+| največ korakov na sličico | sličica (ms) | p95 (ms) | najdaljša (ms) | hitrost dirke |
+|---|---|---|---|---|
+| 4 (kot od 26. 11.) | 48,8 | 77,6 | 132–192 | 68 % |
+| 6 | 57,9 | 99,3 | 136–166 | 79 % |
+| 10 | 69,7 | 122,7 | 192–223 | 90 % |
+
+- Več korakov dirko približa pravemu času, a podaljša vsako sličico (10 korakov: povprečje +21 ms, p95 +45 ms). Tudi z 10 koraki dirka ne drži ure: na startu je skoraj vse polje ob drugem avtu, zato gre v korak skoraj vseh 101 avtov.
+- **Ostane 4** (odločitev 26. 11.). Izbira 4, 6 ali 10 je vprašanje `gneca-1180-koraki` na strani Odločitve; za poskus na telefonu `?proga=spa&nacin=dirka&tekmeci=99&koraki=6` (4–10, `Core.LOD.fs` za obisk, velja samo v zelo velikem polju).
+- Najdaljša sličica je ena sama sličica v 20 s (isto stanje med zagoni 115–192 ms); za primerjavo je zanesljivejši p95.
+- Isti PR brez spremembe meje: ura in hitrost na zaslonu ne sprožata več preračuna postavitve strani (4,5 → 1,5 ms na sličico), iskanje vzorcev proge je hitrejše (korak 4,7 → 4,3 ms, sled bit-za-bit enaka); sličica v gneči 50,9 → 48,8 ms, sam 19,7 → 20,1 ms (šum meritve ±5 %).
