@@ -1125,13 +1125,15 @@
   }
   // the carousel's parts in the track screen (its backdrop, the neighbours' cards: the flyover's first frame, else the model on the sky; the
   // flag, the name, the country and the length under it, the arrows); a short list: as many cards as there are other tracks, more of them
+  // the track's kind (js/menu-zemlja.js vrsta): the colour of the chosen card's frame (css/menu.css .v-*; the user's of 26. 11. 2026)
+  const vrCls = (t) => window.MenuZemlja && MenuZemlja.vrsta && t && !t.test ? ' v-' + MenuZemlja.vrsta(t.id) : '';
   // at the right
   function ringView(list, t) {
     const n = list.length, m = Math.min(RING_N, Math.floor((n - 1) / 2)), mr = Math.min(RING_N, n - 1 - m);
     const at = (k) => list[((trackIdx + k) % n + n) % n];
     const card = (k) => {
       const u = at(k), c = countryOf(u), f = flagUrl(c), [x, y, w, hh, b, r] = RING(k), fly = !!(RT[u.id] && RT[u.id].fly);
-      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
+      return '<div class="rcard' + (fly ? '' : ' mdl') + vrCls(u) + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
         '<div class="rlab">' + (f ? '<img src="' + f + '" alt="">' : '<span class="nf">' + esc((c || u.name).slice(0, 3).toUpperCase()) + '</span>') + '<span><b>' + esc(u.name) + '</b><small>' + esc((c ? c + ' · ' : '') + u.km.toFixed(2) + ' km') + '</small></span></div></div>';
     };
     const arw = (k) => {
@@ -1266,7 +1268,7 @@
     const real = list.filter(u => !u.test), at = t.test ? 'TEST' : (real.indexOf(t) + 1) + '\u2009/\u2009' + real.length, W = wxOn();
     // (on its side the weather is a row at the card's top: the chosen one first, the others after it in their order: --wx, the drawing's px)
     const wo = WX5.filter(w => w[0] !== W), wxX = (id) => id === W ? 0 : (wo.length < WX5.length ? 4 : -40) + 40 * (wo.findIndex(w => w[0] === id) + 1);
-    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + (tallOf(t) ? ' tall' : '') + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + (tallOf(t) ? ' tall' : '') + vrCls(t) + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
       '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' + (t.test ? '' : '<div class="tlen" role="note" aria-label="' + esc((ctry ? ctry + ', ' : '') + 'length ' + t.km.toFixed(2) + ' km') + '">' + (fl ? '<img src="' + fl + '" alt="">' : '') + '<span>' + esc(ctry ? ctry + ' \u00b7 ' : '') + t.km.toFixed(2) + ' km</span></div>') +
       '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '" style="--wx:' + wxX(w[0]) + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
