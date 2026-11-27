@@ -142,6 +142,8 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.4 | #1097 | Nova proga Tatev, Armenija (`proga/tatev`) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` in sovoznik zelena; »Ready for review« ob mestu med prvima dvema. |
 | 10.5 | #1091 | Nova proga Chamarel, Mavricij (`proga/chamarel`; rezerva uporabnika 13. 11.) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` in sovoznik zelena; »Ready for review« ob mestu med prvima dvema. |
 | 10.6 | #1096 | Nova proga Trebević, Bosna in Hercegovina (`proga/trebevic`) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` in sovoznik zelena; »Ready for review« ob mestu med prvima dvema. |
+| 10.7 | #791 | Nova proga Envalira, Andora (`nove-proge/podatki-1-0`; slike potrjene 26. 11., `envalira-791-slike-ok`) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` zelen; »Ready for review« ob mestu med prvima dvema. |
+| 10.8 | #788 | Zbirna Proge 3, 17 prog (`zbirna/proge-3`) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` zelen; »Ready for review« ob mestu med prvima dvema. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 
