@@ -133,6 +133,14 @@ Kamera za avtom, skupina 90 (tretji prehod, `js/world-chase-bt90.js`): Buriram (
 2. Samo Canaries, Buriram brez tega prehoda.
 3. Ne, odstrani skupino 90.
 
+### `chase-skupina-91`
+
+Kamera za avtom, skupina 91 (nadaljnji prehod, `js/world-chase-bt91.js`): Furka (za ograjo od ~3 do ~60 m zaplate bolj zelenega in slamnatega pašnika, šopi trave v skupinah, svetli granitni kamni, na skalah in meliščih grušč, na grmičevju nizko ruševje; +9 klicev, 182 od 300, 433 tisoč oglišč od 900) in Gudauri (od ~4 do ~60 m nizki rumeneči šopi v skupinah, sivorjav skrilavec in grušč na strminah, blazine rododendrona in brina; +7 klicev, 186 od 300, 554 tisoč oglišč; sprememba je majhna, ker so prejšnje skupine pas že pokrile). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Furka manj (pol zaplat pašnika), Gudauri tako.
+3. Ne, odstrani skupino 91.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
