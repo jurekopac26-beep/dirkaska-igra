@@ -853,12 +853,12 @@
   }
  },
  "ella": {
-  "meshes": 2030,
-  "verts": 1138020,
+  "meshes": 2053,
+  "verts": 1254900,
   "instances": 34030,
   "props": 81,
   "crowd": 54,
-  "world": "f2da4c1c",
+  "world": "84c8dc9e",
   "propsHash": "8b8ca7eb",
   "floor": "1a7d8cff/8848",
   "groups": {
@@ -867,7 +867,7 @@
    "-:MeshBasicMaterial": "c30bcc47",
    "irFar:MeshLambertMaterial": "b164b94c",
    "crowd:MeshLambertMaterial": "115cee79",
-   "rob:MeshLambertMaterial": "f452c4d6",
+   "rob:MeshLambertMaterial": "e0003ca7",
    "ao:MeshBasicMaterial": "47575aaa",
    "tyremarks:MeshBasicMaterial": "80b908fd",
    "roadwear:MeshLambertMaterial": "390d002a",
