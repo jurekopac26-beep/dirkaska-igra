@@ -1007,9 +1007,9 @@ for (const tid of ['spa', 'bathurst']) {
     }
     return { v25, hit, hz0, hzAt, past, dmg: c.dmg || 0 };
   } finally { Math.random = orig; } });
-  for (const [tid, yaw] of [['spa', 90], ['cusco', 90], ['spa', 180]]) {
+  for (const [tid, yaw] of [['spa', 90], ['cusco', 90], ['spa', 180], ['cusco', 0]]) {   // (0: lengthways, a hazard only as a car stuck: it has driven 9 s and stands for over HZ.st s)
     const a = run(SIM, tid, yaw), b = run(OLD, tid, yaw), q = run(REAL, tid, yaw);
-    ok(`Realistična, a car standing ${yaw === 90 ? 'across' : 'facing back on'} the racing line 160 m ahead (${tid}): the rival sees it from over 60 m, is under 0.75 of cv 5's speed 25 m before it and passes it without a touch; cv 1 and 5 see nothing (the old rule: at racing speed into it); no hazard seen before it stands there`,
+    ok(`Realistična, a car standing ${yaw === 90 ? 'across' : yaw ? 'facing back on' : 'lengthways (stuck, after 9 s of driving) on'} the racing line 160 m ahead (${tid}): the rival sees it from over 60 m, is under 0.75 of cv 5's speed 25 m before it and passes it without a touch; cv 1 and 5 see nothing (the old rule: at racing speed into it); no hazard seen before it stands there`,
       q.past && q.hzAt > 60 && q.hz0 === 0 && q.hit === 0 && q.dmg === 0 && q.v25 < 0.75 * b.v25 && q.v25 > 5
       && a.hzAt == null && b.hzAt == null && a.hz0 === 0 && b.hz0 === 0 && a.hit > 15 && b.hit > 15 && a.v25 > 35 && b.v25 > 35,
       `25 m before it cv 1 ${f(a.v25, 1)}, cv 5 ${f(b.v25, 1)}, cv 6 ${f(q.v25, 1)} m/s; the touch ${f(a.hit, 1)} / ${f(b.hit, 1)} / ${f(q.hit, 1)} m/s; seen from ${f(q.hzAt, 0)} m`);
@@ -1032,6 +1032,19 @@ for (const tid of ['spa', 'bathurst']) {
       if (part != null || hz != null) okAll = false; rows.push(`${tid}: parted ${part == null ? 'never' : f(part * DT, 2) + ' s'}, a hazard ${hz == null ? 'never' : f(hz * DT, 2) + ' s'}`);
     } finally { Math.random = orig; C.setTest(null); B.setTest(null); } }
     ok('Realistična without a car across the road: 13 cars 20 s on Jezero, Cusco and Toskana, the whole state of every car after every step the same to the bit as a Core without aiHazard', okAll, B ? rows.join('; ') : `the call found ${n1}×`);
+    // the start (fizika-2, the independent check of 25. 11. 2026): a car still pulling away from the grid is under HZ.vs for over HZ.st s and was taken
+    // for a car stuck in the road, so the rivals behind it steered and braked for it before anything had touched anything (5 of 60 tracks, Rastro
+    // 1.2 m off main by the first touch). 13 cars from the grid as the recorded races start them (tests/lib/sim.js raceOpts: the player last), up
+    // to the first touch of any car: no rival sees a hazard and the whole state of every car is the same to the bit as without aiHazard
+    if (B) { const rows3 = []; let ok3 = true;
+      for (const tid of ['rastro', 'vaoala', 'kotor']) { const orig = Math.random; C.setTest(REAL); B.setTest(REAL); try {
+        const mk = (K) => { Math.random = seeded(7); const r = new K.Race(new K.Track(K.TRACKS.find(x => x.id === tid)), { numAI: 12, playerGrid: 12, laps: 2, playerModel: K.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }); r.start(); return r; };
+        const ra = mk(B), rb = mk(C); let part = null, hz = null, k = 0;
+        for (; k < 6 / DT && !rb.cars.some(c => c.hitCar > 0 || c.hitWall > 0); k++) { for (const [K, r] of [[B, ra], [C, rb]]) { Math.random = seeded(1000 + k); K.aiControl(r.player, r, DT); r.step(DT); }
+          if (hz == null && rb.cars.some(c => c.aiHz)) hz = k; if (part == null && raceState(ra) !== raceState(rb)) part = k; }
+        if (part != null || hz != null || !(k * DT > 2)) ok3 = false; rows3.push(`${tid}: the first touch ${f(k * DT, 2)} s, a hazard ${hz == null ? 'never' : f(hz * DT, 2) + ' s'}, parted ${part == null ? 'never' : f(part * DT, 2) + ' s'}`);
+      } finally { Math.random = orig; C.setTest(null); B.setTest(null); } }
+      ok('Realistična, the start: 13 cars from the grid (Rastro, Vaoala, Kotor) up to the first touch, a car still pulling away is no car stuck in the road: no rival sees a hazard, the whole state of every car the same to the bit as a Core without aiHazard', ok3, rows3.join('; ')); }
     // the whole field behind it: 10 s into the race a car is stood across the road 400 m before the leader and held (tools/trki/pocez.js skoda):
     // with aiHazard the rivals take no more damage between them than without it, and every one gets past (none left stuck in the queue behind it)
     if (B) { const rows2 = []; let ok2 = true;

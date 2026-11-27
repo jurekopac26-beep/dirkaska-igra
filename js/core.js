@@ -5095,6 +5095,10 @@ const Core = (function () {
   // across (its middle under need + HZ.lc m from the car's: still moving over, or held in its lane by a car alongside) braked as for the crawl, so it
   // can always stop behind it (aiDrive's speed). null: none, or c's own line clear of it.
   // Draws no random number and writes nothing: a race with no such car on the road is step for step what it was.
+  // Stuck is only a car that has been under way (_hzGo: HZ.vs m/s reached once, Race.step): one still pulling away from the grid at the start
+  // stands under HZ.vs for over HZ.st s too and is no hazard, the field behind it sets off as it does without this rule (fizika-2, 25. 11. 2026).
+  // (_hzGo beside the car, not on it, as _aiS: the recorded state of a race, every plain field of every car, stays as it was; a new race's cars are new)
+  const _hzGo = new WeakSet();
   const HZ = { yaw: 0.7, vy: 15, sl: 0.8, yw: 1.05, vw: 8, vs: 3, st: 0.8, a: 5.5, r0: 20, r1: 180, mg: 1, cl: 0.3, v0: 6, vk: 12, v1: 20, vc: 2.5, sT: 2.5, lc: 0.2 };
   function aiHazard(c, race, v, Lw) {
     const T = race.track, M = c.m, gk = race.wst ? clamp(race.wst.profW, 0.3, 1) : 1, a = HZ.a * gk, R = Math.min(HZ.r1, HZ.r0 + v * v / (2 * a));
@@ -5105,7 +5109,7 @@ const Core = (function () {
       if (!(gap > 2 && gap < hg)) continue;
       const yaw = Math.abs(wrapPi(o.h - T.hd[o.q.i]));
       if (yaw > HZ.yaw && yaw < Math.PI - HZ.yaw ? !(o.speed < HZ.vs || (yaw > HZ.yw && yaw < Math.PI - HZ.yw && o.speed < HZ.vw) || Math.abs(wrapPi(Math.atan2(o.vz, o.vx) - o.h)) > HZ.sl)
-        : !(o.speed < HZ.vs && (dnf(o) || o.stuckT > HZ.st || yaw >= Math.PI - HZ.yaw))) continue;   // (across the road: standing, square to it or sliding; or standing lengthways: retired, stuck, facing back)
+        : !(o.speed < HZ.vs && (dnf(o) || (o.stuckT > HZ.st && _hzGo.has(o)) || yaw >= Math.PI - HZ.yaw))) continue;   // (across the road: standing, square to it or sliding; or standing lengthways: retired, stuck (not one yet to set off from the grid), facing back)
       const sy = Math.abs(Math.sin(yaw)), cy = Math.abs(Math.cos(yaw)), e = (o.m.len * sy + o.m.wid * cy) * 0.5, wq = T.wa ? T.wa[o.q.i] : T.w;
       if (Math.abs(o.q.d) - e > wq) continue;   // (all of it off the road)
       h = o; hg = gap; he = e; hl = (o.m.len * cy + o.m.wid * sy) * 0.5;
@@ -8592,6 +8596,7 @@ const Core = (function () {
         if (c.inPit && !c.net && c.pitState !== 'repair' && c.speed < 1.2 && fwd < 0.85 && (this.state === 'racing' || this.state === 'done')) c.wedgeT = (c.wedgeT || 0) + cdt; else if (c.wedgeT) c.wedgeT = 0;   // (the timer only on a car that got knocked across)
         if (c.wedgeT > 2) { const y = c.y, i = q.i; c.place(c.x, c.z, Math.atan2(q.tz, q.tx)); c.y = c.py = y; c.q.i = i; c.wedgeT = 0; }   // (where it stands: its height and its road sample kept, the autopilot steers from it before the next step)
         // stuck detection (AI auto-rescue)
+        if (c.speed >= HZ.vs) _hzGo.add(c);   // (under way once: from here on a standstill of HZ.st s makes it a car stuck in the road for the rivals behind, aiHazard; nothing else reads it)
         if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished) && !(c.fl && c.fl.rw)) c.stuckT += cdt; else c.stuckT = Math.max(0, c.stuckT - cdt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
         if (!c.isPlayer && (c.stuckT > (c.inPit && c.fuel != null ? 30 : c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished) && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason, behind one filling up longer still; not a car pulled up past the finish of an open road, nor a retired one or one the marshals are fixing)
       }
