@@ -523,5 +523,12 @@
   "kverts": 426,
   "maxKverts": 632,
   "jsMs": 1.47
+ },
+ "sipka": {
+  "calls": 172,
+  "maxCalls": 188,
+  "kverts": 492,
+  "maxKverts": 616,
+  "jsMs": 1.26
  }
 }
