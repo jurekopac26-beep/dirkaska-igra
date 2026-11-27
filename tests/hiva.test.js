@@ -31,7 +31,7 @@ check('track: the lap 2.95-3.1 km (realKm 3.05)', T.len > 2950 && T.len < 3100, 
 }
 {
   const ws = (def.widths || []).map(w => w[1]);
-  // (5.8 m: the lane past the east gate, s 1896-1961, as OSM draws it: the gate stands beside it, not on it; Matej 22. 11.)
+  // (5.8 m: the lane past the east gate, s 1896-1961, as OSM draws it: the gate stands beside it, not on it; 22. 11.)
   check('road: the race widths of the streets 8.8-10.4 m, the lane past the east gate 5.8 m', ws.length > 0 && ws.every(w => (w >= 4.4 && w <= 5.2) || w === 2.9), ws.join(' '));
   const ns = def.names.map(q => q.n || q[0]), ds = T.names.map(q => ((q.d - T.startS) % T.len + T.len) % T.len);
   check('road: the places on the HUD in the order of the lap, each with its English in js/lang.js, the four gates and the minaret among them',

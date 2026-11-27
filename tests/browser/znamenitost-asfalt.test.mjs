@@ -1,6 +1,6 @@
 // A landmark made in Blender (js/znamenitost.js) never stands on the asphalt: on every real track with one, each vertex of its near
 // model above the road's height (more than 0.3 m under it: in the ground) is farther from the centre line than half the road's width
-// there plus 0.3 m (Matej 22. 11.: »Grad (vrata) sredi ceste tako zagotovo ni v resnici« — Hiva's east gate at s ≈ 1944: the gates sit in
+// there plus 0.3 m (22. 11.: »Grad (vrata) sredi ceste tako zagotovo ni v resnici« — Hiva's east gate at s ≈ 1944: the gates sit in
 // the walls, the road beside them, as OSM draws them). The same for the simple one drawn until the model has loaded (out.landmarkFallback),
 // here with the models' files held back. And the barriers stand in front of it (barriers(), below). Test tracks (test: true) are frozen and not checked.
 //   node tests/browser/znamenitost-asfalt.test.mjs        every real track with a landmark
@@ -39,7 +39,7 @@ function measure(page, id, fb) {
   }, [id, MARGIN, fb]);
 }
 
-// the barriers stand in front of the landmark, not behind it (Matej 23. 11.: »popravi da je ograja pred obzidjem«): at every sample, on each
+// the barriers stand in front of the landmark, not behind it (23. 11.: »popravi da je ograja pred obzidjem«): at every sample, on each
 // side, the barrier's back (its offset + 0.5 m, js/world-*.js) no farther out than the foot of the landmark's walls (its vertices up to 6 m
 // above the road) within 3 m behind the barrier
 function barriers(page, id) {
