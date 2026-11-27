@@ -199,5 +199,5 @@ const Najboljse = (function () {
       el.addEventListener('click', (e) => { const b = e.target && e.target.closest ? e.target.closest('[data-nv-deli]') : null; if (b) deli(b.dataset.nvDeli); });
     }
   }
-  return { init, cilj, pusti: cilj, preveri, vremeOf, obdrzi, izbor, RULES, MAX, vse, deli, prikazi, cakaj: () => Q, test: { put: (o) => nar('readwrite', (s) => s.put(o)), zadnja: () => last } };
+  return { init, cilj, pusti: cilj, preveri, vremeOf, obdrzi, izbor, RULES, MAX, vse, deli, prikazi, osvezi, cakaj: () => Q, test: { put: (o) => nar('readwrite', (s) => s.put(o)), zadnja: () => last } };
 })();

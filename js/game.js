@@ -721,6 +721,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (race) { $('pause-restart').textContent = restartTxt(); $('h-rlbl').textContent = tr(race.pol ? 'POLICIJA' : 'MESTO'); fltKey = null; tyreKey = '-'; }   // (the failures' pills, the tyres' word: written again)
     chalBtn(); if (screen === 'chal') chalShow();   // (a challenge waiting: its button and card)
     if (screen === 'settings') profNote();   // (the note under Profil and the copies: written in the new language)
+    if (typeof Najboljse !== 'undefined') Najboljse.osvezi();   // (Najboljše vožnje: an open list drawn again in the new language)
     const B = { car: buildCarScreen, upg: buildUpgScreen, track: buildTrackScreen, board: buildBoardScreen, champ: buildChampScreen, career: buildCareerScreen };
     if (B[settingsReturn]) B[settingsReturn]();
     if (mp) buildRoom();

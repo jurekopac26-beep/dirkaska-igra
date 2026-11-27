@@ -38,6 +38,7 @@ Odločitev uporabnika (11. 11. 2026 ob ~10.50, prek Mateja; `docs/vrsta.md`, »N
 - **Deli** naredi eno datoteko `najboljse_<proga>_<LLLLMMDD-UUMM>.rrp` z 10 najboljšimi vožnjami vsake skupine proge. Posnetki so v njej drug za drugim (surovi `.rrp`, skupaj gzip).
   - Na telefonu se odpre okno za deljenje, sicer gre datoteka v Prenose (kot »Shrani datoteko« v Zadnjih posnetkih).
 - Razdelek deluje pokonci in ležeče od 360 × 640. Prevodi so v `js/lang.js` (`Best runs`, `Share top 10`).
+- Ob menjavi jezika se odprt seznam takoj nariše v novem jeziku (`relang` v `js/game.js` kliče `Najboljse.osvezi()`).
 
 ## Datoteka in orodje
 
@@ -64,6 +65,6 @@ Odločitev uporabnika (11. 11. 2026 ob ~10.50, prek Mateja; `docs/vrsta.md`, »N
 - `tests/browser/najboljse.test.mjs` preveri:
   - vožnjo na čas po Bâlei z avtopilotom do cilja, ki se shrani;
   - seznam pri 640 × 360 in 360 × 640;
-  - seznam v angleščini;
+  - seznam v angleščini, tudi ob menjavi jezika pri odprtem seznamu;
   - da »Deli« da datoteko, ki jo orodje izmeri (`#1`, `#2`).
 - `tests/voznja.test.js` (razdelek 3b) preveri datoteko z več zapisi, en zapis pa tako kot prej.

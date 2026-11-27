@@ -76,8 +76,15 @@ try {
     res.code === 0 && !!P && JSON.stringify(P.datoteke) === JSON.stringify([name + ' #1', name + ' #2']) && used.length === 2 && !skip.length && used.every((u) => Math.abs(u.cas - run.ft) < 0.001),
     'izhod ' + res.code + (P ? ' · ' + JSON.stringify(P.datoteke) + ' · ' + used.length + ' izmerjenih, ' + skip.length + ' izpuščenih' : ' · ' + res.out.split('\n').slice(-4).join(' | ')));
 
-  // 4. in English: the list's words translated (Lang.tr), the list drawn again as it opens
-  await Q.evaluate(() => { const g = window.__game; g.onAction('to-settings'); document.querySelector('[data-set="lang"] button[data-v="en"]').click(); });
+  // 4. in English: the open list is drawn again at once in the new language (relang → Najboljse.osvezi), and as it opens
+  await lay();
+  const E0 = await Q.evaluate(async () => {
+    document.querySelector('[data-set="lang"] button[data-v="en"]').click();
+    for (let k = 0; k < 60 && (document.querySelector('#nv-list [data-nv-deli]') || {}).textContent !== 'Share top 10'; k++) await new Promise((r) => setTimeout(r, 100));
+    const b = document.querySelector('#nv-list [data-nv-deli]');
+    return { open: document.getElementById('set-najboljse').open, btn: b ? b.textContent : null, note: [...document.querySelectorAll('#nv-list .set-note')].map((e) => e.textContent), rows: [...document.querySelectorAll('#nv-list .nv-row .rlbl')].filter((e) => e.textContent).length };
+  });
+  T.check('menjava jezika pri odprtem seznamu: seznam takoj v angleščini', E0.open && E0.btn === 'Share top 10' && /^Dry · Driving physics: (Classic|New)$/.test(E0.note[0] || '') && E0.rows === 2, JSON.stringify(E0));
   const E = await lay();
   T.check('seznam v angleščini (Dry · Driving physics, Share top 10)', /^Dry · Driving physics: (Classic|New)$/.test(E.note[0] || '') && E.btn === 'Share top 10' && E.rows.length === 2, JSON.stringify({ note: E.note, btn: E.btn }));
 
