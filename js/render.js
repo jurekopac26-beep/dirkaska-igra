@@ -4848,7 +4848,7 @@ const Render = (function () {
     const sk = sky && sky.mesh.visible ? sky.mesh : null, mo = nsky.moon && nsky.moon.visible;
     const ss = sk ? sk.scale.x : 1; if (sk) { _zsP.copy(sk.position); sk.position.copy(C.position); sk.scale.setScalar(C.far * 0.8); sk.updateMatrixWorld(); }   // (the dome round the TV post, inside its far plane)
     if (mo) nsky.moon.visible = nsky.halo.visible = false;
-    for (const v of views) { if (v.cull && Math.hypot(v.grp.position.x - Z.ax, v.grp.position.z - Z.az) < 150) { scene.add(v.grp); v.grp.updateMatrixWorld(true); zsIn.push(v.grp); } if (v.tag && v.tag.visible) { v.tag.visible = false; zsTag.push(v.tag); } }
+    for (const v of views) { if (v.cull && Math.hypot(v.grp.position.x - Z.ax, v.grp.position.z - Z.az) < 150) { scene.add(v.grp); carPose(v); v.grp.updateMatrixWorld(true); zsIn.push(v.grp); } if (v.tag && v.tag.visible) { v.tag.visible = false; zsTag.push(v.tag); } }
     for (const g of GV) if (g && g.tag && g.tag.visible) { g.tag.visible = false; zsTag.push(g.tag); }
     const ps = World.zaslon.RH / (2 * Math.tan(C.fov * Math.PI / 360)); particles.mat.uniforms.uScale.value = ps; if (sparkP) sparkP.mat.uniforms.uScale.value = ps; if (glows) glows.mat.uniforms.uScale.value = ps;
     try { World.zaslon.draw(Z, renderer, scene); }
@@ -7107,6 +7107,11 @@ const Render = (function () {
       const x = lerp(c.px, c.x, u), z = lerp(c.pz, c.z, u), h = c.ph + wrapPi(c.h - c.ph) * u;
       const y = lerp(c.py, c.y, u), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
       const fb = c.fall && c.fall.b || null;   // (over the edge, falling down the slope as a rigid body, Core fallBody: its pose its own, fallPose below)
+      // out of the view (carCull, last frame's verdict): its parts' matrices not updated, its lamps, glint and blob not drawn; its effects and damage run
+      // as ever (their random numbers drawn, the skid marks laid, the state kept) but nothing of them drawn: a seeded race goes on as it does in sight.
+      // lazy: its body's lean and its wheels' turn not set either (each a setFromEuler; in a field of 101 some 60 to 95 cars are out of the view: a quarter
+      // of a millisecond a frame on a phone); what they would be is kept (v.roll, v.pitch, v.spin, v.poseY, v.poseD) and set once it is seen or asked for (carPose)
+      const vis = !v.cull, lazy = !vis && !fb && !c.rl && !v.sagQ && !v.fb;
       // over a piece of debris on the road (Core debrisHit: hopN, hopT, hopH): the body up and down once, as if it jumped ~2 m
       if (v.hopN === undefined) v.hopN = c.hopN || 0;   // (a view built afresh: none of the old ones)
       else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }
@@ -7123,17 +7128,20 @@ const Render = (function () {
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       if (v.fb && !fb) fallBack(v, pitchTarget, bankT, dt);   // (put back on the road after its fall: standing there at once)
       v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
-      v.bodyG.rotation.set(v.roll, 0, v.pitch);
-      v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) - (v.dl ? v.dl.low : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
+      const by = Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) - (v.dl ? v.dl.low : 0);
+      if (lazy) { v.lazy = true; v.poseY = by; }
+      else { v.lazy = false; v.bodyG.rotation.set(v.roll, 0, v.pitch); v.bodyG.position.set(0, by, 0); }   // (all of it: the sag below turns the whole offset each frame)
       if (c.rl && !fb) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45, 'land');
       if (c.isPlayer && c.speed > 8 && !c.air && c.ws && (c.ws[0] === 1 || c.ws[1] === 1 || c.ws[2] === 1 || c.ws[3] === 1)) shake(0.1 + clamp(c.speed / 60, 0, 1) * 0.14, 'kerb');   // (the kerbs' ridges: the view trembles while a wheel runs on them)
       v.spin += c.vl * dt / M.rw;
-      for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
-      for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
-      for (const w of v.wm) w.rotation.set(0, 0, -v.spin);   // (wheels.mid: as the rear ones, never steered)
+      if (!lazy) {
+        for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
+        for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+        for (const w of v.wm) w.rotation.set(0, 0, -v.spin);   // (wheels.mid: as the rear ones, never steered)
+      } else v.poseD = c.delta;
       if (fb) fallPose(v, c, fb, u, dt);
       if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
@@ -7145,9 +7153,6 @@ const Render = (function () {
       v.tail.material = v.tailDead ? vMat(v, matLensBroken) : (v.noHead ? rainL : braking) ? matTailOn : matTailOff;   // (tailDead: one of the 11's, both its tail lamps smashed or burnt out)
       if (v.drsFlap) { v.drsK = (v.drsK || 0) + ((c.drs ? 1 : 0) - (v.drsK || 0)) * Math.min(1, dt * 12); v.drsFlap.rotation.z = 0.5 * v.drsK; }   // the rear wing's flap opens with DRS
       // light glows: soft warm headlights, red tail lights that flare when braking; at dusk and at night a bright lamp in a wide, faint halo
-      // out of the view (carCull): its parts' matrices not updated, its lamps, glint and blob not drawn; its effects and damage run as ever (their
-      // random numbers drawn, the skid marks laid, the state kept) but nothing of them drawn: a seeded race goes on as it does in sight
-      const vis = !v.cull;
       if (vis) v.grp.updateMatrixWorld(true); else { v.grp.updateMatrix(); v.grp.matrixWorld.copy(v.grp.matrix); }   // (out of the scene: its own place only, what its effects read)
       const nt = todK, rl = (1 + Math.max(0, wet) * 0.9) * (1 + 0.5 * nt);   // (rain, dusk, night: the lights stand out more in the gloom)
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
@@ -7189,7 +7194,7 @@ const Render = (function () {
         xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
-      if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
+      if (v.sagQ && !fb) { carPose(v); v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
       if (!vis) particles.mute = sparkP.mute = glows.mute = false;
     }
@@ -10728,7 +10733,13 @@ const Render = (function () {
     vfog = { meshes, mat, U, top, lo, hi };
   }
 
-  const viewOf = (c) => { for (const v of views) if (v.car === c) return v; return null; };
+  const viewOf = (c) => { for (const v of views) if (v.car === c) { carPose(v); return v; } return null; };   // (carPose: whoever asks for a car's view gets it posed)
+  // a car out of the view had its body's lean and its wheels' turn left as they were (updateCars, lazy): set now, to what updateCars would have set
+  function carPose(v) {
+    if (!v.lazy) return; v.lazy = false;
+    v.bodyG.rotation.set(v.roll, 0, v.pitch); v.bodyG.position.set(0, v.poseY, 0);
+    for (const w of v.wf) w.rotation.set(0, -v.poseD, -v.spin); for (const w of v.wr) w.rotation.set(0, 0, -v.spin); for (const w of v.wm) w.rotation.set(0, 0, -v.spin);
+  }
 
   // the feel of speed (quality 'high', the post pass; only behind the car, never in the landscape views, where the cars must stay sharp): from about 110 km/h the picture streaks out from the point the followed car drives
   // towards, the more the faster and the farther from the car (it stays sharp); not in the photo mode or a TV shot. And the summer's
@@ -10794,7 +10805,7 @@ const Render = (function () {
         out = _ccD.dot(_ccV.subVectors(_ccS.center, p)) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }   // (past the fog by its depth in the view, as the fog itself counts it: a car at the side of the screen as far as one ahead)
       if (out === !!v.cull) continue;
       v.cull = out; if (out) { scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); continue; }
-      scene.add(v.grp); v.grp.updateMatrixWorld(true); carGlows(v); if (v.tlG) { scene.add(v.tlG); v.tlG.updateMatrixWorld(true); } back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
+      scene.add(v.grp); carPose(v); v.grp.updateMatrixWorld(true); carGlows(v); if (v.tlG) { scene.add(v.tlG); v.tlG.updateMatrixWorld(true); } back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
     if (back) { glows.end(); streaks.end(); }
   }
   function frame(dt, alpha, target, mode, opt) {
