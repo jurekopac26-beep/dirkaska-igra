@@ -121,7 +121,8 @@ const Shramba = (function () {
     const L = LS(); if (!L || !rec || !rec.data || typeof rec.data !== 'object' || Array.isArray(rec.data)) return false;
     const ok = (k) => /^tdgp-/.test(k) && !GHOST.test(k) && !OWN.has(k);
     const mine = Object.keys(rec.data).filter(ok);   // (a broken copy: nothing of the game's in it, or a value not text; the saved game left as it is)
-    if (!mine.length || mine.some(k => typeof rec.data[k] !== 'string')) return false;
+    const ex = rec.extra && typeof rec.extra === 'object' ? rec.extra : null;
+    if (mine.some(k => typeof rec.data[k] !== 'string') || (!mine.length && !(ex && EXTRA.some(k => typeof ex[k] === 'string')))) return false;
     const back = collect(), put = (o, ex) => { for (const k in o) if (ok(k) && typeof o[k] === 'string' && !keep(k, o[k])) return false;
       for (const k of EXTRA) { const v = ex && typeof ex[k] === 'string' ? ex[k] : null; if (v == null) { try { L.removeItem(k); } catch (_) { } } else if (!keep(k, v)) return false; } return true; };
     for (const k of Object.keys(back.data)) { try { L.removeItem(k); } catch (_) { } }
