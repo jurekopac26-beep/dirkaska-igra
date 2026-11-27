@@ -159,6 +159,15 @@ Kamera za avtom, skupina 94 (`js/world-chase-bt94.js`): Kotor (četrti prehod: z
 3. Samo Krásna Hôrka, Kotor brez tega prehoda.
 4. Ne, odstrani skupino 94.
 
+### `chase-skupina-95`
+
+Kamera za avtom, skupina 95 (`js/world-chase-bt95.js`): Llogara (na bankini do ograje gruče šopov trave in kamnov, za ograjo do ~60 m na severni strani gozdna tla s šopi, blazinami, iglicami in kamni, na južni zlati in bledi šopi, makija, apnenčasti kamni in grušč na strminah; brez novih klicev risanja, 168 od 300) in Lombok (na suhi ravnini za zalito travo do ~60 m suhi šopi, nizko grmovje in zaplate gole prsti, ob progi redkeje; +8 klicev, 227 od 300). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Llogara samo bankina (brez pasu za ograjo), Lombok tako.
+3. Lombok pol gostote, Llogara tako.
+4. Ne, odstrani skupino 95.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.

@@ -71,6 +71,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 89: Bathurst, Biķernieki (`js/world-chase-bt89.js`, veja `grafika/chase-bt89`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-89` |
 | Kamera za avtom, tla ob cesti, skupina 90 (tretji prehod): Buriram, Canaries (`js/world-chase-bt90.js`, veja `grafika/chase-bt90`) | biketraveler | pripravljeno 26. 11., PR #1141; vprašanje `chase-skupina-90` |
 | Kamera za avtom, tla ob cesti, skupina 91 (nadaljnji prehod): Furka, Gudauri (`js/world-chase-bt91.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-91` |
+| Kamera za avtom, tla ob cesti, skupina 95: Llogara, Lombok (`js/world-chase-bt95.js`, veja `grafika/chase-bt95`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-95` |
 | Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
 | Redčenje gozda na pravih progah | 1 | prestavljeno; najprej drevesa A (#419) |
 | Ljudje ob progi in grafika (`docs/ljudje-predlogi.md`) | partyslo | ko uporabnik reče; po #400; pred novimi progami |
