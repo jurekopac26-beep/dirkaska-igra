@@ -116,6 +116,30 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+## Stari PR (odprti pred 15. 11.), predlog 27. 11.
+
+### `stari-pr-1511`
+
+13 PR je odprtih od 8.–13. 11. Nobenega ni mogoče zapreti po pravilih (nič ni že na `main`, brez podvojitev, nobenega praznega osnutka). Predlog po vrstici (račun v oklepaju):
+
+- #480 KOLIBRI (partyslo): **nadaljuj**; zbirna veja, pred Trki, 2752 commitov pred `main`.
+- #605 hitrejši tekmeci (partyslo): **nadaljuj**; 14 commitov za `main`, čaka konflikte.
+- #608 Trki (jure.kopac26): **nadaljuj**; samo Trki, zaganja opravilo po urniku.
+- #657 Realizem E (croatiadata): **nadaljuj**; pred #678 in #668.
+- #663 najboljše vožnje (croatiadata): **na `main`**; 1 commit za `main`, zeleni testi, za njim #1184.
+- #666 neskončna vožnja (croatiadata): **nadaljuj**.
+- #668 Realizem S0 (partyslo): **nadaljuj** za #657.
+- #672 in #688 svetovna lestvica (croatiadata): **nadaljuj**; #672 pred #688.
+- #673 prvi zagon, stikalo jezika (croatiadata): **na `main`**; 0 commitov za `main`, 8 pred.
+- #678 Realizem E1 (croatiadata): **zapri**, če #657 že vsebuje stranske ceste; sicer nadaljuj po #657 (247 commitov za `main`).
+- #679 samodejno zaviranje (croatiadata): **na `main`**; 1 commit za `main`.
+- #685 4 tovornjaki + gasilec (biketraveler): **nadaljuj** po #480.
+
+1. **Ok, tako (priporočeno).**
+2. Zapri še #678, #605 in #685 (nova seja jih pozneje naredi iz svežega `main`).
+3. Samo na `main` (#663, #673, #679), ostalo pusti odprto.
+4. Drugače (napiši).
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.

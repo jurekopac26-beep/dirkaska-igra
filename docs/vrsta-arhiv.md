@@ -2,6 +2,104 @@
 
 Dobeseden prejšnji `docs/vrsta.md` pred skrajšanjem; nič ni izgubljeno (odločitev uporabnika 12. 11. 2026 ob ~22.00, točka 3, `docs/odlocitve.md`, »Manj žetonov brez izgube kakovosti«). Starejša zgodovina: `docs/arhiv/vrsta-zgodovina.md`.
 
+## 27. 11. 2026 (pospravljeno, #1160)
+
+Izbrisano iz `docs/vrsta.md`; zastareli načrti in vrstice, združene ali preoblikovane z odprtimi PR. Vrstice, ki jih je zamenjala boljša (s PR in računom), so tu v prejšnji obliki.
+
+| Realizem E · Cesta in predmeti (`docs/realizem.md`), 15 prog v skupinah, ~23 sej | po tedenskem načrtu | **na `main` prvi** med realizmi, E → S → G (`js/world.js`) |
+| Realizem S · Stavbe, ~21 sej | po tedenskem načrtu | za E; Medvode po #494 |
+| Realizem G · Rastje in teren, ~16 sej | po tedenskem načrtu | za S |
+| Realizem P · Poškodbe skupaj s Trki (#608), ~16 sej | biketraveler | takoj po #480, 30 avtih in #569 + #494; na `main` ~7. 12. |
+| Vreme med dirko (`docs/vreme-med-dirko.md`) | partyslo | po kodi za Dež in sneg, #284 + #296, #390 |
+| Hitro nalaganje, korak 2 (I17; #758 s #767 in #725; od 17. 11. ob ~2.57 prevzame croatiadata) | croatiadata | po zbirnih A (#583) in B (#579) |
+| Garaža z Dež in sneg v eni zbirni veji: animacije (8 plošč, #546) | biketraveler | prednost; pred `main` ok na posnetku |
+| Avti na raven KOLIBRIJA: preostalih 13 v #480 (+ #626; s #661 in #662 od 17. 11. ob ~2.57 prevzame partyslo) | partyslo | pred Trki; na `main` ~17. 11. |
+| **30 avtov na raven KOLIBRIJA** (`docs/avti-kolibri.md`, »Prednost: 30 avtov«; od 17. 11. partyslo) | partyslo | po #480, pred Trki; ~47 h, ~25. 11. |
+| 4 novi tovornjaki (TITAN PLIN odpade 13. 11.; + 1 posebno vozilo po izbiri seje, najprej slika = 50 avtov) z mesti za dele ob izdelavi | biketraveler | za grafiko; na `main` ~20. 12. |
+| Analiza kroga (I12) | biketraveler | v delu od 8. 11.; pred progami |
+| Samodejno zaviranje pred ovinki za začetnike (I10) | jure.kopac26 | po tedenskem načrtu |
+| Vrstica podatkov na izbiri proge (`docs/meni-izbira-proge.md`) | jure.kopac26 | po tedenskem načrtu |
+| Svetovna lestvica (`docs/svetovna-lestvica.md`), seje 1–6 (#672) | jure.kopac26, croatiadata | po tedenskem načrtu; za izid 1. 2. 2027 |
+| Zima na severu: Silkeborg, Kågeröd (po N1 #485) | po načrtu 9. 11. | ko je N1 na `main` |
+| Prvi zagon z angleškim menijem (I2), samo preizkus (#673) | jure.kopac26, croatiadata | po tedenskem načrtu |
+| Najboljše vožnje: 10 najboljših `.rrp` na progo, gumb »Deli 10 najboljših« | jure.kopac26 | po #650; ~14. 11. |
+| Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
+| **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
+| Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
+| 10 novih prog z znamenitostjo ob cesti (model iz Blenderja, skupni nalagalnik `.glb`; odločitev uporabnika 15. 11. 2026 ob ~4.40 prek Mateja: »namesto 5 novih prog naredi 10 novih prog, vse naj imajo uporabo blenderja«): proga 1 Luanda in skupna pot (#711), proge 2–7 jure.kopac26 na veji `proge/luanda`, 8–10 biketraveler | jure.kopac26, biketraveler | v delu (#711) |
+| Kariera za 1.0 (odločitev uporabnika 19. 11. 2026 ob 10.35 prek Mateja, tabla #382, komentar 7005268592; načrt `docs/kariera-1-0.md`, zbirna veja `kariera-1-0`, deli A–D) | partyslo | del A (logika, #792) na `main` 23. 11. v zbirki meni #1022. Naslednja sta B in C. |
+| **Boksi na vseh krožnih progah** (odločitve uporabnika 13. 11. 2026 ob ~23.40 »vsa dirkališča naj imajo bokse« ter 14. 11. ob ~0.05 »samo dirkališča, ki so v krogu, imajo bokse« in »gorske in odprte ceste: tam jih ne delamo«): bokse (boksarska steza, stavba z boksi, mehaniki) po vzoru Spa (`pit`, `pitRow`) dobijo prave krožne proge brez njih: Livorno, Nürburg (na `main`), Hakone, Kildare, Sosnova (#569); odprte ceste in kronometri ne; start odprtih cest: 3 predlogi v slikah za uporabnika; testne in proge na odločanju ne; obremenitev v mejah; proge, Opus z eno sejo | jure.kopac26 | ko #569 pride na `main` in je prostor za sejo s kodo; pred `main` slike zdaj/potem (kamera za avtom) |
+| Kamera za avtom, tla ob cesti, skupina 52 (drugi prehod): Koli, Pikes Peak (makadam) (`js/world-chase-bt52.js`) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 43 (drugi prehod): Luanda, Portobelo (`js/world-chase-bt43.js`, v #821) | biketraveler | PR #884, vprašanje `chase-skupina-43` 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 49 (drugi prehod): Montréal, Spa (barve tal v `js/world-montreal.js`, `js/world-spa.js`, v #821) | biketraveler | PR #890, vprašanje `chase-skupina-49` 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 50 (drugi prehod): Killar, Ngorongoro (`js/world-chase-bt50.js`, v #821) | biketraveler | PR #892 (na #821), vprašanje `chase-skupina-50` 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 56 (drugi prehod): Kildare, El Jem (`js/world-chase-bt56.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 58 (drugi prehod): Gudauri, Montréal (`js/world-chase-bt58.js`, #902 na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-58` |
+| Kamera za avtom, tla ob cesti, skupina 61 (tretji prehod): Harju, Katu-Jaryk (`js/world-chase-bt61.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 73 (drugi prehod): Porto Moniz, Savusavu (`js/world-chase-bt73.js`, na zbirno #821) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-73` |
+| Kamera za avtom, tla ob cesti, skupina 75 (tretji prehod): Ujarrás, Rio do Rastro (`js/world-chase-bt75.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-75` |
+| Kamera za avtom, tla ob cesti, skupina 74: Hiva, Luanda (`js/world-chase-bt74.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-74` |
+| Kamera za avtom, tla ob cesti, skupina 78 (drugi prehod): Pembrey, Kanaba (`js/world-chase-bt78.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-78` |
+| Kamera za avtom, tla ob cesti, skupina 76 (tretji prehod): Isuna, Portobelo (`js/world-chase-bt76.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-76` |
+| Kamera za avtom, tla ob cesti, skupina 79 (tretji prehod): Livorno, Lombok (`js/world-chase-bt79.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-79` |
+| Kamera za avtom, tla ob cesti, skupina 82 (drugi prehod): Seul, Pikes Peak makadam (`js/world-chase-bt82.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-82` |
+| Kamera za avtom, tla ob cesti, skupina 83 (drugi prehod): Montréal, Pikes Peak (makadam) (`js/world-chase-bt83.js`, na zbirno grafika-chase-bt) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-83` |
+| Kamera za avtom, tla ob cesti, skupina 81 (drugi prehod): El Jem, Killar (`js/world-chase-bt81.js`, na zbirno #821) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-81` |
+| Kamera za avtom, tla ob cesti, skupina 37 (drugi prehod): Sakhir, Seul (`js/world-chase-bt37.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 39 (drugi prehod): Pembrey, Pikes Peak (`js/world-chase-bt39.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 33: Aguascalientes, Bathurst (`js/world-chase-bt33.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 36 (drugi prehod): Ghoufi, Harju (`js/world-chase-bt36.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 34: Zandvoort, Ujarrás (`js/world-chase-bt34.js`, drugi prehod, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 41 (drugi prehod): Biķernieki, Buriram (`js/world-chase-bt41.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 38 (drugi prehod): Canaries, El Jem (`js/world-chase-bt38.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 68 (drugi prehod): Quezaltepeque, Kildare (`js/world-chase-bt68.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 71 (drugi prehod): Chapman's Peak, Mombasa (`js/world-chase-bt71.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 35 (drugi prehod): Medeu, Mombasa (`js/world-chase-bt35.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 42 (drugi prehod): Hiva, Isuna (`js/world-chase-bt42.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 26: Bâlea, Furka (`js/world-chase-bt26.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 60 (drugi prehod): Seul, Biķernieki (`js/world-chase-bt60.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 64 (drugi prehod): Cusco, Ghoufi (`js/world-chase-bt64.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 67 (drugi prehod): Koror, Aguascalientes (`js/world-chase-bt67.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 27: Kotor, Koror (`js/world-chase-bt27.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 23: Portobelo, Aguascalientes (`js/world-chase-bt23.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 40 (drugi prehod): Kågeröd, Kanaba (`js/world-chase-bt40.js`, #880, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 65 (tretji prehod): Bathurst, Kågeröd (`js/world-chase-bt65.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 20: Medeu, Ngorongoro (`js/world-chase-bt20.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 19: Harju, Koli (`js/world-chase-bt19.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 18: Livorno, Montréal (`js/world-chase-bt18.js`, v #821) | biketraveler | v delu 21. 11. |
+| Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
+| **Prevzem dela 17. 11. 2026** (odločitev uporabnika 17. 11. 2026 ob ~2.57, tabla #382): KOLIBRI #480 (s #661 in #662) vodi **partyslo**; Hitro nalaganje #758 (s #767 in #725) vodi **croatiadata**; **biketraveler dela samo Trke #608** | partyslo, croatiadata, biketraveler | takoj; predaja v opisih PR |
+| Odprte ceste: predaja na začetku ravnine, tik za tekmecem (popravek uporabnika 14. 11. ob ~16.45; Chapman's Peak, Bâlea, Tianmen in Rio do Rastro dobijo start na začetku ravnine, proge krajše) | jure.kopac26 | v delu (15. 11., `popravki/2026-11-15`) |
+**Nov vrstni red 16. 11. 2026** (odločitvi uporabnika 16. 11. 2026 ob ~2.47 »uporabi vse 4 predloge« in ob ~2.52 »Sprememba. Proge naj gredo na main cimprej«, prek Mateja; `docs/odlocitve.md`, »Seje«; velja pred načrtom 11. 11. in tabelo spodaj, kjer si nasprotujeta). En PR naenkrat na `main`, »Ready for review« imata samo prva dva v vrsti; vsak račun ima eno sejo Združevanje.
+1. Majhni PR, ki zmanjšajo spore (jure.kopac26 po vrsti): #698 Popravki 15. 11. (združen) → zbirni PR pravil 12.–17. 11. (#664 + #674 + #701 v enem, odločitev uporabnika 17. 11. ob ~3.00: pravila enkrat na dan) → #709; majhni PR drugih računov enako, po vrsti na tabli.
+   Vrstni red (seja Združevanje, 16. 11.): #698 → #569 → zbirni PR pravil (#664 + #674 + #701) → #709 → #669 → #657/#678 (nikoli hkrati; #669 pred #678) → #663 → #670 → #702; #668 za #657. #671 in #675 gredo skupaj s #569.
+2. **Proge: #569 (vse proge, z #494)**, jure.kopac26: ne čaka več na Trke (#608); mesto med prvima dvema dobi takoj, ko je pripravljen (svež `main`, oznake `pending` in `test`, povezani testi), vzporedno z majhnimi PR iz točke 1. Drugi računi svoje pripravljene proge zberejo v en PR na račun in ga vpišejo sem.
+3. Zbirne veje, ena na temo (`zbirna/<ime>`, vodi račun teme): Hitro nalaganje (#514 in koraki, biketraveler), Realizem G (#669 in proge), Realizem S (#668 in proge), Realizem E (#657, #678), Svetovna lestvica (#672, #688, #743), Prvi zagon (#673). Pregled z več agenti enkrat na zbirno vejo.
+4. Ostale teme po načrtu 11. 11. spodaj; Trki + Poškodbe (#608), ko so pripravljeni; Preleti (#246) ostanejo za Trki, dokler uporabnik ne reče drugače.
+5. Nova mapa in misije zadnje.
+
+**Načrt 12. 11. ob ~19.30** (Matej; velja pred 11. 11.): #569 + #494 (29 prog) na `main` ~15.–16. 11. takoj po meniju (pravih 44); 9 dirkališč iz #547, #591, #619 ~25. 11. (53); vse razen novih prog ~16. 12.; do 70 manjka 17; ob potrditvi seznama do ~15. 11. ~18. 12., ob potrditvi 30. 11. 70 do 23. 12. ni verjetnih.
+
+**Načrt 11. 11.** (Matej, komentar 6793233105), vse na `main` ~16. 12.:
+1. Dež in sneg (#647), biketraveler, ~12. 11.
+2. Samsung temni način (#656) + ikona, jure.kopac26, ~13. 11. po »ok«
+3. Kamera in meni (#650), jure.kopac26, ~13. 11. po »ok«
+4. (združeno v 2.)
+6. Najboljše vožnje, jure.kopac26, ~14. 11.
+7. Mesta za dele (#480 + #626) in 30 avtov KOLIBRI, partyslo (od 17. 11.), ~25. 11.
+8. (združeno v 7.)
+9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
+10. Proge v dveh delih: #569 + #494 popravljene ~17.–20. 11.; nove proge potrjene 13. 11. (19 prog do 70), partyslo in croatiadata
+11. Preleti (#246 s preleti iz #753), partyslo: **čim prej** (vrstica 10.12; #569 je že na `main`; odločitev uporabnika 16. 11. 2026 ob ~3.45 prek Mateja, tabla #382, komentar 6905955445; en PR: Matej, tabla #382, komentarja 6956629243, točka 1, in 6957630615)
+12. Grafika (E, S, G), jure.kopac26 in partyslo, ~8. 12.; 21 PR grafike prog na `main` 23. 11. v zbirki #1021.
+13. 5 tovornjakov, biketraveler, ~16. 12.
+
+**Manj sklopov** (11. 11., `docs/varcevanje.md`): #480 in 30 avtov v eni zbirni veji; Chapman, Samsung in ikona v enem PR; osnutki prog se zaprejo, ko so v #569; PR vodi do `main` seja Združevanje.
+
+**Poraba do resetov**: jure.kopac26 95 % do ned 15. 11., nato stoji do 10.00, do 3 seje s kodo; biketraveler do 3 seje (do ned 15. 11. 12.00 do 4), cilj 100 %; partyslo do čet ~15.00 1 seja s kodo, reset pet 03.00.
+
+
+
 ## 12. 11. 2026 (stanje pred skrajšanjem)
 
 ## Vrsta za `main` (vsi trije računi)
