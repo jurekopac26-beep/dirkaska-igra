@@ -24,5 +24,5 @@ Makete: `maketa-menija/profil/`.
 - (b) 3: »Kilometri na teden« (zadnjih 8 tednov, ta teden zlato; `st.wk`, ponedeljek → km, hrani 12 tednov), pod njim »Zmage« (% dirk) in »Najljubša proga« (različice štejejo h kartici).
 - (c) 2: v nastavitvah razdelek »Shranjena igra«: Izvozi (zadnjič …), Uvozi (zamenja trenutni napredek), Varnostne kopije (število).
 - (d) 1: kopija po vsaki končani dirki, kronometru in pobegu (`Shramba.snap('dirka', proga)`, `RACE_N = 2`); dnevne kopije ob zagonu ni več. Obnova: okno pove, kaj se izgubi (dirke, kovančki).
-- (e), (f): samo slike, kode ni.
+- (e) 1 in (f) 1 (»da« Mateja 27. 11., komentar 7207532856 na #1163): v garaži gumb »Primerjaj« (dva avta: moč z nadgradnjami, masa, moč na tono, pogon) in zlata oznaka »ZA TO PROGO« pri izbiri avta za progo (samo igralčevi avti; točkovanje `zaProgo()` v `js/garage.js`: makadam oprijem, AWD, reli; asfalt moč na tono, oprijem).
 - Fizika vožnje nespremenjena; test `tests/browser/shramba.test.mjs` posodobljen.
