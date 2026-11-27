@@ -7,7 +7,7 @@
 //   repository's page, e.g. on a local server) they come from the network first, and the saved copies only without internet.
 // - A new index.html is saved only together with everything it links (and the fonts its stylesheets name), so the saved game is
 //   always complete; files it no longer links are then removed. Each copy of the game (its own folder) keeps its own saved files.
-// - The menu's pictures (assets/: the models of the tracks, the maps, the cars, the landmarks' models; not the videos and the music) are kept as they are looked at, in
+// - The menu's pictures (assets/: the models of the tracks, the maps, the cars, the landmarks' models, the flags; not the videos and the music) are kept as they are looked at, in
 //   a cache of their own: the kept copy at once, the newest from the network for next time. Without internet the menu shows the pictures
 //   already seen.
 // To switch it off for every player: replace this file with one that, when installed, calls self.skipWaiting(), and when
@@ -20,7 +20,7 @@ const abs = (u) => new URL(u, self.registration.scope).href;
 const PAGE = () => abs('./');   // (the key of the saved index.html, whichever address opened it)
 const STAMPED = /[?&]v=[0-9a-f]{8}(&|$)/;
 const PICTURES = 'apex-racing pictures ' + self.registration.scope;
-const PICTURE = /\/assets\/[^?#]*\.(?:webp|png|json|glb)$/;
+const PICTURE = /\/assets\/[^?#]*\.(?:webp|png|svg|json|glb)$/;
 const SLOW = 4000;
 
 // the local files a page links (scripts, styles, icons, manifest; not in comments) and the app's icons, as full addresses
