@@ -1,0 +1,35 @@
+=== 96a181d 2026-11-25 01:05:55 +0000 Trki: preizkus zmogljivosti z vleko krmila kot ob snemanju referenc
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1001 1897 2734 3708 4647 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 17 11 | avti s škodo 0 2 5 5 5 5, igralec 0 0.106 0.13 0.13 0.13 0.13
+         tisoč oglišč 675 605 842 660 383 328 (povprečno 582, največ 842) | klici 204 211 257 194 135 123 (povprečno 187, največ 257)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 302 376 366 427 326 293 (povprečno 348, največ 427) | klici 118 209 170 147 125 112 (povprečno 147, največ 209)
+=== 9770dca 2026-11-25 01:06:06 +0000 Merge remote-tracking branch 'origin/main' into trki/realizem
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1001 1897 2734 3708 4647 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 17 11 | avti s škodo 0 2 5 5 5 5, igralec 0 0.106 0.13 0.13 0.13 0.13
+         tisoč oglišč 675 605 842 660 383 328 (povprečno 582, največ 842) | klici 204 211 257 194 135 123 (povprečno 187, največ 257)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 302 376 366 427 326 293 (povprečno 348, največ 427) | klici 118 209 170 147 125 112 (povprečno 147, največ 209)
+=== 8527ac8 2026-11-25 13:59:16 +0000 Merge remote-tracking branch 'origin/main' into trki/realizem
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1001 1897 2734 3708 4647 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 17 11 | avti s škodo 0 2 5 5 5 5, igralec 0 0.106 0.13 0.13 0.13 0.13
+         tisoč oglišč 675 605 842 660 383 328 (povprečno 582, največ 842) | klici 204 211 257 194 135 123 (povprečno 187, največ 257)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 302 376 366 427 326 293 (povprečno 348, največ 427) | klici 118 209 170 147 125 112 (povprečno 147, največ 209)
+=== 1e42a0b 2026-11-25 13:04:42 +0100 Orodje za predajo: osnutek predaje iz commitov veje (#1066)
+livorno  s 811 2187 3481 4418 5080 5997 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 36 66 33 36 | avti s škodo 14 22 25 28 38 42, igralec 0.164 0.208 0.215 0.215 0.215 0.215
+         tisoč oglišč 279 321 318 383 461 458 (povprečno 370, največ 461) | klici 185 144 130 133 159 181 (povprečno 155, največ 185)
+lusail   s 110 1013 1902 2699 3673 4611 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 21 13 | avti s škodo 0 2 6 7 7 7, igralec 0 0.09 0.108 0.11 0.11 0.11
+         tisoč oglišč 675 599 920 595 366 340 (povprečno 583, največ 920) | klici 204 214 265 185 152 128 (povprečno 191, največ 265)
+mombasa  s 500 1081 1100 1100 1100 1100 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 0 0 0 0 | avti s škodo 0 10 17 18 18 18, igralec 0 0 0.097 0.097 0.097 0.097
+         tisoč oglišč 302 375 329 339 331 331 (povprečno 335, največ 375) | klici 118 208 117 119 116 116 (povprečno 132, največ 208)
+=== a8cde61 2026-11-27 03:05:51 +0100 Merge pull request #1134 from jurekopac26-beep/popravek/sovoznik-main
+livorno  s 811 2187 3481 4418 5080 5997 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 36 66 33 36 | avti s škodo 14 22 25 28 38 42, igralec 0.164 0.208 0.215 0.215 0.215 0.215
+         tisoč oglišč 279 321 318 383 461 458 (povprečno 370, največ 461) | klici 185 144 130 133 159 181 (povprečno 155, največ 185)
+lusail   s 110 1016 1918 2764 3726 4665 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 17 11 | avti s škodo 0 2 2 2 2 2, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 603 896 656 430 301 (povprečno 594, največ 896) | klici 204 227 241 177 125 117 (povprečno 182, največ 241)
+mombasa  s 500 1081 1100 1100 1100 1100 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 0 0 0 0 | avti s škodo 0 10 17 18 18 18, igralec 0 0 0.097 0.097 0.097 0.097
+         tisoč oglišč 303 385 330 338 333 333 (povprečno 337, največ 385) | klici 119 215 120 122 118 118 (povprečno 135, največ 215)

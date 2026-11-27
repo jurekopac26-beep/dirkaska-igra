@@ -1,0 +1,63 @@
+=== 777993a 2026-11-27 15:57:31 +0100 Vrsta: gneča (#1069, #1119) na začetek, #1075 izbrisan (združen) (#1178)
+livorno  s 811 2187 3481 4418 5080 5997 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 36 66 33 36 | avti s škodo 14 22 25 28 38 42, igralec 0.164 0.208 0.215 0.215 0.215 0.215
+         tisoč oglišč 279 321 318 383 461 458 (povprečno 370, največ 461) | klici 185 144 130 133 159 181 (povprečno 155, največ 185)
+lusail   s 110 1016 1918 2764 3726 4665 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 17 11 | avti s škodo 0 2 2 2 2 2, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 603 896 656 430 301 (povprečno 594, največ 896) | klici 204 227 241 177 125 117 (povprečno 182, največ 241)
+mombasa  s 500 1081 1100 1100 1100 1100 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 0 0 0 0 | avti s škodo 0 10 17 18 18 18, igralec 0 0 0.097 0.097 0.097 0.097
+         tisoč oglišč 303 385 330 338 333 333 (povprečno 337, največ 385) | klici 119 215 120 122 118 118 (povprečno 135, največ 215)
+=== f36d382 2026-11-27 09:53:28 +0000 Merge remote-tracking branch 'origin/main' into trki/realizem
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
+=== 0fc7026 2026-11-27 10:15:51 +0000 Trki: sunek ob ograji tam, kjer se avto ograje dotika; brez sunka ni udarca 
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
+=== c727c8d 2026-11-27 11:34:58 +0000 Trki: avto, ki ob štartu še speljuje, ni ovira (fizika-2, različica A)
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
+=== 737b389 2026-11-27 12:31:45 +0000 Trki: brez isker pod povešenim vogalom (kartica trki-iskre-vogal = 2)
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
+=== bfdd165 2026-11-27 13:09:02 +0000 Trki: fizika-4, odboj po virih (Realistična, cv 6)
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
+=== 0c36dfd 2026-11-27 13:53:23 +0000 Trki: fizika-5, stvar ob cesti in odpadli del avtu ne dodata energije (Reali
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
+=== 130ceaf 2026-11-27 14:50:33 +0000 Trki: fizika-6, povožen kolesar ne doda energije (samo Realistična)
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
+=== d7f821d 2026-11-27 20:39:07 +0000 Trki: test boksov z vleko krmila tekmecev (Toskana, seme 5), meritve po seme
+livorno  s 804 2167 3433 4356 5006 5900 (krog 19087 m, 100 avtov) | tekmeci do 150 m 18 14 25 36 31 27 | avti s škodo 10 17 23 27 31 38, igralec 0.329 0.429 0.433 0.451 0.461 0.461
+         tisoč oglišč 311 298 319 553 522 477 (povprečno 413, največ 553) | klici 187 130 138 193 181 144 (povprečno 162, največ 193)
+lusail   s 110 1016 1910 2749 3722 4673 (krog 5412 m, 22 avtov) | tekmeci do 150 m 20 21 21 21 16 11 | avti s škodo 0 2 2 4 4 6, igralec 0 0.091 0.091 0.091 0.091 0.091
+         tisoč oglišč 675 604 909 654 421 310 (povprečno 596, največ 909) | klici 204 228 260 180 125 117 (povprečno 186, največ 260)
+mombasa  s 500 1081 1393 1979 2572 3196 (krog 3670 m, 22 avtov) | tekmeci do 150 m 4 14 14 9 9 6 | avti s škodo 0 10 14 15 15 15, igralec 0 0 0.027 0.027 0.027 0.059
+         tisoč oglišč 303 385 369 450 341 291 (povprečno 357, največ 450) | klici 119 216 175 149 128 110 (povprečno 150, največ 216)
