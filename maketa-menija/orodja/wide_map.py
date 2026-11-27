@@ -31,6 +31,7 @@ RING_PX = {'monaco': 8, 'riviera': 18, 'montreal': 6, 'toronto': 8}   # (where t
 WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal', 'detroit', 'bangsaen', 'livorno', 'mombasa', 'portobelo'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
 STRIP_M = {'chapman': 260, 'mombasa': 110, 'portobelo': 90}   # (a world whose own land fills the whole tile: only a strip this many metres either side of the road is the island)
 BEACH = {'bangsaen', 'mombasa', 'portobelo'}   # (a beach between the road and the sea: the island goes on to the shore there, no rim cut; the painted sea flat, no seabed in its shading)
+SEA_BARE = {'portobelo'}   # (the land cover's bare cells joined to the sea are sea: WorldCover's strips along the shore, under the seabed's depths)
 H_SMOOTH = {'rastro': 5.0, 'tianmen': 6.0, 'bangsaen': 2.0, 'balea': 6.0}   # (output pixels: where the heights are coarse for the tile's scale, their steps would show in the shading)
 THEME = {'vrsic': 'vrsic', 'pikes': 'pikes', 'ouninpohja': 'ouni', 'nring': 'nring', 'spa': 'spa', 'rbring': 'rbring', 'suzuka': 'suzuka', 'monaco': 'monaco', 'riviera': 'city'}
 # the sun of each theme (routemap_page.js: THEMES sunOff, default [-80, 96, 70]; x east, y up, z south), its strength and the sky light
@@ -113,6 +114,15 @@ def paint_land(F):
     if z is not None and 'lc' in z.files: alb, h, lc = z['alb'], z['h'], z['lc']
     else:
         alb, h, lc = _paint_land(F); os.makedirs(os.path.dirname(cache), exist_ok=True); np.savez(cache, alb=alb, h=h, lc=lc)
+    if F.tid in SEA_BARE:   # cells the land cover calls bare but the heights the seabed, joined to the water (strips by the shore): the water round them, no walls
+        wat = np.isin(lc, (0, 80)); fix = ~wat & ndimage.binary_dilation(h < 0, iterations=2) & (h < 12)
+        lab, _ = ndimage.label(lc == 60); ids = np.unique(lab[ndimage.binary_dilation(wat) & (lab > 0)]); fix |= np.isin(lab, ids[ids > 0])
+        if fix.any():
+            fix |= ndimage.binary_dilation(fix, iterations=2) & wat   # (and the painted foam round them, in the water)
+            wf = (wat & ~fix).astype(np.float32); num = lowpass(alb * wf[..., None], 24); den = lowpass(wf, 24)[..., None]   # (the water round them, smoothed: no pale shallows copied in)
+            _, (iy, ix) = ndimage.distance_transform_edt(den[..., 0] < 0.02, return_indices=True); fill = (num / np.maximum(den, 1e-3))[iy, ix]
+            alb = alb.copy(); alb[fix] = fill[fix]
+        h = np.where(fix | (h < 0), 0.0, h).astype(np.float32)
     if F.tid in BEACH: h = np.where(np.isin(lc, (0, 80)), 0.0, h).astype(np.float32)
     if F.tid in H_SMOOTH: h = ndimage.gaussian_filter(h, H_SMOOTH[F.tid])
     # the sun in the output grid's axes: x right, z down in the tile; the world's vector (sx east, sz south) turned by the tile's fit
