@@ -2,7 +2,7 @@
    trailer: one rigid body on three axles (the steered front one, the driven twin-tyred one, a tag axle behind it: the look's), the longest
    single body in the game (Core lets a body be up to 13 m long for it; the garage shows a vehicle longer than 6.4 m scaled down to 6.4 m,
    Render.garageK, so its room, its chamber and its robots stay as they are for every other car). The look: a tall box with rounded ends,
-   a dark band of glass down both sides and round the nose, a white sweep low on the sides, the luggage bays' seams, mirrors on arms from
+   a light blue-grey band of glass down both sides and round the nose, a white sweep low on the sides, the luggage bays' seams, mirrors on arms from
    the roof's front corners, an air-conditioning unit on the roof's front, and the passengers' luggage on a rack over the rest of the
    roof: suitcases, a trunk, duffel bags, a rolled mat (they go as one part in a hard hit: 'luggage'). No spare tyre
    (docs/avti-kolibri.md), no names, no lettering. L 12.00 W 2.55 H 3.52 (4.05 with the luggage), axles 3.40 ahead of and 3.20 and 4.55
@@ -67,8 +67,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       wheels: { style: 'truck', w: 0.32, wR: 0.32, gap: 0.08, rim: [0.8, 0.81, 0.83], dual: true },
       regions: 'none',
       build(K) {
-        const P = K.paint, WH = [0.93, 0.93, 0.92], G = [0.05, 0.06, 0.08], D = [0.16, 0.16, 0.17], SV = [0.75, 0.76, 0.78], RK = [0.62, 0.63, 0.66];
-        // the body: the paint, the dark glass band down the sides and round the nose, white under the glass on the sides
+        const P = K.paint, WH = [0.93, 0.93, 0.92], G = [0.32, 0.4, 0.48], D = [0.16, 0.16, 0.17], SV = [0.75, 0.76, 0.78], RK = [0.62, 0.63, 0.66];
+        // the body: the paint, the light blue-grey glass band down the sides and round the nose (the user's of 26. 11. 2026, tovornjaki-26-11), white under the glass on the sides
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (at.end) return P;
           if (e === 0 || e === 8) return D;
