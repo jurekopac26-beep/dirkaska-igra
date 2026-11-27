@@ -1,11 +1,12 @@
 // Lestvica, preverjanje (Svetovna lestvica, seja 2: strežnik; docs/svetovna-lestvica.md, »Zaščita pred goljufanjem«, »2. Ponovitev vožnje v
 // Node«): tools/lestvica-preveri.mjs checks the times waiting on the server in Node (--krog). Harju, Finska: time trials recorded in Node by their
 // own core (js/vnos.js; the autopilot's inputs played back as a player's) and replayed by the tool's. Accepted: a plain run, a rescue, career wear,
-// upgrades, a car with a part, the test cars' switch, a crash setting. Rejected: a part or a test car the run may not have, and a record forged (the
-// autopilot, the time step, settings, weather, upgrades or assists other than the packet's, a time or a step count off, events cut, a slower
-// throttle); a field set mid-run is suspicious, a time within 0.2 % of the replay is accepted as approximate (the crash rule, 13. 11.). The tool's
-// core is clean after every check. The round against a fake server: the list, a record missing or broken, a server error, the results posted in
-// batches of 200, the token sent as given, one line of counts only; the token from GitHub's OIDC with the audience »lestvica«. No network, no key.
+// upgrades, a car with a part, the test cars' switch, a crash setting. A time more than 10 % under the autopilot's with the same car (the speed
+// threshold) is suspicious. Rejected: a part or a test car the run may not have, and a record forged (the autopilot, the time step, settings,
+// weather, upgrades or assists other than the packet's, a time or a step count off, events cut, a slower throttle); a field set mid-run is
+// suspicious, a time within 0.2 % of the replay is accepted as approximate (the crash rule, 13. 11.). The tool's core is clean after every check.
+// The round against a fake server: the list, a record missing or broken, a server error, the results posted in batches of 200, the token sent as
+// given, one line of counts only; the token from GitHub's OIDC with the audience »lestvica«. No network, no key.
 //   node tests/lestvica-preveri.test.js
 'use strict';
 const path = require('path'), zlib = require('zlib');
@@ -92,6 +93,24 @@ for (const k of ['LESTVICA_ZETON', 'LESTVICA_STREZNIK', 'ACTIONS_ID_TOKEN_REQUES
     ['rally s krilom', { deli: { krilo: 16 }, max: 600 }, Z('deli')],
   ]) { const X = posnemi(o); je(ime, pc(X.R, paket(X)), exp); }
   check('jedro čisto po pravih vožnjah', cisto() === S0);
+
+  // --- the speed threshold: the autopilot's time with the same car and options (the quickest rival's skill); a time more than 10 % under it is suspicious
+  {
+    const a1 = m.avtopilotMs(K, R), nK = K.ai.size, U = posnemi({ upg: { motor: 3, gume: 3, zavore: 3, aero: 3 } }), a3 = m.avtopilotMs(K, U.R);
+    check('avtopilot: čas za avto in nastavitve, enkrat', Number.isInteger(a1) && a1 > 0 && a1 <= c0.ms && m.avtopilotMs(K, R) === a1 && K.ai.size === nK, `${a1} ms, vožnja ${c0.ms} ms`);
+    check('avtopilot: nadgradnje imajo svoj čas', Number.isInteger(a3) && a3 < a1, `${a3} ms proti ${a1} ms`);
+    check('avtopilot: brez proge ni časa', m.avtopilotMs(K, { ...R, track: 'ni-je' }) === null);
+    je('prag: vožnja avtopilota ni sumljiva', pc(R, c0), { izid: 'ok', t: false });
+    try {
+      K.prag = 1 - (c0.ms + 0.5) / a1;   // (the threshold half a millisecond over this run's time)
+      const g = pc(R, c0); check('prag: hitrejša od praga je sumljiva', g.izid === 'sumljivo' && g.razlog === `hitrost ${c0.ms} avtopilot ${a1}` && /^[\w .,:;()%-]{1,80}$/.test(g.razlog), opis(g));
+      K.prag = 1 - (c0.ms - 0.5) / a1;   // (half a millisecond under it: not suspicious)
+      je('prag: tik nad pragom ni sumljiva', pc(R, c0), { izid: 'ok', t: false });
+      K.prag = 1 - (c0.ms + 0.5) / a1;
+      je('prag: zavrnjena ostane zavrnjena', pc(R, { ...c0, ms: c0.ms - 500 }), Z('cas'));
+    } finally { delete K.prag; }
+    check('jedro čisto po pragu', cisto() === S0);
+  }
 
   // --- forged
   const mid = sredi(R), op = (f) => { const r = kl(R); f(r.opts.o); return r; };
