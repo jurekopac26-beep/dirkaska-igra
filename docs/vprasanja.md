@@ -204,6 +204,15 @@ Kamera za avtom, skupina 108 (tretji prehod, `js/world-chase-bt108.js`): Pikes P
 3. Rio do Rastro tako, Pikes Peak brez kolesnic (samo kamenje in prah ob robu).
 4. Ne, odstrani skupino 108.
 
+### `chase-skupina-111`
+
+Kamera za avtom, skupina 111 (četrti prehod, `js/world-chase-bt111.js`): Isuna (na pašniku kratki popaseni šopi trave, suhe bilke in posamezni višji šopi do ~60 m, pod gozdom mladi modri bori in praprot, na bregu reke Paro Chhu prodniki in svetle zaplate proda; +7 klicev, 162 od 300, 261 tisoč oglišč od 900). Hiva ni v skupini, ker ji obcestje spreminja odprti #1079. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Samo breg reke (prodniki in prod), brez šopov in mladih borov.
+3. Pol gostote šopov in borov, breg tako.
+4. Ne, odstrani skupino 111.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
