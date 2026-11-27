@@ -64,6 +64,7 @@ CFG = {
     'kanaba': dict(kind='real', start='Kanaba Gap', finish='Kanaba', country='Uganda', region='Kigezi', l1='virunga'),
     'koli': dict(kind='real', start='Koli', finish='Ylä-Koli', country='Finland', region='North Karelia', l1='finland'),
     'isuna': dict(kind='real', start='Chuzom', finish='Isuna', country='Bhutan', region='Paro', l1='himalaya'),
+    'hakone': dict(kind='real', start='Hakone', country='Japan', region='Kanagawa', l1='japan'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),

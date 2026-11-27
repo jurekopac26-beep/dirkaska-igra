@@ -542,5 +542,16 @@
    "wet": true,
    "skirt": false
   }
+ ],
+ [
+  "hakone",
+  "top",
+  "isle-hakone",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
  ]
 ]

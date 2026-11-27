@@ -120,7 +120,8 @@ window.MENU = {
   "livorno": 240,
   "furka": 300,
   "gudauri": 300,
-  "ghoufi": 300
+  "ghoufi": 300,
+  "hakone": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -644,6 +645,9 @@ window.MENU = {
     724,
     741
    ]
+  },
+  "hakone": {
+   "base": 102
   }
  },
  "intro": {

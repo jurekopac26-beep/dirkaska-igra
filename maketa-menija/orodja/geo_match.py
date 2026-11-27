@@ -51,10 +51,12 @@ GUESS = {
     'kanaba': (-1.2561077, 29.8021448, 300),
     'koli': (63.101285, 29.784938, 300),       # the origin in js/tracks/<id>.js (tools/proga-uvoz.mjs)
     'isuna': (27.331833, 89.518573, 300),
+    'hakone': (35.2336134, 139.1046511, 30),   # the start line, the origin of the game's frame (docs/proga-hakone.md, »Okvir igre«); held by HOLD
 }
 # a place held after the fit: on Ghoufi's short, almost flat road the heights alone put the start and the finish 35 m west of OSM's line
 # (tools/predogled/proge.json, sec), the same at both ends; the turn and the height offset stay the fit's
-HOLD = {'ghoufi': {'lat0': 35.054441, 'lon0': 6.165218}}
+HOLD = {'ghoufi': {'lat0': 35.054441, 'lon0': 6.165218},
+        'hakone': {'lat0': 35.2336134, 'lon0': 139.1046511, 'rot': 0.0}}   # Hakone's frame known exactly: x east, z south from the start line
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
 def fit(T, g0, R, z=13, coarse=30, rots=np.arange(-3, 3.01, 0.5)):
