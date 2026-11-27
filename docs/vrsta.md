@@ -43,6 +43,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 79 (tretji prehod): Livorno, Lombok (`js/world-chase-bt79.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-79` |
 | Kamera za avtom, tla ob cesti, skupina 96: Lusail, Mapileng (`js/world-chase-bt96.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-96` |
 | Kamera za avtom, tla ob cesti, skupina 82 (drugi prehod): Seul, Pikes Peak makadam (`js/world-chase-bt82.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-82` |
+| Kamera za avtom, tla ob cesti, skupina 100: Savusavu, Seul (`js/world-chase-bt100.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-100` |
 | Kamera za avtom, tla ob cesti, skupina 83 (drugi prehod): Montréal, Pikes Peak (makadam) (`js/world-chase-bt83.js`, na zbirno grafika-chase-bt) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-83` |
 | Kamera za avtom, tla ob cesti, skupina 88: Aguascalientes, Bâlea (`js/world-chase-bt88.js`, veja `grafika/chase-bt88`, osnutek PR na `main`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-88` |
 | Kamera za avtom, tla ob cesti, skupina 92 (nadaljnji prehod): Izoard, Kanaba (`js/world-chase-bt92.js`, veja `grafika/chase-bt92`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-92` |

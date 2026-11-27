@@ -177,6 +177,15 @@ Kamera za avtom, skupina 99 (nadaljnji prehod, `js/world-chase-bt99.js`): Štaje
 3. Štajerska tako, Sa Calobra brez.
 4. Ne, odstrani skupino 99.
 
+### `chase-skupina-100`
+
+Kamera za avtom, skupina 100 (`js/world-chase-bt100.js`): Savusavu (šopi trave v gručah, pod gozdom praprot in odpadle veje, ob hišah suhi palmovi listi in kokosove lupine do ~60 m; +6 klicev, 197 od 300, do 709 tisoč oglišč) in Seul (iglice in listje v pasu ob robniku pod gozdom, za bloki podrast, odpadle veje in granitni kamni na gozdnih tleh do ~60 m; +1 klic, 138 od 300, do 818 tisoč oglišč). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Samo Savusavu, Seul brez dodatkov.
+3. Samo Seul, Savusavu brez dodatkov.
+4. Ne, odstrani skupino 100.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
