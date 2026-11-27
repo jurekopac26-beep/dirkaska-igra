@@ -140,3 +140,23 @@ Z LOD (#1176) gre v korak fizike okoli 66 avtov namesto 101, zato je meja 4 izme
 - **Ostane 4** (odločitev 26. 11.). Izbira 4, 6 ali 10 je vprašanje `gneca-1180-koraki` na strani Odločitve; za poskus na telefonu `?proga=spa&nacin=dirka&tekmeci=99&koraki=6` (4–10, `Core.LOD.fs` za obisk, velja samo v zelo velikem polju).
 - Najdaljša sličica je ena sama sličica v 20 s (isto stanje med zagoni 115–192 ms); za primerjavo je zanesljivejši p95.
 - Isti PR brez spremembe meje: ura in hitrost na zaslonu ne sprožata več preračuna postavitve strani (4,5 → 1,5 ms na sličico), iskanje vzorcev proge je hitrejše (korak 4,7 → 4,3 ms, sled bit-za-bit enaka); sličica v gneči 50,9 → 48,8 ms, sam 19,7 → 20,1 ms (šum meritve ±5 %).
+
+## 28. 11.: kam gre čas sličice v gneči in kaj ne pomaga (#1180)
+
+Ista meritev (Spa, 101 avto z mreže, igralec 50., telefon 844×390, procesor 4× počasnejši); profil sličice v gneči proti enemu avtu na isti progi (`tools/gneca-slicica.mjs --surovo=pot.cpuprofile`):
+
+| del sličice (ms) | gneča | sam | razlika |
+|---|---|---|---|
+| fizika (gneča: 4 koraki × 4,4 ms) | 17,4 | 0,7 | +16,7 |
+| risanje | 24,8 | 11,9 | +12,9 |
+| prikaz podatkov, zvok, drugo | 8,1 | 3,1 | +5,0 |
+| delo skupaj | 50,3 | 15,7 | +34,6 |
+| razmik sličic (najmanj 16,7 ms, zaslon 60 Hz) | 50,3 | 18,2 | +32,1 |
+
+- V razliki risanja: izris three.js (klici risanja, sprehod prizora, sence) ≈ +7 ms, priprava avtov (`updateCars`) ≈ +4,5 ms, drugo ≈ +1,4 ms; v vrstici pod njo prikaz podatkov ≈ +2 ms, zvok ≈ +1,4 ms (od tega ≈ 0,7 ms priprava zvočnih valov na začetku dirke, `prepRun`: enako skupno delo kot pri enem avtu, razdeljeno na manj sličic). V prizoru je 5–43 avtov, 58–96 od 101 jih `carCull` izloči; oddaljen avto v pogledu stane 3 klice risanja (≈ 0,09 ms). Klici največ 298–301, oglišča do 685 tisoč.
+- Korak fizike 101 avta po funkcijah (profil v node, `tools/gneca-korak.js`; v koraku je povprečno 66 od 101 avtov): korak avta (`Car.step`) 41 %, vodenje tekmecev (`aiControl`) 19 %, trki med avti (`_pairs`, `pair`) 9 %, trki z zidom (`wallCollide`) 7 %, `_tow` 4 %, lastno delo koraka dirke 10 %. Prihranek, ki se pozna, je zato samo v manj avtih na korak ali v cenejšem koraku oddaljenega tekmeca.
+- Narejeno (na sliki se ne pozna): avtom zunaj pogleda se nagib karoserije in zasuk koles nastavita šele ob vrnitvi v prizor (`carPose` v `js/render.js`): ≈ 0,25 ms na sličico (`updateCars` 9,5 → 8,7 % sličice).
+- Izmerjeno in zavrnjeno, ne ponavljaj: nižji skupni takt za avte ob drugem avtu (polje se upočasni in zastane); redkejše posodabljanje oddaljenih vidnih avtov pri risanju (≈ 0,5 ms, vidno); slog pik na zemljevidu (≈ 0,05 ms, v šumu meritve); krajše držanje pravila »ob drugem avtu« (`LOD.nrT`: ≈ 9 % manj avtov na korak, opuščeno).
+- Ocenjeno iz profila in opuščeno: vodenje oddaljenih tekmecev v nižjem taktu (≈ 1 ms, tveganje zastoja), vreme enkrat na sličico (≤ 0,3 ms), izpuščanje matrik skritih delov oddaljenih avtov (≈ 0,3–0,5 ms, poseg v veliko kode). Učinki in poškodbe izločenih avtov namenoma tečejo naprej, da dirka s semenom in slika ostaneta enaki.
+- Meritev niha z vsem strojem: ista koda 36,5–50,3 ms na sličico, korak fizike 3,5–4,4 ms. Razlika nekaj ms med zagonoma zato ne pove nič; majhne prijeme primerjaj po deležih funkcij v profilu, sličico pa deli z nedotaknjenim korakom fizike.
+- Sklep: majhni prijemi so izčrpani. Dirka teče s polno hitrostjo šele pri sličici pod 33,3 ms (4 koraki po 8,33 ms). Ocene iz profila za večje spremembe (vprašanje `gneca-1180-zgradba` na strani Odločitve): oddaljeni tekmeci na preprostejšem modelu, fizika ≈ 17 → ≈ 6 ms na sličico; prave sence samo bližnjim avtom in pege v enem klicu ≈ −1,6 ms (vse polje brez pravih senc ≈ −3,4 ms).
