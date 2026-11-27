@@ -2,6 +2,18 @@
 
 Odločitev uporabnika 3. 11. 2026 (seja »Dnevna vprašanja za seje«): »Pripravi mi vsa vprašanja v prihodnje, dokler ne prekličem, vsak dan vsa za vse seje ob 10.30h, 14.30h in 23.00h, da samo kliknem na izbiro. Pri grafičnih vprašanjih dodaj sliko.« Velja do preklica (razdelek Preklic). Nadgradi pravilo z 31. 10. 2026 (vsa vprašanja na strani Odločitve, uporabnik samo klikne izbiro).
 
+## Čaka »ok« (27. 11.)
+
+Povezave do že objavljenih slik (novih ni, ničesar ni zagnano). Odgovor: ok / popravek.
+
+- #1174, 13 kartic `chase-skupina-NN` (prej/potem, kamera za avtom): https://github.com/jurekopac26-beep/dirkaska-igra/pull/1174#issuecomment-7219115758 · ok / popravek
+- #1095, Šipka: slik s povezavo v opisu PR ni; meni `assets/tracks/sipka.webp`, `sipka-rain.webp` v PR. Koordinacija je 25. 11. proge ustavila (komentar), opis PR pa 27. 11. pravi »pripravljena za `main`«: najprej razjasni · https://github.com/jurekopac26-beep/dirkaska-igra/pull/1095 · ok / popravek
+- #1169, meni s kamero 1: povezave ni, kartice na strani Odločitve: `kamera1-zemljevidi-s1-1169`, `zemljevidi-1169-sk2` do `-sk5` · https://github.com/jurekopac26-beep/dirkaska-igra/pull/1169 · ok / popravek
+- #1100, Lombok (korak 1): pred | po | razlika https://claude.ai/artifact/VFfnfoqRfeLuE8qE74oifv; stara stran z gumbom: https://claude.ai/artifact/EuHgioRzZkafiVakSY8S1d (`vprasanja/lombok-grafika`) · ok / popravek
+- #1175, analiza kroga (I12 A): kartica `i12-analiza-prej-potem` na strani Odločitve, povezave ni · https://github.com/jurekopac26-beep/dirkaska-igra/pull/1175 · ok / popravek
+- #1173, tovornjaki: kartica `tovornjaki-bt-1` na strani Odločitve (priporočilo: videz 3), povezave ni · https://github.com/jurekopac26-beep/dirkaska-igra/pull/1173 · ok / popravek
+- Kariera Atlas (slika q7): v drugi seji, ni zbrana tukaj.
+
 ## Na kratko
 
 - Seja zapiše vprašanje na stran Odločitve svojega računa takoj, ko ga ima, in dela naprej pri tem, kar od odgovora ni odvisno (ali konča korak). Uporabnika ne sprašuje v pogovoru in ga ne obvešča sproti (brez `PushNotification`).
