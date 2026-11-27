@@ -4755,8 +4755,9 @@ const Core = (function () {
   // middle to middle with the old one: Nürburg, 100 cars, the default knock, with nr below 0.081 -> 0.048 hard knocks a car-minute, as many passes). A car within 1 m of another's
   // bumper or 0.6 m of its side, more by nrV s of their speed apart, stays at the full rate for nrT steps (Race._pairs, _lodPlan): no touch
   // on an extrapolated place, and two far cars between their steps do not run through each other (Nürburg, 100 cars: hard knocks far ahead
-  // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0)
-  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 4, fol: 1, nrT: 60, nrV: 0.15, off: false };
+  // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0).
+  // fs: with the LOD on the game catches up at most that many steps a frame (4 in every other race: js/game.js, frame)
+  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 4, fol: 1, nrT: 60, nrV: 0.15, fs: 10, off: false };
   // the indices 0..n-1 in I sorted by cmp, ties by the index (what a stable sort of the list gives), by insertion from the order I had the last
   // time: from one step to the next only a few cars change places (Race._byDist, the order)
   function isortIx(I, n, cmp) {

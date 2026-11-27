@@ -6661,8 +6661,10 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       // alone, a slow device plays in slow motion rather than in big jumps; online, the race keeps up with the clock the
       // phones share (slow frames and hitches up to 0.5 s are caught up), so a slower phone does not lose time. Alone at most 4 steps a
       // frame (1/30 s): a slow frame does not pile up more steps and a slower next one (the start with a full field, docs/zatikanje-start.md);
-      // only the catching up is capped, each step the same STEP as ever
-      const on = mp && mp.race, lim = on ? 64 : 4;
+      // only the catching up is capped, each step the same STEP as ever. A very big field (the rivals' LOD on, Core.LOD.fs): up to 10 steps
+      // a frame, so the race keeps the clock on a phone whose frame with a hundred cars takes longer than 4 steps (at 4 the race ran at two
+      // thirds of its speed there and the car answered that much slower than on the time trial); the time trial and the smaller fields 4 as ever
+      const on = mp && mp.race, big = !on && race._lod && race._lod.on, lim = on ? 64 : big ? Core.LOD.fs || 4 : 4;
       if (!restOn()) {   // (behind the results, every car home 3 s ago: no more steps, the cars stand as they were)
         if (on && on.late != null) { acc = on.late; on.late = null; } else acc += on ? dtNet : dt;   // (online: the lights went out this frame)
         let n = 0;

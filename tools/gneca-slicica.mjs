@@ -8,22 +8,22 @@
 // priprava in oddaja ukazov WebGL), ostalo (HUD, zvok, vnos); hitrost dirke = čas dirke / navidezna ura (pod 100 %: omejitev korakov).
 // Igre ne spreminja: ovije jo samo na strani.
 //   node tools/gneca-slicica.mjs [--proga=spa] [--tekmeci=100,0] [--mesto=50] [--sek=20] [--od=0.5] [--cpu=4] [--ponovi=1]
-//                                [--lod='{"nrT":0}'] [--profil=20] [--sklad=1] [--skupno=1] [--izhod=pot.json] [--slika=pot.png]
+//                                [--lod='{"nrT":0}'] [--profil=20] [--sklad=1] [--skupno=1] [--izhod=pot.json] [--slika=pot.png] [--dsf=2]
 //   --mesto=N: start z mesta N na startni vrsti (zastoj v prvem ovinku; igra da polju nad 22 avtov leteči start, igralec zadnji: --mesto=0);
 //   --sek: sekund navidezne ure od --od s časa dirke; --lod: nastavitve Core.LOD za obisk (JSON); --profil=N: N funkcij z največ lastnega
 //   časa (profil CDP, ms na sličico), --sklad=1: s klicatelji (dve ravni), --skupno=1: skupni čas (funkcija s svojimi klici); postavitev = razporeditev in slog strani (CDP, zunaj časa JS
-//   ali v njem, če jo skript izsili); --slika: slika zaslona na koncu (ime dobi število avtov); GAME_ROOT=pot: igra iz druge mape.
+//   ali v njem, če jo skript izsili); --slika: slika zaslona na koncu (ime dobi število avtov; --dsf: gostota pik slike); GAME_ROOT=pot: igra iz druge mape.
 import { serve, launch, openGame, startTrack } from '../tests/browser/lib.mjs';
 import fs from 'node:fs';
 
 const arg = (k, d) => { const a = process.argv.find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : d; };
 const PROGA = arg('proga', 'spa'), TEKMECI = arg('tekmeci', '100,0').split(',').map(Number), SEK = +arg('sek', 20), OD = +arg('od', 0.5), CPU = +arg('cpu', 4);
-const MESTO = +arg('mesto', 50), PONOVI = +arg('ponovi', 1), LOD = JSON.parse(arg('lod', '{}')), PROFIL = +arg('profil', 0), SKLAD = +arg('sklad', 0), SKUPNO = +arg('skupno', 0), IZHOD = arg('izhod', ''), SLIKA = arg('slika', '');
+const MESTO = +arg('mesto', 50), PONOVI = +arg('ponovi', 1), LOD = JSON.parse(arg('lod', '{}')), PROFIL = +arg('profil', 0), SKLAD = +arg('sklad', 0), SKUPNO = +arg('skupno', 0), IZHOD = arg('izhod', ''), SLIKA = arg('slika', ''), DSF = +arg('dsf', 0);
 const q = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 const avg = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0, r1 = (x) => Math.round(x * 10) / 10, r2 = (x) => Math.round(x * 100) / 100;
 
 async function ena(browser, base, rivals) {
-  const { ctx, page, errors } = await openGame(browser, base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, rivals, track: PROGA, sound: 1 }, { width: 844, height: 390 }, { seed: 12345, touch: true });
+  const { ctx, page, errors } = await openGame(browser, base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, rivals, track: PROGA, sound: 1 }, { width: 844, height: 390 }, Object.assign({ seed: 12345, touch: true }, DSF ? { context: { deviceScaleFactor: DSF } } : {}));
   try {
     await page.evaluate(([lod, mesto]) => {
       Object.assign(Core.LOD, lod);
