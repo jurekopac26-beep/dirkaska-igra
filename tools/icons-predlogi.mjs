@@ -19,11 +19,11 @@ function carTop(w, h, paint, dark) {
 // 1 · Serpentina: a mountain road climbing in hairpins up a green slope under a snowy peak at sunset, the orange car on
 // the lowest leg. At 48 px it reads as the white zigzag on green with the peak.
 function serpentina() {
-  const legs = [[[352, 470], [158, 392]], [[158, 392], [338, 318]], [[338, 318], [196, 252]], [[196, 252], [300, 200]]];
-  const width = [62, 50, 40, 31];
+  const legs = [[[336, 432], [166, 372]], [[166, 372], [332, 308]], [[332, 308], [200, 250]], [[200, 250], [292, 198]]];
+  const width = [64, 52, 42, 32];
   const road = (k) => legs.map(([[x0, y0], [x1, y1]], i) => `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke-width="${width[i] + k}"/>`).join('');
   const dash = legs.map(([[x0, y0], [x1, y1]], i) => `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke-width="${Math.max(3, width[i] * 0.08)}" stroke-dasharray="${width[i] * 0.3} ${width[i] * 0.3}"/>`).join('');
-  const ang = Math.atan2(392 - 470, 158 - 352) * 180 / Math.PI + 90;
+  const ang = Math.atan2(372 - 432, 166 - 336) * 180 / Math.PI + 90;
   return `<defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb35c"/><stop offset=".55" stop-color="#ffd9a0"/><stop offset="1" stop-color="#fff1d6"/></linearGradient>
     <linearGradient id="far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8fb8"/><stop offset="1" stop-color="#a7a9c6"/></linearGradient>
@@ -39,13 +39,13 @@ function serpentina() {
     <g stroke="#555c66">${road(0)}</g>
     <g stroke="#ffd34d">${dash}</g>
   </g>
-  <g transform="translate(262 434) rotate(${ang.toFixed(1)})">${carTop(34, 58, '#ff7a1a', '#5b3a24')}</g>`;
+  <g transform="translate(262 406) rotate(${ang.toFixed(1)})">${carTop(40, 68, '#ff7a1a', '#5b3a24')}</g>`;
 }
 
 // 2 · Atlas: the globe with the road wrapping over it like a ribbon and the red car on it — a world of real roads.
 // At 48 px it reads as the blue ball with the grey band and the red dot.
 function atlas() {
-  const ribbon = 'M 70 330 C 150 250 230 380 300 290 C 360 212 400 210 452 180';
+  const ribbon = 'M 96 322 C 160 256 230 370 296 292 C 350 226 384 212 424 196';
   return `<defs>
     <radialGradient id="bg" cx=".5" cy=".42" r=".75"><stop offset="0" stop-color="#2f7bb5"/><stop offset="1" stop-color="#173e66"/></radialGradient>
     <radialGradient id="sea" cx=".36" cy=".32" r=".8"><stop offset="0" stop-color="#6cc6f0"/><stop offset=".6" stop-color="#2d8fd0"/><stop offset="1" stop-color="#1b5f9a"/></radialGradient>
@@ -70,7 +70,7 @@ function atlas() {
     <path d="${ribbon}" stroke="#565d67" stroke-width="50"/>
     <path d="${ribbon}" stroke="#fff" stroke-width="4" stroke-dasharray="16 14"/>
   </g>
-  <g transform="translate(300 290) rotate(52)">${carTop(30, 52, '#ff3b30', '#5a1d1a')}</g>`;
+  <g transform="translate(296 292) rotate(50)">${carTop(38, 64, '#ff3b30', '#5a1d1a')}</g>`;
 }
 
 // 3 · Za avtom: the game's own view — behind the yellow car on a road that bends right to the mountains at dusk.
@@ -87,10 +87,10 @@ function zaAvtom() {
   <path d="M -10 235 L 60 175 L 120 205 L 190 135 L 270 200 L 330 160 L 400 205 L 460 170 L 522 215 L 522 260 L -10 260 Z" fill="#6f7fa6"/>
   <path d="M 190 135 L 214 156 L 200 154 L 190 166 L 178 152 L 168 156 Z" fill="#fff"/>
   <rect y="240" width="512" height="272" fill="url(#grass)"/>
-  <path d="M -40 512 C 120 380 250 320 330 262 C 345 252 352 246 356 240 L 372 240 C 372 250 368 262 360 274 C 330 330 420 420 552 512 Z" fill="url(#road)"/>
-  <path d="M -40 512 C 120 380 250 320 330 262 C 345 252 352 246 356 240" fill="none" stroke="#fff" stroke-width="9"/>
-  <path d="M 552 512 C 420 420 330 330 360 274 C 368 262 372 250 372 240" fill="none" stroke="#fff" stroke-width="9"/>
-  <path d="M 256 512 C 270 420 300 330 338 270 C 350 254 362 246 364 240" fill="none" stroke="#fff" stroke-width="7" stroke-dasharray="26 22" opacity=".9"/>
+  <path d="M -40 512 C 120 380 280 300 356 240 L 372 240 C 350 330 430 420 552 512 Z" fill="url(#road)"/>
+  <path d="M -40 512 C 120 380 280 300 356 240" fill="none" stroke="#fff" stroke-width="9"/>
+  <path d="M 552 512 C 430 420 350 330 372 240" fill="none" stroke="#fff" stroke-width="9"/>
+  <path d="M 256 512 C 276 420 320 320 364 240" fill="none" stroke="#fff" stroke-width="7" stroke-dasharray="26 22" opacity=".9"/>
   <g transform="translate(256 352)">
     <ellipse cx="0" cy="62" rx="106" ry="20" fill="#000" opacity=".45" filter="url(#soft)"/>
     <rect x="-98" y="20" width="34" height="46" rx="9" fill="#23262b"/><rect x="64" y="20" width="34" height="46" rx="9" fill="#23262b"/>
