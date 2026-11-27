@@ -483,5 +483,27 @@
    "pad": 1.0,
    "skirt": false
   }
+ ],
+ [
+  "furka",
+  "top",
+  "isle-furka",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "gudauri",
+  "top",
+  "isle-gudauri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
  ]
 ]

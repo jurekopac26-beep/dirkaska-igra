@@ -91,7 +91,9 @@ window.MENU = {
   "bangsaen": 240,
   "balea": 300,
   "bathurst": 240,
-  "livorno": 240
+  "livorno": 240,
+  "furka": 300,
+  "gudauri": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -467,6 +469,22 @@ window.MENU = {
   },
   "livorno": {
    "base": 4
+  },
+  "furka": {
+   "start": "Gletsch",
+   "finish": "Furka Pass",
+   "alt": [
+    2045,
+    2416
+   ]
+  },
+  "gudauri": {
+   "start": "Gudauri",
+   "finish": "Upper Gudauri",
+   "alt": [
+    1953,
+    2213
+   ]
   }
  },
  "intro": {

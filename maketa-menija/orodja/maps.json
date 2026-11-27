@@ -465,5 +465,25 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "furka",
+  "top",
+  "top-furka",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "gudauri",
+  "top",
+  "top-gudauri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]

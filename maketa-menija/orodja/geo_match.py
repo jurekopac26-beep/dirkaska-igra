@@ -37,6 +37,8 @@ GUESS = {
     'balea': (45.6107785, 24.6144425, 150),
     'bathurst': (-33.43930, 149.55846, 150),
     'livorno': (43.51202, 10.3188882, 150),
+    'furka': (46.5704, 8.3962, 300),        # the start above Gletsch by the Muttbach (docs/proge/furka.md)
+    'gudauri': (42.4594, 44.4849, 300),     # the start at the lower edge of Gudauri (docs/proge/gudauri.md)
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
