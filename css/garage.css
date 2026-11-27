@@ -323,3 +323,4 @@ svg { display: block; }
 .g-cmp .ps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .g-cmp .p { padding: 6px 8px; border-radius: 999px; text-align: center; font: 800 11.5px/1.2 var(--f); border: 1.5px solid var(--cyan); color: #d9f1fd; }
 .g-cmp .p.r { border-color: var(--red); color: #fde0dd; margin-top: 0; }
+.g-cmpb::before { content: '⇄ '; }

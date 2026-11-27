@@ -595,7 +595,7 @@
   }
   const zpIds = () => { const o = ORDER.filter(id => S.cars[id].own || S.rent === id); return o.length ? o : ORDER; };
   function zpDraw() {
-    $('g-cmpb').textContent = '⇄ ' + tr('Primerjaj');
+    $('g-cmpb').textContent = tr('Primerjaj');
     const el = $('g-zp'); if (!ZP) { el.hidden = true; return; }
     const r = zaProgo(ZP.gravel, zpIds()); if (!r) { el.hidden = true; return; }
     const why = r.why.map(w => tr(w, kwt(r.id))).join(', ');
