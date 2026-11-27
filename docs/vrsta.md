@@ -48,6 +48,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 88: Aguascalientes, Bâlea (`js/world-chase-bt88.js`, veja `grafika/chase-bt88`, osnutek PR na `main`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-88` |
 | Kamera za avtom, tla ob cesti, skupina 92 (nadaljnji prehod): Izoard, Kanaba (`js/world-chase-bt92.js`, veja `grafika/chase-bt92`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-92` |
 | Kamera za avtom, tla ob cesti, skupina 102: Vaoala (prvi prehod), Zandvoort (četrti prehod) (`js/world-chase-bt102.js`, veja `grafika/chase-bt102`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-102` |
+| Kamera za avtom, tla ob cesti, skupina 105: Kågeröd, Koli (`js/world-chase-bt105.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-105` |
 | Kamera za avtom, tla ob cesti, skupina 81 (drugi prehod): El Jem, Killar (`js/world-chase-bt81.js`, na zbirno #821) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-81` |
 | Kamera za avtom, tla ob cesti, skupina 93 (nadaljnji prehod): Kildare, Koror (`js/world-chase-bt93.js`, osnutek PR na `main`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-93` |
 | Kamera za avtom, tla ob cesti, skupina 94: Kotor (četrti prehod), Krásna Hôrka (prvi prehod) (`js/world-chase-bt94.js`, veja `grafika/chase-bt94`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-94` |

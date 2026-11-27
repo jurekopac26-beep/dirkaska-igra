@@ -119,11 +119,11 @@
   "jsMs": 1.8
  },
  "kagerod": {
-  "calls": 237,
-  "maxCalls": 279,
-  "kverts": 633,
+  "calls": 243,
+  "maxCalls": 268,
+  "kverts": 650,
   "maxKverts": 730,
-  "jsMs": 1.8
+  "jsMs": 2.14
  },
  "sosnova": {
   "calls": 212,
@@ -406,11 +406,11 @@
   "jsMs": 1.16
  },
  "koli": {
-  "calls": 181,
-  "maxCalls": 290,
-  "kverts": 632,
-  "maxKverts": 748,
-  "jsMs": 0.79
+  "calls": 189,
+  "maxCalls": 299,
+  "kverts": 674,
+  "maxKverts": 790,
+  "jsMs": 1.41
  },
  "kanaba": {
   "calls": 214,
