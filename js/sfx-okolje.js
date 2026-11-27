@@ -26,7 +26,11 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819],
+    mujib: [31.44, 471], atitlan: [14.76, 2068], mapileng: [23.25, 1184], krasnahorka: [48.67, 608], envalira: [42.54, 2367] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge;
+    // Wadi Mujib and Atitlán, docs/nove-proge-1-0.md del 4: the start's altitude, their heights are from the start line as GEO's offset;
+    // Envalira: OSM's start node, its lowest point 5.8 m under the line's 2,372.9 m, js/tracks/envalira.js;
+    // Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
@@ -40,6 +44,7 @@
     livorno: [[-400, 400, 1], [3250, 3750, 1], [4300, 4580, 0.5], [7330, 7590, 0.5], [16500, 17300, 1]],   // (Livorno, Montenero, Savolano, Castellaccio, Antignano)
     nring: [[7850, 8050, 0.5], [20100, 20500, 0.5]],   // (Breidscheid, Nürburg)
     ghoufi: [[115, 385, 0.5]],   // (the old village on the canyon's wall below the road, 20–67 % of the track: mostly ruins, a hamlet, no bells)
+    vinales: [[-60, 20, 0.5], [230, 400, 0.5]],   // (the farmhouses at the start and on the valley's floor, 2–5 within 80 m: js/tracks/vinales.js bld)
   };
   // the churches within ~600 m of the road (OpenStreetMap, amenity=place_of_worship or building=church, tools/zvoki-pasovi.mjs --osm):
   // [metres from the start, the side (-1 left, 1 right), how far from the road (m)]; only those with bells (not a temple, a hall, a
@@ -127,9 +132,10 @@
     if (H) { h0 = Infinity; h1 = -Infinity; for (let i = 0; i < H.length; i++) { if (H[i] < h0) h0 = H[i]; if (H[i] > h1) h1 = H[i]; } }
     const alt0 = g ? g[1] : 300, relief = sstep(60, 400, h1 - h0), seaB = def.sea || SEA.has(id) ? 0.2 : 0;
     Z.clim = { lat: g ? g[0] : 45, alt: alt0 + (h0 + h1) / 2 };
+    const w0 = +def.wind || 0;   // (a track's own wind, the least along its road: a bare desert canyon's, def.wind; trees shelter it too)
     if (def.theme !== 'pikes') for (let k = 0; k < n; k++) {   // (Pikes Peak: its own wind, js/sfx.js atmo)
       const y = P[k * 5 + 4], hn = h1 > h0 ? (y - h0) / (h1 - h0) : 0, open = 1 - 0.75 * Math.max(Z.fL[k], Z.fR[k]), sn = Math.max(Z.kL[k] === SEAK ? Z.wL[k] : 0, Z.kR[k] === SEAK ? Z.wR[k] : 0);
-      Z.wind[k] = clamp((0.55 * sstep(500, 2500, alt0 + y) + 0.55 * relief * Math.pow(hn, 1.5) + seaB * Math.min(1, 0.4 + sn * 3)) * open, 0, 1);
+      Z.wind[k] = clamp(Math.max(w0, 0.55 * sstep(500, 2500, alt0 + y) + 0.55 * relief * Math.pow(hn, 1.5) + seaB * Math.min(1, 0.4 + sn * 3)) * open, 0, 1);
     }
     Z.st.ms = Math.round(performance.now() - t0);
     return Z;

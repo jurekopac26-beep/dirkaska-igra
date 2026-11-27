@@ -1,0 +1,34 @@
+{
+  "id": "mujib",
+  "about": "Wadi Mujib, Jordanija (id mujib): 1 km of road 35 up the south side of the Mujib canyon, 5 hairpins (docs/nove-proge-1-0.md, Del 4)",
+  "box": [31.417, 35.7797, 31.4555, 35.846],
+  "closed": false,
+  "dist": {
+    "grid": 480
+  },
+  "route": [
+    [31.439958, 35.800245, "طريق الملك", "run-up for the grid | primary, w115417965, 210 m before the start line"],
+    [31.440496, 35.799327, "طريق الملك", "primary, w115417965, 104 m before the start line"],
+    [31.44114, 35.79847, "طريق الملك", "start | primary, w115417965, s 0 m"],
+    [31.44095, 35.79821, "طريق الملك", "primary, w115417965, s 100 m"],
+    [31.44036, 35.79835, "طريق الملك", "primary, w115417965, s 200 m"],
+    [31.441, 35.79763, "طريق الملك", "primary, w115417965, s 300 m"],
+    [31.44156, 35.79682, "طريق الملك", "primary, w115417965, s 400 m"],
+    [31.44189, 35.79605, "طريق الملك", "primary, w115417965, s 500 m"],
+    [31.44104, 35.79638, "طريق الملك", "primary, w115417965, s 600 m"],
+    [31.44053, 35.79718, "طريق الملك", "primary, w115417965, s 700 m"],
+    [31.44022, 35.79653, "طريق الملك", "primary, w115417965, s 800 m"],
+    [31.44002, 35.79553, "طريق الملك", "primary, w115417965, s 900 m"],
+    [31.43988, 35.79615, "طريق الملك", "finish | primary, w115417965, s 1000 m"],
+    [31.43959, 35.797344, "طريق الملك", "primary, w115417965, 108 m past the finish line"],
+    [31.438971, 35.79814, "طريق الملك", "primary, w115417965, 210 m past the finish line"],
+    [31.438598, 35.798433, "طريق الملك", "past the finish | primary, w115417965, 260 m past the finish line"]
+  ],
+  "prefer": [
+    "طريق الملك"
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}

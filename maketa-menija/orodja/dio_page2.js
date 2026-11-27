@@ -2,6 +2,7 @@
 // World.build, cuts it into a diorama and renders it on a copy of the showroom turntable.
 window.DIO = (function () {
   const THEMES = {   // copied from the game (race lighting per theme: render.js THEMES, a real track's look in js/tracks/<id>.js)
+    // (a job with ownLook: true lights the track with its own def.look, the lights of the race: the new tracks of 1.0)
     lake:     { sun: 0xfff0d6, sunI: 0.98, sky: 0xd3e7ff, gnd: 0x5d6b35, hemiI: 0.62 },
     city:     { sun: 0xffe5bd, sunI: 1.04, sky: 0xdcecff, gnd: 0x86785a, hemiI: 0.6 },
     monaco:   { sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6 },
@@ -19,7 +20,35 @@ window.DIO = (function () {
     const sc = new THREE.Scene();
     const tex = Tex.all(1);
     const w = World.build(sc, T, tex, { density: 1 });
+    if (w && w.forceSeason === 'winter') snowOver(w, tex);   // (a world under snow all year, e.g. Envalira: as the game's render paints it)
     return { def, T, sc, w, tex };
+  }
+  // a world whose own look is winter (world.forceSeason; js/render.js seasonWorld): the grass pictures under snow (white, the world's own
+  // colours give the shading; also the brown and olive ground: earth and scree under snow), the road's materials left alone
+  function snowOver(w, tex) {
+    const roads = new Set([tex.asphalt, tex.curb, tex.paving].filter(Boolean)), tone = new Map();
+    const grassy = (t) => {
+      if (!t || !t.image) return false; if (tone.has(t)) return tone.get(t);
+      let g = false; try { const c = document.createElement('canvas'); c.width = c.height = 4; const x = c.getContext('2d'); x.drawImage(t.image, 0, 0, 4, 4); const d = x.getImageData(0, 0, 4, 4).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } g = gg > b * 1.2 || r > b * 1.2; } catch (e) { g = false; }
+      tone.set(t, g); return g;
+    };
+    (w.root || w.group || { traverse() {} }).traverse(o => {
+      for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
+        if (!m.color || !m.map || roads.has(m.map) || !grassy(m.map)) continue;
+        m.map = null; m.color.setRGB(0.97, 0.98, 1); m.needsUpdate = true;
+      }
+      const g = o.geometry, a = g && g.attributes && g.attributes.color;   // (the colours of the world's meshes: plants, soil and grey rock take
+      if (!a || a.noSeason || a.dbSnow) return;                           // the snow as render.js seasonCol does in winter, more where they face up)
+      a.dbSnow = 1; const N = g.attributes.normal, d = a.array, is = a.itemSize, c = new THREE.Color(), hsl = {};
+      for (let i = 0, v = 0; i < d.length; i += is, v++) {
+        c.setRGB(d[i], d[i + 1], d[i + 2]); c.getHSL(hsl); const { h, s, l } = hsl, ground = !!N && N.array[v * 3 + 1] > 0.8;
+        const plant = h > 0.14 && h < 0.47 && s > 0.1 && l > 0.04, soil = h > 0.04 && h <= 0.14 && s > 0.12 && l > 0.08 && l < 0.7;
+        if (!plant && !soil && !(s < 0.12 && l > 0.25 && l < 0.8)) continue;
+        const k = ground ? (plant || soil ? 0.88 : 0.5) : plant ? 0.4 : soil ? 0.6 : 0.3;
+        d[i] += (0.92 - d[i]) * k; d[i + 1] += (0.95 - d[i + 1]) * k; d[i + 2] += (0.99 - d[i + 2]) * k;
+      }
+      a.needsUpdate = true;
+    });
   }
   function probe(id) {
     const { T, sc, w } = buildWorld(id);
@@ -278,7 +307,7 @@ window.DIO = (function () {
     const R2 = Rmax * 1.25, blob = new THREE.Mesh(new THREE.PlaneGeometry(2 * R2, 2 * R2), new THREE.MeshBasicMaterial({ map: blobTex(poly, cx, cz, R2), transparent: true, opacity: opt.blob == null ? 0.75 : opt.blob, depthWrite: false }));
     blob.rotation.x = -Math.PI / 2; blob.position.set(cx, yBase + 0.02 * k, cz); tsc.add(blob);
     // pass 2: the diorama with the track's race lighting
-    const th = THEMES[def.theme] || THEMES.lake;
+    const th = (opt.ownLook && def.look) || THEMES[def.theme] || THEMES.lake;
     const L = [];
     const hemi = new THREE.HemisphereLight(th.sky, th.gnd, th.hemiI * (opt.hemiMul || 1)); sc.add(hemi); L.push(hemi);
     const sun = new THREE.DirectionalLight(th.sun, th.sunI * (opt.sunMul || 1));
@@ -372,7 +401,7 @@ window.DIO = (function () {
       tsc.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: opt.blob == null ? 0.7 : opt.blob, depthWrite: false, side: THREE.DoubleSide })));
     }
     // pass 2: the diorama with its track's race lighting (sun fixed relative to the camera, as the showroom key light)
-    const th = THEMES[def.theme] || THEMES.lake, L = [], ctr = new THREE.Vector3(cx, yBase, cz);
+    const th = (opt.ownLook && def.look) || THEMES[def.theme] || THEMES.lake, L = [], ctr = new THREE.Vector3(cx, yBase, cz);
     const hemi = new THREE.HemisphereLight(th.sky, th.gnd, th.hemiI * (opt.hemiMul || 1)); hemi.position.copy(up); sc.add(hemi); L.push(hemi);
     const sun = new THREE.DirectionalLight(th.sun, th.sunI * (opt.sunMul || 1));
     sun.position.copy(dirW(opt.sunDir || [-6, 10, 7]).normalize().multiplyScalar(Rmax * 2.2).add(ctr)); sun.target.position.copy(ctr);
@@ -446,7 +475,7 @@ window.DIO = (function () {
     const blob = new THREE.Mesh(bg, new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, opacity: opt.shadowOpacity, depthWrite: false, side: THREE.DoubleSide }));
     blob.renderOrder = -1; sc.add(blob);
     // lights: the track's race lighting, sun fixed relative to the camera
-    const th = THEMES[def.theme] || THEMES.lake, L = [blob], ctr = new THREE.Vector3(cx, yBase, cz);
+    const th = (opt.ownLook && def.look) || THEMES[def.theme] || THEMES.lake, L = [blob], ctr = new THREE.Vector3(cx, yBase, cz);
     const camDir = (v) => { const m = new THREE.Matrix4().extractRotation(cam.matrixWorld); return new THREE.Vector3(v[0], v[1], v[2]).applyMatrix4(m); };
     const rn = opt.rain || 0, mixC = (a, b, f) => new THREE.Color(a).lerp(new THREE.Color(b), f * rn);   // (rain: the game's overcast light)
     wetWorld(B, rn);

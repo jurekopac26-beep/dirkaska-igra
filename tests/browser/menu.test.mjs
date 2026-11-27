@@ -544,22 +544,23 @@ try {
     const f5 = await tap('rally', 'ice');
     const ids = (v) => JSON.stringify(v.rows.map(r => r[0]));
     // a category with no track in the list says "No <it> tracks here." ("yet" would be false: a mode's list can lack rally tracks the game has)
-    T.check('the filters: four buttons Circuit, Open road, Rally, Ice, each with an icon (no length filter); Circuit the circuits (no test track), Circuit and Open road either, Rally, Ice says "No ice tracks here." (no ice track in the game), Rally and Ice either, all off the countries again',
+    T.check('the filters: four buttons Circuit, Open road, Rally, Ice, each with an icon (no length filter); Circuit the circuits (no test track), Circuit and Open road either, Rally, Ice the ice tracks (Envalira), Rally and Ice either, all off the countries again',
       JSON.stringify(cats) === '["circuit:Circuit:icon","road:Open road:icon","rally:Rally:icon","ice:Ice:icon"]' && JSON.stringify(f1.chips) === '["circuit"]' && ids(f1) === JSON.stringify(w1) && w1.length >= 3 && f1.rows.every(r => r[5] !== 'TEST') &&
       ids(f2) === JSON.stringify(w2) && w2.length > w1.length && JSON.stringify(f3.chips) === '["rally"]' && (w3.length ? ids(f3) === JSON.stringify(w3) : !f3.rows.length && f3.none === 'No rally tracks here.') &&
-      JSON.stringify(f4.chips) === '["ice"]' && !w4.length && !f4.rows.length && f4.none === 'No ice tracks here.' &&
+      JSON.stringify(f4.chips) === '["ice"]' && (w4.length ? ids(f4) === JSON.stringify(w4) : !f4.rows.length && f4.none === 'No ice tracks here.') &&
       JSON.stringify(f6.chips) === '["rally","ice"]' && (w6.length ? ids(f6) === JSON.stringify(w6) : !f6.rows.length && f6.none === 'No rally or ice tracks here.') && !f5.chips.length && f5.tiles.length === g.tiles.length,
       JSON.stringify({ cats, f1: f1.rows.map(r => r[0]), f2: f2.rows.length, f3: f3.rows.map(r => r[0]), f3n: f3.none, f4n: f4.none, f6: f6.rows.map(r => r[0]), f6n: f6.none, f5: f5.tiles.length }));
-    // an ice track (def.ice; none in the game yet, so Nürburg's flag is set here and the list opened again): Ice finds it alone, its type is
-    // "Ice", Circuit does not, a search finds it without a filter as before; the flag off again, the list as the next steps expect it
+    // an ice track (def.ice: Envalira's; Nürburg's flag is set here too and the list opened again): Ice finds the ice tracks, Nürburg among
+    // them, each of type "Ice", Circuit not Nürburg, a search finds it without a filter as before; the flag off again, the list as the next
+    // steps expect it
     await page.evaluate(() => { Core.TRACKS.find(x => x.id === 'nring').ice = true; MenuIzbor.close(true); });
     await page.waitForFunction(() => !(history.state && history.state.nazaj), null, { timeout: 5000 }).catch(() => null);
     await page.click('.trow .flag button'); await IZ(1);
     const i1 = await tap('ice'), i2 = await tap('ice', 'circuit');
     await tap('circuit'); await page.fill('.izb-q input', 'nurburg'); const i3 = await view(); await page.click('.izb-qx');
     await page.evaluate(() => { delete Core.TRACKS.find(x => x.id === 'nring').ice; });
-    T.check('an ice track (Nürburg flagged): Ice finds it alone (its type "Ice"), Circuit does not, the search "nurburg" finds it without a filter',
-      JSON.stringify(i1.rows.map(r => r[0])) === '["nring"]' && / · Ice$/.test(i1.rows[0][3]) && !i1.none && !i2.rows.some(r => r[0] === 'nring') && i2.rows.length >= 3 && JSON.stringify(i3.rows.map(r => r[0])) === '["nring"]',
+    T.check('an ice track (Nürburg flagged): Ice finds it with Envalira (each of type "Ice"), Circuit not Nürburg, the search "nurburg" finds it without a filter',
+      JSON.stringify(i1.rows.map(r => r[0]).sort()) === '["envalira","nring"]' && i1.rows.every(r => / · Ice$/.test(r[3])) && !i1.none && !i2.rows.some(r => r[0] === 'nring') && i2.rows.length >= 3 && JSON.stringify(i3.rows.map(r => r[0])) === '["nring"]',
       JSON.stringify({ i1: i1.rows.map(r => r.slice(0, 4)), i2: i2.rows.length, i3: i3.rows.map(r => r[0]) }));
     // Select: a country of several tracks (Japan, Irohazaka shown as real above), a track's card, Select: the screen goes to it, the list
     // closed and its steps gone
@@ -726,7 +727,7 @@ try {
     T.check('Select on the Earth (Hakone): the track step goes to it, the Earth gone with its steps in the history; the head\'s globe turned to Japan (from Belgium, along the way)',
       sel.id === 'hakone' && sel.track === 'hakone' && sel.head === 'Hakone' && !sel.hist && turned && !sel.g.turning && Math.abs(sel.g.at[0] - suz[0]) < 0.05 && Math.abs(wrap(sel.g.at[1] - suz[1])) < 0.05 && sel.country === 'Japan' && sel.S >= 104, JSON.stringify({ sel, turned, suz }));
     // the head's globe in daylight (the Sun set over the next track's antipode: no night on it); the moon switched on the Earth (the night
-    // there, remembered): the same globe darker at once; then the next track's at night, the one after it by day (their globes not drawn yet)
+    // there, remembered): the same globe darker at once; then the next track by day, the one after it at night (their globes not drawn yet)
     await page.evaluate(() => { const s0 = MenuZemlja.sun; MenuZemlja.sun = (t) => { if (t || !window.__sun) return s0(t); const d = Menu.debug(), id = d.list[d.trackIdx], g = GEO.tracks[id], p = (MENU.globe.places || {})[id] || (g ? [g.lat0, g.lon0] : [0, 0]); return window.__sun === 'day' ? p : [-p[0], p[1] > 0 ? p[1] - 180 : p[1] + 180]; }; });
     const DISK = 'const c = root.querySelector(".thead .globe canvas"), S = c.width, d = c.getContext("2d").getImageData(0, 0, S, S).data; let n = 0, r = 0, g = 0, b = 0;' +
       'for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const dx = x + 0.5 - S / 2, dy = y + 0.5 - S / 2; if (dx * dx + dy * dy > (S * 0.42) ** 2) continue; const i = (y * S + x) * 4; if (d[i] > 150 && d[i] - d[i + 2] > 60) continue; n++; r += d[i]; g += d[i + 1]; b += d[i + 2]; }' +

@@ -24,7 +24,7 @@
 const Lestvica = (function () {
   'use strict';
   const APP = 'apex-racing', V = 1, KEY = 'tdgp-lp', ME = 'tdgp-lp-me', PHYS = ['cs', 'nova'];
-  const MAX_FRIENDS = 40, MAX_TIMES = 1000, MAX_HIDDEN = 100, MAX_LINK = 16000, MAX_IN = 120000, MAX_TEXT = 4e6;
+  const MAX_FRIENDS = 40, MAX_TIMES = 1200, MAX_HIDDEN = 100, MAX_LINK = 16000, MAX_IN = 120000, MAX_TEXT = 4e6;
   const DAY = 864e5, DAY0 = Date.UTC(2026, 0, 1);
   // the bound: in a bend no car turns harder than G3 (m/s²) nor goes faster than VK times the top speed of the fastest car
   const G3 = 3 * 9.81, VK = 1.15;
@@ -89,7 +89,7 @@ const Lestvica = (function () {
     if (car !== null && (typeof car !== 'string' || !CAR_RE.test(car))) return null;
     return [ms, day, car];
   }
-  // at most MAX_TIMES: the newest first (by their day)
+  // at most MAX_TIMES: the newest first (by their day). (600 until 19. 11. 2026: every record of 85 tracks are 746 keys; 1200 leave room)
   function capTimes(t) {
     const ks = Object.keys(t); if (ks.length <= MAX_TIMES) return t;
     const out = {}; ks.sort((a, b) => t[b][1] - t[a][1] || (a < b ? -1 : 1)).slice(0, MAX_TIMES).forEach(k => { out[k] = t[k]; }); return out;
@@ -100,7 +100,7 @@ const Lestvica = (function () {
     const body = JSON.stringify({ app: APP, kind: 'times', v: V, pub: M.pub, name: cleanName(name) || '?', sent: Math.floor((now || Date.now()) / 1000), t: capTimes(t || {}) });
     return [body, b64u(new Uint8Array(await subtle().sign(SIGN, M.key, enc(body))))];
   }
-  const okPk = (pk) => Array.isArray(pk) && pk.length === 2 && typeof pk[0] === 'string' && pk[0].length <= 60000 && typeof pk[1] === 'string' && SIG_RE.test(pk[1]);
+  const okPk = (pk) => Array.isArray(pk) && pk.length === 2 && typeof pk[0] === 'string' && pk[0].length <= 100 * MAX_TIMES && typeof pk[1] === 'string' && SIG_RE.test(pk[1]);
   // a packet checked: { id, pub, name, sent, t, pk } or null (not of this game's form, sent more than a day ahead of the clock, more than
   // MAX_TIMES times, or its signature not its owner's); a time of an unknown form is left out (a later game's), the rest stays
   async function readPacket(pk, now) {

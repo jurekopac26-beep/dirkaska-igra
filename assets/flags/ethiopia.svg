@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Ethiopia</title>
+  <!-- Ratio 1:2. Three equal horizontal bands green, yellow, red; in the centre the blue disc with the yellow star and its five rays
+       (Proclamation 654/2009). Colours: #078930, #FCDD09, #DA121A, the disc #0F47AF. -->
+  <rect x="0" y="0" width="1200" height="200" fill="#078930"/>
+  <rect x="0" y="200" width="1200" height="200" fill="#FCDD09"/>
+  <rect x="0" y="400" width="1200" height="200" fill="#DA121A"/>
+  <circle cx="600" cy="300" r="200" fill="#0F47AF"/>
+  <g fill="none" stroke="#FCDD09" stroke-width="14" stroke-linejoin="miter" stroke-miterlimit="10">
+    <polygon points="600.0,161.0 631.2,257.0 732.2,257.0 650.5,316.4 681.7,412.5 600.0,353.1 518.3,412.5 549.5,316.4 467.8,257.0 568.8,257.0"/>
+    <path d="M632.8,254.9L701.1,160.8"/><path d="M653.0,317.2L763.6,353.2"/><path d="M600.0,355.7L600.0,472.0"/><path d="M547.0,317.2L436.4,353.2"/><path d="M567.2,254.9L498.9,160.8"/>
+  </g>
+</svg>

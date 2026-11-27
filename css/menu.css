@@ -79,7 +79,7 @@ svg { display: block; }
 .soon-note { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); font: 900 italic 22px/1 var(--f-ui); color: rgba(63, 208, 255, .85); letter-spacing: .12em; text-shadow: 0 0 18px rgba(63, 208, 255, .5); pointer-events: none; z-index: 2; }
 .dio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .dio .isl { position: absolute; inset: 0; animation: float 5s ease-in-out infinite; }
-.dio img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.dio img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }   /* (the browser does not drag the picture away: a swipe across it, js/menu.js) */
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .dio.lock img { filter: saturate(.55) brightness(.8); }
 /* ---------------- card (car, track) ---------------- */
@@ -385,6 +385,7 @@ svg { display: block; }
 @media (max-height: 700px) { .tbars, #s-car .desc { display: none; } .card { margin-top: 14px; } .tabs { margin: 10px 0 6px; } .tabpane { min-height: 0; } .brow { padding: 4px 0; } }
 /* ---------------- the weather on the track model: sun or overcast behind it, the wet model, the rain ---------------- */
 .dio img.wet { opacity: 0; transition: opacity .7s ease; }
+.dio img { -webkit-user-drag: none; user-select: none; }   /* (a finger or mouse across the model swipes the track: the picture itself is not dragged, which would cancel the swipe) */
 .stage.rainy .dio img.wet { opacity: 1; }
 /* the weather over the whole track screen (js/menu-vreme.js, sklop 12): the picture's light and colours (--wxf, the videos' --wxv), a
    blue tint, the snow's light, the clouds, the warm sun and a canvas over it (the rainbow, frost, lightning, drops on the

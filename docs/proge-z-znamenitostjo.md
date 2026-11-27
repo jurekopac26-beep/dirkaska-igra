@@ -7,12 +7,12 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | # | Proga | Država | Vrsta | Kdo | Stanje |
 |---|---|---|---|---|---|
 | 1 | Luanda | Angola | stavba: trdnjava na griču | jure.kopac26 | v zbirni Proge 2 (#756) |
-| 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | čaka (veja `proge/luanda`) |
+| 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | v zbirni Proge 3 |
 | 3 | Isalo, Madagaskar (zamenjava za Antananarivo) | Madagaskar | druga: skalna tvorba Kraljica Isala (Reine de l'Isalo; OSM `natural=rock`, -22.6283, 45.3389), ~30 m od sredine RN7 | jure.kopac26 | v zbirni Proge 2 (#756) |
 | 4 | Mombasa | Kenija | stavba: trdnjava ob cesti | jure.kopac26 | v zbirni Proge 2 (#756) |
 | 5 | Hiva | Uzbekistan | stavba: obzidje Ičan Kale in minareta | jure.kopac26 | v delu (#723; ostane model iz Blenderja) |
-| 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
-| 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
+| 6 | Atimpoku (zamenjava za Elmino, občutljivo) | Gana | druga: star most (ločni most Adomi z obešenim voziščem, 1957) čez Volto | jure.kopac26 | v zbirni Proge 3 |
+| 7 | Phou Hin Boun (bil Bokor) | Laos | druga: kraški stolpi (kamniti gozd) ob razgledišču | jure.kopac26 | v zbirni Proge 3 |
 | 8 | El Jem | Tunizija | stavba: rimski amfiteater | biketraveler | v zbirni Proge 2 (#756) |
 | 9 | Portobelo | Panama | stavba | biketraveler | v zbirni Proge 2 (#756) |
 | 10 | Isuna (bila Trongsa, delujoč samostan) | Butan | druga: star železni verižni most čez Paro Chhu ob cesti Chuzom–Paro | biketraveler | v zbirni Proge 2 (#756) |
