@@ -53,6 +53,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 93 (nadaljnji prehod): Kildare, Koror (`js/world-chase-bt93.js`, osnutek PR na `main`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-93` |
 | Kamera za avtom, tla ob cesti, skupina 94: Kotor (četrti prehod), Krásna Hôrka (prvi prehod) (`js/world-chase-bt94.js`, veja `grafika/chase-bt94`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-94` |
 | Kamera za avtom, tla ob cesti, skupina 106: Sakhir, Silkeborg (`js/world-chase-bt106.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-106` |
+| Kamera za avtom, tla ob cesti, skupina 109 (nadaljnji prehod): El Jem (`js/world-chase-bt109.js`, osnutek PR na `main`); Ghoufi izpuščen zaradi #1078 | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-109` |
 | Kamera za avtom, tla ob cesti, skupina 37 (drugi prehod): Sakhir, Seul (`js/world-chase-bt37.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 39 (drugi prehod): Pembrey, Pikes Peak (`js/world-chase-bt39.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 33: Aguascalientes, Bathurst (`js/world-chase-bt33.js`, v #821) | biketraveler | v delu 21. 11. |
