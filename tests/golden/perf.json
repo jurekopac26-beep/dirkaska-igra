@@ -65,9 +65,9 @@
  "bathurst": {
   "calls": 175,
   "maxCalls": 254,
-  "kverts": 508,
-  "maxKverts": 557,
-  "jsMs": 1.21
+  "kverts": 518,
+  "maxKverts": 561,
+  "jsMs": 1.62
  },
  "chapman": {
   "calls": 169,
@@ -169,10 +169,10 @@
  },
  "bikernieki": {
   "calls": 195,
-  "maxCalls": 243,
-  "kverts": 471,
-  "maxKverts": 563,
-  "jsMs": 1.22
+  "maxCalls": 244,
+  "kverts": 497,
+  "maxKverts": 595,
+  "jsMs": 1.65
  },
  "zandvoort": {
   "calls": 212,
