@@ -106,6 +106,17 @@ Besedila opravil: kot na računu strani 1 (tam jih prebere `get_trigger`), s str
 
 Seja zbiranja s časom nabira kontekst (meritev 3. 11. 2026: 250 tisoč žetonov v 11 urah), zato pregled sej dela podagent, sejo pa po koraku 9 razdelka Zbiranje zamenja nova. Besedilo njenih opravil lahko spremeni samo ona (`update_trigger` iz drugih sej zavrne spremembo besedila), zato je postopek v tem dokumentu, ne v besedilu opravil.
 
+## Besedila vprašanj grafike (za stran Odločitve)
+
+### `chase-skupina-82`
+
+Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgnanec v žlebu ob robniku, redke krpe novejšega asfalta, v mestu rešetke odtokov, plošče pločnika in pokrovi do ~60 m, na tratah svetlejše in temnejše pokošene zaplate in uhojena prst; brez novih klicev risanja) in Pikes Peak na makadamu (rožnat gramoz in kamenje v kratkih progah ob robu, za ograjo do ~60 m granitne skale, nizki bori, iglice, blazine tundre, suhi šopi in grušč na strminah; +13 klicev, 146 od 300). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Pikes Peak manj (pol gostote za ograjo), Seul tako.
+3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
+4. Ne, odstrani skupino 82.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
