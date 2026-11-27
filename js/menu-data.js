@@ -124,6 +124,30 @@ window.MENU = {
   "hakone": 300
  },
  "routeMaps": {
+  "aguascalientes": {
+   "base": 1859
+  },
+  "batangas": {
+   "base": 103
+  },
+  "bikernieki": {
+   "base": 6
+  },
+  "buriram": {
+   "base": 176
+  },
+  "canaries": {
+   "base": 44
+  },
+  "cusco": {
+   "base": 3531
+  },
+  "eljem": {
+   "base": 110
+  },
+  "ella": {
+   "base": 681
+  },
   "vrsic": {
    "start": "Kranjska Gora",
    "finish": "Vršič",
