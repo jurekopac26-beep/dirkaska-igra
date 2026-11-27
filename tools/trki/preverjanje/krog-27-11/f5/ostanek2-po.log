@@ -1,0 +1,21 @@
+drevo: 31f12e4, js/core.js spremenjen v delovnem drevesu
+== razredi (zadetki; avtoNic = zadetki, pri katerih se spremeni samo stvar; rast energije avta in para; pri kupu par brez stranskega razleta in energija razleta; pri celem predmetu omejitev hitrosti; gkMax = največja razlika gibalne količine para, kg m/s)
+giblje, avto se vrti {"zadetkov":5119,"avtoNic":100,"avtoGor":1016,"avtoGorMaxJ":6310.9,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"omejitev":2871,"omejitevZavrla":1654,"parGorOmejitev":0,"gkMax":2242.9,"vrste":{}}
+giblje, w=0 {"zadetkov":2775,"avtoNic":29,"avtoGor":573,"avtoGorMaxJ":5077.1,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"omejitev":1458,"omejitevZavrla":873,"parGorOmejitev":0,"gkMax":1692.6,"vrste":{}}
+stoji, w=0, cel {"zadetkov":15064,"avtoNic":0,"avtoGor":0,"avtoGorMaxJ":0,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"omejitev":3394,"omejitevZavrla":0,"parGorOmejitev":0,"gkMax":0,"vrste":{}}
+stoji, w=0, kup {"zadetkov":1820,"avtoNic":0,"avtoGor":0,"avtoGorMaxJ":0,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"parBrezRazletaGor":0,"parBrezRazletaMaxJ":0,"razletMaxJ":6985.7,"gkMax":227.6,"vrste":{}}
+stoji, |w|<=3, cel {"zadetkov":18974,"avtoNic":0,"avtoGor":0,"avtoGorMaxJ":0,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"omejitev":4513,"omejitevZavrla":0,"parGorOmejitev":0,"gkMax":0,"vrste":{}}
+stoji, |w|<=3, kup {"zadetkov":2417,"avtoNic":0,"avtoGor":0,"avtoGorMaxJ":0,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"parBrezRazletaGor":0,"parBrezRazletaMaxJ":0,"razletMaxJ":8200.6,"gkMax":244.6,"vrste":{}}
+stoji, |w|>3, cel {"zadetkov":8639,"avtoNic":0,"avtoGor":0,"avtoGorMaxJ":0,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"omejitev":2870,"omejitevZavrla":0,"parGorOmejitev":0,"gkMax":0,"vrste":{}}
+stoji, |w|>3, kup {"zadetkov":1086,"avtoNic":0,"avtoGor":0,"avtoGorMaxJ":0,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"parBrezRazletaGor":0,"parBrezRazletaMaxJ":0,"razletMaxJ":6581.6,"gkMax":235.2,"vrste":{}}
+== razlet kupa po hitrosti udarca (n zadetkov; povprečna in največja stranska hitrost kosa, m/s; povprečna energija razleta in povprečna izguba para brez razleta, J; nad = razlet večji od izgube)
+drugi kupi, do 2 m/s: {"n":873,"stran":0.57,"stranMax":1.11,"razletJ":15.3,"izgubaJ":1028.7,"nad":0}
+drugi kupi, 2–5 m/s: {"n":904,"stran":0.58,"stranMax":1.16,"razletJ":13.2,"izgubaJ":1741.3,"nad":0}
+drugi kupi, 5–10 m/s: {"n":729,"stran":0.57,"stranMax":1.13,"razletJ":9.8,"izgubaJ":4583.5,"nad":0}
+drugi kupi, 10–20 m/s: {"n":691,"stran":0.59,"stranMax":1.11,"razletJ":9.7,"izgubaJ":12422.1,"nad":0}
+drugi kupi, nad 20 m/s: {"n":836,"stran":0.59,"stranMax":1.11,"razletJ":11.9,"izgubaJ":44135.5,"nad":0}
+kup z razmikom (isign), do 2 m/s: {"n":295,"stran":2.18,"stranMax":4.55,"razletJ":417.9,"izgubaJ":3405.7,"nad":0}
+kup z razmikom (isign), 2–5 m/s: {"n":268,"stran":3.18,"stranMax":4.63,"razletJ":664.1,"izgubaJ":8171.6,"nad":0}
+kup z razmikom (isign), 5–10 m/s: {"n":213,"stran":3.71,"stranMax":4.74,"razletJ":972.6,"izgubaJ":13140.7,"nad":0}
+kup z razmikom (isign), 10–20 m/s: {"n":218,"stran":4.02,"stranMax":4.69,"razletJ":1071.3,"izgubaJ":37616.4,"nad":0}
+kup z razmikom (isign), nad 20 m/s: {"n":296,"stran":4.05,"stranMax":4.78,"razletJ":1305.7,"izgubaJ":112863.3,"nad":0}

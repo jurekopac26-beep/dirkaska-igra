@@ -416,6 +416,34 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
       return { first, last, loss, fast, nan, st1, L, end: [loss, P.x, P.z, P.h * D, Math.hypot(P.vx, P.vz) * 3.6] };
     });
   }
+  // the first touch of a thing by the road, the car's and the thing's energy (fizika-5, 27. 11.): gain: what the car and the thing have more after
+  // the step of the first touch than they came with, J (the car against its twin without the thing; with its yaw and its fuel; a stack: the sum
+  // of its pieces); side: the pieces' largest speed across the car's way, m/s; dz, dw: the car's speed across its way and its yaw rate got in the
+  // touch. mv [vx, vz, z0, gap]: the thing comes moving (its own speed, where it starts beside the car's line, how far ahead of the touch)
+  function touch(tx, kind, kmh, mv) {
+    return test(tx, () => {
+      const mk = (withProp) => { const race = mkRace(), P = race.player; placeCar(P, OV.px[I0], 0, 0, kmh / 3.6);
+        if (withProp) { race.setProps([{ kind, x: P.x, z: P.z, yaw: 0, col: 0, i: I0 }], null); const K = race.props[0].K, ahead = P.circles[P.circles.length - 1] + P.rad + (K.reach || K.rh) + (mv ? mv[3] : 0.6);
+          race.setProps([{ kind, x: P.x + ahead, z: mv ? mv[2] : 0, yaw: 0, col: 0, i: I0 }], null); if (mv) { const b = race.props[0]; b.vx = mv[0]; b.vz = mv[1]; b.sleep = false; } }
+        return race; };
+      const A = mk(true), B = mk(false), P = A.player, Q = B.player, b = A.props[0];
+      const E = (c) => { const m = c.m.mass + (c.fuelKg || 0); return 0.5 * m * (c.vx * c.vx + c.vz * c.vz) + 0.5 * c.I * m / c.m.mass * c.w * c.w; }, eT = (L) => L.reduce((a, p) => a + 0.5 * p.K.m * (p.vx * p.vx + p.vz * p.vz), 0);
+      for (let k = 1; k <= Math.round(2 / DT); k++) {
+        const e0 = eT([b]), v0 = Math.hypot(b.vx, b.vz); stepR(A, k); stepR(B, k);
+        if (P.hitDebris > 0) { const L = b.dead && b.parts ? b.parts : [b]; return { k, parts: L.length, gain: E(P) - E(Q) + eT(L) - e0, side: Math.max(...L.map(p => Math.abs(p.vz))), dz: P.vz - Q.vz, dw: P.w - Q.w, dx: P.vx - Q.vx, v0, v1: Math.hypot(b.vx, b.vz), nan: !fin(P) }; }
+      }
+      return null;
+    });
+  }
+  {
+    const s5 = touch(REAL, 'isign', 5), s120 = touch(REAL, 'isign', 120), q5 = touch(SIM, 'isign', 5), q120 = touch(SIM, 'isign', 120), mv = touch(REAL, 'bale', 60, [16, 0, 0, 0.05]);
+    ok('Realistična, a stack that a slow car touches (a board on three blocks, isign, at 5 km/h): the car and the pieces together have no more energy than the car came with (1 J) and the pieces fly apart slower than the stack\'s own scatter (under 3 m/s); a hard hit (120 km/h) scatters them as in Simulacija (the same to 1e-9); Simulacija is as it was (its slow touch still flings them, 3 m/s or more)',
+      !!(s5 && s120 && q5 && q120) && s5.parts === 4 && !s5.nan && !s120.nan && s5.gain <= 1 && s5.side < 3 && s120.side >= 3 && Math.abs(s120.side - q120.side) <= 1e-9 && q5.side >= 3,
+      s5 && s120 && q5 && q120 ? `5 km/h: the pair ${f(s5.gain, 1)} J, the pieces sideways up to ${f(s5.side)} m/s (Simulacija ${f(q5.gain, 1)} J, ${f(q5.side)} m/s); 120 km/h: ${f(s120.side)} m/s (Simulacija ${f(q120.side)})` : 'no touch');
+    ok('Realistična, a thing the car catches up with (a bale sliding ahead at 16 m/s, the car at 60 km/h): the limit of the thing\'s speed holds it below the speed it came with, and that does not push the car on: the car is no faster than its twin without the thing (1e-9) and the car and the thing together have no more energy than before the touch',
+      !!mv && !mv.nan && mv.v0 < 60 / 3.6 && mv.v1 < mv.v0 && mv.dx <= 1e-9 && mv.gain <= 1e-6,
+      mv ? `the bale ${f(mv.v0)} to ${f(mv.v1)} m/s; the car against its twin ${mv.dx.toExponential(1)} m/s; the pair ${f(mv.gain, 1)} J` : 'no touch');
+  }
   const KINDS = ['cone', 'tyre', 'bale', 'bstack', 'lamp'], pr = {};
   for (const kind of KINDS) for (const kmh of [60, 120, 200]) pr[kind + '-' + kmh] = { name: kind + '-' + kmh, kind, r: prop(REAL, kind, kmh, 0, 1.2), a: kind === 'bstack' ? null : prop(REAL, kind, kmh, 0.6, 1.2), b: kind === 'bstack' ? null : prop(REAL, kind, kmh, -0.6, 1.2) };
   {

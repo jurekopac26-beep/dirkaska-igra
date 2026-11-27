@@ -20,7 +20,7 @@ const cm = (c) => c.m.mass + (c.fuelKg || 0), Ec = (c) => { const m = cm(c); ret
 const SU = SIM.SETUPS.race, race = SIM.makeRace(C, 'spa', (C2, tt, t) => Object.assign(SU.opts(C2, tt, 'cs', t), { numAI: 0, playerGrid: 1 })), T = race.track, I0 = 300, X0 = T.px[I0], Z0 = T.pz[I0];
 race.propFx = () => {}; const kinds = X.kinds().filter(k => { race.setProps([{ kind: k, x: X0, z: Z0, yaw: 0, col: 0, i: I0 }], null); return race.props.length > 0; });
 let BK = null; const bp0 = race.breakProp; race.breakProp = function (b, nx, nz, vn) { BK = { nx, nz, vn }; return bp0.apply(this, arguments); };   // (smer in hitrost udarca v kup)
-const CL = {}, cls = (k) => CL[k] || (CL[k] = { zadetkov: 0, avtoGor: 0, avtoGorMaxJ: 0, parGor: 0, parGorMaxJ: 0, parGorMaxDelez: 0, parBrezRazletaGor: 0, parBrezRazletaMaxJ: 0, razletMaxJ: 0, omejitev: 0, omejitevZavrla: 0, parGorOmejitev: 0, gkMax: 0, vrste: {} });
+const CL = {}, cls = (k) => CL[k] || (CL[k] = { zadetkov: 0, avtoNic: 0, avtoGor: 0, avtoGorMaxJ: 0, parGor: 0, parGorMaxJ: 0, parGorMaxDelez: 0, parBrezRazletaGor: 0, parBrezRazletaMaxJ: 0, razletMaxJ: 0, omejitev: 0, omejitevZavrla: 0, parGorOmejitev: 0, gkMax: 0, vrste: {} });
 const PASOVI = [2, 5, 10, 20, Infinity], PIME = ['do 2 m/s', '2–5 m/s', '5–10 m/s', '10–20 m/s', 'nad 20 m/s'], RZ = {}, rz = (k) => RZ[k] || (RZ[k] = PASOVI.map(() => ({ n: 0, s: 0, max: 0, e: 0, bud: 0, nad: 0 })));
 for (let n = 0; n < N; n++) { const kind = kinds[(R() * kinds.length) | 0]; race.setProps([{ kind, x: X0, z: Z0, yaw: u(-Math.PI, Math.PI), col: 0, i: I0 }], null); const b = race.props[0], K = b.K;
   const id = ids[(R() * ids.length) | 0], sp = Math.exp(u(Math.log(1), Math.log(80))), dir = u(-Math.PI, Math.PI), wr = R();
@@ -32,8 +32,8 @@ for (let n = 0; n < N; n++) { const kind = kinds[(R() * kinds.length) | 0]; race
   BK = null; X.propCarHit(race, c, b);
   const parts = b.parts && b.dead ? b.parts : null, things = parts ? parts.map(p => [p.K.m, p.vx, p.vz]) : [[K.m, b.vx, b.vz]];
   if (![c.vx, c.vz, c.w, b.vx, b.vz].every(Number.isFinite)) continue;
-  if (c.vx === S.vx && c.vz === S.vz && c.w === S.w) continue;
-  const key = (mov ? 'giblje' : S.w === 0 ? 'stoji, w=0' : Math.abs(S.w) <= 3 ? 'stoji, |w|<=3' : 'stoji, |w|>3') + (mov ? (S.w === 0 ? ', w=0' : ', avto se vrti') : parts ? ', kup' : ', cel'), Q = cls(key); Q.zadetkov++;
+  const avtoNic = c.vx === S.vx && c.vz === S.vz && c.w === S.w; if (avtoNic && !parts && b.vx === v0[0] && b.vz === v0[1]) continue;   // (ni dotika: ne avto ne stvar se ne spremenita; avtoNic: stvar se spremeni, avto ne)
+  const key = (mov ? 'giblje' : S.w === 0 ? 'stoji, w=0' : Math.abs(S.w) <= 3 ? 'stoji, |w|<=3' : 'stoji, |w|>3') + (mov ? (S.w === 0 ? ', w=0' : ', avto se vrti') : parts ? ', kup' : ', cel'), Q = cls(key); Q.zadetkov++; if (avtoNic) Q.avtoNic++;
   const dEc = Ec(c) - e0, eb0 = 0.5 * K.m * (v0[0] * v0[0] + v0[1] * v0[1]), eb1 = things.reduce((a, t) => a + 0.5 * t[0] * (t[1] * t[1] + t[2] * t[2]), 0), dE = dEc + eb1 - eb0;
   const gk = Math.hypot(m * (c.vx - S.vx) + things.reduce((a, t) => a + t[0] * t[1], 0) - K.m * v0[0], m * (c.vz - S.vz) + things.reduce((a, t) => a + t[0] * t[2], 0) - K.m * v0[1]); Q.gkMax = Math.max(Q.gkMax, gk);
   const cap = Math.min(K.vmax || 18, 0.72 * sp + 2), hs = Math.hypot(b.vx, b.vz), naMeji = !parts && Math.abs(hs - cap) < 1e-9, zavrla = naMeji && hs < Math.hypot(v0[0], v0[1]);
@@ -47,7 +47,7 @@ for (let n = 0; n < N; n++) { const kind = kinds[(R() * kinds.length) | 0]; race
     if (brez > 1e-6) { Q.parBrezRazletaGor++; Q.parBrezRazletaMaxJ = Math.max(Q.parBrezRazletaMaxJ, brez); }
     const P = rz(K.spread ? 'kup z razmikom (' + kind + ')' : 'drugi kupi')[PASOVI.findIndex(x => BK.vn < x)]; P.n++; P.s += A; P.max = Math.max(P.max, A); P.e += razlet; P.bud += -brez; if (razlet > -brez + 1e-6) P.nad++; }
 }
-console.log('== razredi (zadetki; rast energije avta in para; pri kupu par brez stranskega razleta in energija razleta; pri celem predmetu omejitev hitrosti; gkMax = največja razlika gibalne količine para, kg m/s)');
+console.log('== razredi (zadetki; avtoNic = zadetki, pri katerih se spremeni samo stvar; rast energije avta in para; pri kupu par brez stranskega razleta in energija razleta; pri celem predmetu omejitev hitrosti; gkMax = največja razlika gibalne količine para, kg m/s)');
 for (const k of Object.keys(CL).sort()) { const Q = CL[k]; for (const f of ['avtoGorMaxJ', 'parGorMaxJ', 'parBrezRazletaMaxJ', 'razletMaxJ', 'gkMax']) Q[f] = r1(Q[f]); Q.parGorMaxDelez = +Q.parGorMaxDelez.toFixed(4);
   if (!/kup/.test(k)) { delete Q.parBrezRazletaGor; delete Q.parBrezRazletaMaxJ; delete Q.razletMaxJ; } else { delete Q.omejitev; delete Q.omejitevZavrla; delete Q.parGorOmejitev; } console.log(k, JSON.stringify(Q)); }
 console.log('== razlet kupa po hitrosti udarca (n zadetkov; povprečna in največja stranska hitrost kosa, m/s; povprečna energija razleta in povprečna izguba para brez razleta, J; nad = razlet večji od izgube)');

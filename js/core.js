@@ -4379,9 +4379,12 @@ const Core = (function () {
       if (vrel < 0.5) return;
       const kr = krOn(c), bvx = b.vx, bvz = b.vz;   // (Realistična: the push back of what it got, propPush; bvx, bvz its speed before)
       if (K.breaks) { const live = !b.dead; race.breakProp(b, nx, nz, vrel, kr ? vcx : c.vx, kr ? vcz : c.vz, c);   // (Realistična: its pieces take the share of the speed of what hit them, the car's body at the contact, its turn with it: a spinning car's tail shoves them where it swings, not where the car's middle goes)
-        if (kr && live && b.parts) { let qx = 0, qz = 0, eb = 0;   // (a stack: what its pieces got, without their sideways scatter, _bks: the stack's own, its net not the car's to take)
-          b.parts.forEach((p, k) => { const pm = p.K.m, ux = p.vx + nz * _bks[k], uz = p.vz - nx * _bks[k]; qx += pm * (ux - bvx); qz += pm * (uz - bvz); eb += 0.5 * pm * (ux * ux + uz * uz - bvx * bvx - bvz * bvz); });
-          propPush(c, -qx, -qz, rcx, rcz, eb); }
+        if (kr && live && b.parts) { let qx = 0, qz = 0, eb = 0, sa = 0, sc = 0;   // (a stack: what its pieces got, without their sideways scatter, _bks: the stack's own, its net not the car's to take; sa, sc: the energy of that scatter, s * sc + s * s * sa for the share s of it)
+          b.parts.forEach((p, k) => { const pm = p.K.m, ux = p.vx + nz * _bks[k], uz = p.vz - nx * _bks[k]; qx += pm * (ux - bvx); qz += pm * (uz - bvz); eb += 0.5 * pm * (ux * ux + uz * uz - bvx * bvx - bvz * bvz); sa += 0.5 * pm * _bks[k] * _bks[k]; sc += pm * _bks[k] * (uz * nx - ux * nz); });
+          const cm = c.m.mass + (c.fuelKg || 0), cI = c.I * cm / c.m.mass, e0 = 0.5 * cm * (c.vx * c.vx + c.vz * c.vz) + 0.5 * cI * c.w * c.w;
+          propPush(c, -qx, -qz, rcx, rcz, eb);
+          const bud = Math.max(0, e0 - 0.5 * cm * (c.vx * c.vx + c.vz * c.vz) - 0.5 * cI * c.w * c.w - eb);   // (what the car and the stack lost in the knock: all that the scatter can take, so a slow touch does not fling the pieces apart; a hard one scatters them as before)
+          if (sa + sc > bud) { const s = clamp((Math.sqrt(sc * sc + 4 * sa * bud) - sc) / (2 * sa), 0, 1); b.parts.forEach((p, k) => { const d = (1 - s) * _bks[k]; p.vx += nz * d; p.vz -= nx * d; _bks[k] *= s; }); } }
         propFeel(c, K.m, vrel, b.kind, kr); return; }
       const rx = K.legs ? px - b.x : -nx * K.rh, rz = K.legs ? pz - b.z : -nz * K.rh, ry = clamp(cy + 0.42 - b.y, -K.rb * 0.8, K.rb * 0.8);          // hit at bumper height: it topples away (a board at its leg: it turns as well)
       const ax2 = ry * nz, ay2 = rz * nx - rx * nz, az2 = -ry * nx;
@@ -4393,7 +4396,8 @@ const Core = (function () {
       race.propFx(b, vrel);
       if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) knock(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
-      if (kr) propPush(c, -K.m * (b.vx - bvx), -K.m * (b.vz - bvz), rcx, rcz, 0.5 * K.m * (b.vx * b.vx + b.vz * b.vz - bvx * bvx - bvz * bvz));
+      if (kr) { const eb = 0.5 * K.m * (b.vx * b.vx + b.vz * b.vz - bvx * bvx - bvz * bvz), a = hs > cap && (bvx || bvz) ? K.m * clamp((b.vx - bvx) * nx + (b.vz - bvz) * nz, 0, j / K.m) : -1;   // (a: it came moving and vmax held it: the car gets the knock along the contact only, no more than it was; what vmax took of the prop's own way went into the ground, not into the car)
+        if (a < 0) propPush(c, -K.m * (b.vx - bvx), -K.m * (b.vz - bvz), rcx, rcz, eb); else if (a > 0) propPush(c, -nx * a, -nz * a, rcx, rcz, eb); }
       propFeel(c, K.m, vrel, b.kind, kr);
       return;
     }
