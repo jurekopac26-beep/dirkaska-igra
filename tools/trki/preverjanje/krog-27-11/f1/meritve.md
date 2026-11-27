@@ -57,6 +57,40 @@ Najmočnejši udarec repa: mombasa/formula, tekmec, ograja spremeni smer: 18,5 m
 
 Cusco (`cusco9b`, cusco/crash, bočni zdrs 29,7 m/s, kot karoserije do ograje −4,3°): sprednji vogal 12,63 → 12,48 m/s, prijemališče 0,457 → 0,636 m pred sredino; zadnji vogal 0,05 → 0,042 s pozneje s 5,94 → 9,74 m/s; škoda igralca 0,627 → 0,729. Razmerje 0,47 → 0,78, pod 1,5.
 
+## Slika zdaj in potem (kartica `trki-ograja-27-11`, stran Odločitve)
+
+Prizor: `slika-ograja.json` (zagon je zapisan v datoteki; slika ni v repozitoriju). Krásna Hôrka, 121 m po štartu, reli avto, 107 km/h, 12,5 m desno od sredine, nos 8° stran od desne ograje, gibanje 9° proti njej, pred trkom škoda 0,56. Obe strani cv 6, koraki 1/120 s; do dotika sta enaki (`enako_pred_trkom`), prvi dotik v koraku 12, hitrost zapiranja 3,663 m/s.
+
+| | pred (`f36d382`) | po (`0fc7026`) |
+|---|---|---|
+| škoda | 0,56 → 1,00 v 0,1 s | 0,593 |
+| odpadlo | ogledalo, blatnik, obe sprednji kolesi (konec dirke) | ogledalo |
+| km/h tik pred trkom, +0,1, +0,3, +0,8, +1,6 s | 107,4 / 84,9 / 46,7 / 5,9 / 0 | 107,4 / 101,5 / 98,8 / 93,1 / 85,4 |
+| vnosi po dotiku, izmerjeni (plin; volan; zavora) | 0; 0; 0,1 | 0; 0; 0 |
+
+Zavoro 0,1 na strani »pred« doda igra sama po koncu dirke. Koliko k ustavitvi prispeva ta zavora in koliko odpadli kolesi, ni izmerjeno.
+
+Dvanajst postavitev okoli tega položaja (isti kraj, avto, hitrost, škoda 0,56). Izbrane so ob znani napaki in niso naključen vzorec: ne povedo, kako pogosto se to zgodi v dirki (to povesta `zid10` in `zid10b` zgoraj). »Kolesi« = odpadejo ogledalo, blatnik in obe sprednji kolesi.
+
+| | desno (m) | nos (°) | gibanje (°) | po dotiku | zapiranje (m/s) | pred: škoda, odpadlo | po: škoda, odpadlo |
+|---|---|---|---|---|---|---|---|
+| 1 (slika) | 12,5 | −8 | 9 | brez vnosov | 3,663 | 1,00, kolesi | 0,593, ogledalo |
+| 2 | 12,6 | −10 | 7 | brez vnosov | 2,533 | 0,688, ogledalo | 0,561, nič |
+| 3 | 12,6 | −10 | 9 | brez vnosov | 3,625 | 1,00, kolesi | 0,591, ogledalo |
+| 4 | 12,7 | −11 | 6 | brez vnosov | 2,014 | 0,577, ogledalo | 0,560, nič |
+| 5 | 12,5 | −12 | 9 | brez vnosov | 3,462 | 1,00, kolesi | 0,587, ogledalo |
+| 6 | 12,4 | −9 | 11 | brez vnosov | 4,689 | 1,00, kolesi | 0,621, ogledalo |
+| 7 | 12,5 | −8 | 9 | plin, volan levo | 3,663 | 1,00, kolesi | 0,600, ogledalo |
+| 8 | 12,6 | −10 | 9 | plin, volan levo | 3,625 | 1,00, kolesi | 0,591, ogledalo |
+| 9 | 12,7 | −8 | 9 | brez vnosov | 3,856 | 1,00, kolesi | 0,598, ogledalo |
+| 10 | 12,3 | −8 | 9 | brez vnosov | 3,384 | 1,00, kolesi | 0,585, ogledalo |
+| 11 | 12,5 | −6 | 11 | brez vnosov | 4,883 | 1,00, kolesi | 0,662, ogledalo |
+| 12 | 12,6 | −12 | 6 | plin, volan levo | 1,773 | 0,562, nič | 0,560, nič |
+
+Sprednji kolesi odpadeta v 9 od 12 postavitev pred popravkom in v nobeni po njem; v treh blažjih (zapiranje 1,8–2,5 m/s) kolo ne odpade ne prej ne potem. V repozitoriju je samo postavitev 1; drugih enajst je bilo pognanih iz začasne datoteke.
+
+**Orodje za slike (`tools/trki/slike.mjs`), najdba ob tej sliki.** Na odprti cesti z letečim štartom igra vozi igralčev avto s samodejnim pilotom, dokler je `race.flyOn` vklopljen; v orodju je ostal vklopljen ves prizor. Izmerjeno: ob dotiku plin 0,8 in volan −1 na obeh straneh namesto vnosov orodja, pod sliko pa je pisalo »po dotiku brez plina in volana«. Sklep iz kode (ni izmerjeno): zastavica ostane, ker orodje igro ustavi takoj po štartu in avto prestavi. Popravek je samo v orodju (`R.flyOn = false` po postavitvi; kjer zastavice ni, vrstica ne naredi nič); orodje zdaj v vsaki sličici zapiše dejanske vnose (`plin`, `volan`, `zavora`). Po popravku izmerjeno: ob dotiku plin 1 (drži hitrost), volan 0; po dotiku plin 0, volan 0. Slike s tem orodjem pred 27. 11. s prog z letečim štartom so lahko nastale s pilotom; katere, ni preverjeno.
+
 ## Česa ta krog ni izmeril
 
 - Semena: `SEED=11` in `SEED=23` dasta iste številke kot 7 (dirke v `tests/lib/sim.js` so deterministične), zato to ni nov vzorec. Nov vzorec so druge proge (`zid10b`) ali druge postavitve (`race`, `lm`, `car`, `upg`, `demo`): te niso izmerjene.

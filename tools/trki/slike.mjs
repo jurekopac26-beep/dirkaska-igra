@@ -31,6 +31,8 @@
 //      with one rival, dry, by day; the game is paused and from then on stepped only from here (window.__game.sim, 1/120 s a step)
 //   2. the player's car is put m metres after the start (the road's frame there: naprej along it, desno across it to the right, kot the
 //      nose's angle to the road, + to the right), the rival relative to it; a wall scenario has no rival (it is parked 400 m back, hidden).
+//      igralec.smer (optional): the direction the player's car MOVES in, as kot is given; without it the car moves where its nose points.
+//      With it the car is staged in a slide (nose one way, speed another), as measured in a race.
 //      A rival with do_ograje drives into the barrier itself (its nearest corner that far from it); a player with kmh 0 stands and
 //      watches (held as on the grid). avto: the player's car (the rivals drive what its field says: a kit car's rival has wheels to lose)
 //   3. 1.25 s on the spot: every step the cars are put back where they were staged with their speed, so the gearbox, the revs and the
@@ -123,6 +125,7 @@ function stageAndRun(o) {
   const g = window.__game, R = g.race, T = R.track, P = R.player, STEP = 1 / 120, RAD = Math.PI / 180;
   const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a)), clamp = (x, a, b) => Math.max(a, Math.min(b, x)), r3 = (x) => +x.toFixed(3);
   g.pause(); Render.resize();
+  if (R.flyOn) R.flyOn = false;   // (an open road's flying start: until the car is over the line the game's autopilot drives the player's car, not the inputs given here; switched off, the game hands the car over in its next step, during the settle)
   const ms = {}, clock = (k, w) => { ms[k] = Math.round(performance.now() - w); return performance.now(); }; let w0 = performance.now();   // (where the time goes)
   let stepNo = 0, touchAt = -1;   // (the steps made from here; the step of the first touch)
   const others = R.cars.filter(c => c !== P), B = o.tekmec ? others[0] : null;
@@ -132,7 +135,7 @@ function stageAndRun(o) {
   const O = { x: T.px[i0], z: T.pz[i0], hd: T.hd[i0], tx: Math.cos(T.hd[i0]), tz: Math.sin(T.hd[i0]), nx: T.nx[i0], nz: T.nz[i0] };
   const sg = O.nx * -O.tz + O.nz * O.tx >= 0 ? 1 : -1;
   const along = (c) => (c.x - O.x) * O.tx + (c.z - O.z) * O.tz, across = (c) => (c.x - O.x) * O.nx + (c.z - O.z) * O.nz;
-  const pose = (a, d, kot, kmh) => { const h = wrap(O.hd + sg * kot * RAD), v = kmh / 3.6; return { x: O.x + a * O.tx + d * O.nx, z: O.z + a * O.tz + d * O.nz, h, v, vx: v * Math.cos(h), vz: v * Math.sin(h), a, d, kot }; };
+  const pose = (a, d, kot, kmh, smer) => { const h = wrap(O.hd + sg * kot * RAD), hv = smer == null ? h : wrap(O.hd + sg * smer * RAD), v = kmh / 3.6; return { x: O.x + a * O.tx + d * O.nx, z: O.z + a * O.tz + d * O.nz, h, v, vx: v * Math.cos(hv), vz: v * Math.sin(hv), a, d, kot }; };
   // do_ograje: a car's place across the road from the barrier it drives at (its nearest corner that far from it, where it will meet it;
   // a0: where the car stands along the road). The player's, or the rival's (then the rival's desno is not used)
   const atWall = (c, cfg, a0) => {
@@ -144,7 +147,7 @@ function stageAndRun(o) {
   const ip = o.igralec, kotP = ip.kot || 0, it = o.tekmec, wallB = !!(it && it.do_ograje != null);
   let dP = ip.desno || 0, ograja = null;
   if (ip.do_ograje != null) { const w = atWall(P, ip, ip.naprej || 0); dP = w.d; ograja = w.ograja; }
-  const tP = pose(ip.naprej || 0, dP, kotP, ip.kmh || 0);
+  const tP = pose(ip.naprej || 0, dP, kotP, ip.kmh || 0, ip.smer);
   let dB = it ? tP.d + (it.desno || 0) : 0;
   if (wallB) { const w = atWall(B, it, tP.a + (it.naprej || 0)); dB = w.d; ograja = w.ograja; }
   const tB = it ? pose(tP.a + (it.naprej || 0), dB, it.kot || 0, it.kmh || 0) : null;
@@ -240,7 +243,7 @@ function stageAndRun(o) {
   w0 = clock('kamera', w0);
   // the numbers under a frame: the speed, how far the car has turned since the touch (+ to the right), where it is in the road's frame
   const turn = { P: 0, B: 0 }, hPrev = { P: P.h, B: B ? B.h : 0 };
-  const num = (c, k) => ({ kmh: +(c.speed * 3.6).toFixed(1), zasuk: +(sg * turn[k] / RAD).toFixed(1), naprej: r3(along(c)), desno: r3(across(c)), kot: +(sg * wrap(c.h - O.hd) / RAD).toFixed(1), skoda: r3(c.dmg || 0) });
+  const num = (c, k) => ({ kmh: +(c.speed * 3.6).toFixed(1), zasuk: +(sg * turn[k] / RAD).toFixed(1), naprej: r3(along(c)), desno: r3(across(c)), kot: +(sg * wrap(c.h - O.hd) / RAD).toFixed(1), skoda: r3(c.dmg || 0), plin: r3(c.inThr || 0), volan: r3(sg * (c.inSteer || 0)), zavora: r3(c.inBrk || 0) });   // (plin, volan, zavora: the inputs the car really had in that step; the autopilot's if the game drove it)
   const nums = () => ({ igralec: num(P, 'P'), tekmec: B ? num(B, 'B') : null, deli: deli() });
   const track = () => { turn.P += wrap(P.h - hPrev.P); hPrev.P = P.h; if (B) { turn.B += wrap(B.h - hPrev.B); hPrev.B = B.h; } };
   // how soon the first touch can come at the earliest (s): the gap between the two bodies' boxes over the speed they close at, the
