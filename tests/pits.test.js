@@ -21,10 +21,14 @@ const laneYaw = (T, c, p) => { let a = c.h - Math.atan2(c.q.tz, c.q.tx); a = Mat
 const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the apron starts to show: the autopilot looks ahead)
 
 // 1. the boxes: 13 crews' boxes 10 m apart where the lane runs full width; the player's one of them, the 12 AI cars each in another one
+// (FEW: fewer boxes, the AI crews share them, Core's _pitRoom never sends two cars to the same box at once: Sosnová's short lane, 7 boxes,
+// brez vira (izjema, odločitev Mateja 27. 11.))
+const FEW = { sosnova: 7 };
 {
   const res = PITS.map(d => { const T = new C.Track(d), P = d.pit, B = T.crewBoxes(), r = new C.Race(T, { numAI: 12, playerGrid: 7, laps: 2, playerModel: C.MODELS[4], phys: 'cs', seed: 5 });
     const ai = r.cars.filter(c => !c.isPlayer).map(c => r._aiBox(c)), k = B.indexOf(P[3]);
-    return { id: d.id, ok: !!d.pitRow && B.length === 13 && B.every((b, i) => !i || b - B[i - 1] === 10) && B.every(b => T.pitAt(T.startS + b).t > 0.999) && k >= 0 && new Set(ai).size === 12 && ai.every(b => B.includes(b) && b !== P[3]), k }; });
+    const nb = FEW[d.id] || 13;
+    return { id: d.id, ok: !!d.pitRow && B.length === nb && B.every((b, i) => !i || b - B[i - 1] === 10) && B.every(b => T.pitAt(T.startS + b).t > 0.999) && k >= 0 && new Set(ai).size === Math.min(12, nb - 1) && ai.every(b => B.includes(b) && b !== P[3]), k }; });
   check('the boxes: 13 crews\' boxes 10 m apart (pitRow) where the lane runs full width; the player\'s one of them, each AI car in another of its own', res.every(x => x.ok), res.map(x => `${x.id} ${x.ok ? 'player in box ' + (x.k + 1) : 'NO'}`).join(', '));
 }
 

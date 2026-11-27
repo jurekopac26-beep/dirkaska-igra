@@ -2100,59 +2100,59 @@
   }
  },
  "sosnova/crash/cs": {
-  "digest": "059c565eeebea9ba940c4615",
-  "lead": 1611.7,
+  "digest": "0b8cf0e8820a7bd6dc216b64",
+  "lead": 2166.3,
   "car0": [
-   116.37,
-   -33.89
+   9.81,
+   7.78
   ],
   "cover": {
    "dmg": 0.94,
    "loose": 5,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "sosnova/formula/cs": {
-  "digest": "64538d314abb3a8fb1b44780",
-  "lead": 1763.4,
+  "digest": "4df2246c9afc920b935f6cd6",
+  "lead": 2996.1,
   "car0": [
-   141.96,
-   -26.42
+   -267.69,
+   -75.01
   ],
   "cover": {
    "dmg": 1,
    "loose": 9,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "sosnova/lm/cs": {
-  "digest": "05e48526c0512f86e232b806",
-  "lead": 1736.7,
+  "digest": "d374621af879448acc1a6140",
+  "lead": 2963.1,
   "car0": [
-   156.1,
-   -9.09
+   -261.93,
+   -111.55
   ],
   "cover": {
    "dmg": 0.88,
    "loose": 3,
    "rescues": 1,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "sosnova/car/cs": {
-  "digest": "5a063dc8db06b6b92bdea50c",
-  "lead": 1606.9,
+  "digest": "911a152284d28a079ff2a38f",
+  "lead": 2791.6,
   "car0": [
-   16.72,
-   -22.72
+   -191.08,
+   -42.38
   ],
   "cover": {
    "dmg": 0.52,
    "loose": 4,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "izoard/race/cs": {
