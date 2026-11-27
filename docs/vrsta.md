@@ -102,7 +102,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Nova proga: Šipka, Bolgarija (A Šipka, B Trigrad, C Melnik na strani Odločitve) | partyslo (rezerva croatiadata) | PR #1095 (osnutek, podatki A); čaka »ok« (kartica proge-bolgarija-pot) |
 | Nova proga: Armenija (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11. |
 | Orodje za prekrivanje `tools/prekrivanje.mjs` (odprti PR z isto progo ali datoteko, račun lastnika; `docs/odlocitve.md`, »Brez dvojnega dela«, točka 3) | croatiadata | #1089 osnutek, test OK 25. 11. |
-| Nova proga: El Castaño, Venezuela (rezerva uporabnika 13. 11.; pot in zanimivosti na kartici Odločitve, veja `proga/el-castano`) | partyslo (rezerva croatiadata) | v delu od 25. 11. |
+| Nova proga: El Castaño, Venezuela (rezerva uporabnika 13. 11.; pot in zanimivosti na kartici Odločitve, veja `proga/el-castano`) | partyslo (rezerva croatiadata) | #1090: proga narejena 25. 11. (`elcastano`, 7,9 km); push po #788 na `main` |
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
@@ -140,6 +140,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.2 | #1119 | Zatikanje na startu: testi in meritve | partyslo | **druga prednost (Matej 27. 11., #1161)**; osnutek, »Ready for review« ob mestu med prvima dvema; pred združitvijo svež `main`, `test:related`. |
 | 10.3 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: po #1069 in #1119) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
+| 10.20 | #1118 Zbirna: Proge 4 | El Castaño #1090, Chamarel #1091, Meteora #1094, Šipka #1095, Trebević #1096, Tatev #1097 iz svežega `main` (26. 11.), člani ostanejo odprti; proge, zato zadnje | partyslo | osnutek; povezani zeleni (VELIKOST[2] 10, meja ekonomije 4–20; odločitvi 26. 11.) |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.

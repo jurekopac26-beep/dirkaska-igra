@@ -37,7 +37,7 @@ Isti čas, kot ga meni že kaže v vrstici številk (most `record` v `js/game.js
   //    ključ rekorda: [čas v ms, dan nastanka (dni od 1. 1. 2026; 0 = neznan), avto ali nič]
   ```
 - **S** = podpis ECDSA P-256 s SHA-256 (WebCrypto `crypto.subtle`) niza P, base64url, 86 znakov.
-- **Velikost**: igralec z 20–60 časi ~0,8–2 tisoč znakov; vse proge v obeh fizikah, z dežjem in načini (~300 časov) ~7 tisoč, pod mejo 16.000, ki jo že uporablja duh. Test: polni rekordi ≤ 8.000 znakov.
+- **Velikost**: igralec z 20–60 časi ~0,8–2 tisoč znakov; vse proge v obeh fizikah, z dežjem in načini (~300 časov) ~7 tisoč, pod mejo 16.000, ki jo že uporablja duh. Test: polni rekordi ≤ 12.000 znakov (726 časov ~10.900, 26. 11. 2026).
 
 ### Zaščita pred ponarejenimi časi
 
@@ -91,7 +91,7 @@ Imena na lestvici so vzdevki, ki jih vnese igralec. Igra ne zbira pravih imen, e
 
 ## Testi
 
-- **Node** `tests/lestvica.test.js` (logika v `js/lestvica.js` brez DOM; Node 22 ima WebCrypto in CompressionStream): povezava tja in nazaj; podpis (spremenjen znak, prirezana povezava, tuj podpis, napačna vrsta ali različica: zavrnjeno); meje (vsaka prava proga: zmagovalec AI iz `tests/golden/races.json` je počasnejši od 1,2 × meje, meja je vsaj 0,35 × njegovega časa); združevanje (najmanjši po ključu, ista povezava dvakrat, obraten vrstni red, vzdevek z najnovejšim `sent`, lastna povezava, skriti prijatelj, 40 prijateljev, 1000 časov); velikost pri polnih rekordih ≤ 8.000 znakov; čiščenje vzdevka in izpis brez HTML.
+- **Node** `tests/lestvica.test.js` (logika v `js/lestvica.js` brez DOM; Node 22 ima WebCrypto in CompressionStream): povezava tja in nazaj; podpis (spremenjen znak, prirezana povezava, tuj podpis, napačna vrsta ali različica: zavrnjeno); meje (vsaka prava proga: zmagovalec AI iz `tests/golden/races.json` je počasnejši od 1,2 × meje, meja je vsaj 0,35 × njegovega časa); združevanje (najmanjši po ključu, ista povezava dvakrat, obraten vrstni red, vzdevek z najnovejšim `sent`, lastna povezava, skriti prijatelj, 40 prijateljev, 1000 časov); velikost pri polnih rekordih ≤ 12.000 znakov; čiščenje vzdevka in izpis brez HTML.
 - **Brskalnik** `tests/browser/lestvica.test.mjs`: dve igri (dva konteksta) si izmenjata povezavi; tabela na koraku izbire proge pokonci 360 × 640 in ležeče 640 × 360 (vrstice vidne, nič čez rob, značka mesta); Lestvica s prijatelji in *Odstrani*; vrstica med prijatelji na rezultatih; izvoz in uvoz profila ohrani identiteto. Po spremembi menija `menu.test.mjs`, prevodi `lang.test.js`.
 - Lokalno `npm run test:related` (zaradi `js/game.js` in `js/menu.js` izbere tudi `share`, `chal`, `menu`). Obremenitve telefona sprememba ne poveča (samo meni in zasloni).
 

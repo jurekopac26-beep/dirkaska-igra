@@ -523,5 +523,47 @@
   "kverts": 426,
   "maxKverts": 632,
   "jsMs": 1.47
+ },
+ "tatev": {
+  "calls": 169,
+  "maxCalls": 205,
+  "kverts": 364,
+  "maxKverts": 455,
+  "jsMs": 1.5
+ },
+ "trebevic": {
+  "calls": 161,
+  "maxCalls": 190,
+  "kverts": 364,
+  "maxKverts": 433,
+  "jsMs": 1.48
+ },
+ "sipka": {
+  "calls": 172,
+  "maxCalls": 188,
+  "kverts": 492,
+  "maxKverts": 616,
+  "jsMs": 1.26
+ },
+ "meteora": {
+  "calls": 171,
+  "maxCalls": 205,
+  "kverts": 386,
+  "maxKverts": 543,
+  "jsMs": 1.38
+ },
+ "chamarel": {
+  "calls": 171,
+  "maxCalls": 206,
+  "kverts": 542,
+  "maxKverts": 804,
+  "jsMs": 1.22
+ },
+ "elcastano": {
+  "calls": 116,
+  "maxCalls": 130,
+  "kverts": 447,
+  "maxKverts": 492,
+  "jsMs": 1.34
  }
 }

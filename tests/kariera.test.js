@@ -1,7 +1,7 @@
 // Kariera 1.0, part A and »Atlas« (js/kariera.js, docs/kariera-1-0.md): the path's events come from the real tracks only (every one of them,
 // a new one by itself, never a test or pending one), the cups' sizes and names, the single events (a race, a time trial, a duel), the stars,
 // the unlocking of the stages by the stars, the class cups, the move of the save from v1 to v2, the rewards and the menu's view. And the
-// economy (kariera-5): a simulation of the career, wins only, must buy every car in 110–130 wins and a car of the next stage every 4–16
+// economy (kariera-5): a simulation of the career, wins only, must buy every car in 110–130 wins and a car of the next stage every 4–20
 // races; outside those ranges the test fails (kariera-5, option 2 'hitro', tuned 20. 11., with the single events 22. 11.).
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -19,7 +19,7 @@ const onPath = new Set(P.pokali.flatMap(c => c.tracks)), inClass = new Set(P.raz
 check('every real track is on the path', real.every(d => onPath.has(d.id)), real.filter(d => !onPath.has(d.id)).map(d => d.id).join(', '));
 const nu = [...onPath, ...inClass].filter(id => !byId.has(id) || byId.get(id).test || byId.get(id).pending);
 check('no test or pending track on the path or in a class cup', !nu.length, nu.join(', '));
-check('5 stages of 7/8/9/10/10 events (44), stages 1–4 with 2 cups at least, stage 5 the final', P.stopnje.length === 5 && P.vse.length === 44
+check('5 stages of 7/8/10/10/10 events (45), stages 1–4 with 2 cups at least, stage 5 the final', P.stopnje.length === 5 && P.vse.length === 45
   && P.stopnje.every((s, i) => s.dogodki.length === K.VELIKOST[i] && (s.n === 5 ? s.pokali.join() === 's4-finale' : s.pokali.length >= 2)), P.stopnje.map(s => s.dogodki.length + ':' + s.pokali.length).join('/'));
 const sizes = P.pokali.filter(c => c.vrsta !== 'finale').filter(c => c.tracks.length < 3 || c.tracks.length > K.NAJVEC);
 check('a stage cup has 3–6 races', !sizes.length, sizes.map(c => c.id + ':' + c.tracks.length).join(', '));
@@ -62,7 +62,7 @@ for (const id of ['kildare', 'tianmen', 'livorno']) {
   const up = P.vse.filter(x => { const k = K.kovanci(x); return !(k[0] > 0 && k[0] < k[1] && k[1] < k[2]); });
   check('the coins: 1★ < 2★ < 3★ for every event', !up.length, up.map(x => x.id).join(', '));
   check('the coins grow with the stage', [2, 3, 4, 5].every(s => K.NAGRADE.posamezna[s].every((x, i) => x > K.NAGRADE.posamezna[s - 1][i])));
-  check('the thresholds: 0/9/21/36/54 of 132 stars', P.max === 132 && P.pragovi.join('/') === '0/9/21/36/54', P.max + ': ' + P.pragovi.join('/'));
+  check('the thresholds: 0/9/21/37/55 of 135 stars', P.max === 135 && P.pragovi.join('/') === '0/9/21/37/55', P.max + ': ' + P.pragovi.join('/'));
   const cene = {}; for (const m of C.MODELS) { const pr = C.CAREER.car[m.id]; if (pr && !m.retired && !(cene[m.cat] <= pr)) cene[m.cat] = pr; }
   const Q = K.pot(C.TRACKS, C.CATS, cene), rs = Q.razredi.slice().sort((a, b) => a.stopnja - b.stopnja);
   check('the class cups: two a stage, by the price of the class\'s cheapest car', P.stopnje.every(s => Q.razredi.filter(r => r.stopnja === s.n).length === 2)
@@ -238,7 +238,7 @@ check('the racing cars and trucks on circuits', ['dirkalni', 'tovornjaki'].every
   const a = sim('cheap');
   check('every car in 110–130 wins (kariera-5)', a.cars === models.length && a.wins >= 110 && a.wins <= 130, `${a.wins} wins, ${a.path} on the path, ${a.cars}/${models.length} cars`);
   const b = sim('save'), at = [0, b.bought[1], b.bought[2], b.bought[3], b.bought[4]], gaps = [1, 2, 3, 4].map(s => at[s] - at[s - 1]);
-  check('a car of the next stage every 4–16 races', [1, 2, 3, 4].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 4 && g <= 16), `bought after ${at.slice(1).join(', ')} races`);
+  check('a car of the next stage every 4–20 races', [1, 2, 3, 4].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 4 && g <= 20), `bought after ${at.slice(1).join(', ')} races`);
 }
 
 console.log(`\n${n - bad}/${n} OK`);

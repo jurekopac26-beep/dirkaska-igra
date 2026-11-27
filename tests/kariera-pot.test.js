@@ -177,7 +177,7 @@ const darilaOk = (g) => { const want = []; for (let s = g.igral ? 2 : g.o0 + 1; 
   check('the difficulties: the stages ' + S.map(s => s.diff).join('/') + ', the final 3 (stage 5), the class cups 1, two a stage', J(S.map(s => s.diff)) === '[0,1,2,2,3]' && cupIn(P, 's4-finale').diff === 3
     && cupIn(P, 's4-finale').stopnja === 5 && P.razredi.every(r => r.diff === 1) && S.every(st => P.razredi.filter(r => r.stopnja === st.n).length === 2));
   check('Atlas on the real path: ' + P.stopnje.map(st => st.dogodki.length).join('/') + ' events (' + P.vse.length + '; ' + P.posamezne.length + ' single, ' + P.pokali.length + ' cups, ' + P.razredi.length
-    + ' class cups), ' + P.max + '★, the thresholds ' + P.pragovi.join('/'), J(P.stopnje.map(st => st.dogodki.length)) === J(K.VELIKOST) && P.vse.length === 44 && P.max === 132 && J(P.pragovi) === '[0,9,21,36,54]');
+    + ' class cups), ' + P.max + '★, the thresholds ' + P.pragovi.join('/'), J(P.stopnje.map(st => st.dogodki.length)) === J(K.VELIKOST) && P.vse.length === 45 && P.max === 135 && J(P.pragovi) === '[0,9,21,37,55]');
   check('the numbering (the plan\'s »Pokal cest · Klub«): a first part plain, a second » II«, never » I« (fixed: it began at » II«)',
     P.pokali.some(c => c.name === 'Pokal cest · Klub' && c.en.name === 'Road Cup · Club') && !P.vse.some(c => / I( ·|$)/.test(c.name) || / I( ·|$)/.test(c.en.name)), P.pokali.map(c => c.name).join(', '));
   check('the class cups: an English name for every class of Core; a new class keeps its own name', P.razredi.every((r, i) => r.en.name !== 'Class Cup · ' + C.CATS[i].name)
