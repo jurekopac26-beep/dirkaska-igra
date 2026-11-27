@@ -50,6 +50,46 @@
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
 
+  /* the side roads of OSM on a closed lap (LD.side: their first ~60 m from the lap's nodes, the drivable ones; odločitev 23. 11.): flat strips
+     on the ground from the barrier outward, which stays closed straight across their mouths (World's def.sideRoads and Core's stubs are the
+     open roads': here only the drawing, in the scenery chunks: no draw calls of their own); till the way comes back to the lap. Two steps: the
+     strips' lines and the trees kept off them now, the quads by draw() once the trees' shade is in the ground's colours (nrGCol) */
+  function sideStrips(list, scen, excl) {
+    const PAVED = [0.44, 0.44, 0.45], TRACK = [0.64, 0.56, 0.44], ddAt = (x, z) => nrNear(x, z).dd;
+    const yAt = (x, z) => { const g = nrGround(x, z), n = nrNear(x, z); return (n.i >= 0 && n.dd < 3.4 ? Math.max(g, n.hn + lerp(-0.08, -0.4, clamp(n.dd / 3.2, 0, 1))) : g) + 0.07; };
+    const todo = [];
+    for (const [, , kind, wd, fl] of list || []) {
+      const S = [];
+      for (let k = 0; k + 3 < fl.length; k += 2) { const ax = fl[k], az = fl[k + 1], bx = fl[k + 2], bz = fl[k + 3], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2));
+        for (let q = 0; q < m; q++) S.push([ax + (bx - ax) * q / m, az + (bz - az) * q / m]); }
+      if (fl.length >= 2) S.push([fl[fl.length - 2], fl[fl.length - 1]]);
+      let a = 0; while (a < S.length && ddAt(S[a][0], S[a][1]) < 0.3) a++;
+      if (a === 0 || a >= S.length - 2) continue;
+      let lo = S[a - 1], hi = S[a];   // (the mouth: the point right at the barrier)
+      for (let q = 0; q < 6; q++) { const mid = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2]; if (ddAt(mid[0], mid[1]) < 0.05) lo = mid; else hi = mid; }
+      const Q = [lo]; for (let j = a; j < S.length && ddAt(S[j][0], S[j][1]) >= 0.3; j++) Q.push(S[j]);
+      let len = 0; for (let j = 1; j < Q.length; j++) len += Math.hypot(Q[j][0] - Q[j - 1][0], Q[j][1] - Q[j - 1][1]);
+      if (Q.length < 3 || len < 4) continue;
+      const hw = wd / 2;
+      if (excl) for (let j = 0; j < Q.length; j += 2) excl(Q[j][0], Q[j][1], hw + 1.5);
+      todo.push([kind, hw, Q]);
+    }
+    const draw = () => { for (const [kind, hw, Q] of todo) {
+      const base = kind === 1 ? TRACK : PAVED, tone = 0.94 + crH(Math.round(Q[1][0]), Math.round(Q[1][1]), 29) * 0.1;
+      const rows = Q.map(([x, z], j) => {
+        const p = Q[Math.max(0, j - 1)], q = Q[Math.min(Q.length - 1, j + 1)], tl = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1, nx = -(q[1] - p[1]) / tl, nz = (q[0] - p[0]) / tl;
+        const f = j >= Q.length - 3 ? 0.35 + 0.65 * (Q.length - 1 - j) / 3 : 1;   // (the far end narrows: the bare vertex colours of the ground are paler than its textured mesh, so no fade into them)
+        return [-hw * f, 0, hw * f].map(o => { const px = x + nx * o, pz = z + nz * o, gc = API.nrGCol(px, pz), c = base.map((v, k) => lerp(v * tone, gc[k] * v * 2, o === 0 ? 0 : 0.12));
+          return { p: [px, yAt(px, pz), pz], c }; });
+      });
+      for (let j = 0; j + 1 < rows.length; j++) {
+        const A = rows[j], B = rows[j + 1], g = scen.get((A[1].p[0] + B[1].p[0]) / 2, (A[1].p[2] + B[1].p[2]) / 2);
+        for (const [u, v] of [[0, 1], [1, 2]]) g.quadUp(A[u].p, A[v].p, B[v].p, B[u].p, [A[u].c, A[v].c, B[v].c, B[u].c]);
+      }
+    } };
+    return { n: todo.length, draw };
+  }
+
   function buildLivorno(scene, tex, opts) {
     const R = rng(1922), N = T.N, ds = T.ds, sStart = T.startS, def = T.def, L = T.len, LD = LV_DATA;
     if (!def.dem) { def.dem = LD.dem; def.lc = LD.lc; }   // (nrPrep reads the corridor's terrain and land cover from the track)
@@ -199,6 +239,7 @@
 
     /* ---- scenery chunks (vertex coloured, 128 m) and the spectators ---- */
     const scen = new Chunks(128);
+    const SIDE = sideStrips(LD.side, scen, exclPush);   // (the side roads of OSM: their lines now, the trees and the crowd kept off them)
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
     let nBld = 0, nCast = 0;
 
@@ -451,6 +492,7 @@
         }
         addM(gv, gMat);
       }
+      SIDE.draw();   // (the side roads' quads, in the ground's colours with the trees' shade)
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
@@ -458,7 +500,7 @@
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'livorno', { gH: nrGround, slope: API.nrSlope, lc: nrLC, near: nrNear, bad: (x, z) => { const sd = seaD(x, z); return sd > -2 || (sd > -16 && nrDem(x, z) < 2.0) || (BRC.length > 0 && deckH(x, z) != null); } });   // (the roadside ground for the chase camera: js/world-chase-bt18.js)
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { sideRoads: SIDE.n, tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
     return out;
   }
 

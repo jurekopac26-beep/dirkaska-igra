@@ -184,6 +184,17 @@ def on_road():
             out.append([dd(s), 1 if kind == 'stop' else 2, 1 if ahead <= behind else -1])
     return sorted(out)
 
+SIDE_W = {'primary': 7.5, 'primary_link': 5, 'secondary': 7, 'secondary_link': 5, 'tertiary': 6.5, 'tertiary_link': 5, 'residential': 5.5,
+          'unclassified': 5, 'living_street': 4.5, 'service': 3.5, 'track': 3}
+def side_roads(sh, ds):
+    """the side roads (J['side']: OSM's ways from the lap's nodes, their first 60 m; the drivable ones only): [s after the start line, side,
+       kind (0 paved, 1 track), width, [x, z, ...]] (drawn by the world's builder, closed at the barriers: odločitev 23. 11.)"""
+    def width(r):   # (OSM's lanes when it has them, ~3.2 m each, or its width; a one-way road without them a little over half the two-way one's)
+        ln = r[4] if isinstance(r[4], (int, float)) else (float(r[4]) if str(r[4]).replace('.', '', 1).isdigit() else 0)
+        if ln >= 4: return round(min(ln, 9), 1)   # (or its width in metres)
+        return round(min(9, ln * 3.2 + 0.6), 1) if ln > 0 else round(SIDE_W[r[3]] * (0.55 if r[5] else 1), 1)
+    return [[ds(r[0]), r[1], 1 if r[3] == 'track' else 0, width(r), sh(r[7])] for r in J['side'] if r[3] in SIDE_W]
+
 def build_world():
     P = game_line(); M = 800; O = LINE0[K0]   # (the data's frame -> the game's: minus the start line's point)
     sh = lambda fl: [round(v - (O[0] if i % 2 == 0 else O[1]), 1) for i, v in enumerate(fl)]
@@ -223,6 +234,7 @@ def build_world():
         'towers': [sh(t[1:]) for t in OB['towers']], 'gates': [[h, sh(fl)] for _, h, fl in OB['gates']],
         'marks': [[m[0], m[2], dd(m[3]), m[4], sh(m[5])] for m in J['landmarks']],
         'onRoad': on_road(),
+        'side': side_roads(sh, dd),
     }
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'hiva.js'); open(path, 'w').write(src)

@@ -481,7 +481,7 @@ async function main() {
     if (L0 < 45 || (kind0 === 1 && L0 < 80) || /driveway|parking_aisle|drive-through|alley|emergency_access/.test(w.tags.service || '')) continue;   // (the side roads that matter: no driveways, no stubs too short to drive into)
     const j = near(p[0][0], p[0][1], 40); if (j.i < 0 || j.d > 6) continue; const i = j.i, s = mS(i);
     if ((iS - i) * ds > 55 || (i - iF) * ds > 200 || (n - 1 - i) * ds < 30 || Math.abs(i - iS) * ds < 30 || Math.abs(i - iF) * ds < 30 || cps.some(c => Math.abs(i - c) * ds < 25)) continue;   // (within the race, as tests/junctions.test.js wants; clear of the gantries)
-    if (bd.some(b => Math.abs(b.s - (i0 + i) * ds) < 40)) continue;
+    if (!U.sideBends && bd.some(b => Math.abs(b.s - (i0 + i) * ds) < 40)) continue;   // (uvoz.sideBends: also inside the hairpins, odločitev 23. 11.: Cusco)
     const q = resample(p, 3); let e = Math.min(q.length - 1, 5); const dx = q[e][0] - q[0][0], dz = q[e][1] - q[0][1], dl = Math.hypot(dx, dz) || 1;
     const a = Math.max(0, i - 2), b = Math.min(n - 1, i + 2), tx = S[b][0] - S[a][0], tz = S[b][1] - S[a][1], tl = Math.hypot(tx, tz) || 1, ux = tx / tl, uz = tz / tl;
     const sd = Math.sign(dx * -uz + dz * ux) || 1, cosA = (dx * ux + dz * uz) / dl; let ang = Math.acos(Math.max(-1, Math.min(1, cosA))) * 180 / Math.PI;

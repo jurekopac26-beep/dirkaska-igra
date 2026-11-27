@@ -528,7 +528,8 @@
    "grid": 190,
    "izt": 160,
    "hw": 3.8,
-   "hwG": 3.0
+   "hwG": 3.0,
+   "sideBends": true
   },
   "focus": "walls",
   "cfg": {
