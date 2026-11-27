@@ -7416,9 +7416,11 @@ const Core = (function () {
     // least: a field of 13 or fewer as ever; a bigger one over its own, a multiple of 7 one more: 7 g then still hits every slot once)
     _pitJ(c) { const N = Math.max(13, this._gridN || 0), M = N % 7 ? N : N + 1; return ((c.grid * 7) % M) / (M - 1); }
     // room in the lane for an AI car's stop: fewer than three AI cars on their way in or in the lane (a field of 13 or fewer as ever); a bigger
-    // field a quarter of its AI cars at a time, but never two of them for the same crew's box (Track.crewBoxes: 12 for the AI, shared over 21)
+    // field a quarter of its AI cars at a time, but never two of them for the same crew's box (Track.crewBoxes: 12 for the AI, shared over 21;
+    // fewer boxes than the crews, Sosnová's 7, shared in any field: the same rule)
     _pitRoom(c) {
-      const N = this._gridN || 0, big = N > 13, lim = big ? Math.max(3, Math.ceil((N - 1) / 4)) : 3, b = big ? this._aiBox(c) : null; let n = 0;
+      this._aiBox(c);   // (this._boxes: the AI crews' boxes)
+      const N = this._gridN || 0, big = N > 13 || this._boxes.length < 12, lim = big ? Math.max(3, Math.ceil((N - 1) / 4)) : 3, b = big ? this._aiBox(c) : null; let n = 0;
       for (const o of this.cars) if (!o.isPlayer && (o.pitWant || o.inPit)) { n++; if (big && !o.net && !o.sc && this._aiBox(o) === b) return false; }
       return n < lim;
     }

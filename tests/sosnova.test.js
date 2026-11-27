@@ -1,6 +1,7 @@
 // Sosnová, Češka: the circuit on the meadows by the village of Sosnová near Česká Lípa (1.7 km, clockwise; docs/proge/sosnova.md).
 // The layout at its real length, clockwise, twisty (four hairpins and a chicane); its corners by plain descriptions in their order round
-// the lap, each turning its way; almost flat; no pits (the finish straight is too short for the 13 crews' boxes); the run-offs, the
+// the lap, each turning its way; almost flat; the pits (a short lane left of the finish straight, 7 boxes, the pit wall, the paddock moved
+// back: brez vira (izjema, odločitev Mateja 27. 11.)); the run-offs, the
 // barriers nowhere folding back on themselves (def.walls on the inside of the tight bends between bends the other way); the scenery data
 // (terrain, land cover, the streams under the circuit, the power lines over it, the buildings); the most rivals its flying start takes;
 // a whole AI race in the dry and in the rain.
@@ -62,22 +63,34 @@ const turnIn = (s0, s1) => { let a = 0; for (let d = s0; d <= s1; d += T.ds) a +
   check('heights: 2-5 m from the lowest (by the west hairpin, 500-650 m after the start line) to the highest (by the last hairpin, 1.45-1.65 km), the steepest grade under 4 %',
     hi - lo > 2 && hi - lo < 5 && dLo > 500 && dLo < 650 && dHi > 1450 && dHi < 1650 && g < 0.04, `${(hi - lo).toFixed(1)} m, lowest at ${Math.round(dLo)} m, highest at ${Math.round(dHi)} m, steepest ${(g * 100).toFixed(1)} %`);
 }
-// 4. no pits (the finish straight from the last hairpin to the left past the line is under 230 m: too short for a lane with the 13 crews'
-// boxes, tests/pits.test.js); the start line on the finish straight, the left past the line 60-110 m after it; the run-offs: the barriers
-// more than 3 m past the asphalt all round (both sides), the paddock's side held 4 m past it; nowhere the barrier folds back on itself
-// (a fence or a tyre wall going back along the road: the run-off of the bend before or after reaching round the inside of a tight bend)
+// 4. the pits (brez vira (izjema, odločitev Mateja 27. 11.): OSM has no pit lane here): a short lane on the left of the finish straight
+// (def.pit; full width 60 m and more, 7 boxes 10 m apart along it, the player's one of them: def.pitRow; the AI crews share them) behind
+// the pit wall 1 m past the road's edge, from before the lane's full width to past its end; in front of the paddock's garages (OSM, moved
+// 5.6 m back: their fronts by the lane's apron, 17-19 m from the centre line); the start line on the finish straight, the left past the line
+// 60-110 m after it; the run-offs: the barriers more than 3 m past the asphalt all round but for the pit wall, the paddock's side held 4 m
+// past it before and after it; nowhere the barrier folds back on itself (a fence or a tyre wall going back along the road: the run-off of
+// the bend before or after reaching round the inside of a tight bend)
 {
-  const lp = def.names.find(c => c[0] === 'Levi za ciljem'), zl = def.names.find(c => c[0] === 'Zadnja lasnica'), dlp = near(lp[1], lp[2]).d, dzl = near(zl[1], zl[2]).d;
+  const P = def.pit, B = T.crewBoxes(), pw = def.walls.find(w => w[2] === -1 && w[3] === 1);
+  let wallOk = !!pw; if (pw) for (let d = pw[0] + 2; d <= pw[1] - 2; d += T.ds) if (Math.abs(T.bl[T.idx(T.startS + d)] - T.w - 1) > 0.05) wallOk = false;
+  let full = 0; for (let d = -150; d <= 50; d += 1) { const p = T.pitAt(T.startS + d); if (p && p.t > 0.999) full++; }
+  const gar = []; for (let k = 0; k < def.sk.bld.length; k += 7) if (def.sk.bld[k + 6] === 4) { const q = near(def.sk.bld[k], def.sk.bld[k + 1]); gar.push(-q.lat - def.sk.bld[k + 3] / 2); }
+  check('pits: a short lane on the left (def.pit) behind the pit wall 1 m past the road\'s edge, 60 m and more at full width, 7 boxes 10 m apart along it, the player\'s one of them; the garages\' fronts 17-19 m from the centre line',
+    !!P && P[0] < 0 && !!def.pitRow && full >= 60 && B.length === 7 && B.every((b, i) => !i || b - B[i - 1] === 10) && B.includes(P[3]) && !!pw && wallOk
+      && pw[0] <= -80 && pw[1] >= -10 && gar.length >= 2 && gar.every(f => f > 17 && f < 19),
+    (P ? `pit ${P.join(' ')}, ${full} m full width, ${B.length} boxes; ` : 'no def.pit; ') + (pw ? `wall ${pw[0]} .. ${pw[1]} m; ` : 'no pit wall; ') + `garages' fronts ${gar.map(f => f.toFixed(1)).join(', ')} m`);
+  const lp = def.names.find(c => c[0] === 'Levi za ciljem'), dlp = near(lp[1], lp[2]).d;
   let kmax = 0; for (let d = -20; d <= 30; d += T.ds) kmax = Math.max(kmax, Math.abs(T.k[T.idx(T.startS + d)]));
-  check('no pits: the finish straight from the last hairpin to the left past the line under 230 m; the start line on it (no bend under a 300 m radius 20 m before it to 30 m after it), the left past the line 60-110 m after it',
-    !def.pit && !def.pitRow && T.len - dzl + dlp < 230 && 1 / kmax > 300 && dlp > 60 && dlp < 110, `the straight ${Math.round(T.len - dzl + dlp)} m, the left ${Math.round(dlp)} m after the line, tightest radius by the line ${(1 / kmax).toFixed(0)} m`);
-  let all = 0, wide = 0, min = 1e9; for (let i = 0; i < T.N; i++) for (const b of [T.bl[i], T.br[i]]) { const e = b - T.w; all++; if (e > 3) wide++; min = Math.min(min, e); }
-  let pad = 1e9; for (let d = -100; d <= 10; d += T.ds) pad = Math.min(pad, Math.abs(T.bl[T.idx(T.startS + d)] - T.w - 4));
+  check('the start line on the finish straight (no bend under a 300 m radius 20 m before it to 30 m after it), the left past the line 60-110 m after it',
+    1 / kmax > 300 && dlp > 60 && dlp < 110, `the left ${Math.round(dlp)} m after the line, tightest radius by the line ${(1 / kmax).toFixed(0)} m`);
+  const inWall = (i) => { let d = dS(i * T.ds); if (d > T.len / 2) d -= T.len; return d > pw[0] - 8 && d < pw[1] + 8; };
+  let all = 0, wide = 0, min = 1e9; for (let i = 0; i < T.N; i++) for (const [b, w] of [[T.bl[i], inWall(i)], [T.br[i], false]]) { if (w) continue; const e = b - T.w; all++; if (e > 3) wide++; min = Math.min(min, e); }
+  let pad = 1e9; for (const d of [-110, -100, -95, 10, 15, 20]) pad = Math.min(pad, Math.abs(T.bl[T.idx(T.startS + d)] - T.w - 4));
   const folds = [];
-  for (const [nm, s, B] of [['left', -1, T.bl], ['right', 1, T.br]]) for (let i = 0; i < T.N; i++) {
-    const j = (i + 1) % T.N, bx = T.px[j] + T.nx[j] * s * B[j] - T.px[i] - T.nx[i] * s * B[i], bz = T.pz[j] + T.nz[j] * s * B[j] - T.pz[i] - T.nz[i] * s * B[i];
+  for (const [nm, s, Bb] of [['left', -1, T.bl], ['right', 1, T.br]]) for (let i = 0; i < T.N; i++) {
+    const j = (i + 1) % T.N, bx = T.px[j] + T.nx[j] * s * Bb[j] - T.px[i] - T.nx[i] * s * Bb[i], bz = T.pz[j] + T.nz[j] * s * Bb[j] - T.pz[i] - T.nz[i] * s * Bb[i];
     if (bx * (T.px[j] - T.px[i]) + bz * (T.pz[j] - T.pz[i]) < 0) folds.push(`${nm} ${Math.round(dS(i * T.ds))} m`); }
-  check('run-offs: the barriers more than 3 m past the asphalt all round, the paddock\'s side of the straight 4 m past it; no barrier folding back on itself (one stretch at most, 2-6 m)',
+  check('run-offs: the barriers more than 3 m past the asphalt all round but for the pit wall, the paddock\'s side of the straight 4 m past it before and after it; no barrier folding back on itself (one stretch at most, 2-6 m)',
     wide === all && min >= 3.4 && pad < 0.1 && folds.length <= 2, `nearest ${min.toFixed(1)} m, the paddock's side ${(4 + pad).toFixed(1)} m; folds: ${folds.join(', ') || 'none'}`);
 }
 // 5. the scenery data (tools/sosnova/build.py): terrain and land cover round the track, the grandstand (named after the village); the

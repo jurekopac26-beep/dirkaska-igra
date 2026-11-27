@@ -93,11 +93,11 @@ NAMES = [
 # right, the left onto the gravel, the right on the gravel straight, the north hairpin
 TURNS = [62, 125, 235, 463, 536, 619, 648, 900]
 
-DESC = ('Kratka proga za reli kros na dirkališču v grofiji Kildare na vzhodu Irske, zahodno od Dublina: 1,2 km asfalta in makadama v smeri '
+DESC = ('Kratka proga za reli kros na dirkališču v grofiji Kildare na vzhodu Irske, zahodno od Dublina: 1,1 km asfalta in makadama v smeri '
         'urinega kazalca, skoraj ravno. Ciljna ravnina, dvojni desni na makadamu, hitri levi, južna ravnina, zahodna lasnica, ostri desni, levi '
         'na makadam, makadamska ravnina in severna lasnica nazaj na asfalt. Ob progi trava, ograje in gume, tribuna, brv čez progo, garaže '
         'boksov, stolp ob ciljni črti, ceste drugih postavitev dirkališča in daljnovod.')
-DESC_EN = ('A short rallycross track at the circuit in County Kildare in the east of Ireland, west of Dublin: 1.2 km of tarmac and gravel, '   # (no č, š or ž in the English: tests/lang.test.js)
+DESC_EN = ('A short rallycross track at the circuit in County Kildare in the east of Ireland, west of Dublin: 1.1 km of tarmac and gravel, '   # (no č, š or ž in the English: tests/lang.test.js)
            'clockwise, almost flat. The finish straight, the double right on the gravel, the fast left, the south straight, the west hairpin, '
            'the sharp right, the left onto the gravel, the gravel straight and the north hairpin back onto the tarmac. Grass, fences and tyre '
            'walls, a grandstand, a footbridge over the track, the pit garages, the tower by the line, the roads of the circuit\'s other '
@@ -309,7 +309,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Kildare, Ireland: the rallycross lap of the circuit in County Kildare, west of Dublin, clockwise, in its layout and scale as OpenStreetMap
   // maps it (the circuit's raceways with the rallycross's gravel): the start line on the finish straight, the double right on the gravel, the
   // fast left, the south straight, the west hairpin, the sharp right at the top of the link, the left onto the gravel, the gravel straight and
-  // the north hairpin onto the finish straight: %(km)s km on our line (1.2 km). No pits: a rallycross race has no stops.
+  // the north hairpin onto the finish straight: %(km)s km on our line (1.2 km). Pits as OpenStreetMap maps them (def.pit).
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/kildare/config.json: the lap's 12 raceways
   // in their one-way direction, clockwise); the three joints where it turns from one raceway onto another rounded to arcs (9-12 m), the
   // corners at its nodes (sigma 5 m); metres, x east, z south, origin = the start line.
@@ -350,6 +350,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the circuit's grandstand by the gravel right after the start
     stands: %(stands)s,
     walls: %(walls)s,   // the pit wall 1.2 m past the road's edge, the pit lane behind it; the tight bends' insides, none folding back
+    // pits (Core: def.pit [lane centre right, from, to, the player's box, way in], def.pitRow, def.pitApron; m from the start line): the OSM pit lane
+    // behind the pit wall (its centre 10-14 m right of the centre line, Core keeps it 5 m past the wall), the way in out of the north hairpin, out
+    // where the wall ends; the apron to the OSM garages' front (18.9 m), the 13 boxes in front of them and on past the row's end
+    pit: [11.7, -230, 50, -140, 40], pitRow: [-185, -65], pitApron: 3.6, pitLanes: [0, 40],
     maxRivals: 25,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the shortest circuit, its flying start's column (4/5 of a lap at most) would stand car on car with more (26 already do, the formula cars)
     sectors: %(sectors)s,   // the three sectors of the timing screens: the gravel right and the south straight, the hairpin and the link, the gravel straight and the finish straight
     dem: %(dem)s,

@@ -65,13 +65,18 @@ DESC_EN = ('A short circuit on the meadows by the village of Sosnová in the nor
            'power lines, the fast right, the esses, the east hairpin, the double left and the last hairpin back onto the straight. Meadows, two '
            'streams, four power lines, pine and birch woods and the paddock\'s garages by the track.')
 
-# ---- no pits: the finish straight (140 m between the last hairpin and the left past the line) is too short for a pit lane with the 13
-# crews' boxes (tests/pits.test.js); the paddock's garages, its office and its hall (OSM) stand on its left as they are ----
-# the barriers held this side of the paddock's buildings left of the finish straight (the garages 12 m from the centre line) and of the
+# ---- the pits (brez vira (izjema, odločitev Mateja 27. 11.): OSM has no pit lane here): a short lane, ~75 m at full width, left of the
+# finish straight in front of the paddock's garages (def.pit: from the last hairpin's exit, -100 m, back onto the track 16 m past the line;
+# the boxes -80 .. -20 m: 7, the AI crews share them), a pit wall in place of the paddock's fence; the garages, the office, the hall and the
+# two houses by the straight (OSM) moved 5.6 m back from the road for it (PAD_SHIFT, the same exception) ----
+PIT = dict(pit=[-11.5, -100, 16, -45, 20], pitRow=[-80, -20], pitApron=3.0, pitLanes=[0, 40])
+PAD_SHIFT = (-115, 12, -30, -10, 5.6)   # (the buildings from .. to m after the start line, from .. to m to the side: moved this far away from the road)
+# the barriers held this side of the paddock's buildings left of the finish straight (the garages 12 m from the centre line; the pit wall
+# 1 m past the asphalt in front of the pit lane, -86 .. -2 m: brez vira (izjema, odločitev Mateja 27. 11.)) and of the
 # stream that runs by the circuit left of the long right (def.sk.brooks: 20 m from the centre line; the run-off outside the bend reaches past it)
 # and on the inside of the tight bends between bends the other way (the left past the line, the chicane, the long left's entry, the esses),
 # where the run-off of the bend before or after reached round the inside and the barrier folded back on itself
-WALLS = [[-110, 20, -1, 4, 20], [600, 670, -1, 9, 15], [70, 88, -1, 3.5, 10], [186, 212, -1, 3.5, 14], [296, 312, -1, 3.5, 10], [1076, 1092, -1, 3.5, 10],
+WALLS = [[-110, 20, -1, 4, 20], [-86, -2, -1, 1.0, 8], [600, 670, -1, 9, 15], [70, 88, -1, 3.5, 10], [186, 212, -1, 3.5, 14], [296, 312, -1, 3.5, 10], [1076, 1092, -1, 3.5, 10],
          [164, 174, 1, 3.5, 8], [218, 242, 1, 3.5, 10], [1114, 1126, 1, 3.5, 8]]
 # grandstands [from, to, side, rows, roof, sections, orange, name]: a bank of seats on the grass by the start line, across from the paddock
 STANDS = [[-25, 15, 1, 5, 0, 2, 0, 'SOSNOVÁ']]
@@ -189,6 +194,10 @@ def scenery():
         x, z, l, w, ang, hgt, kind, s, d = b
         hh = hgt if hgt > 2 else 7.0 if l * w > 500 else 4.2 if (l * w > 100 and kind != 0) or l > 2.8 * w else 5.5 if l * w > 100 else 3.2
         k = 4 if l > 2.8 * w else kind if kind in (4, 5, 6) else 0
+        a0, a1, l0, l1, sh = PAD_SHIFT; ss, dd, _ = sd(x, z); ss = ss - LEN if ss > LEN / 2 else ss
+        if a0 <= ss <= a1 and l0 <= dd <= l1:   # the paddock by the straight, 5.6 m back for the pit lane: brez vira (izjema, odločitev Mateja 27. 11.)
+            i = int(np.hypot(P[:, 0] - x, P[:, 1] - z).argmin()); tx, tz = P[(i + 1) % NP] - P[i]; tl = math.hypot(tx, tz)
+            x, z = x + tz / tl * sh, z - tx / tl * sh   # (to the left of the travel direction: -(the right normal (-tz, tx)))
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), round(hh, 1), k]
     X = extra()   # (the power lines: those with a pylon within 700 m)
     pw = [p for p in X['power'] if min(sd(p[1][k], p[1][k + 1])[2] for k in range(0, len(p[1]), 3)) < 700]
@@ -228,7 +237,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // layout and scale (the combined layout: the outer loop with the two inner parts): the start line on the finish straight by the paddock,
   // the left past the line, the lower hairpin, the chicane, the long left, the west straight, the west hairpin, the long right over the
   // stream, the north straight under the power lines, the fast right, the esses, the east hairpin, the double left and the last hairpin onto
-  // the straight: %(km)s km on our line (1.7 km). No pits: the straight is too short for a pit lane with the 13 crews' boxes.
+  // the straight: %(km)s km on our line (1.7 km). The pits: a short lane left of the finish straight in front of the paddock's garages, with
+  // 7 boxes (no source: OSM has no pit lane here; brez vira (izjema, odločitev Mateja 27. 11.)), the paddock 5.6 m back from the road for it.
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/sosnova/config.json: the raceways'
   // nodes in their order, clockwise), the corners at its nodes rounded (sigma 5 m; the chicane's 6 m radius eased to ~10 m); metres, x east,
   // z south, origin = the junction where the link from the infield meets the straight, 35 m past the start line (start: the first point).
@@ -264,7 +274,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
 %(names)s
     ],
     turns: %(turns)s,   // the corners' apexes: the left past the line, the lower hairpin, the chicane (2), the long left (2), the west hairpin, the fast right, the esses (2), the east hairpin, the double left (2), the last hairpin
-    walls: %(walls)s,   // the barriers this side of the paddock's buildings by the finish straight and of the stream left of the long right
+    walls: %(walls)s,   // the barriers this side of the paddock's buildings by the finish straight (the pit wall: brez vira (izjema, odločitev Mateja 27. 11.)) and of the stream left of the long right
+    // the pits [offset (- left), from, to, the player's box, entry]: brez vira (izjema, odločitev Mateja 27. 11.); 7 boxes, the 13 crews share them
+    pit: %(pit)s, pitRow: %(pitRow)s, pitApron: %(pitApron)s, pitLanes: %(pitLanes)s,
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: on the grass by the start line, across from the paddock
     stands: %(stands)s,
     sectors: %(sectors)s,   // the three sectors of the timing screens: the infield to the west straight, the west and the north, the east loops and the straight
@@ -275,7 +287,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   });
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), start=json.dumps(at(0)).replace(',', ', '), ssh=ssh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
-           walls=json.dumps(WALLS), stands=js(STANDS).replace(',', ', '), sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
+           walls=json.dumps(WALLS), pit=json.dumps(PIT['pit']), pitRow=json.dumps(PIT['pitRow']), pitApron=PIT['pitApron'], pitLanes=json.dumps(PIT['pitLanes']), stands=js(STANDS).replace(',', ', '), sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'sosnova.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights; dem', D['nx'], 'x', D['nz'], '; lc', LC['nx'], 'x', LC['nz'],
           len(LC['rle']), 'chars; brooks', [len(c[1]) // 2 for c in SK['brooks']], 'points; buildings', len(SK['bld']) // 7, '; power', len(SK['power']))

@@ -203,6 +203,7 @@
       woods: KD_WOODS, extra: kdExtra, fl: { ie: IE }, ck: 2, air: false,   // (ck: chunks twice as big: from most places much of the short circuit is in view)
       flags: { stand: [{ ie: 0.7, tm: 0.2, rb: 0.1 }, { ie: 0.6, tm: 0.25, rb: 0.15 }], ga: { ie: 0.65, tm: 0.25, rb: 0.1 }, camp: { ie: 0.8, tm: 0.2 }, pole: 'ie', podium: 'ie' },
       vid: [], poles: [-100, 30, -1], runoff: ['KILDARE', 'CILL DARA', 'ÉIRE'], straight: [-120, 25, -1],   // (the pit lane on the right of the finish straight)
+      pitBox: [-185, -10, 1], lane: true, pitF: 12.15, pitOwn: true,   // (def.pit: the apron from the pit wall to the OSM garages' front, 12.15 m past it; the garages and the tower: kdBuildings)
       farm: { wall: [0.93, 0.92, 0.88], roof: [0.26, 0.27, 0.3], end: [0.92, 0.91, 0.87], barn: [0.5, 0.52, 0.5], barnRoof: [0.3, 0.33, 0.31], barnEnd: [0.5, 0.52, 0.5] },   // a white farmhouse under slate, a grey barn under dark sheeting
       tvSkip: [1, 2, 4, 5, 6], recov: [3], photo: [0, 3, 7], jets: [[0.09, 0.61, 0.38], [0.95, 0.95, 0.95], [1.0, 0.53, 0.24]],   // (TV towers at the gravel right after the start and at the two hairpins)
       colMod: (P) => (x, z, c) => {   // the plain in summer: the pasture lush and deep green, in lighter and darker patches, rushes in the wet hollows; the fields grazed, cut for silage, barley; the paddock grey through the grass

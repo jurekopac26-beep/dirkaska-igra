@@ -126,11 +126,11 @@
   "jsMs": 1.8
  },
  "sosnova": {
-  "calls": 204,
-  "maxCalls": 249,
-  "kverts": 654,
-  "maxKverts": 829,
-  "jsMs": 0.82
+  "calls": 218,
+  "maxCalls": 271,
+  "kverts": 680,
+  "maxKverts": 870,
+  "jsMs": 1.14
  },
  "izoard": {
   "calls": 190,

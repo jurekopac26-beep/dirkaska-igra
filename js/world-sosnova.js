@@ -238,7 +238,8 @@
 
   // LK.extra: the streams, the power lines, the buildings round the paddock and by the circuit (OSM outlines as boxes: plaster
   // in cream, ochre or light grey, red-tiled or dark grey roofs; the paddock's garages in rows, their doors to the straight, flat roofs; its
-  // office and its hall); before the crowds and the trees, which keep clear of them
+  // office and its hall; those by the finish straight 5.6 m back from OSM for the pit lane: tools/sosnova/build.py PAD_SHIFT, brez vira (izjema,
+  // odločitev Mateja 27. 11.)); before the crowds and the trees, which keep clear of them
   function soExtra(o) {
     const { scen, exclPush, CR } = o, T = API.T, sk = T.def.sk || {}, R = rng(5723), st = { brook: 0, culverts: 0, pipes: 0, alders: 0, pylons: 0, spans: 0, buildings: 0 };
     soBrooks(o, st); soPower(o, st);
@@ -268,7 +269,8 @@
     sosnova: { ban: SO_BAN, at: SO_AT, nums: 0, shirts: SO_SHIRTS, smoke: false, camps: 0, seC: [1.08, 1.04, 0.88], gravel: true, noVid: true, mow: 0.6,
       woods: SO_WOODS, extra: soExtra, pad: soPad, fl: { cz: CZ }, ck: 2, air: false,   // (ck: chunks twice as big: from most places much of the short circuit is in view)
       flags: { stand: [{ cz: 0.7, tm: 0.2, rb: 0.1 }, { cz: 0.6, tm: 0.25, rb: 0.15 }], ga: { cz: 0.65, tm: 0.25, rb: 0.1 }, camp: { cz: 0.8, tm: 0.2 }, pole: 'cz', podium: 'cz' },
-      vid: [], poles: [-100, 60, -1], runoff: ['SOSNOVÁ', 'ČESKÁ LÍPA', 'ČESKO'], straight: [-90, 50, 1],
+      pitBox: [-80, -10, -1], lane: true, pitF: 11.5, pitOwn: true,   // (def.pit: the pit lane and its apron, from the pit wall to the paddock's garages' front, 11.5 m past it; the garages: soExtra; brez vira (izjema, odločitev Mateja 27. 11.))
+      vid: [], poles: [-100, 60, 1], runoff: ['SOSNOVÁ', 'ČESKÁ LÍPA', 'ČESKO'], straight: [-90, 50, 1],
       farm: { wall: [0.91, 0.87, 0.77], roof: [0.57, 0.26, 0.17], end: [0.91, 0.87, 0.77], barn: [0.6, 0.58, 0.54], barnRoof: [0.36, 0.35, 0.34], barnEnd: [0.6, 0.58, 0.54] },   // a cream farmhouse under red tiles, a grey barn under a dark roof
       tvSkip: [0, 2, 3, 4, 7, 8, 9, 11, 12], recov: [1, 6], photo: [0, 2, 10, 13], jets: [[0.84, 0.08, 0.1], [0.95, 0.95, 0.95], [0.07, 0.27, 0.49]],   // (TV towers at the lower hairpin, the long left, the west and the east hairpins and the last one)
       colMod: (P) => (x, z, c) => {   // the meadows in late summer: green, in lighter and darker patches, dry and straw-coloured here and there, yarrow and knapweed; the farmland's stubble and maize

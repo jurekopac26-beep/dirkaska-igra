@@ -65,14 +65,16 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
     runs.length === 2 && Math.abs(runs[0][0] - 58) < 6 && Math.abs(runs[0][1] - 130) < 6 && Math.abs(runs[1][0] - 582) < 6 && Math.abs(runs[1][1] - 817) < 6 && kerb === 0 && g < a && g > 0.7,
     runs.map(r => `${Math.round(r[0])}-${Math.round(r[1])} m`).join(', ') + `, ${kerb} kerb samples, grip ${g} (tarmac ${a})`);
 }
-// 5. no pits (a rallycross race has no stops): the pit wall on the right of the finish straight 1.2 m past the road's edge, from before the
+// 5. pits as OpenStreetMap maps them (def.pit on the right, the lane behind the pit wall; def.pitRow: 13 boxes): the pit wall on the right of the finish straight 1.2 m past the road's edge, from before the
 // start line to past it; the run-offs grass (def.noGravel), the barriers more than 3 m past the asphalt along more than 80 % of the lap
 // (both sides); nowhere the barrier folds back on itself (def.walls on the insides of the five tight bends)
 {
   const pw = def.walls.find(w => w[2] === 1 && w[3] === 1.2);
   let wallOk = !!pw; if (pw) for (let d = pw[0] + 2; d <= pw[1] - 2; d += T.ds) if (Math.abs(T.br[T.idx(T.startS + d)] - T.w - 1.2) > 0.05) wallOk = false;
-  check('pits: none (no def.pit, a rallycross race has no stops); the pit wall on the right of the finish straight 1.2 m past the road\'s edge, from 200 m and more before the line to past it',
-    !def.pit && !!pw && pw[0] <= -200 && pw[1] > 0 && wallOk, pw ? `${pw[0]} .. ${pw[1]} m` : 'no pit wall');
+  const P = def.pit, nBox = typeof T.crewBoxes === 'function' ? T.crewBoxes().length : 0;
+  check('pits: the OSM pit lane (def.pit) on the right behind the pit wall, 13 boxes (def.pitRow) along it; the pit wall on the right of the finish straight 1.2 m past the road\'s edge, from 200 m and more before the line to past it',
+    !!pw && !!P && P[0] > 0 && P[1] <= pw[0] && P[2] >= pw[1] && nBox === 13 && pw[0] <= -200 && pw[1] > 0 && wallOk,
+    (P ? `pit ${P.join(' ')}, ${nBox} boxes; ` : 'no def.pit; ') + (pw ? `wall ${pw[0]} .. ${pw[1]} m` : 'no pit wall'));
   let all = 0, wide = 0; for (let i = 0; i < T.N; i++) for (const b of [T.bl[i], T.br[i]]) { all++; if (b - T.w > 3) wide++; }
   const folds = [];
   for (const [nm, s, B] of [['left', -1, T.bl], ['right', 1, T.br]]) for (let i = 0; i < T.N; i++) {
