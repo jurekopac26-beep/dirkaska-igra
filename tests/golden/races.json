@@ -749,56 +749,6 @@
   "nan": false,
   "digest": "01f78c7cd9a79f85da68e4d1"
  },
- "marrakesh/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 173.9,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "4eee922e11dfb8f5123e7fe7"
- },
- "marrakesh/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 201.65,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "b19e095c84f0cb6e036f1fca"
- },
- "marrakesh/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 154.78,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "80145bf99fd7555a905c1ff5"
- },
- "marrakesh/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 155.46,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "14327fb716f6b0bafcef6af0"
- },
- "marrakesh/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 168.78,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "e010b335417aba8a3a2029d2"
- },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,
@@ -1398,56 +1348,6 @@
   "rescues": 0,
   "nan": false,
   "digest": "9eb7f0b41f1138506c5534bb"
- },
- "london/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 92.4,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "2d134217305a062cb441b6d3"
- },
- "london/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 106.73,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "7aeb3a2f236b4eefaa266b8f"
- },
- "london/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 79.31,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "d50975875f5878cf02721c8b"
- },
- "london/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 79.94,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "a5f83b720e208e0ef4f89319"
- },
- "london/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 90.64,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "18d37959b55e68365541b55d"
  },
  "zandvoort/cs": {
   "finished": 13,
@@ -3448,56 +3348,6 @@
   "rescues": 0,
   "nan": false,
   "digest": "5bb8ae4fe7ccf88d1e3a45eb"
- },
- "longyearbyen/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 85.55,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "728c7f06074df8c7fc424502"
- },
- "longyearbyen/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 96.23,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "b3bc166fcb12967ef2f2c6a5"
- },
- "longyearbyen/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 68.53,
-  "spins": 0,
-  "walls": 3,
-  "rescues": 1,
-  "nan": false,
-  "digest": "52532f35ef118cfa38f7d0d2"
- },
- "longyearbyen/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 69.32,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "d09427dd6180d3b5fea5f4cf"
- },
- "longyearbyen/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 85.69,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "3da76599d1b79bac807bb3c6"
  },
  "irishtown/cs": {
   "finished": 13,

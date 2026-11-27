@@ -21,8 +21,8 @@ const at = (d) => T.idx(T.startS + d);
 {
   let turn = 0; for (let i = 0; i < T.N; i++) turn += T.k[i] * T.ds;
   let g = 0; for (let i = 0; i < T.N; i++) g = Math.max(g, Math.abs(T.grade[i]));
-  check('track: Marrakesh, Maroko (Marrakesh, Morocco), a closed circuit of 5 laps, not a test track, in the big championship',
-    def.name === 'Marrakesh, Maroko' && def.en && def.en.name === 'Marrakesh, Morocco' && !def.open && !def.timeTrial && !def.test && def.laps === 5 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('marrakesh'),
+  check('track: Marrakesh, Maroko (Marrakesh, Morocco), a closed circuit of 5 laps, a test track since 26. 11. 2026 (Morocco keeps Dadès), in the big championship',
+    def.name === 'Marrakesh, Maroko' && def.en && def.en.name === 'Marrakesh, Morocco' && !def.open && !def.timeTrial && def.test === true && !def.pending && def.laps === 5 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('marrakesh'),
     `${def.name} / ${def.en && def.en.name}, ${def.laps} laps`);
   check('track: 2.971 km within 0.5 %, the menu\'s real length 2.971 km, anticlockwise (one full turn to the left), no crossover',
     Math.abs(T.len / 2971 - 1) < 0.005 && def.realKm === 2.971 && Math.abs(turn + 2 * Math.PI) < 0.05 && !(T.cross && T.cross.length),
