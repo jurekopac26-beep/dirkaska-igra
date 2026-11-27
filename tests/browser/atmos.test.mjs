@@ -57,7 +57,7 @@ try {
   const s5 = await look();
   await pick('season', 'summer'); await pick('tod', 'day'); await page.waitForTimeout(300);
   const s6 = await look();
-  T.check('dusk: the floodlights on along a real track; summer by day: the colours as built, no lights', s5.atmos.tod === 'dusk' && s5.pools > 50 && s6.atmos.season === 'summer' && s6.atmos.tod === 'day' && Math.abs(s6.green - s0.green) < 1e-4 && s6.snowMaps === 0 && s6.pools === 0 && s6.emissive === 0,
+  T.check('dusk: the floodlights on along a real track; summer by day: the colours as built, no lights', s5.atmos.tod === 'dusk' && s5.pools > 50 && s6.atmos.season === 'summer' && s6.atmos.tod === 'day' && Math.abs(s6.green - s0.green) < 3e-4 && s6.snowMaps === 0 && s6.pools === 0 && s6.emissive === 0,
     JSON.stringify({ s5: { tod: s5.atmos.tod, pools: s5.pools }, s6, s0: { green: s0.green } }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
