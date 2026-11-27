@@ -11,7 +11,8 @@
 // trial's, the events the player's own inputs, car, upgrades and assist the packet's), replayed in Node and the verdicts sent (POST): ok
 // (Node's time if it differs; »preverjeno približno«: a run with crashes not exact to the bit, or an engine other than V8 or Node within
 // 0.2 %), zavrnjeno (a reason), ni-mogoce (a core stamp not in git's history, a key not a time trial's), sumljivo (events or options not
-// known: not replayed, left for a person). A time from an older version is replayed by that version's code (seja 3: a git worktree per core
+// known: not replayed, left for a person; or a verified time more than 10 % quicker than the autopilot's with the same car, options and
+// weather at the quickest rival's skill: »hitrost«, avtopilotMs). A time from an older version is replayed by that version's code (seja 3: a git worktree per core
 // stamp, removed after the round). --meje: the bounds sent first when the server's are another core's. Only counts are printed (a public
 // repository); the job is .github/workflows/lestvica-preveri.yml.
 // Exit 1 when a record fails. The user's recordings stay out of the repository (CLAUDE.md, Orodje za napake).
@@ -120,6 +121,9 @@ const TT_IZBIRE = ['playerModel', 'playerUpg', 'playerSetup', 'playerDeli', 'pla
 const ZNANE = new Set([...Object.keys(TT_FIX), ...TT_NE, ...TT_NIC, ...TT_TUJE, ...TT_IZBIRE]);
 export const TYRE_COLD = ['kolibri'];   // (js/game.js's: the test keeps them equal)
 const STROGO = /^(V8( tel)?|node)$/, PRIBLIZNO = 0.002, MAX_N = 1e6, MAX_E = 900000, MAX_T = 7.2e6, GLOBINA = 40;
+// the speed threshold (docs/svetovna-lestvica.md, »Zaščita pred goljufanjem«): a time more than PRAG_HITRO quicker than the autopilot's is
+// sumljivo; AI_NAJ the quickest rival's skill (js/core.js's DIFF, težka: the cars' own limit on the autopilot), AI_KORAKI the longest run
+const PRAG_HITRO = 0.10, AI_NAJ = 1.12, AI_KORAKI = 144000;
 const IME_KLIC = /^![A-Za-z]{1,32}$/, IME_POLJE = /^(r|o|x|l|fl|t|c\d{1,3})\.(.{1,64})$/, DG_RE = /^[0-9a-z]{1,8}$/;
 const TX_MIRNI = /^(ai(Spr|Fol|Push|Side|Kerb)|cPm|cE|cMu|cYaw|cGl|cFx)$/;   // (not read in a solo run; cv and cSl only by a trailer)
 const RAZLOGI = [['cilja ni', 'cilja-ni'], ['cilj v koraku', 'cilj-korak'], ['čas cilja', 'cas'], ['pot več', 'pot'], ['v zapisu ostanejo', 'dogodki'], ['ni proge', 'proga']];
@@ -235,6 +239,31 @@ function nastavitve(op, C) {
   for (const k of Object.keys(op)) if (!ZNANE.has(k) && !nic(op[k]) && op[k] !== false) return su('nastavitve ' + k);
   return null;
 }
+// the autopilot's time in ms with the record's car, upgrades, set-up, parts, weather and test settings (no wear, no props: never slower for
+// them), at the quickest rival's skill, or at the profile's (1) when the car does not finish at that; null when it finishes at neither or the
+// options do not make a race. One run per car and options (K.ai), its own random numbers; the tool's core is clean after it.
+export function avtopilotMs(K, rec, op) {
+  K = pripravi(K || koda()); const C = K.C, X = { C, race: null, fn: null }, M0 = Math.random, STEP = K.V.STEP;
+  let o, kljuc;
+  try {
+    o = { ...(op || K.V.dec(rec.opts, X)), playerColor: 0x808080, playerNum: 1 }; delete o.playerName;
+    kljuc = JSON.stringify([rec.track, K.V.enc(o, X, 0), rec.tx, rec.xr]);
+  } catch { return null; }
+  const m = K.ai || (K.ai = new Map()); if (m.has(kljuc)) return m.get(kljuc);
+  const tdef = C.TRACKS.find(d => d.id === rec.track); let ms = null;
+  try {
+    for (const sk of tdef ? [AI_NAJ, 1] : []) {
+      let s = 0x2f6e2b1; Math.random = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      C.setCrash(K.V.dec(rec.xr, X)); C.setTest(K.V.dec(rec.tx, X));
+      const race = new C.Race(new C.Track(tdef), { ...o }), P = race.player, AI = C.aiControl.__vnos || C.aiControl;
+      if (!P) break;
+      P.skill = sk; race.start();
+      for (let k = 0; k < AI_KORAKI && !P.finished; k++) { AI(P, race, STEP); P.inHand = 0; P.digitalSteer = false; race.step(STEP); }
+      if (P.finished && fin(P.finishTime) && P.finishTime > 0) { ms = Math.round(P.finishTime * 1000); break; }
+    }
+  } catch { ms = null; } finally { Math.random = M0; ponastavi(K); }
+  m.set(kljuc, ms); return ms;
+}
 // one waiting time checked against its record: { st, izid, razlog?, t?, priblizno? } (the server's POST /v1/preveri)
 export function preveriCas(c, rec, K, T) {
   K = pripravi(K || koda()); T = T || L.keyTable(prave(K.C));
@@ -280,13 +309,15 @@ export function preveriCas(c, rec, K, T) {
   const strict = !crash && STROGO.test(rec.eng);
   const ms = P.finished && fin(P.finishTime) ? Math.round(P.finishTime * 1000) : null;
   if (ms != null && !int(ms, 1, MAX_T)) return ne('cas');
+  // (a time that holds, against the autopilot's: K.prag another threshold, the test's)
+  const hitro = (v) => { const a = avtopilotMs(K, rec, op), t = v.t ?? c.ms; return a != null && t < (1 - (K.prag ?? PRAG_HITRO)) * a ? { st, izid: 'sumljivo', razlog: `hitrost ${t} avtopilot ${a}` } : v; };
   if (res.ok && res.fs === c.fs && ms != null) {
     if (Math.abs(ms - c.ms) > PRIBLIZNO * c.ms) return ne('cas');
-    return crash && !res.exact ? { st, izid: 'ok', t: ms, priblizno: true } : ms === c.ms ? { st, izid: 'ok' } : { st, izid: 'ok', t: ms };
+    return hitro(crash && !res.exact ? { st, izid: 'ok', t: ms, priblizno: true } : ms === c.ms ? { st, izid: 'ok' } : { st, izid: 'ok', t: ms });
   }
   if (strict) return ne(res.ok ? 'cilja-ni' : razlogIz(res.why));
   if (ms == null) return nm;
-  if (Math.abs(ms - c.ms) <= PRIBLIZNO * c.ms) return { st, izid: 'ok', t: ms, priblizno: true };
+  if (Math.abs(ms - c.ms) <= PRIBLIZNO * c.ms) return hitro({ st, izid: 'ok', t: ms, priblizno: true });
   const r = razlogIz(res.why); return ne(r === 'zapis' ? 'cas' : r);
 }
 export async function zeton(o = {}) {

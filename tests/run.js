@@ -64,7 +64,7 @@ const SECS = {
   'browser/carcull.test.mjs': 80, 'browser/napake-slika.test.mjs': 74, 'browser/faults.test.mjs': 73, 'browser/atmos.test.mjs': 71,
   'browser/career.test.mjs': 71, 'browser/hlvid.test.mjs': 70, 'browser/voices.test.mjs': 69, 'browser/rio.test.mjs': 68,
   'browser/camtilt.test.mjs': 67, 'browser/forecast.test.mjs': 62, 'browser/napake-seznami.test.mjs': 62, 'browser/napake.test.mjs': 61,
-  'browser/nvfair.test.mjs': 61, 'browser/tyrebands.test.mjs': 61, 'browser/camshake.test.mjs': 58, 'browser/repro.test.mjs': 58,
+  'browser/nvfair.test.mjs': 61, 'browser/tyrebands.test.mjs': 61, 'browser/camshake.test.mjs': 58, 'browser/repro.test.mjs': 58, 'browser/vnos.test.mjs': 90,
   'browser/wear.test.mjs': 57, 'browser/lang.test.mjs': 55, 'browser/quick.test.mjs': 54, 'browser/boards.test.mjs': 52,
   'browser/pitexit.test.mjs': 52, 'browser/rivals.test.mjs': 52, 'browser/shramba.test.mjs': 52, 'browser/medvode-castle.test.mjs': 51,
   'browser/napake-posnetek.test.mjs': 51, 'browser/denar.test.mjs': 50, 'browser/drag.test.mjs': 50, 'browser/medvode-props.test.mjs': 50,
