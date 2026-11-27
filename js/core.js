@@ -2542,9 +2542,11 @@ const Core = (function () {
      spun more easily). Mehka: soft contact (little bounce, little turn, hard to spin: rubbing is racing). Kaskaderska: the crash games
      (bouncy, a hard rub, half as much turn again, spins easily, the rivals among themselves too, the grip back late). Realistična (real,
      the sixth choice, cv 6; in the row right after Simulacija): as a real crash (docs/trki-realizem.md, »Zasnova prototipa Realistična«):
-     Simulacija's numbers and four things more, only at a touch (every place asks krOn(c)); not for the police chase (c.ck), a truck with
+     Simulacija's numbers, but the bounce by the sources (between cars e1 0.03 over eV 10 m/s: 0.15-0.35 at 7-16 km/h, 0.05-0.2 at 25-60, the
+     cars part at 3-10 km/h from 100 km/h up; the barrier wall.e0 0.36 over wall.eV 4.5 m/s: the same 0.15-0.35 at 7-16 km/h, from 50 km/h
+     up as before; fizika-4, tools/trki/preverjanje/krog-27-11/f4), and four things more, only at a touch (every place asks krOn(c)); not for the police chase (c.ck), a truck with
      its trailer (c.tl: the tractor and the trailer's body) nor in the pit lane (c.inPit: the old knock there, the walls, the slide and
-     the light things as Simulacija's); the new physics (phys 'nova') not 1 and 2 (kTake gives it the push before, its step is its own),
+     the light things as Simulacija's; a pair with one car outside the rule keeps Simulacija's bounce between the two, kvMake x1, xV); the new physics (phys 'nova') not 1 and 2 (kTake gives it the push before, its step is its own),
      at the barrier the push without 3's grip; never online (the game sends no version there: the default):
        1 the turn anywhere on the car (kTakeR): each axle's slip by the mean lever, (a + b) / 2; the grip goes as Simulacija's, and when both
          axles are pushed past aH2 (all of it aS2 further: a hard knock in the middle) or the nose more than the tail and past aHf (aSf:
@@ -2562,8 +2564,8 @@ const Core = (function () {
     arc: { pm: 1.7, e0: 0.4, e1: 0.2, eV: 5, eT: 0.5, mu: 0.15, muL: 0, muV: 0.6, yaw: 1, yawP: 0.5, aH: 0.1, aS: 0.06, glP: 0.25, glA: 1.3, glR: 0.5, glT: 0.8, slT: 0.7, wI: 3 },
     soft: { pm: 1, e0: 0.15, e1: 0.06, eV: 4, eT: 0.8, mu: 0.2, muL: 0.2, muV: 0.6, yaw: 0.6, yawP: 1, aH: 0.15, aS: 0.12, glP: 1, glA: 1, glR: 0.5, glT: 0.7, slT: 0.8, wI: 2 },
     stunt: { pm: 1, e0: 0.4, e1: 0.2, eV: 6, eT: 0.5, mu: 0.5, muL: 0.6, muV: 0.3, yaw: 1.5, yawP: 1, aH: 0.06, aS: 0.04, glP: 1, glA: 1, glR: 1, glT: 1.3, slT: 1.2, wI: 4 },
-    real: { pm: 1, e0: 0.3, e1: 0.12, eV: 4, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glR: 0.5, glT: 0.6, slT: 1, wI: 3,   // (Realistična: Simulacija's numbers,
-      aH2: 0.22, aS2: 0.1, aHf: 0.3, aSf: 0.15, wMax: 9, glX: 1, sl0: 3, slA: 0.1, wall: { v0: 1.5, e0: 0.2, e1: 0.05, eV: 6, eT: 0.5, mu: 0.35, arm: 0.55, face: 0.06, cr0: 0.03, cr1: 0.5 } }   // then its own)
+    real: { pm: 1, e0: 0.3, e1: 0.03, eV: 10, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glR: 0.5, glT: 0.6, slT: 1, wI: 3,   // (Realistična: Simulacija's numbers but a hard knock's bounce (e1, eV),
+      aH2: 0.22, aS2: 0.1, aHf: 0.3, aSf: 0.15, wMax: 9, glX: 1, sl0: 3, slA: 0.1, wall: { v0: 1.5, e0: 0.36, e1: 0.05, eV: 4.5, eT: 0.5, mu: 0.35, arm: 0.55, face: 0.06, cr0: 0.03, cr1: 0.5 } }   // then its own)
   };
   // the versions by their number (TX.cv; the settings' crV + 1): new ones go at the end, a number once given stays (the settings keep it, the
   // tests and the renderer ask for Stara as 5). The order of the choices on the page is its own (index.html: Realistična after Simulacija)
@@ -2576,7 +2578,8 @@ const Core = (function () {
   function kvMake() {
     const id = TX.cv != null && KV_IDS[TX.cv] ? KV_IDS[TX.cv] : KV_DEF; if (id === 'old') return null;
     const K = Object.assign({ id, fx: 1 }, KV[id]);
-    if (TX.cPm != null) K.pm = TX.cPm; if (TX.cE != null) { K.e0 *= TX.cE; K.e1 *= TX.cE; } if (TX.cMu != null) K.mu = TX.cMu;
+    if (id === 'real') { K.x1 = KV.sim.e1; K.xV = KV.sim.eV; }   // (a pair with a car outside the rule, krOn: Simulacija's bounce, kCollide)
+    if (TX.cPm != null) K.pm = TX.cPm; if (TX.cE != null) { K.e0 *= TX.cE; K.e1 *= TX.cE; if (K.x1 != null) K.x1 *= TX.cE; } if (TX.cMu != null) K.mu = TX.cMu;
     if (TX.cYaw != null) K.yaw = TX.cYaw; if (TX.cGl != null) { K.glP *= TX.cGl; K.glA *= TX.cGl; } if (TX.cSl != null) K.slT = TX.cSl; if (TX.cFx === 0) K.fx = 0;
     return K;
   }
@@ -4763,7 +4766,8 @@ const Core = (function () {
     const rax = px - a.x, raz = pz - a.z, rbx = px - b.x, rbz = pz - b.z;
     const vrx = (a.vx - a.w * raz) - (b.vx - b.w * rbz), vrz = (a.vz + a.w * rax) - (b.vz + b.w * rbx), vn = -(vrx * nx + vrz * nz);   // (vn: how fast they close)
     if (vn <= 0) return 0;
-    const e = vn < K.eT ? 0 : (K.e1 + (K.e0 - K.e1) * Math.exp(-(vn - K.eT) / K.eV)) * sstep(K.eT, K.eT + 0.5, vn);
+    const kx = K.x1 != null && !(krOn(a) && krOn(b)), e1 = kx ? K.x1 : K.e1, eV = kx ? K.xV : K.eV;   // (Realistična, one of the two outside its rule: the pair's bounce is Simulacija's, as the share of the one outside is)
+    const e = vn < K.eT ? 0 : (e1 + (K.e0 - e1) * Math.exp(-(vn - K.eT) / eV)) * sstep(K.eT, K.eT + 0.5, vn);
     const rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx, J = (1 + e) * vn / (tot + rna * rna / Ia + rnb * rnb / Ib);
     const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = K.mu * (K.muL + (1 - K.muL) * sstep(K.muV, K.muV + 1, vn));
     const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;

@@ -1,0 +1,65 @@
+== avto-avto celno (snap, cv 6); vir: pod 5 km/h 0,4-0,7; 7-16 km/h 0,15-0,35; 25-60 km/h 0,05-0,2; 100 km/h in vec 0-0,1, odbojna hitrost 3-10 km/h
+  rally (1150 kg) / rally (1150 kg)
+    3.6: e 0.287 (razmik 1.033 km/h, sunkov 1)
+    5: e 0.277 (razmik 1.385 km/h, sunkov 1)
+    10: e 0.245 (razmik 2.45 km/h, sunkov 1)
+    16: e 0.212 (razmik 3.392 km/h, sunkov 1)
+    30: e 0.153 (razmik 4.601 km/h, sunkov 1)
+    60: e 0.084 (razmik 5.017 km/h, sunkov 1)
+    100: e 0.048 (razmik 4.765 km/h, sunkov 1)
+    160: e 0.033 (razmik 5.333 km/h, sunkov 1)
+    240: e 0.03 (razmik 7.287 km/h, sunkov 1)
+  mravlja (165 kg) / kamen (7000 kg)
+    3.6: e 0.287 (razmik 1.033 km/h, sunkov 1)
+    5: e 0.277 (razmik 1.385 km/h, sunkov 1)
+    10: e 0.245 (razmik 2.45 km/h, sunkov 1)
+    16: e 0.212 (razmik 3.392 km/h, sunkov 1)
+    30: e 0.153 (razmik 4.601 km/h, sunkov 1)
+    60: e 0.084 (razmik 5.017 km/h, sunkov 1)
+    100: e 0.048 (razmik 4.765 km/h, sunkov 1)
+    160: e 0.033 (razmik 5.333 km/h, sunkov 1)
+    240: e 0.03 (razmik 7.287 km/h, sunkov 1)
+== avto-zid pravokotno z nosom; vir: odbojna hitrost 3-7 km/h pri 50 in 3-10 km/h pri 100 km/h; odboj kot avto-avto
+  rally   {"kmh":5,"deg":90,"vn0":1.389,"odbojKmh":0.365,"e":0.073,"hitrostPo":0.179,"w":-0.114,"sunkov":4,"trenjePrviSunek":0.22,"skoda":0,"nan":false}
+  rally   {"kmh":10,"deg":90,"vn0":2.778,"odbojKmh":2.172,"e":0.217,"hitrostPo":0.217,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.008,"nan":false}
+  rally   {"kmh":16,"deg":90,"vn0":4.444,"odbojKmh":2.647,"e":0.165,"hitrostPo":0.165,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.054,"nan":false}
+  rally   {"kmh":30,"deg":90,"vn0":8.333,"odbojKmh":2.96,"e":0.099,"hitrostPo":0.099,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.163,"nan":false}
+  rally   {"kmh":50,"deg":90,"vn0":13.889,"odbojKmh":3.208,"e":0.064,"hitrostPo":0.064,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.319,"nan":false}
+  rally   {"kmh":100,"deg":90,"vn0":27.778,"odbojKmh":5.065,"e":0.051,"hitrostPo":0.051,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.708,"nan":false}
+  rally   {"kmh":200,"deg":90,"vn0":55.556,"odbojKmh":10,"e":0.05,"hitrostPo":0.05,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":1,"nan":false}
+  mravlja {"kmh":5,"deg":90,"vn0":1.389,"odbojKmh":0.515,"e":0.103,"hitrostPo":0.178,"w":-0.214,"sunkov":4,"trenjePrviSunek":0.25,"skoda":0,"nan":false}
+  mravlja {"kmh":10,"deg":90,"vn0":2.778,"odbojKmh":2.172,"e":0.217,"hitrostPo":0.217,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.01,"nan":false}
+  mravlja {"kmh":16,"deg":90,"vn0":4.444,"odbojKmh":2.647,"e":0.165,"hitrostPo":0.165,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.071,"nan":false}
+  mravlja {"kmh":30,"deg":90,"vn0":8.333,"odbojKmh":2.96,"e":0.099,"hitrostPo":0.099,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.212,"nan":false}
+  mravlja {"kmh":50,"deg":90,"vn0":13.889,"odbojKmh":3.208,"e":0.064,"hitrostPo":0.064,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.415,"nan":false}
+  mravlja {"kmh":100,"deg":90,"vn0":27.778,"odbojKmh":5.065,"e":0.051,"hitrostPo":0.051,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.92,"nan":false}
+  mravlja {"kmh":200,"deg":90,"vn0":55.556,"odbojKmh":10,"e":0.05,"hitrostPo":0.05,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":1,"nan":false}
+  kamen   {"kmh":5,"deg":90,"vn0":1.389,"odbojKmh":0.305,"e":0.061,"hitrostPo":0.167,"w":-0.068,"sunkov":4,"trenjePrviSunek":0.196,"skoda":0,"nan":false}
+  kamen   {"kmh":10,"deg":90,"vn0":2.778,"odbojKmh":2.172,"e":0.217,"hitrostPo":0.217,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.004,"nan":false}
+  kamen   {"kmh":16,"deg":90,"vn0":4.444,"odbojKmh":2.647,"e":0.165,"hitrostPo":0.165,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.03,"nan":false}
+  kamen   {"kmh":30,"deg":90,"vn0":8.333,"odbojKmh":2.96,"e":0.099,"hitrostPo":0.099,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.09,"nan":false}
+  kamen   {"kmh":50,"deg":90,"vn0":13.889,"odbojKmh":3.208,"e":0.064,"hitrostPo":0.064,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.175,"nan":false}
+  kamen   {"kmh":100,"deg":90,"vn0":27.778,"odbojKmh":5.065,"e":0.051,"hitrostPo":0.051,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.389,"nan":false}
+  kamen   {"kmh":200,"deg":90,"vn0":55.556,"odbojKmh":10,"e":0.05,"hitrostPo":0.05,"w":0,"sunkov":1,"trenjePrviSunek":0,"skoda":0.817,"nan":false}
+== avto-zid oplazenje, prvi sunek: razmerje vzdolznega in pravokotnega sunka; vir: karoserija ob beton 0,15-0,4, ob jekleno ograjo 0,2-0,4
+  rally   {"kmh":100,"deg":5,"vn0":2.421,"odbojKmh":1.673,"e":0.192,"hitrostPo":0.96,"w":-0.218,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.01,"nan":false}
+  rally   {"kmh":100,"deg":10,"vn0":4.824,"odbojKmh":2.652,"e":0.153,"hitrostPo":0.915,"w":-0.308,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.142,"nan":false}
+  rally   {"kmh":100,"deg":20,"vn0":9.501,"odbojKmh":3.776,"e":0.11,"hitrostPo":0.808,"w":-0.313,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.361,"nan":false}
+  rally   {"kmh":100,"deg":25,"vn0":11.739,"odbojKmh":4.192,"e":0.099,"hitrostPo":0.745,"w":-0.183,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.441,"nan":false}
+  rally   {"kmh":110,"deg":20,"vn0":10.451,"odbojKmh":4.543,"e":0.121,"hitrostPo":0.807,"w":-0.008,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.412,"nan":false}
+  rally   {"kmh":200,"deg":10,"vn0":9.647,"odbojKmh":8.073,"e":0.232,"hitrostPo":0.912,"w":1.091,"sunkov":3,"trenjePrviSunek":0.35,"skoda":0.424,"nan":false}
+  rally   {"kmh":100,"deg":45,"vn0":19.642,"odbojKmh":-1.278,"e":-0.018,"hitrostPo":0.468,"w":0.457,"sunkov":3,"trenjePrviSunek":0.35,"skoda":0.48,"nan":false}
+  kamen   {"kmh":100,"deg":5,"vn0":2.421,"odbojKmh":1.642,"e":0.188,"hitrostPo":0.96,"w":-0.143,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.008,"nan":false}
+  kamen   {"kmh":100,"deg":10,"vn0":4.824,"odbojKmh":2.169,"e":0.125,"hitrostPo":0.917,"w":-0.273,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.083,"nan":false}
+  kamen   {"kmh":100,"deg":20,"vn0":9.501,"odbojKmh":2.342,"e":0.068,"hitrostPo":0.812,"w":-0.462,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.21,"nan":false}
+  kamen   {"kmh":100,"deg":25,"vn0":11.739,"odbojKmh":2.401,"e":0.057,"hitrostPo":0.75,"w":-0.515,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.257,"nan":false}
+  kamen   {"kmh":110,"deg":20,"vn0":10.451,"odbojKmh":2.341,"e":0.062,"hitrostPo":0.813,"w":-0.508,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.239,"nan":false}
+  kamen   {"kmh":200,"deg":10,"vn0":9.647,"odbojKmh":5.087,"e":0.146,"hitrostPo":0.915,"w":0.173,"sunkov":2,"trenjePrviSunek":0.35,"skoda":0.242,"nan":false}
+  kamen   {"kmh":100,"deg":45,"vn0":19.642,"odbojKmh":-4.268,"e":-0.06,"hitrostPo":0.48,"w":0.854,"sunkov":3,"trenjePrviSunek":0.35,"skoda":0.264,"nan":false}
+== avto-avto bok ob bok, en klic: razmerje vzdolznega in bocnega sunka; vir: avto-avto 0,3-0,6
+  {"razlikaVzdolz":10,"zapiranje":1,"sunek":true,"dvx":-0.158,"dvz":-0.643,"razmerje":0.245,"wA":0,"wB":0}
+  {"razlikaVzdolz":10,"zapiranje":3,"sunek":true,"dvx":-0.651,"dvz":-1.86,"razmerje":0.35,"wA":0,"wB":0}
+  {"razlikaVzdolz":30,"zapiranje":1,"sunek":true,"dvx":-0.158,"dvz":-0.643,"razmerje":0.245,"wA":0,"wB":0}
+  {"razlikaVzdolz":3,"zapiranje":3,"sunek":true,"dvx":-0.651,"dvz":-1.86,"razmerje":0.35,"wA":0,"wB":0}
+  {"razlikaVzdolz":1,"zapiranje":5,"sunek":true,"dvx":-0.306,"dvz":-3.005,"razmerje":0.102,"wA":0.034,"wB":0}
+  {"razlikaVzdolz":10,"zapiranje":0.3,"sunek":true,"dvx":-0.021,"dvz":-0.15,"razmerje":0.14,"wA":0,"wB":0}

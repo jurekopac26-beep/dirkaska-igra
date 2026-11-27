@@ -902,10 +902,10 @@ for (const tid of ['spa', 'bathurst']) {
   // loose bodies: the momentum both ways, the energy, the bounce
   { const rows = []; let okAll = true;
     for (const p of [0, 1, 2, 3]) for (const v of [60 / 3.6, V, 200 / 3.6]) for (const off of [0, 0.6, -0.6]) { const q = hit(REAL, { p, v, off }), e = (q.vb - q.vcl) / v;
-      const good = !q.nan && q.st === 1 && q.dp < 1e-9 && q.dE < 1e-9 && q.dE > -0.97 && e >= -1e-9 && e < 0.2 && q.wh === 1 && q.hitCar > 3 && q.ev === 'crash'; if (!good) okAll = false;
+      const good = !q.nan && q.st === 1 && q.dp < 1e-9 && q.dE < 1e-9 && q.dE > -0.97 && e >= (off ? -0.05 : -1e-9) && e < 0.2 && q.wh === 1 && q.hitCar > 3 && q.ev === 'crash'; if (!good) okAll = false;
       if (!good || (off === 0 && v === V)) rows.push(`${NAME[p]} ${f(v * 3.6, 0)} km/h ${off}: dp ${q.dp.toExponential(1)}, dE ${f(q.dE * 100, 1)} %, e ${f(e)}, st ${q.st}`); }
     { const q = hit(REAL, { p: 0, v: V, vt: 60 / 3.6 }); if (q.nan || q.dp > 1e-6 || q.dE > 1e-9 || q.st !== 1) okAll = false; rows.push(`120 into a car at 60 km/h: dp ${q.dp.toExponential(1)}, dE ${f(q.dE * 100, 1)} %`); }   // (its lane's tangent between two samples: 1e-6)
-    ok('Realistična, the traffic: a car, a van, a bus and a motorbike rear-ended at 60-200 km/h (centred and 0.6 m off either way) come loose and the pair keeps its momentum (1e-9), never gains energy, the bounce 0-0.2; a touch ends the endless drive, a crash event', okAll, rows.join('; ')); }
+    ok('Realistična, the traffic: a car, a van, a bus and a motorbike rear-ended at 60-200 km/h (centred and 0.6 m off either way) come loose and the pair keeps its momentum (1e-9), never gains energy, the bounce 0-0.2 (between the mass centres; off the middle the pair also turns about the touch, so they part up to 0.05 slower than the touch itself: -0.05 to 0.2); a touch ends the endless drive, a crash event', okAll, rows.join('; ')); }
   // the turn, the mirror image, against the old touch
   { const a = hit(REAL, { p: 0, v: V, off: 0.6 }), b = hit(REAL, { p: 0, v: V, off: -0.6 }), o = hit(SIM, { p: 0, v: V, off: 0.6 }), c = hit(REAL, { p: 0, v: V });
     ok('Realistična, the traffic: 0.6 m off the middle the car turns (1-9 rad/s, away from the vehicle; centred not at all), the mirror image the other way to 1e-9; the old touch leaves its yaw rate alone and swings the nose',
