@@ -13,6 +13,8 @@
 //    none; in the air none, and the gouge is not joined across the jump; no mesh more in the scene, no draw call but the one of the tyre
 //    marks' mesh (hidden: one call fewer), the frame within section 3's 360; the race started again: the marks' mesh empty, the new car
 //    whole, its view without v.hubG
+// 8. P4.4, a bent wheel's sagged corner (P3; the Tornado, its body held 1 cm over the road): no sparks under it at any speed (as on main:
+//    the stream of 20. 11. taken out, trki-iskre-vogal = 2), no spark alive, no mesh more, the same draw calls as with the wheel straight
 // 9. P4, the grit of a concrete wall (cv 6): the knock's frame no draw call, vertex or mesh over the same at a steel rail; the pool of 2400 holds
 // 10. a pile-up (cv 6, render.js xLtCut): 10 knocked rivals in a row ahead of the camera (more than 6): the 3 nearest keep their own panels,
 //     the 7 behind them are drawn light (one mesh again, v.xLt), fewer calls than with the rule off (Render.setDebug({ xLtK })) and no more
@@ -147,8 +149,9 @@ try {
   T.check('7. only the bare hub marks the road (the other three wheels: no mark of any kind)', hg.marks0 === 0 && hg.others === 0 && hg.marks1 === hg.n3, `${hg.marks0} before, ${hg.marks1} after, ${hg.n3} the gouge's`);
   T.check('7. no mesh more in the scene, no draw call but the tyre marks\' one (hidden: one fewer), the frame ≤ 360', hg.mesh1 === hg.mesh0 && hg.call1 - hg.callH === 1 && hg.call1 <= 360, `meshes ${hg.mesh0} → ${hg.mesh1}, calls ${hg.call0} before, ${hg.call1} with, ${hg.callH} with the marks hidden`);
   T.check('7. the race again: the marks cleared, the car whole, its view without a gouge\'s end', HA.fresh && HA.n === 0 && HA.marks === 0 && !HA.hubG && HA.off === 0 && HA.lost === 0, JSON.stringify(HA));
-  // 8. P4.4: sparks under a bent wheel's sagged corner (P3), only where the body as drawn is down on the road (the Tornado: its low
-  // splitter's corner, the sag held at 1 cm over the road: tools/trki/iskre-vogal.mjs). The car carried by hand as in 7
+  // 8. P4.4, a bent wheel's sagged corner (P3): no sparks under it, however low the body as drawn (as on main; the stream it had from
+  // 20. 11. was taken out on 27. 11. 2026, the card trki-iskre-vogal answered 2). The Tornado: its low splitter's corner, the sag held at
+  // 1 cm over the road (tools/trki/iskre-vogal.mjs). The car carried by hand as in 7
   const sc = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, o = {};
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
     for (let i = 0; i < 4; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }
@@ -161,21 +164,20 @@ try {
     const v = Render.viewOf(P), sp = () => Render.fxStats().sparksN, run = (vel, n, air) => { const s0 = sp(); drive(vel, n, air); return sp() - s0; };
     const gapOf = () => { let lo = Infinity; const a = v.body.geometry.attributes.position.array, p = new THREE.Vector3(); v.grp.updateMatrixWorld(true);   // (the lowest point of the outer shell as it stands drawn, over the road)
       for (let i = 0, n = v.body.geometry.userData.outerN; i < n; i++) { p.set(a[i * 3], a[i * 3 + 1], a[i * 3 + 2]).applyMatrix4(v.body.matrixWorld); v.grp.worldToLocal(p); if (p.y < lo) lo = p.y; } return +lo.toFixed(4); };   // (in the car's own frame: it lies on the road's slope)
-    o.kit = !!v.kit; o.whole = run(20, 30); o.gap0 = gapOf(); o.mesh0 = meshes(); o.call0 = meas();
+    o.kit = !!v.kit; o.whole = run(20, 30); o.gap0 = gapOf(); o.mesh0 = meshes();
     // the front left wheel bent a little: the corner sags, its body still over the road: none
     P.cd[0] = 0.47; o.some = run(20, 30); o.bendS = v.bend[0]; o.sagS = !!v.sagQ; o.gapS = gapOf();
-    // bent all the way: down to 1 cm, sparks at 20 m/s; none at 12 m/s, none in the air, none with the detail off
+    // bent all the way: down to 1 cm over the road, and still none: at 12 m/s, at 20 m/s, in the air
     P.cd[0] = 1; o.slow = run(12, 30); o.bend = v.bend[0]; o.gap = gapOf(); o.fast = run(20, 30); o.air = run(20, 30, true);
     const xs = P.x, zs = P.z, again = () => { for (let i = 0; i < 30; i++) Render.frame(1 / 30, 1, P, 'chase', {}); P.place(xs, zs, P.h); return run(20, 30); };   // (the same 20 m from the same place, the camera settled before each)
-    again(); o.fast2 = again();
-    o.mesh1 = meshes(); o.callS = meas(); o.alive = Render.fxStats().sparks; const pts = []; Render.scene.traverse(q => { if (q.isPoints && q.visible) pts.push(q); }); const hid = () => { for (const q of pts) q.visible = false; const n = meas(); for (const q of pts) q.visible = true; return n; }; o.callH = hid(); o.aliveH = Render.fxStats().sparks;   // (the sparks still in the air: counted with them, then after the same run with the wheel straight again: none)
-    P.cd[0] = 0; o.back = again(); o.bendB = v.bend[0]; o.callN = meas(); o.aliveN = Render.fxStats().sparks; o.callNH = hid();
+    o.fast2 = again();
+    o.mesh1 = meshes(); o.callS = meas(); o.alive = Render.fxStats().sparks;   // (none in the air after the runs; then the same run with the wheel straight again: the same draw calls)
+    P.cd[0] = 0; o.back = again(); o.bendB = v.bend[0]; o.callN = meas(); o.aliveN = Render.fxStats().sparks;
     return o; });
   T.check('8. the car whole, 20 m at 20 m/s: no sparks', sc.kit && sc.whole === 0 && sc.gap0 > 0.03, JSON.stringify({ sparks: sc.whole, gap: sc.gap0 }));
   T.check('8. the front left wheel bent a little: the corner sagged, the body still over the road: no sparks', sc.bendS > 0 && sc.bendS < 0.5 && sc.sagS && sc.gapS > 0.016 && sc.gapS < sc.gap0 && sc.some === 0, JSON.stringify({ bend: sc.bendS, gap: sc.gapS, sparks: sc.some }));
-  T.check('8. bent all the way: the body 1 cm over the road; 20 m at 20 m/s: a stream of sparks (by time: about 40 a second)', sc.bend === 1 && sc.gap > 0.005 && sc.gap < 0.015 && sc.fast >= 25 && sc.fast <= 45 && sc.fast2 >= 25 && sc.fast2 <= 45, JSON.stringify({ bend: sc.bend, gap: sc.gap, sparks: [sc.fast, sc.fast2] }));
-  T.check('8. the same at 12 m/s (15 m/s or less) and in the air: none; the wheel straight again: none', sc.slow === 0 && sc.air === 0 && sc.bendB === 0 && sc.back === 0, JSON.stringify({ slow: sc.slow, air: sc.air, back: sc.back }));
-  T.check('8. no mesh more in the scene; the same draw calls with the sparks in the air as after the same run without them (the particle systems that were there before set aside; with them at most their own two)', sc.mesh1 === sc.mesh0 && sc.alive > 0 && sc.aliveH > 0 && sc.aliveN === 0 && sc.callH === sc.callNH && sc.callS - sc.callN >= 0 && sc.callS - sc.callN <= 2, `meshes ${sc.mesh0} → ${sc.mesh1}, calls ${sc.callS} with ${sc.alive} sparks, ${sc.callN} with ${sc.aliveN}; the particles hidden ${sc.callH} / ${sc.callNH}`);
+  T.check('8. bent all the way: the body 1 cm over the road (the sag as drawn stays); 20 m at 20 m/s, at 12 m/s and in the air: no sparks (as on main)', sc.bend === 1 && sc.gap > 0.005 && sc.gap < 0.015 && sc.fast === 0 && sc.fast2 === 0 && sc.slow === 0 && sc.air === 0, JSON.stringify({ bend: sc.bend, gap: sc.gap, sparks: [sc.fast, sc.fast2], slow: sc.slow, air: sc.air }));
+  T.check('8. none in the air after the runs, no mesh more in the scene; the wheel straight again: none, and the same draw calls as with it bent', sc.alive === 0 && sc.aliveN === 0 && sc.mesh1 === sc.mesh0 && sc.bendB === 0 && sc.back === 0 && sc.callS === sc.callN, `meshes ${sc.mesh0} → ${sc.mesh1}, calls ${sc.callS} bent, ${sc.callN} straight; sparks alive ${sc.alive} / ${sc.aliveN}, back ${sc.back}`);
   // 9. P4, the grit of a concrete wall (cv 6, render.js: world.barKind 1): the knock's frame costs no draw call, vertex or mesh over the
   // same frame at a steel rail (the one pool of particles, 2400, drawn whole each frame), the grit 86 particles at its fullest
   // (28 clouds, 50 crumbs, 8 lumps), and four full knocks in four frames leave the pool far from full (tools/trki/prah-klici.mjs: the race)

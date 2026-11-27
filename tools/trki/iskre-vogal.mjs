@@ -1,5 +1,6 @@
 // Iskre P4.4: how far over the road is the lowest point of the DRAWN bodywork? ANALYSIS ONLY (the topic Trki #608, paket P, P4 point 4:
-// »iskre pod povešenim vogalom (P3)« and »ob pristanku«). Nothing here changes the game.
+// »iskre pod povešenim vogalom (P3)« and »ob pristanku«). Nothing here changes the game. (The sparks this table led to were taken out
+// again on 27. 11. 2026, the card trki-iskre-vogal answered 2: none, as on main. The table stays as the measure of the drawn gap.)
 //   node tools/trki/iskre-vogal.mjs            the table, every model the page has (Core.MODELS)
 //   node tools/trki/iskre-vogal.mjs --json     the same as JSON
 // How: the game opened in the test browser, a race started (the renderer's shared resources), then every model's car built as the
