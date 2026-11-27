@@ -241,6 +241,13 @@
    "skirt": false
   }
  ],
+["koror", "top", "top-koror", {"W": 824, "H": 620, "wet": true}],
+["kotor", "top", "top-kotor", {"W": 824, "H": 620, "wet": true}],
+["llogara", "top", "top-llogara", {"W": 824, "H": 620, "wet": true}],
+["lombok", "top", "top-lombok", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["luanda", "top", "top-luanda", {"W": 824, "H": 620, "wet": true}],
+["lusail", "top", "top-lusail", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["mapileng", "top", "top-mapileng", {"W": 824, "H": 620, "wet": true}],
  [
   "sani",
   "top",

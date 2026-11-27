@@ -39,6 +39,13 @@ GUESS = {
     'livorno': (43.51202, 10.3188882, 150),
     'furka': (46.5704, 8.3962, 300),        # the start above Gletsch by the Muttbach (docs/proge/furka.md)
     'gudauri': (42.4594, 44.4849, 300),     # the start at the lower edge of Gudauri (docs/proge/gudauri.md)
+    'koror': (7.3629003, 134.5061099, 300),   # the Babeldaob end of the Koror-Babeldaob Bridge (tools/koror/koror.json)
+    'kotor': (42.40309, 18.77908, 400),      # the lower serpentines above the bay (tools/kotor/config.json)
+    'llogara': (40.20679, 19.585, 400),      # the northern hairpins below the pass (tools/llogara/config.json)
+    'lombok': (-8.8957935, 116.3032175, 300),   # the start / finish (tools/lombok/lombok.json)
+    'luanda': (-8.8199022, 13.2168586, 300),    # the shore road of the western bay (tools/luanda/luanda.json)
+    'lusail': (25.4890496, 51.4497373, 300),    # the start / finish (tools/lusail/lusail.json)
+    'mapileng': (23.252294, 105.3888758, 300),  # the QL4C up from Đồng Văn (tools/mapileng/mapileng.json)
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
