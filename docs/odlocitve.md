@@ -283,3 +283,9 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - Orodje za napake (`js/napake.js`): samo slovenščina, sklopa 0 in 8 odložena; slik in seznamov napak ne shranjuj.
 - `docs/kazalo.md`: samo »Na kratko«, ostalo z grepom; velikih datotek ne beri v celoti. O progah `docs/proge-pregled.md`. Orodje za napake: `docs/orodje-za-napake.md`.
 - Žetoni: odločitve enkrat v docs; slike samo za vprašanja in ob koncu (≤300 KB); opis PR do ~20 vrstic. V `docs/vrsta.md` celica do ~2 stavka, starejše v `docs/arhiv/vrsta-zgodovina.md`.
+
+
+## Pretečeno iz `CLAUDE.md` (27. 11. 2026, O-27-23)
+
+- Pravilo sej (vrstica »Največ 6 odprtih tem«), prej: »(od 18. 11.; 10 je zgornja meja, ne cilj; croatiadata do 20 do 22. 11.; jure.kopac26: Tabla)«.
+- Prej: **jure.kopac26**: do reseta brez sej s kodo; po resetu v nedeljo 22. 11. ob 10.00 **največ 2 seji, samo Trki #608** (Fable, max; zažene opravilo po urniku). Delo prevzeli: partyslo Združevanje in proge, biketraveler #569 pred Trki, grafika in fizika, croatiadata #679, #663, #688, #672, #657, #666.
