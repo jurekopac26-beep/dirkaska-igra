@@ -1,0 +1,14 @@
+drevo: 0c36dfd, po spremembi
+{"cv":6,"klicev":120000,"nan":0,"wMax":9,"xgl":-1}
+giblje {"zadetkov":7894,"avtoEgor":1749,"avtoEmaxJ":13015.158,"avtoErelMax":70.9,"dvMax":9.622,"parEgor":43,"parEmaxJ":4077,"parErelMax":0.0447}
+   najvec E {"vrsta":"shelter","mPredmeta":220,"avto":"ev","mAvta":1798.302,"igralec":false,"E0":148150,"dEavto":13015.158,"dEpar":-5431.02,"v0":7.485,"v1":8.397,"w0":8.147,"w1":8.147,"xgl":0,"predmetV1":7.389}
+   najvec dv {"vrsta":"shelter","mPredmeta":220,"avto":"mravlja","mAvta":165,"igralec":false,"E0":136,"dEavto":9645.164,"dEpar":-1530.891,"v0":1.267,"v1":10.888,"w0":0.385,"w1":0.07,"xgl":0.865,"predmetV1":2.912}
+stoji, w=0 {"zadetkov":16884,"avtoEgor":0,"avtoEmaxJ":0,"avtoErelMax":0,"dvMax":0,"parEgor":143,"parEmaxJ":1351.229,"parErelMax":3.79}
+   najvec E null
+   najvec dv null
+stoji, |w|<=3 {"zadetkov":21391,"avtoEgor":0,"avtoEmaxJ":0,"avtoErelMax":0,"dvMax":0.192,"parEgor":259,"parEmaxJ":1771.566,"parErelMax":2.05}
+   najvec E null
+   najvec dv {"vrsta":"shelter","mPredmeta":220,"avto":"modras","mAvta":1450,"igralec":false,"E0":8723,"dEavto":-669.066,"dEpar":-406.777,"v0":1.061,"v1":1.253,"w0":2.642,"w1":2.471,"xgl":0.562,"predmetV1":1.544}
+stoji, |w|>3 {"zadetkov":9725,"avtoEgor":0,"avtoEmaxJ":0,"avtoErelMax":0,"dvMax":0.563,"parEgor":195,"parEmaxJ":2214.399,"parErelMax":0.951}
+   najvec E null
+   najvec dv {"vrsta":"isign","mPredmeta":126,"avto":"bizon","mAvta":750,"igralec":true,"E0":23115,"dEavto":-709.561,"dEpar":332.405,"v0":1.405,"v1":1.968,"w0":-6.717,"w1":-6.5,"xgl":0,"predmetV1":0}

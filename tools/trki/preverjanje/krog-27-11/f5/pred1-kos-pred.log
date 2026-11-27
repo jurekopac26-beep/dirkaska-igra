@@ -1,0 +1,8 @@
+drevo: 7112de1 (koda bfdd165), pred spremembo
+{"kaj":"kos","cv":6,"n":60000,"hit":37166,"nan":0,"dPmax":12900,"avtoEgor":3028,"avtoEgorObMirujoci":38,"avtoEgorMax_J":5258.515,"parEgor":419,"parEgorMax_J":2078.907,"parEgorRelMax":0.0226,"zrcaloMax":0}
+dP po vrstah {"giblje":6.79819143539367e-11,"giblje, avto se vrti":1.2339494083665828e-10,"lezi":12852.020390095127}
+primer par {"key":"giblje, avto se vrti","dE":2078.907,"dEavto":428.759,"dEstvar":1650.148,"E0":3304477,"id":"tur","m":3377.921,"m2":12.013,"v0":[-17.481,-38.885],"w0":-7.856,"v1":[-17.424,-38.893],"w1":-7.904,"s0":[-0.25,-0.106],"s1":[-16.456,1.994],"xgl":0.439,"kos":{"m":12.013,"r":0.412}}
+primer mirujoca {"key":"giblje, avto se vrti","dEc":472.111,"E0":65663,"id":"formula","m":798,"m2":11.498,"v0":[-6.03,0.525],"w0":-8.7,"v1":[-5.99,0.576],"w1":-8.755,"xgl":0.765,"kos":{"m":11.498,"r":0.474}}
+giblje {"hit":5486,"carUp":956,"pairUp":0,"pairMax":0}
+giblje, avto se vrti {"hit":11700,"carUp":2072,"pairUp":419,"pairMax":2078.90739889804}
+lezi {"hit":19980,"carUp":0,"pairUp":0,"pairMax":0}

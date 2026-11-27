@@ -1,0 +1,49 @@
+drevo: 0c36dfd, po spremembi
+{"kaj":"predmet","cv":6,"n":60000,"hit":27951,"nan":0,"dPmax":244,"avtoEgor":1946,"avtoEgorObMirujoci":0,"avtoEgorMax_J":12269.304,"parEgor":379,"parEgorMax_J":6334.361,"parEgorRelMax":11.3,"zrcaloMax":0}
+dP po vrstah {"cabinet":8.327747105674582e-11,"cone":3.8925376123511495e-11,"stop":4.92018476560307e-11,"bboard":6.320655141577169e-11,"crate":2.940231335342404e-11,"bench":5.935526132692765e-11,"iboard":6.230226712878399e-11,"bsign":5.99381579272443e-11,"post":4.5432396453098965e-11,"sign":2.748145995928002e-11,"tbollard":4.376432058447717e-11,"zaprta":5.968459514146584e-11,"bale":4.838913148671459e-11,"barrel":3.620953667618702e-11,"meter":5.167330192267509e-11,"msign":7.100330094088686e-11,"signalm":3.4527873636267427e-11,"pylon":3.892210342087001e-11,"vboard":3.2909924936442855e-11,"warn":3.570219250764583e-11,"iblock":2.8840181499293344e-11,"mlamp":2.841784048391942e-11,"flagp":4.04648548364207e-11,"signal":6.66301864408968e-11,"rsboard":4.3250803446097785e-11,"bollard":3.9802703988692594e-11,"hydrant":3.196227604753626e-11,"gpost":4.690376571967038e-11,"dpost":2.845748760677663e-11,"bin":8.114105980416567e-11,"rssign":4.769879259594846e-11,"cflag":4.116736102093728e-11,"shelter":1.7389464707647523e-11,"lamp":4.393323370939654e-11,"rschev":3.267020330278007e-11,"nsign":5.695092357031176e-11,"tyre":5.116557013378115e-11,"mailbox":3.4585471871003326e-11,"rbale":2.926891041214898e-11}
+vrste ["cone","pylon","tyre","bale","crate","tstack","bstack","rbale","rbstack","post","gpost","tbollard","mlamp","msign","nsign","zaprta","vboard","flagp","cflag","bench","isign","iblock","iboard","signal","signalm","lamp","sign","hydrant","bin","cabinet","bollard","shelter","barrel","stop","warn","mailbox","meter","bboard","bsign","dpost","rssign","rschev","rsboard"]
+primer par {"key":"rbstack (sklad)","dE":6334.361,"dEavto":7807.708,"dEstvar":-1473.347,"E0":882401,"id":"kolibri","m":680,"m2":78,"kosov":3,"v0":[-46.369,-21.099],"w0":0,"v1":[-46.846,-20.574],"w1":0.719}
+primer mirujoca null
+cabinet {"hit":730,"carUp":48,"pairUp":0,"pairMax":0}
+cone {"hit":654,"carUp":51,"pairUp":2,"pairMax":96.94495927709721}
+stop {"hit":644,"carUp":39,"pairUp":3,"pairMax":105.57016229854844}
+bboard {"hit":675,"carUp":58,"pairUp":19,"pairMax":5310.995529134274}
+bstack {"hit":653,"carUp":48,"pairUp":39,"pairMax":5923.706176946503}
+crate {"hit":651,"carUp":39,"pairUp":2,"pairMax":405.11021210722265}
+bench {"hit":644,"carUp":48,"pairUp":3,"pairMax":22.430936962918828}
+iboard {"hit":658,"carUp":45,"pairUp":1,"pairMax":195.663996611119}
+bsign {"hit":670,"carUp":39,"pairUp":0,"pairMax":0}
+post {"hit":679,"carUp":47,"pairUp":3,"pairMax":64.6091573057347}
+sign {"hit":685,"carUp":49,"pairUp":2,"pairMax":247.96536535677959}
+tbollard {"hit":678,"carUp":46,"pairUp":2,"pairMax":16.250514883799525}
+zaprta {"hit":677,"carUp":41,"pairUp":1,"pairMax":35.538912515453205}
+rbstack {"hit":620,"carUp":54,"pairUp":40,"pairMax":6334.360585089355}
+bale {"hit":680,"carUp":46,"pairUp":3,"pairMax":2941.1493156524903}
+barrel {"hit":647,"carUp":43,"pairUp":1,"pairMax":431.67555430330765}
+meter {"hit":622,"carUp":36,"pairUp":0,"pairMax":0}
+msign {"hit":652,"carUp":40,"pairUp":1,"pairMax":25.614600777534477}
+signalm {"hit":676,"carUp":62,"pairUp":0,"pairMax":0}
+pylon {"hit":666,"carUp":50,"pairUp":2,"pairMax":56.30037735428124}
+vboard {"hit":624,"carUp":35,"pairUp":0,"pairMax":0}
+warn {"hit":651,"carUp":52,"pairUp":3,"pairMax":508.0693179227411}
+iblock {"hit":659,"carUp":62,"pairUp":3,"pairMax":414.09087524843153}
+mlamp {"hit":626,"carUp":37,"pairUp":1,"pairMax":8.791085240646808}
+isign {"hit":672,"carUp":47,"pairUp":182,"pairMax":4889.099382478304}
+flagp {"hit":627,"carUp":42,"pairUp":1,"pairMax":100.31247858711214}
+signal {"hit":640,"carUp":40,"pairUp":0,"pairMax":0}
+rsboard {"hit":466,"carUp":35,"pairUp":2,"pairMax":31.609924537591496}
+bollard {"hit":661,"carUp":45,"pairUp":0,"pairMax":0}
+hydrant {"hit":627,"carUp":43,"pairUp":2,"pairMax":588.924275342074}
+gpost {"hit":666,"carUp":50,"pairUp":3,"pairMax":282.44506717357217}
+dpost {"hit":633,"carUp":44,"pairUp":2,"pairMax":32.78591829124605}
+bin {"hit":657,"carUp":43,"pairUp":0,"pairMax":0}
+rssign {"hit":666,"carUp":40,"pairUp":1,"pairMax":6.966794153705635}
+cflag {"hit":654,"carUp":42,"pairUp":0,"pairMax":0}
+shelter {"hit":656,"carUp":56,"pairUp":1,"pairMax":143.2670172997059}
+lamp {"hit":679,"carUp":46,"pairUp":1,"pairMax":318.5744667616291}
+rschev {"hit":620,"carUp":37,"pairUp":1,"pairMax":4.686187858494673}
+nsign {"hit":671,"carUp":34,"pairUp":0,"pairMax":0}
+tyre {"hit":619,"carUp":42,"pairUp":1,"pairMax":0.9045664318957094}
+tstack {"hit":659,"carUp":53,"pairUp":50,"pairMax":2663.3902215925937}
+mailbox {"hit":621,"carUp":51,"pairUp":1,"pairMax":281.55445684906147}
+rbale {"hit":636,"carUp":41,"pairUp":0,"pairMax":0}

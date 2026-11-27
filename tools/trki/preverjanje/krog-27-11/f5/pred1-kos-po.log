@@ -1,0 +1,8 @@
+drevo: 0c36dfd, po spremembi
+{"kaj":"kos","cv":6,"n":60000,"hit":37613,"nan":0,"dPmax":12900,"avtoEgor":2943,"avtoEgorObMirujoci":0,"avtoEgorMax_J":7418.412,"parEgor":0,"parEgorMax_J":0,"parEgorRelMax":0,"zrcaloMax":0}
+dP po vrstah {"giblje":6.79819143539367e-11,"giblje, avto se vrti":1.2339494083665828e-10,"lezi":12852.020390095127}
+primer par null
+primer mirujoca null
+giblje {"hit":5486,"carUp":956,"pairUp":0,"pairMax":0}
+giblje, avto se vrti {"hit":12147,"carUp":1987,"pairUp":0,"pairMax":0}
+lezi {"hit":19980,"carUp":0,"pairUp":0,"pairMax":0}

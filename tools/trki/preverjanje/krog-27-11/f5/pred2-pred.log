@@ -1,0 +1,14 @@
+drevo: 7112de1 (koda bfdd165), pred spremembo
+{"cv":6,"klicev":120000,"nan":0,"wMax":9,"xgl":-1}
+giblje {"zadetkov":7894,"avtoEgor":1788,"avtoEmaxJ":13015.158,"avtoErelMax":70.9,"dvMax":9.622,"parEgor":194,"parEmaxJ":4077,"parErelMax":0.0599}
+   najvec E {"vrsta":"shelter","mPredmeta":220,"avto":"ev","mAvta":1798.302,"igralec":false,"E0":148150,"dEavto":13015.158,"dEpar":-5431.02,"v0":7.485,"v1":8.397,"w0":8.147,"w1":8.147,"xgl":0,"predmetV1":7.389}
+   najvec dv {"vrsta":"shelter","mPredmeta":220,"avto":"mravlja","mAvta":165,"igralec":false,"E0":136,"dEavto":9645.164,"dEpar":-1530.891,"v0":1.267,"v1":10.888,"w0":0.385,"w1":0.07,"xgl":0.865,"predmetV1":2.912}
+stoji, w=0 {"zadetkov":16884,"avtoEgor":9,"avtoEmaxJ":144.089,"avtoErelMax":0.0355,"dvMax":0.028,"parEgor":151,"parEmaxJ":1300.132,"parErelMax":4.73}
+   najvec E {"vrsta":"isign","mPredmeta":126,"avto":"tur","mAvta":3300,"igralec":false,"E0":6913,"dEavto":144.089,"dEpar":1041.429,"v0":2.047,"v1":2.068,"w0":0,"w1":0.02,"xgl":0.993,"predmetV1":0}
+   najvec dv {"vrsta":"isign","mPredmeta":126,"avto":"lisica","mAvta":991.14,"igralec":true,"E0":3421,"dEavto":74.257,"dEpar":1083.021,"v0":2.627,"v1":2.656,"w0":0,"w1":0,"xgl":0,"predmetV1":0}
+stoji, |w|<=3 {"zadetkov":21391,"avtoEgor":508,"avtoEmaxJ":651.589,"avtoErelMax":0.171,"dvMax":0.192,"parEgor":1176,"parEmaxJ":1760.609,"parErelMax":2.48}
+   najvec E {"vrsta":"shelter","mPredmeta":220,"avto":"kamen","mAvta":7067.271,"igralec":false,"E0":110827,"dEavto":651.589,"dEpar":784.552,"v0":2.694,"v1":2.728,"w0":-2.806,"w1":-2.806,"xgl":0,"predmetV1":1.099}
+   najvec dv {"vrsta":"shelter","mPredmeta":220,"avto":"modras","mAvta":1450,"igralec":false,"E0":8723,"dEavto":-669.066,"dEpar":-406.777,"v0":1.061,"v1":1.253,"w0":2.642,"w1":2.471,"xgl":0.562,"predmetV1":1.544}
+stoji, |w|>3 {"zadetkov":9725,"avtoEgor":850,"avtoEmaxJ":3659.593,"avtoErelMax":0.0883,"dvMax":0.532,"parEgor":1589,"parEmaxJ":5167.724,"parErelMax":1.1}
+   najvec E {"vrsta":"isign","mPredmeta":126,"avto":"panter","mAvta":1350,"igralec":true,"E0":74309,"dEavto":3659.593,"dEpar":5167.724,"v0":3.683,"v1":3.428,"w0":8.326,"w1":8.632,"xgl":0.741,"predmetV1":0}
+   najvec dv {"vrsta":"shelter","mPredmeta":220,"avto":"levk","mAvta":1196.845,"igralec":false,"E0":42499,"dEavto":1743.795,"dEpar":2777.714,"v0":2.47,"v1":3.003,"w0":7.068,"w1":7.068,"xgl":0,"predmetV1":3.066}
