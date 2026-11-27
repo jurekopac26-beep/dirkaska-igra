@@ -3,7 +3,7 @@
 // settings, the leaderboard, the championship, the career, a friend's race); a race on autopilot to the results; a vehicle of the fleet
 // (the MIŠKA): its category and description on the car screen; a car destroyed in a race (the KAZE RS: the banner, Retire, the pause,
 // the results with Retired); then the switch in the settings back to Slovenian: the page and the title in Slovenian at once, and English
-// again.
+// again; the garage (garaza.html) in English, its top strip and its labels.
 //   node tests/browser/lang.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -158,6 +158,32 @@ try {
   const g8 = await page.evaluate(() => ({ name: document.querySelector('#set-name').closest('.row').querySelector('.rlbl').textContent, player: window.__game.S.name }));
   const s8 = await slovene();
   T.check('English again: the settings in English, the default name Player', g8.name === 'Driver name' && g8.player === 'Player' && !s8.length, JSON.stringify({ g8, s8 }));
+
+  // 8. the garage (garaza.html, a page of its own) in English: its top strip (Career / Free / Full game ..., Choose a track, the coins),
+  // the car's buttons and labels; no Slovenian word on the page and no Slovenian text through tr() left as it is (the page's Lang.tr watched)
+  {
+    const gctx = await browser.newContext({ viewport: { width: 390, height: 844 } }), gp = await gctx.newPage(), gerr = [];
+    gp.on('pageerror', (e) => gerr.push(e.message));
+    await gp.addInitScript(() => { try { localStorage.setItem('tdgp-settings', JSON.stringify({ lang: 'en', sound: 0 })); } catch (_) {}
+      let L; Object.defineProperty(window, 'Lang', { configurable: true, get() { return L; }, set(v) { const o = v.tr; window.__miss = [];
+        v.tr = function (s, ...a) { const r = o.call(this, s, ...a); if (v.cur === 'en' && typeof s === 'string' && /[čšžČŠŽ]/.test(s) && r === o.call(this, s) && r.replace(/\{\d\}/g, '') === s.replace(/\{\d\}/g, '') && !/^[A-ZČŠŽ\s.,·\d-]+$/.test(s) && !/^Vršič/.test(s)) window.__miss.push(s); return r; }; L = v; } }); });
+    await gp.goto(srv.base + '/garaza.html', { timeout: 120000 });
+    await gp.waitForFunction(() => { const l = document.getElementById('g-load'); return !l || l.hidden || getComputedStyle(l).display === 'none' || getComputedStyle(l).opacity === '0'; }, null, { timeout: 90000 }).catch(() => {});
+    await gp.waitForTimeout(1500);
+    const g9 = await gp.evaluate(() => {
+      const names = new Set(['Vršič', 'Kovač', 'Slovenščina']);
+      if (window.Core) for (const m of Core.MODELS) for (const w of m.name.split(/\s+/)) names.add(w);
+      const sl = new Set(['je', 'za', 'se', 'pri', 'ki', 'ni', 'izberi', 'nazaj', 'naprej', 'avto', 'kariera', 'brezplačno', 'najemi', 'proga', 'progo', 'kovanci', 'zvok', 'prej', 'potem', 'preskoči']);
+      const words = document.body.innerText.split(/[^A-Za-zÀ-žčšžČŠŽ]+/).filter(Boolean);
+      const labels = [...document.querySelectorAll('[aria-label]')].map(e => e.getAttribute('aria-label')).filter(a => /[čšžČŠŽ]|\b(avto|zvok|kovanci)\b/i.test(a));
+      return { lang: document.documentElement.lang, modes: document.getElementById('g-modes').textContent, track: document.getElementById('g-track').textContent,
+        go: document.getElementById('g-go').textContent, prev: document.getElementById('g-prev').getAttribute('aria-label'),
+        sl: [...new Set(words.filter(w => (/[čšžČŠŽ]/.test(w) && !names.has(w)) || sl.has(w.toLowerCase())))], labels, miss: [...new Set(window.__miss || ['(no Lang)'])] };
+    });
+    await gctx.close();
+    T.check('the garage in English: Career / Free, Choose a track, "Previous car", no Slovenian word or label on the page, no Slovenian through tr()', g9.lang === 'en' && /Career/.test(g9.modes) && /Free/.test(g9.modes) &&
+      !/Kariera|Brezplačno/.test(g9.modes) && !/Izberi/.test(g9.track + g9.go) && /car/i.test(g9.prev || '') && !g9.sl.length && !g9.labels.length && !g9.miss.length && !gerr.length, JSON.stringify({ g9, gerr: gerr.slice(0, 3) }));
+  }
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

@@ -1,6 +1,6 @@
 // The English page (js/lang.js, no browser): every Slovenian text the game shows has its English, with the same {0} {1} ... slots.
 // Checked: the first argument of every tr(...) in the scripts (each string in it: tr(a ? 'x' : 'y')), the tables the game reads through
-// tr() (DRIVE_TXT, NET_ERR, ...), the texts and labels of index.html, the garage (js/garage.js, js/garage3d.js, its tables, garaza.html), the upgrades and the car credit (Core), the English of every track,
+// tr() (DRIVE_TXT, NET_ERR, ...), the texts that reach tr() through a variable (achievements, controls, statistics, career rewards ...), the texts and labels of index.html, the garage (js/garage.js, js/garage3d.js, its tables, garaza.html), the upgrades and the car credit (Core), the English of every track,
 // championship and famous jump (def.en), the place names on the HUD, the helpers for numbers, money and places, and the fleet: the
 // categories (Core.CATS) and the description of every vehicle (def.desc), both shown through tr(). Every voice speaks English in both
 // languages (the engineer's row in the settings, the police radio given the English twin of its lines).
@@ -81,6 +81,34 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const stat = /const rows = \[\['Moč', 'power'\][^\n]*/.exec(src);
   for (const s of literals(stat ? stat[0] : '')) if (!['power', 'grip', 'weight', 'drift'].includes(s) && !has(s) && !Lang.SAME.has(s)) miss.push('statRows: ' + s);
   check('tables read through tr() (drive, controls, cars, modes, medals, upgrades, cameras, filters, difficulty, network errors, set-up): all in English', !miss.length, miss.slice(0, 10).join(' | '));
+
+  // 2b. the other texts that reach tr() through a variable (tr(a[1]), tr(k), tr(what), tr(e) ...), which check 1 cannot see: the achievements
+  // (ACH: name, task), the controls' keys and buttons (CTL_KEYS, CTL_PAD), the flying start, the challenge's time of day and season, the pit
+  // board's tyre (STOP_TY), the rows of the statistics and of the police file (rows = [[...]], rows.push([...])), the rivals' character
+  // (chrWords), the career's rewards (careerPay's second argument; 'Nagrada' + ' (z najhitrejšim krogom)' as one text) and the water's
+  // message (js/nvwater.js, shown through tr(e)); a text without a word (S, 300 km/h, ', ') stays as it is
+  const miss2 = [], need = (where, s) => { if (s && /[A-Za-zČŠŽčšž]{3}/.test(s) && !has(s) && !Lang.SAME.has(s)) miss2.push(where + ': ' + s); };
+  const ach = tableSrc('ACH'); if (!ach) miss2.push('(no table ACH)'); else for (const r of Function('return ' + ach)()) { need('ACH', r[1]); need('ACH', r[2]); }
+  for (const k of ['CTL_KEYS', 'CTL_PAD']) { const t = tableSrc(k); if (!t) miss2.push('(no table ' + k + ')'); else for (const r of Function('return ' + t)()) need(k, r[1]); }
+  for (const k of ['FLY_TXT', 'CHAL_TOD', 'CHAL_SEASON', 'STOP_TY']) { const t = tableSrc(k); if (!t) miss2.push('(no table ' + k + ')'); else for (const x of Object.values(Function('return ' + t)())) need(k, x); }
+  let nRows = 0;
+  for (const m of src.matchAll(/\brows(?: = |\.push\()(?=\[)/g)) { let i = m.index + m[0].length, d = 0, j = i;
+    for (; j < src.length; j++) { const ch = src[j]; if (ch === "'" || ch === '"') { j = strAt(src, j)[1] - 1; continue; } if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch) && --d < 0) break; }
+    for (const r of src.slice(i, j).matchAll(/\[\s*(?=')/g)) { nRows++; need('rows', strAt(src.slice(i, j), r.index + r[0].length)[0]); } }
+  if (nRows < 25) miss2.push('(only ' + nRows + ' rows of the statistics and the police file found)');
+  const chr = /const chrWords = [^\n]*/.exec(src); if (!chr) miss2.push('(no chrWords)'); else for (const s of literals(chr[0])) need('chrWords', s);
+  let nPay = 0;
+  for (const m of src.matchAll(/\bcareerPay\(/g)) { if (/function\s+$|careerPay: \(sum, what\) => $/.test(src.slice(m.index - 30, m.index + 10).replace(/careerPay\($/, ''))) continue;
+    const a0 = firstArg(src, m.index + 10), at = m.index + 10 + a0.length; if (src[at] !== ',') continue;
+    const arg = firstArg(src, at + 1); if (/^\s*what\s*$/.test(arg)) continue;
+    const ls = literals(arg.replace(/\btr\([^)]*\)/g, '')); nPay++;
+    ls.forEach((s, q) => { if (has(s) || Lang.SAME.has(s)) return; if (q && has(ls[q - 1] + s)) return; need('careerPay', s); });
+    if (/'\s*\+\s*\(/.test(arg)) for (let q = 1; q < ls.length; q++) if (ls[q]) need('careerPay', ls[q - 1] + ls[q]); }
+  if (nPay < 4) miss2.push('(only ' + nPay + ' calls of careerPay found)');
+  const wat = noComments(read('js/nvwater.js')), wm = [...wat.matchAll(/return '([^']+)'/g)].map(x => x[1]);
+  if (!wm.length || !/NVWater\.step\([^)]*\);\s*if \(e\) showMsg\(tr\(e\)/.test(src)) miss2.push('(js/nvwater.js: no message, or game.js no longer shows it through tr(e))');
+  for (const s of wm) need('nvwater', s);
+  check(`texts reaching tr() through a variable (achievements, controls, flying start, challenge, statistics and police file rows (${nRows}), rivals, career rewards (${nPay}), water): all in English`, !miss2.length, miss2.slice(0, 10).join(' | '));
 }
 
 // 3. index.html: every text and label (aria-label, placeholder, title) the page shows before the game writes over it
