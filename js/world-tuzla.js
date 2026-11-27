@@ -237,7 +237,7 @@
         if (!rows[q]) { prev = -1; q++; continue; }
         const R = rows[q], r = B.row(R.row, C, R.row.map((e, j) => [j * HW / 4, R.along / 4]));
         if (prev >= 0) B.link(prev, r, 0, 2); prev = r;
-        let j = q + 1; while (j + 1 < rows.length && rows[j + 1] && rows[j + 1].along - R.along <= 24 && fits(q, j + 1)) j++;
+        let j = q + 1; while (rows[j] && j + 1 < rows.length && rows[j + 1] && rows[j + 1].along - R.along <= 24 && fits(q, j + 1)) j++;   // (a row left out next to the track ends the strip: nothing is measured across it)
         q = j;
       }
     }
