@@ -12,7 +12,8 @@ const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf(k)
 const TRACK = flag('--proga', 'spa'), T = +flag('--t', '9'), OUT = path.resolve(flag('--out', path.join(ROOT, 'test-results', 'tovornjaki')));
 // id, barva (indeks PLAYER_COLORS v dirki, ista barva v salonu)
 const PAL = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];
-const ALL = [['tb1a', 2, '1 · BIVOL, dolgi nos'], ['tb1b', 6, '2 · BIVOL, kabina nad motorjem'], ['tb1c', 3, '3 · BIVOL, kamnolomski'], ['tbg', 0, 'Posebno vozilo · FENIKS, gasilsko']];
+const ALL = [['tb1a', 2, '1 · BIVOL, dolgi nos'], ['tb1b', 6, '2 · BIVOL, kabina nad motorjem'], ['tb1c', 3, '3 · BIVOL, kamnolomski'], ['tbg', 0, 'Posebno vozilo · FENIKS, gasilsko'],
+  ['tb2', 5, 'Mešalec betona · VRTINEC'], ['tb3', 7, 'Dolgonosi dirkalni vlačilec · VIHAR'], ['tb4', 1, 'Avtovleka · ŽERJAV']];
 const pick = args.filter(a => !a.startsWith('--')), CARS = pick.length ? ALL.filter(c => pick.includes(c[0])) : ALL;
 fs.mkdirSync(OUT, { recursive: true });
 const png = (file, dataUrl) => fs.writeFileSync(file, Buffer.from(dataUrl.split(',')[1], 'base64'));
