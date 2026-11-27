@@ -877,6 +877,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const o = { from: carFrom, track: !!(menuOn && Menu.fromTrack), before: (Core.MODELS[carBefore] || M).id };
     const td = Core.TRACKS.find(d => d.id === S.track), dz = td && /, /.test(td.name) ? td.name.split(', ').pop() : '';   // (the selected track's country: the flag on the garage's IZBERI PROGO)
     const p = { car: M.id, color: PLAYER_COLORS[colNow()].toString(16).padStart(6, '0') }; if (dz) p.drzava = dz;
+    if (o.track && td) { p.proga = ((Lang.cur === 'en' && td.en && td.en.name) || td.name).split(', ')[0]; p.podlaga = td.roadSurface === 'makadam' ? 'makadam' : 'asfalt'; }   // (f1, #1068: the garage's car »Za to progo«)
     garPre(true);
     if (garF && !garOn) {
       garCtx = o; garOn = true; garF.classList.remove('off'); garF.removeAttribute('aria-hidden'); try { garF.focus(); } catch (_) { }

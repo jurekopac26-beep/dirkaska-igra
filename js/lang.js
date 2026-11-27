@@ -636,6 +636,12 @@
     'Kupi': 'Buy', 'Najemi': 'Rent', 'NAJET ZA ENO DIRKO': 'RENTED FOR ONE RACE', '{0} je vrnjen, najemnina povrnjena.': '{0} returned, its rent refunded.', 'Najprej kupi ali najemi avto': 'Buy or rent the car first', 'Najet avto vozi tak, kot je.': 'A rented car is driven as it is.',
     'tvoj': 'yours', 'NAMESTI': 'FIT',
     'PRESKOČI ›': 'SKIP ›', 'PREJ': 'BEFORE', 'Garaža': 'Garage', 'POTEM': 'AFTER',
+    // e1 and f1 (#1068): two cars side by side, the car for the track
+    'Primerjaj': 'Compare', 'Primerjava': 'Comparison', 'Garaža · dva avta': 'Garage · two cars', 'Pogon': 'Drive', 'Moč na tono': 'Power per tonne',
+    'vsa štiri kolesa': 'all four wheels', 'spredaj': 'front', 'zadaj, motor spredaj': 'rear, engine in front', 'zadaj, motor v sredini': 'rear, mid engine',
+    'zadaj, motor zadaj': 'rear, rear engine', 'ZA TO PROGO': 'FOR THIS TRACK', 'Za to progo ({0}): {1}': 'For this track ({0}): {1}',
+    'pogon na vsa štiri kolesa': 'all-wheel drive', 'reli avto': 'a rally car', 'dober oprijem na makadamu': 'good grip on gravel',
+    'največ oprijema na makadamu od tvojih avtov': 'the most grip on gravel of your cars', '{0} kW na tono': '{0} kW per tonne', 'dober oprijem': 'good grip',
     'Preizkus luči': 'Lamp test', 'Motor zaturira': 'The engine revs', 'Sušenje': 'Drying', 'Dvig': 'Lift', 'Snemanje': 'Removal', 'Nove gume': 'New tyres', 'Nova platišča': 'New rims', 'Montaža': 'Fitting', 'Tapni': 'Tap', 'Priprava': 'Prep',
     'Menjava': 'Swap', 'Hauba gor': 'Bonnet up', 'Preizkus moči': 'Power test', 'Roki dol': 'Arms down', 'Izberi barvo': 'Pick a colour', 'Komora dol': 'Booth down', 'Barvanje': 'Painting', 'Kupljeno · roki se zbudita': 'Bought · both arms wake up',
     'Voziček pripelje nov del': 'A trolley brings the new part', 'Hauba je gor, podpira jo drog': 'The bonnet is up, a prop holds it', 'Roka {0} sname stari del': 'Arm {0} takes the old part off',
