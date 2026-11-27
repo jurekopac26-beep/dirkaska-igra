@@ -14,11 +14,11 @@
   "jsMs": 1.04
  },
  "pikesg": {
-  "calls": 146,
-  "maxCalls": 161,
-  "kverts": 487,
-  "maxKverts": 588,
-  "jsMs": 0.91
+  "calls": 153,
+  "maxCalls": 167,
+  "kverts": 521,
+  "maxKverts": 625,
+  "jsMs": 1.39
  },
  "nring": {
   "calls": 179,
@@ -84,11 +84,11 @@
   "jsMs": 1.16
  },
  "rastro": {
-  "calls": 216,
-  "maxCalls": 270,
-  "kverts": 629,
-  "maxKverts": 754,
-  "jsMs": 1
+  "calls": 223,
+  "maxCalls": 277,
+  "kverts": 677,
+  "maxKverts": 813,
+  "jsMs": 1.14
  },
  "montreal": {
   "calls": 209,
