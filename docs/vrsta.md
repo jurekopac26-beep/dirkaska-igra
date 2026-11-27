@@ -71,6 +71,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 27: Kotor, Koror (`js/world-chase-bt27.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 23: Portobelo, Aguascalientes (`js/world-chase-bt23.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 40 (drugi prehod): Kågeröd, Kanaba (`js/world-chase-bt40.js`, #880, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 107 (četrti prehod): Cusco, Kågeröd (`js/world-chase-bt107.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-107` |
 | Kamera za avtom, tla ob cesti, skupina 65 (tretji prehod): Bathurst, Kågeröd (`js/world-chase-bt65.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 20: Medeu, Ngorongoro (`js/world-chase-bt20.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 19: Harju, Koli (`js/world-chase-bt19.js`, v #821) | biketraveler | v delu 21. 11. |
