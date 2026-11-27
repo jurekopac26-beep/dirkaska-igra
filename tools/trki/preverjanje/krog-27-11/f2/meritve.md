@@ -27,7 +27,7 @@ Za to najdbo ni vira iz resničnih trkov; merilo je trdo pravilo veje: **dokler 
 | regresijsko preverjanje iz popravka (`regres.js`, 8 preverjanj) | 7 od 8 (štart: ovira pred prvim dotikom) | 8 od 8 |
 | avto, ki je peljal in nato stoji vzdolž ceste (`vzdolz.js`; spa in cusco, zasuk 0°, 90°, 180°) | ostane ovira | enako do bajta |
 | `pocez.js enakost` (6 prog × semena 71–73, cela dirka 13 avtov v obeh jedrih) | ni teklo | 18 od 18 OK |
-| `pocez.js skoda` (avto počez 400 m pred vodilnim; cusco, tianmen, hiva, spa × 3 semena) | vse vožnje skupaj: ? | enako do bajta |
+| `pocez.js skoda` (avto počez 400 m pred vodilnim; cusco, tianmen, hiva, spa × 3 semena) | vse vožnje skupaj: cv 1 4222 %, osnova 2418 %, igra 1251 % | enako do bajta |
 | `tests/golden.test.js` brez `--update` | ni teklo (25. 11.: 504 od 504) | 504 od 504 enakih |
 | `tests/races.test.js` brez `--update` | ni teklo (25. 11.: 112 od 360, tek ustavljen) | 360 od 360 enakih |
 
