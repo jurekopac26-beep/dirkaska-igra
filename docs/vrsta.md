@@ -2,6 +2,8 @@
 
 Skupna vrsta PR za `main` vseh računov (`CLAUDE.md`, Postopek). Naenkrat gre na `main` en PR. Citati, datumi in dolgi opisi: `docs/vrsta-arhiv.md` (12. 11. 2026) in `docs/arhiv/vrsta-zgodovina.md`.
 
+**Prva prednost (O-27-8, 27. 11. 2026): gneča.** Z veliko vozili se avto odziva kot v time trialu; lastnik biketraveler (#1176), po predaji partyslo na Fable; #1069 in #1119 na začetek vrste.
+
 ## Različica 1.0 (odločitev uporabnika 7. 11. 2026)
 - Nova mapa, misije in vse zraven: **različica 2.0**, pred izidom gumb NEUPORABNO (9. 11.).
 - **70 pravih prog** do 23. 12. 2026, **50 avtov**; vsi avti na raven KOLIBRIJA pred Trki; vrstni red: Dež in sneg + garaža → #480 + #626 → 30 avtov → #569 + #494 → Trki + Poškodbe → #246 → grafika → nove proge → 5 tovornjakov (~20. 12.).
