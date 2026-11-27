@@ -83,6 +83,13 @@ window.MENU = {
   "marrakesh": 240,
   "longford": 240,
   "chapman": 300,
+  "koror": 300,
+  "kotor": 300,
+  "llogara": 300,
+  "lombok": 240,
+  "luanda": 300,
+  "lusail": 240,
+  "mapileng": 300,
   "sani": 300,
   "montreal": 240,
   "toronto": 240,
@@ -385,6 +392,52 @@ window.MENU = {
    "alt": [
     34,
     153
+   ]
+  },
+  "koror": {
+   "start": "Babeldaob",
+   "finish": "Koror",
+   "alt": [
+    5,
+    56
+   ]
+  },
+  "kotor": {
+   "start": "Kotor",
+   "finish": "Kotor Serpentines",
+   "alt": [
+    609,
+    862
+   ]
+  },
+  "llogara": {
+   "start": "Llogara National Park",
+   "finish": "Llogara Pass",
+   "alt": [
+    894,
+    905
+   ]
+  },
+  "lombok": {
+   "base": 10
+  },
+  "luanda": {
+   "start": "Praia do Bispo",
+   "finish": "Luanda",
+   "alt": [
+    3,
+    4
+   ]
+  },
+  "lusail": {
+   "base": 13
+  },
+  "mapileng": {
+   "start": "Đồng Văn",
+   "finish": "Mã Pí Lèng",
+   "alt": [
+    1184,
+    1245
    ]
   },
   "sani": {
