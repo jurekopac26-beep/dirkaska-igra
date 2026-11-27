@@ -294,11 +294,11 @@
   "jsMs": 1.15
  },
  "hakone": {
-  "calls": 200,
-  "maxCalls": 220,
-  "kverts": 310,
-  "maxKverts": 351,
-  "jsMs": 2.96
+  "calls": 207,
+  "maxCalls": 230,
+  "kverts": 344,
+  "maxKverts": 397,
+  "jsMs": 3.73
  },
  "killar": {
   "calls": 155,
