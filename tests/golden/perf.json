@@ -112,18 +112,18 @@
   "jsMs": 0.94
  },
  "silkeborg": {
-  "calls": 244,
-  "maxCalls": 290,
-  "kverts": 660,
-  "maxKverts": 785,
-  "jsMs": 1.8
+  "calls": 246,
+  "maxCalls": 300,
+  "kverts": 661,
+  "maxKverts": 738,
+  "jsMs": 1.49
  },
  "kagerod": {
-  "calls": 237,
-  "maxCalls": 279,
-  "kverts": 633,
-  "maxKverts": 730,
-  "jsMs": 1.8
+  "calls": 236,
+  "maxCalls": 262,
+  "kverts": 619,
+  "maxKverts": 693,
+  "jsMs": 1.21
  },
  "sosnova": {
   "calls": 204,
