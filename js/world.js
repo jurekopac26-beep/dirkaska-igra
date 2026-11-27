@@ -3768,7 +3768,9 @@ const World = (function () {
       let y = HYi(i) + (HYi(j) - HYi(i)) * t + 0.035; if (T.bank) y += T.bankAt(s, lo, bk).dy;
       return [L(T.px) + L(T.nx) * lo, y, L(T.pz) + L(T.nz) * lo]; };
     const onTall = (p) => !!T._tall && T._tall.some(Rg => (p[0] - Rg.x) ** 2 + (p[2] - Rg.z) ** 2 < (Rg.ie + 0.2) ** 2);   // (a ring's tall island (Medvode): no wear on its grass)
+    const sr2 = !!(World.cesta && World.cesta.krpe && World.cesta.krpe(T, LOD.tier, o, tex));   // (Grafika AAA, SR2: the road's own shader draws the patches and the cracks, js/world-cesta.js KRPE; R runs as before, so the rubber and the arrows stay)
     const decal = (s, lo, hl, hw, rot, u0, v0, u1, v1, col) => {   // centre (s, lo), half length and width along and across the road, turned by rot; an atlas cell
+      if (sr2) return;
       const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
       if (T._tall && Q.some(q => onTall(q[0]))) return;
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
@@ -3853,7 +3855,8 @@ const World = (function () {
     'float gNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(gHash(i), gHash(i + vec2(1.0, 0.0)), u.x), mix(gHash(i + vec2(0.0, 1.0)), gHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
   function grassLook(m, sd, nat) {
     if (!m || m.userData.grassLook) return; m.userData.grassLook = true;
-    m.onBeforeCompile = (sh) => {
+    m.onBeforeCompile = (sh, rr) => {
+      if (m.userData.plasti) m.userData.plasti(sh, rr);   // (the ground's layers, js/world-plasti.js: only where a track's gate is open)
       sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) }; sh.uniforms.uNat = { value: nat || 0 }; sh.uniforms.uPat = m.userData.uPat || (m.userData.uPat = { value: 1 });   // (uPat: the patches' strength, 0 for one even meadow)
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGw; varying float vGd;')
         .replace('#include <project_vertex>', '#include <project_vertex>\nvGw = (modelMatrix * vec4(transformed, 1.0)).xz; vGd = -mvPosition.z;');
@@ -3872,7 +3875,7 @@ const World = (function () {
         '    if (uNat > 0.0) { float L = dot(gc, vec3(0.3, 0.59, 0.11)); gc = mix(gc, mix(vec3(L), gc, 0.72) * vec3(1.04, 0.96, 0.86), gg * uNat); }',
         '    diffuseColor.rgb = gc; } }'].join('\n'));
     };
-    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '') + (nat ? 'N' : '');
+    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '') + (nat ? 'N' : '') + (m.userData.plastiKey || '');
     m.needsUpdate = true;
   }
   const GRASS_NAT = { lake: 0.75 };   // how much of the loud green to tone down, per theme
@@ -4396,7 +4399,7 @@ const World = (function () {
     o.yard = Y.length;
   }
   function finish(o, tex) { if (o.props && T.def.pit) o.props = o.props.filter(p => !pitRoadAt(p.x, p.z, 0.6));   // (no knockable prop on the pit road's junctions)
-     o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); if (World.cesta) World.cesta.finish(o, tex, T); grassWorld(o, tex); verge(o); wornGrass(o); yardWorld(o, tex); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
+     o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); if (World.cesta) World.cesta.finish(o, tex, T, LOD.tier); grassWorld(o, tex); verge(o); wornGrass(o); yardWorld(o, tex); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4525,6 +4528,7 @@ const World = (function () {
     // the roads under the track's bridges (def.brO, not the two by T13): nrH digs a cutting for each, 6 m below the road, straight across the track
     P.br = (def.brO || []).map(([x, z]) => T.nearestIdx(x, z)).filter(i => { const d = ((i * T.ds - T.startS) % T.len + T.len) % T.len; return d > 250 && d < T.len - 250; })
       .map(i => ({ i, x: T.px[i], z: T.pz[i], tx: T.tx[i], tz: T.tz[i], nx: T.nx[i], nz: T.nz[i], y: T.hy[i] - 6 }));
+    P.bake = API.sencenje ? API.sencenje.prep(P, def, nrDem, nrGround) : null;   // (the terrain's baked shading, a real track that asks for it: js/world-sencenje.js)
   }
   function nrChamfer(d, nx, nz, c) {   // two-pass 3x3 chamfer distance transform (in place)
     const c2 = c * Math.SQRT2;
@@ -4638,6 +4642,7 @@ const World = (function () {
   function nrVCol(i, j) {   // grid vertex (i, j): its colour's index in G.col, coloured once per build (as a full tile's vertex: the normal from the neighbours)
     const G = NR.G, k = j * G.nx + i, C = G.col; if (C[k * 3] === C[k * 3]) return k * 3;
     nrGH(i, j); const nx = (nrGH(i + 1, j) - nrGH(i - 1, j)) / (2 * NRC), nz = (nrGH(i, j + 1) - nrGH(i, j - 1)) / (2 * NRC), c = nrCol(G.x0 + i * NRC, G.z0 + j * NRC, 1 / Math.hypot(nx, 1, nz), G.dd[k], G.cov[k]);
+    if (NR.bake) NR.bake(G.x0 + i * NRC, G.z0 + j * NRC, nx, nz, G.dd[k], G.cov[k], c);
     C[k * 3] = c[0]; C[k * 3 + 1] = c[1]; C[k * 3 + 2] = c[2]; return k * 3;
   }
   function nrGCol(x, z) {   // the terrain mesh's vertex colour at (x, z) (bilinear over the grid vertices)
@@ -4662,7 +4667,7 @@ const World = (function () {
       let nx = -(nrGH(i + st, j) - nrGH(i - st, j)) / (2 * NRC * st), nz = -(nrGH(i, j + st) - nrGH(i, j - st)) / (2 * NRC * st), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; nor[k * 3] = nx; nor[k * 3 + 1] = ny; nor[k * 3 + 2] = nz;
       if (st === 1) { const q = nrVCol(i, j), C = G.col; col[k * 3] = C[q]; col[k * 3 + 1] = C[q + 1]; col[k * 3 + 2] = C[q + 2]; }   // (cached: the verges take their outer colours from it)
-      else { const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), c = nrCol(x, z, ny, G.dd[kk], G.cov[kk]); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2]; }
+      else { const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), c = nrCol(x, z, ny, G.dd[kk], G.cov[kk]); if (NR.bake) NR.bake(x, z, -nx / ny, -nz / ny, G.dd[kk], G.cov[kk], c); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2]; }
       uv[k * 2] = x / 14; uv[k * 2 + 1] = -z / 14;
     }
     const idx = new Uint16Array(m * m * 6); k = 0;

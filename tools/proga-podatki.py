@@ -23,6 +23,10 @@
 #        RAW: mapa ZUNAJ repozitorija za surove prenose (npr. scratchpad seje): RAW/osm/ (kosi), RAW/<id>-osm.json, RAW/<id>-route.json,
 #        RAW/<id>-ground.npz (predpomnilnik tal). Korak data piše tools/<id>/<id>.json (opis vsakega ključa v njegovem "about") ter
 #        dem.png, far.png, lc.png, lu.png, chm.png. Ponovni zagon prenese samo, česar še ni v RAW.
+#   3b. Plasti tal (Grafika AAA, SR3'; docs/grafika-aaa.md): python3 -I tools/proga-podatki.py --plasti js/tracks/<id>.js LAT LON OUT.json
+#        LAT LON: izhodišče proge (štart; ne natančno: zamik se poišče z ujemanjem gozda WorldCover z gozdom def.lc). Na mreži def.lc
+#        (16 m) speče deleže štirih plasti (trava, zemlja, gramoz, skala) iz celic ESA WorldCover 2021 (10 m), jih mehko zgladi in obdrži
+#        največ dve na celico; izpiše vrstico `plasti: { ... }` za js/tracks/<id>.js (OUT.json: isto z ujemanjem in zamikom).
 #   4. Preveri pot na sliki (npr. preprost izris `line` in `places`) in v viru o progi; popravi točke v config.json in ponovi route + data.
 #
 # Kaj nastane (podrobno v "about" izhoda): sredinska črta vsakih ~5 m (OSM, vogali zaobljeni), višine ceste (Copernicus DEM GLO-30, ki je
@@ -164,7 +168,7 @@ def step_route(raw):
         else:
             t = W[w][1]
             seq.append([w, t.get('name', '') if t.get('name', '') in C['prefer'] else '', t.get('highway'), i, i + 1,
-                        {k: t[k] for k in ('lanes', 'width', 'oneway', 'bridge', 'tunnel', 'surface', 'maxspeed', 'ref', 'layer', 'sidewalk') if k in t}])
+                        {k: t[k] for k in ('lanes', 'width', 'oneway', 'bridge', 'tunnel', 'surface', 'smoothness', 'maxspeed', 'ref', 'layer', 'sidewalk') if k in t}])
     json.dump({'date': time.strftime('%Y-%m-%d', time.gmtime(os.path.getmtime(osm))), 'closed': closed, 'length': round(L, 1),
                'nodes': [[r, N[r][0], N[r][1]] for r in nodes], 'ways': seq}, open(os.path.join(raw, C['id'] + '-route.json'), 'w'), separators=(',', ':'))
     print('route: %d nodes, %.1f m' % (len(nodes), L))
@@ -824,6 +828,16 @@ def bends(line):
     return out
 
 # ================= the data step =================
+# Grafika AAA, SR2: how worn the asphalt of a way is (0-1, as World's roadWear kw: an open road 0.8, a circuit 0.3). OSM's smoothness where
+# it is tagged (the surveyor's own word); else the surface's (asphalt as an ordinary road's), a raceway's 0.4 of it (kept and resurfaced).
+# Not asphalt (gravel, cobbles, ...): 0, the shader draws no patches on it.
+WEAR_SMOOTH = {'excellent': 0.1, 'good': 0.3, 'intermediate': 0.55, 'bad': 0.8, 'very_bad': 1.0, 'horrible': 1.0, 'very_horrible': 1.0, 'impassable': 1.0}
+WEAR_SURF = {'asphalt': 0.75, 'paved': 0.75, '': 0.75, 'concrete': 0.6, 'concrete:plates': 0.7, 'chipseal': 0.9}
+def wear_density(highway, surface, smoothness):
+    if surface not in WEAR_SURF: return 0
+    if smoothness in WEAR_SMOOTH: return WEAR_SMOOTH[smoothness]
+    return round(WEAR_SURF[surface] * (0.4 if highway == 'raceway' else 1), 2)
+
 def step_data(raw):
     R = json.load(open(os.path.join(raw, C['id'] + '-route.json'))); D = json.load(open(os.path.join(raw, C['id'] + '-osm.json')))
     closed = C['closed']; n0 = R['nodes'][0]; F = Frame(n0[1], n0[2])
@@ -843,10 +857,11 @@ def step_data(raw):
     # the route's roads along it: [s0, s1, name (geographic ones only), highway, lanes, width, oneway today, surface, maxspeed, bridge]
     A, sN = route_s(R, line, F)
     if closed and sN[-1] < 1: sN[-1] = L
-    ways = []
+    ways = []; wear = []
     for w, nm, hw, i0, i1, tg in R['ways']:
         a = float(sN[i0]); b = float(sN[i1]) if i1 < len(sN) else L
         ways.append([r1(a), r1(b), nm if nm in C['geoRoads'] else '', hw, tg.get('lanes', ''), tg.get('width', ''), tg.get('oneway', ''), tg.get('surface', ''), tg.get('maxspeed', ''), 1 if tg.get('bridge') else 0])
+        wear.append([r1(a), r1(b), wear_density(hw, tg.get('surface', ''), tg.get('smoothness', ''))])
     step = L / len(line) if closed else L / (len(line) - 1)
     about = {
         'track': C.get('about', C['id']),
@@ -855,6 +870,7 @@ def step_data(raw):
         'h': 'the road\'s height at each point of line (m above sea level, 0.1 m): the ground model across the road (median of 5 samples, -8..8 m), the bridges straight from bank to bank, dips under 60 m filled, a 35 m median, sigma 15 m, grades at most %d %%, sigma 5 m' % round(MAXG * 100),
         'hRaw': 'the ground model under each point of line before the smoothing (m, 0.1 m)',
         'ways': '[s0, s1, road name (geographic names only), OSM highway, lanes, width, oneway today, surface, maxspeed, bridge]: the route\'s OSM ways in driving order (s in m from the start line)',
+        'wear': '[s0, s1, density 0-1]: how worn the asphalt is (patches, sealed cracks; Grafika AAA SR2, js/world-cesta.js KRPE gostota) from OSM\'s smoothness where it is tagged, else from surface and highway (a raceway 0.4 of a road\'s); 0 not asphalt (wear_density)',
         'bends': '[s of the apex, radius m, side (1 right, -1 left), turn deg]: the bends of line with a radius under 60 m',
         'bld': '[x, z, length, width, angle (rad, the long side from +x towards +z), height (m, 0 = not in OSM), kind, s, d (m, + right of the travel direction)]: the buildings with any part within %d m (OSM); kinds: ' % C['dist']['bld'] + BLD_KINDS,
         'bldOutline': '[index in bld, [x, z, ...]]: the outline of the buildings that are not a rectangle',
@@ -874,14 +890,67 @@ def step_data(raw):
         'tools': 'tools/proga-podatki.py with %s/config.json (see the tool\'s header)' % os.path.relpath(out_dir, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     }
     data = {'about': about, 'lat0': round(F.lat0, 7), 'lon0': round(F.lon0, 7), 'closed': closed, 'length': r1(L, 2), 'step': round(step, 4),
-            'line': flat(line, 2), 'h': [r1(v) for v in h], 'hRaw': [r1(v) for v in h0], 'ways': ways, 'bends': bends(line), 'grids': grids}
+            'line': flat(line, 2), 'h': [r1(v) for v in h], 'hRaw': [r1(v) for v in h0], 'ways': ways, 'wear': wear, 'bends': bends(line), 'grids': grids}
     data.update(vec)
     path = os.path.join(out_dir, C['id'] + '.json')
     with open(path, 'w') as f:
         f.write('{\n' + ',\n'.join(json.dumps(k) + ': ' + json.dumps(v, ensure_ascii=False, separators=(',', ':')) for k, v in data.items()) + '\n}\n')
     print('wrote', path, os.path.getsize(path) // 1024, 'KB; grids:', ', '.join('%s %d KB' % (g['file'], os.path.getsize(os.path.join(out_dir, g['file'])) // 1024) for g in grids.values()))
 
+# ---- plasti tal (SR3'): ESA WorldCover -> največ dve plasti na celico def.lc ----
+# Razredi WorldCover v plasti 0 trava, 1 zemlja, 2 gramoz, 3 skala. Skala samo, kjer WorldCover kaže golo ali redko poraslo površje (60);
+# naklon ni uporabljen (predpostavka, zapisana v docs/proge/<id>.md: strma pobočja so v Ardenih porasla, gola so le, kjer to kaže WorldCover).
+PLASTI = {10: (0, 1, 0, 0), 20: (.5, .5, 0, 0), 30: (1, 0, 0, 0), 40: (1, 0, 0, 0), 50: (.85, 0, .15, 0), 60: (0, 0, 0, 1), 70: (0, 0, 0, 1),
+          80: (0, 1, 0, 0), 90: (1, 0, 0, 0), 95: (0, 1, 0, 0), 100: (1, 0, 0, 0)}
+A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+def lc_grid(js):
+    import re
+    m = re.search(r"lc: \{ x0: (-?\d+), z0: (-?\d+), nx: (\d+), nz: (\d+), cell: (\d+), rle: '([^']+)'", open(js).read())
+    x0, z0, nx, nz, cell = map(int, m.groups()[:5]); rle = m.group(6); lc = np.zeros(nx * nz, np.uint8); p = k = 0
+    while k < lc.size:
+        v = A64.index(rle[p]); p += 1; n = (v & 15) + 1
+        if (v & 15) == 15:
+            while True:
+                e = A64.index(rle[p]); p += 1; n += e
+                if e != 63: break
+        lc[k:k + n] = v >> 4; k += n
+    return x0, z0, nx, nz, cell, lc.reshape(nz, nx)
+def plasti_bake(js, lat0, lon0):
+    x0, z0, nx, nz, cell, lc = lc_grid(js); F = Frame(lat0, lon0); M = 400
+    la, lo = F.ll(np.array([x0 - M, x0 + nx * cell + M]), np.array([z0 - M, z0 + nz * cell + M]))
+    a, T, _ = read_mosaic(wc_urls(la.min(), lo.min(), la.max(), lo.max()), la.min(), lo.min(), la.max(), lo.max()); inv = ~T
+    def cls(dx, dz, sub=1):   # the WorldCover class at sub x sub points of every cell
+        o = (np.arange(nx * sub) + .5) * cell / sub, (np.arange(nz * sub) + .5) * cell / sub
+        X, Z = np.meshgrid(x0 + dx + o[0], z0 + dz + o[1]); la, lo = F.ll(X, Z); c, r = inv * (lo, la)
+        return a[np.clip(np.floor(r).astype(int), 0, a.shape[0] - 1), np.clip(np.floor(c).astype(int), 0, a.shape[1] - 1)]
+    fo = lc == 1; agree = lambda dx, dz: ((cls(dx, dz) == 10) == fo).mean()
+    best = max((agree(dx, dz), dx, dz) for dx in range(-400, 401, 24) for dz in range(-400, 401, 24))   # the shift: the forests agree best
+    best = max((agree(dx, dz), dx, dz) for dx in range(best[1] - 24, best[1] + 25, 2) for dz in range(best[2] - 24, best[2] + 25, 2))
+    c = cls(best[1], best[2], 4); W = np.zeros((4,) + c.shape)
+    for k, w in PLASTI.items():
+        for l in range(4): W[l][c == k] = w[l]
+    W = W.reshape(4, nz, 4, nx, 4).mean(axis=(2, 4))   # the shares in every 16 m cell
+    W = np.stack([ndimage.gaussian_filter(W[l], 0.6, mode='nearest') for l in range(4)])   # soft over the cells' edges (~10 m)
+    o = np.argsort(-W, axis=0); d, s = o[0], o[1]; wd, ws = np.take_along_axis(W, o[:1], 0)[0], np.take_along_axis(W, o[1:2], 0)[0]
+    q = np.clip(np.rint(ws / np.maximum(wd + ws, 1e-6) * 6), 0, 3).astype(int); s = np.where(q == 0, d, s)
+    v = (d * 16 + s * 4 + q).ravel(); out = []; i = 0   # one character a cell; '.' + k: the last one k + 2 more times
+    while i < v.size:
+        j = i + 1
+        while j < v.size and v[j] == v[i]: j += 1
+        out.append(A64[v[i]]); n = j - i - 1
+        while n >= 2: k = min(n - 2, 63); out.append('.' + A64[k]); n -= k + 2
+        if n == 1: out.append(A64[v[i]])
+        i = j
+    share = [float(np.mean(d == l)) for l in range(4)]
+    return {'x0': x0, 'z0': z0, 'nx': nx, 'nz': nz, 'cell': cell, 'w': ''.join(out)}, {'agree': best[0], 'shift': best[1:], 'share': share}
+def step_plasti(js, lat0, lon0, out):
+    P, info = plasti_bake(js, lat0, lon0)
+    print('plasti: forest agreement %.3f at shift x %+d m, z %+d m; dominant share grass/earth/gravel/rock %s; %d chars' % (info['agree'], info['shift'][0], info['shift'][1], ' / '.join('%.3f' % v for v in info['share']), len(P['w'])))
+    json.dump({'plasti': P, 'info': info}, open(out, 'w'))
+    print("plasti: { on: 0, x0: %d, z0: %d, nx: %d, nz: %d, cell: %d, w: '%s' }," % (P['x0'], P['z0'], P['nx'], P['nz'], P['cell'], P['w'][:60] + '...'))
+
 def main():
+    if len(sys.argv) == 6 and sys.argv[1] == '--plasti': step_plasti(sys.argv[2], float(sys.argv[3]), float(sys.argv[4]), sys.argv[5]); return
     if len(sys.argv) < 3: print(__doc__ or 'usage: python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]'); sys.exit(2)
     C.update(load_config(sys.argv[1])); raw = sys.argv[2]; os.makedirs(raw, exist_ok=True)
     steps = [a for a in sys.argv[3:] if a in ('osm', 'route', 'data')] or ['osm', 'route', 'data']
