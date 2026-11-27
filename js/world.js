@@ -3758,7 +3758,8 @@ const World = (function () {
     const wAt = (i) => (T.wa ? T.wa[i] : w), limAt = (i) => (T.wa ? T.wa[i] - 0.6 : lim), bare = (s) => (!!T.sf && T.sf[at(Math.round(s / ds))] !== 0) || (!!T.def.wearPaved && !T.pavedAt[at(Math.round(s / ds))]);
     const sp = T.sf ? 0.5 : 1;   // (and a stage through a town, its streets patched and cracked twice as often)
     const deck = (i) => { for (const c of T.cross || []) { const d = Math.abs(i - c.up); if (Math.min(d, N - d) * ds < c.upZ + 30) return true; } return false; };   // (Suzuka's bridge fades out while the car drives under it)
-    const chunk = (p) => { const k = Math.floor(p[0] / 256) + ',' + Math.floor(p[2] / 256); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
+    const WC = o.wearCell || 256;   // (o.wearCell: bigger cells, fewer draws, where the phone's budget of draws is short: js/world-rbring.js, LK.wearCell)
+    const chunk = (p) => { const k = Math.floor(p[0] / WC) + ',' + Math.floor(p[2] / WC); let c = cells.get(k); if (!c) cells.set(k, c = { P: [], C: [], U: [], I: [] }); return c; };
     const vtx = (c, p, col, uv) => { c.P.push(p[0], p[1], p[2]); c.C.push(col[0], col[1], col[2], col[3]); c.U.push(uv[0], uv[1]); return c.P.length / 3 - 1; };
     const face = (c, a, b, d) => {   // a triangle facing up
       const P = c.P, ux = P[b * 3] - P[a * 3], uz = P[b * 3 + 2] - P[a * 3 + 2], vx = P[d * 3] - P[a * 3], vz = P[d * 3 + 2] - P[a * 3 + 2];
