@@ -16,3 +16,5 @@ Po vsakem krogu zemljevid proge, ki pokaže, kje si izgubil (rdeče) ali pridobi
 ## Stanje
 - 8. 11. 2026: začetek dela (seja biketraveler).
 - 8. 11. 2026: narejeno; testi `tests/analiza.test.js` (16) in `tests/browser/analiza.test.mjs` (9), povezani testi lokalno zeleni (14/14); v vrsti za `main` (#511, osnutek do vrste).
+- 26. 11. 2026: Matej (jure.kopac26) izbral možnost A (obarvana proga, nasvet in 3 najslabši ovinki; #1160).
+- 27. 11. 2026: prenos na svež `main`, veja `analiza/i12-krog`, #1175 (nadaljuje #511, zaprt 25. 11.); povezani testi 25/25 zeleni.
