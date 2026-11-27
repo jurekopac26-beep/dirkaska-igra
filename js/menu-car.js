@@ -226,7 +226,7 @@ window.MenuCar = (function () {
   // a box in the yard as laid out (a new track's sign sliding in, its transform, does not move it: the car drawn where it stands)
   const boxIn = (e) => e ? { left: e.offsetLeft, top: e.offsetTop, width: e.offsetWidth, height: e.offsetHeight } : null;
   function frameCar() {
-    const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? 4 : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's)
+    const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? (M.trailer && M.trailer.tail ? 7.5 : 4) : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's; a load past the trailer's tail in it: up to 7.5)
     cam.fov = FOV; cam.aspect = W / H; cam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); cam.lookAt(0, 0.55 * k + dy, 0);
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
     // the car's box as seen, in the canvas's -1..1

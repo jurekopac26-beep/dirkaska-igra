@@ -22,6 +22,9 @@ const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : String(x));
   const tt = new C.Race(track('pikes'), { numAI: 0, playerGrid: 1, laps: 1, phys: 'cs', seed: 3, slip: true });
   check('off (the default) and in a time trial: no tow on any car; on: every car with it (none on the grid)',
     !off.slip && off.cars.every(c => !('tow' in c)) && !tt.slip && tt.cars.every(c => !('tow' in c)) && !!on.slip && on.cars.length === 4 && on.cars.every(c => c.tow === 0), '');
+  // the levels of Nastavitve (the user's of 20. 11. 2026): 1 Šibko, 2 Srednje, 3 Močno (true: Močno, the strength of before); the share of the drag a full wake takes
+  const lv = [1, 2, 3, true].map(k => { const r = new C.Race(T, { numAI: 3, playerGrid: 4, laps: 2, phys: 'cs', seed: 3, slip: k }); return r.slip.lv + '/' + r.cars.every(c => c.towK === r.slip.lv); });
+  check('the levels: Šibko 0.32, Srednje 0.6, Močno 1 of the full wake (true: Močno)', lv.join(' ') === '0.32/true 0.6/true 1/true 1/true', lv.join(' '));
 }
 
 // 2. the wake: 8 m behind a car on a straight, in its line, both at 150 km/h: a strong tow; 2 m to the side, 30 m behind, slow, in the pit

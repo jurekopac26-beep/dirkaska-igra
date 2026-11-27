@@ -2491,6 +2491,9 @@ const Core = (function () {
   // (the user, 4. 11. 2026, Great Alpine Road: »avto dobi pospešek, ko je med gužvo avtomobilov«: with 2.4 m and 40 m, at once, the car in a
   // pack was in some wake 90 % of the time, +7.9 % top speed on average; with these +1.6 %, behind one car on a straight as before)
   const TOW_LAT = 1.2, TOW_RNG = 25, TOW_T = 1;
+  const TK_HOLD_M = 1e9;   // (a truck in the traffic that keeps to its lane: its mass for a car's knock, Traffic._tkHold)
+  // the levels of Nastavitve, Zavetrje (opts.slip 1-3; true, the tests' and the old way: 3): the share of TOW_DRAG a full wake takes away (c.towK)
+  const TOW_LV = [0, 0.32, 0.6, 1];
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (snappy, a bit above real g)
   // Razbijanje · nov način: prevračanje (Nastavitve xRoll; off by default: nothing here runs, no car ever has rl). A hard knock on a car's
   // side (another car's, 9 m/s and more across; a wall's, 10 m/s and more) rolls it over away from the knock: for 1.2-1.6 s it slides on
@@ -2708,8 +2711,8 @@ const Core = (function () {
     if (!isObj(D)) return 'trailer: an object';
     const ok = isNum(D.mass, 500, 40000) && isNum(D.len, 4, 16) && isNum(D.wid, 1.5, 2.6) && isNum(D.ht, 1, 4.5) && isNum(D.f, 0, 3) && isNum(D.rw, 0.25, 0.7)
       && isNum(D.mu, 0.5, 2.5) && isNum(D.brk, 0, 14) && Array.isArray(D.ax) && D.ax.length >= 1 && D.ax.length <= 4 && D.ax.every(x => isNum(x, -D.len + D.f + 0.3, -1))
-      && Array.isArray(D.kp) && D.kp.length === 2 && isNum(D.kp[0], -4, 0) && isNum(D.kp[1], 0.5, 1.6) && (D.look == null || isObj(D.look));
-    if (!ok) return 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, look }';
+      && Array.isArray(D.kp) && D.kp.length === 2 && isNum(D.kp[0], -4, 0) && isNum(D.kp[1], 0.5, 1.6) && (D.look == null || isObj(D.look)) && (D.tail == null || isNum(D.tail, 0, 14));
+    if (!ok) return 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, tail, look }';
     if (D.next == null) return '';
     // the road train's second tank (docs/zrcalni-vlak.md): on the dolly's fifth wheel, kp[0] behind the first kingpin; dax the dolly's axles
     // (rigid to the first tank: a B-dolly), lim its fold against the first tank
@@ -2724,7 +2727,7 @@ const Core = (function () {
     const T = { tl: true, D, id: c.id, x: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, y: 0, vy: 0, px: 0, pz: 0, ph: 0, py: 0,
       m: { mass: D.mass, len: L, wid: W, a: L / 2, b: L / 2, kI: Math.sqrt((L * L + W * W) / 12) }, I: D.mass * (L * L + W * W) / 12,
       cx, xa: xa - cx, axS: cx / xa,   // (the box's middle from the kingpin, < 0; the axles' middle from the box's; the axles' share of its weight)
-      back: -D.kp[0] + L - D.f - c.m.len / 2, kd2: xa * xa,   // (the AI's: its tail past the tractor's own, straight behind (m); the kingpin to the axles, squared: how far in it cuts a bend)
+      back: -D.kp[0] + L - D.f + (D.tail || 0) - c.m.len / 2, kd2: xa * xa,   // (the AI's: its tail past the tractor's own, straight behind (m); the kingpin to the axles, squared: how far in it cuts a bend)
       rel: 0, yA: 0, vyA: 0, airA: 0, yK: 0, pit: 0, slide: 0, fold: 0, fall: null, torn: 0,
       q: { i: -1 }, qa: { i: -1 }, corners: [], circles: [], rad: W * 0.5 + 0.02, phys: 'nova', dmgMode: 0, dmg: 0, dz: [0, 0, 0, 0], cd: [0, 0, 0, 0],
       isPlayer: c.isPlayer, net: false, air: 0, xgl: 0, fuelKg: 0, inPit: false, pitWant: false, pitG: false, speed: 0, csKc: 0,
@@ -2883,7 +2886,7 @@ const Core = (function () {
   // the load the kingpin puts on the tractor's fifth wheel (kg; over its drive axle: its traction, stepCS); none torn off
   const tlKing = (c) => c.tl.fall ? 0 : c.tl.m.mass * (1 - c.tl.axS);
   // a rig's tail behind its tractor's middle (m; the grid, the open road's finish parking): its trailer's, a road train's second tank's (tlChain)
-  const tlTail = (M) => { const D = M.trailer, N = D.next; return N ? -D.kp[0] - N.kp[0] + N.len - N.f : D.len - D.f - D.kp[0]; };
+  const tlTail = (M) => { const D = M.trailer, N = D.next; return N ? -D.kp[0] - N.kp[0] + N.len - N.f : D.len - D.f - D.kp[0] + (D.tail || 0); };
   // the trailer's step (Car.step, after the tractor's): see above
   function tlStep(c, dt, trk) {
     const T = c.tl, D = T.D, T2 = T.next;
@@ -3327,7 +3330,7 @@ const Core = (function () {
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
       if (gl > 0 && grounded && fwd) Fy += clamp(-vt * m / dt, -G * m * CRASH.slide, G * m * CRASH.slide) * gl * (1 - lowGrip);   // (the tyres scrub the slide)
       // ---- air + rolling + surface drag, slope, bank (shared blocks) ----
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow : 1);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow * (this.towK == null ? 1 : this.towK) : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -3550,7 +3553,7 @@ const Core = (function () {
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
       if (gl > 0 && grounded && fwd) Fy += clamp(-vt * m / dt, -G * m * CRASH.slide, G * m * CRASH.slide) * gl * lo;   // (the tyres scrub the slide)
       // ---- air + rolling + surface drag, slope, bank (cs's shared blocks); the drag of one side's wheels pulls the car round ----
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow : 1);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow * (this.towK == null ? 1 : this.towK) : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -5397,6 +5400,10 @@ const Core = (function () {
     }
     _dead(v) { return !!(v.rider && (v.rider.st === 'dead' || v.rider.st === 'hit')); }   // (a bicycle whose rider lies dead by it: it lies there for good)
     // a vehicle knocked loose (st 1): out of its group; a moment without contacts when it was knocked out of a car's way (nc s)
+    // a truck in the traffic (TFK 5) hit by a car (Nastavitve, Tovornjak v prometu: opts.tfTruck; the user's of 20. 11. 2026, trki-tovornjak-20-11
+    // = 1): 0 (the default) it keeps to its lane, as heavy as a wall for the car (never knocked loose); 1 the same up to 120 km/h, a faster car
+    // knocks it as before; 2 as before (its own mass, knocked loose). The tie to Trki (#608) is that branch's
+    _tkHold(v, c) { if (v.p !== 5 || v.st !== 0) return false; const m = this.race.opts.tfTruck | 0; return m === 0 || (m === 1 && c.speed * 3.6 <= 120); }
     _knock(v, nc) { v.st = 1; v.t = 0; v.yl = 0; v.ind = 0; v.nc = nc || 0; if (v.grp) { const m = v.grp.m, k = m.indexOf(v); if (k >= 0) m.splice(k, 1); v.grp = null; } }
     // off the far end (or a wreck left far behind): back at the other end, when it is clear there and out of sight of the race cars; a
     // group of cyclists all together once the last of them is off, in single file again
@@ -5503,7 +5510,7 @@ const Core = (function () {
       if (best <= 0 || v.nc > 0) return 0;
       if (this.win && c === this.race.player) this.win.hit++;   // (the endless drive: any touch ends it, Endless)
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
-      const ma = c.m.mass, mb = v.mass, ia = c.net ? 0 : 1 / ma, ib = 1 / mb, tot = ia + ib;   // (a friend's car online: its own phone moves it; here it is as heavy as a wall, the vehicle takes all of it)
+      const ma = c.m.mass, mb = this._tkHold(v, c) ? TK_HOLD_M : v.mass, ia = c.net ? 0 : 1 / ma, ib = 1 / mb, tot = ia + ib;   // (a truck that keeps to its lane: Nastavitve, _tkHold) (a friend's car online: its own phone moves it; here it is as heavy as a wall, the vehicle takes all of it)
       c.x += bnx * best * ia / tot; c.z += bnz * best * ia / tot;
       if (v.st !== 0) { v.x -= bnx * best * ib / tot; v.z -= bnz * best * ib / tot; }
       else { const f = best * ib / tot; v.s -= (bnx * this.T.tx[v.i] + bnz * this.T.tz[v.i]) * f; v.d -= (bnx * this.T.nx[v.i] + bnz * this.T.nz[v.i]) * f; }
@@ -5532,7 +5539,7 @@ const Core = (function () {
       const o = obbHit(c.x, c.z, c.h, c.m.len, c.m.wid, v.x, v.z, v.h, v.len, v.wid); if (!o || v.nc > 0) return 0;
       const best = o.pen, bnx = o.nx, bnz = o.nz, bpx = o.px, bpz = o.pz, T = this.T;
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
-      const ma = crashMass(c), mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib, Ia = c.I * ma / c.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
+      const ma = crashMass(c), mb = this._tkHold(v, c) ? TK_HOLD_M : v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib, Ia = c.I * ma / c.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
       const corr = Math.max(0, best - CRASH.slop) * CRASH.push + Math.max(0, best - 0.25);
       c.x += bnx * corr * ia / tot; c.z += bnz * corr * ia / tot;
       if (v.st !== 0) { v.x -= bnx * corr * ib / tot; v.z -= bnz * corr * ib / tot; }
@@ -7331,7 +7338,7 @@ const Core = (function () {
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       // the slipstream (opts.slip, a race with rivals): less air drag in the wake of a car ahead (c.tow, see _tow; the field only with it on)
       this.slip = opts.slip && total > 1 && !this.timeTrial ? { n: 0 } : null;
-      if (this.slip) for (const c of this.cars) c.tow = 0;
+      if (this.slip) { const k = TOW_LV[opts.slip === true ? 3 : Math.max(1, Math.min(3, opts.slip | 0))]; this.slip.lv = k; for (const c of this.cars) { c.tow = 0; c.towK = k; } }
       // the marbles (opts.tyres, a real circuit: not one kept for testing only, def.test; see _marbles): d, the rubber laid since the road was
       // last washed (car-metres), lv, how thick the band is (0..1; the renderer's too)
       this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0, rb: 0 } : null;
@@ -8720,7 +8727,7 @@ const Core = (function () {
           f = Math.max(f, (1 - (g - 3) / (TOW_RNG - 3)) * (1 - 0.6 * lat / TOW_LAT));
         }
         if (dt != null) { f = (c.tow || 0) + (f - (c.tow || 0)) * Math.min(1, (SD ? SD[ci] : dt) / TOW_T); if (f < 1e-4) f = 0; }   // (built up and died away over TOW_T s)
-        c.tow = f;
+        c.tow = f; c.towK = this.slip ? this.slip.lv : 1;   // (the level, also for a car that joined after the start)
       }
     }
     _drs(c, ds, dt) {
@@ -9131,7 +9138,7 @@ const Core = (function () {
     car: { pico: 48000, p206: 36000, kaze: 62000, muscle: 68000, strega: 95000, vortex: 78000, truck: 350000, rally: 400000, ev: 160000, formula: 650000, lm: 600000,
       miska: 35000, kolibri: 12000, raketa: 22000, levs: 36000, levk: 40000, lisica: 18000, sokol: 65000, panter: 125000, jelen: 280000, modras: 260000, perun: 500000,
       skorpijon: 1400000, jastreb: 130000, gad: 190000, blisk: 450000, lev: 800000, zmaj: 1200000, hrosc: 28000, medved: 190000, gozdar: 300000, pescenjak: 500000,
-      mravlja: 7500, kozorog: 140000, strelica: 350000, tornado: 400000, bizon: 500000, tiger: 550000, titan: 500000, kamen: 800000, cisterna: 850000, zrcalni: 1000000, jezek: 35000, predsednik: 150000,
+      mravlja: 7500, kozorog: 140000, strelica: 350000, tornado: 400000, bizon: 500000, tiger: 550000, titan: 500000, kamen: 800000, cisterna: 850000, zrcalni: 1000000, avtovoz: 650000, vetrnica: 700000, hrast: 750000, lastovka: 900000, gasilec: 950000, jezek: 35000, predsednik: 150000,
       goljat: 300000, superkombi: 450000 },
     upg: [0, 4000, 7000, 12000],
     place: [15000, 11250, 8750, 7000, 5750, 4750, 4000, 3250, 2750, 2250, 1750, 1250, 750],
@@ -9231,7 +9238,7 @@ const Core = (function () {
       else if (k === 'idle') { if (!isNum(P.idle, 0, 8000)) return 'phys.idle not 0..8000'; }
       else if (!isNum(P[k], 1e-6, 1e6)) return 'phys.' + k + ' not a number > 0';
     }
-    if (P.len > 6.4 || P.wid > 3.2) return 'phys: longer than 6.4 m or wider than 3.2 m';
+    if (P.len > 13 || P.wid > 3.2) return 'phys: longer than 13 m or wider than 3.2 m';   // (the longest: the coach, js/cars/lastovka.js; the garage shows one over 6.4 m scaled down, Render.garageK)
     if (!(P.a + P.b < P.len)) return 'phys: the wheelbase (a + b) as long as the vehicle';
     if (!(P.redline > P.idle) || P.redline > 25000) return 'phys.redline not above idle (and up to 25000)';
     if (P.rw > 1.1 || P.kI > 3 || P.cDrag > 3 || P.steerMax > 1.2) return 'phys: rw, kI, cDrag or steerMax out of range';
