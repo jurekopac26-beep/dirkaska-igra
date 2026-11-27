@@ -80,7 +80,7 @@ try {
   await lay();
   const E0 = await Q.evaluate(async () => {
     document.querySelector('[data-set="lang"] button[data-v="en"]').click();
-    for (let k = 0; k < 60 && (document.querySelector('#nv-list [data-nv-deli]') || {}).textContent !== 'Share top 10'; k++) await new Promise((r) => setTimeout(r, 100));
+    for (let k = 0; k < 60 && !/^Dry/.test((document.querySelector('#nv-list .set-note') || {}).textContent || ''); k++) await new Promise((r) => setTimeout(r, 100));   // (the list is drawn again from the store: asynchronous)
     const b = document.querySelector('#nv-list [data-nv-deli]');
     return { open: document.getElementById('set-najboljse').open, btn: b ? b.textContent : null, note: [...document.querySelectorAll('#nv-list .set-note')].map((e) => e.textContent), rows: [...document.querySelectorAll('#nv-list .nv-row .rlbl')].filter((e) => e.textContent).length };
   });
