@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1250 900" width="1250" height="900">
+  <title>Iceland</title>
+  <!-- Ratio 18:25 (the national flag act of 1944): a sky-blue field, a snow-white cross with a fire-red cross inside it, the arms to
+       the edges; the white cross 2/9 of the height wide, the red one 1/9; the blue fields at the hoist squares, the outer ones as wide
+       and twice as long: along 7:1:2:1:14, across 7:1:2:1:7. Colours: blue #02529C, red #DC1E35. -->
+  <rect width="1250" height="900" fill="#02529C"/>
+  <rect x="350" width="200" height="900" fill="#FFFFFF"/>
+  <rect y="350" width="1250" height="200" fill="#FFFFFF"/>
+  <rect x="400" width="100" height="900" fill="#DC1E35"/>
+  <rect y="400" width="1250" height="100" fill="#DC1E35"/>
+</svg>

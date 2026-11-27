@@ -131,6 +131,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 - **Ne velja**:
   - na dirkališčih (odgovor `sovoznik-kje`); tam ostanejo table pred zaviranjem;
   - na testnih progah (zamrznjene);
+  - na progah za cisterno (`def.vehicle`, `docs/proge-cisterna.md`; odločitev uporabnika 16. 11. 2026, vprašanje `cisterna-sovoznik-539` = 1): `Core.codrvRoad` jih izpusti kot ceste ZDA;
   - na novi mapi in v misijah (svoje opombe);
   - v avtošoli (tudi »Prvič na cesti«), posnetku dirke in foto načinu.
 

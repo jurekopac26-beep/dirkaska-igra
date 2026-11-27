@@ -899,6 +899,86 @@
   "nan": false,
   "digest": "2fa2deb6d9228882bfbc751c"
  },
+ "svalvogar/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 55.89,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5d843dfc97f3d3db24b4bd36"
+ },
+ "svalvogar/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 67.85,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d9a86ed1e89ae07bb7109c3e"
+ },
+ "fairymeadows/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 65.94,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bc6b43ba3dbc38a7e361f364"
+ },
+ "fairymeadows/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 79.87,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9933f117331f6ab04889da64"
+ },
+ "manchewe/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 59.89,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "33f45a8c8d62cbc3183e68a7"
+ },
+ "manchewe/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 71.14,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e4cf5f915a5a320848a33299"
+ },
+ "yungas/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 65.28,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "92a3c0de34c970681c0582d9"
+ },
+ "yungas/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 77.33,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "017f585361ff4fbbbb554163"
+ },
  "hafit/cs": {
   "finished": 13,
   "cars": 13,
@@ -3252,52 +3332,22 @@
  "tapini/cs": {
   "finished": 1,
   "cars": 1,
-  "winner": 18.74,
+  "winner": 70.91,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c38768d4cd97b7e6b8ff1c16"
+  "digest": "68d0fbc0aca5e22e4f480544"
  },
  "tapini/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 22.46,
+  "winner": 85.83,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "aa9f1fc4add08b3535b7f0c5"
- },
- "tapini/cs/formula": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 19.4,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "99188f69bfa5d0900ac088d9"
- },
- "tapini/cs/lm": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 21.8,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "7a0d8aade17971b480e1da0f"
- },
- "tapini/cs/car": {
-  "finished": 1,
-  "cars": 1,
-  "winner": 19.86,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "fc780e9e5000cade3c924150"
+  "digest": "7d3e022bf35039948b156b0e"
  },
  "canaries/cs": {
   "finished": 13,

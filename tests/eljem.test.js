@@ -25,6 +25,14 @@ check('track: 1.4-1.6 km of race in the real scale (a short track, its length un
   `race ${T.raceLen.toFixed(0)} m, heights ${Math.min(...T.hy).toFixed(1)}..${Math.max(...T.hy).toFixed(1)} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('eljem'));
 {
+  // Realizem E: the side roads from OpenStreetMap (def.stranske, World.cesta.stranske) only for the look: the track's model the same
+  // without them (the line, the heights, the barriers' lines), each road from its mouth at most ~60 m into the land
+  const T0 = new C.Track(Object.assign({}, def, { stranske: undefined })), same = ['px', 'pz', 'hy', 'bl', 'br'].every(k => T0[k].length === T[k].length && T0[k].every((v, i) => v === T[k][i]));
+  const len = def.stranske.map(r => { let l = 0; for (let k = 2; k + 1 < r[6].length; k += 2) l += Math.hypot(r[6][k] - r[6][k - 2], r[6][k + 1] - r[6][k - 1]); return l; });
+  check('road: the 24 side roads from OpenStreetMap (Realizem E) only for the look: the model the same without them, each at most ~60 m from the road',
+    def.stranske.length === 24 && same && len.every(l => l > 5 && l < 70), `${def.stranske.length} roads, ${Math.min(...len).toFixed(0)}-${Math.max(...len).toFixed(0)} m`);
+}
+{
   const ws = (def.widths || []).map(w => w[1]);
   check('road: the streets of the town 9.6-12 m wide', ws.length > 0 && ws.every(w => w >= 4.8 && w <= 6.0), ws.join(' '));
   const ns = def.names.map(q => q.n || q[1]), ds = T.names.map(q => q.d);

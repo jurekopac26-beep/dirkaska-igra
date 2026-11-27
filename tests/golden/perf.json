@@ -420,11 +420,11 @@
   "jsMs": 1.29
  },
  "tapini": {
-  "calls": 84,
-  "maxCalls": 91,
-  "kverts": 246,
-  "maxKverts": 271,
-  "jsMs": 0.09
+  "calls": 90,
+  "maxCalls": 94,
+  "kverts": 313,
+  "maxKverts": 321,
+  "jsMs": 0.2
  },
  "canaries": {
   "calls": 210,
@@ -523,5 +523,33 @@
   "kverts": 426,
   "maxKverts": 632,
   "jsMs": 1.47
+ },
+ "svalvogar": {
+  "calls": 64,
+  "maxCalls": 65,
+  "kverts": 153,
+  "maxKverts": 158,
+  "jsMs": 0.4
+ },
+ "fairymeadows": {
+  "calls": 69,
+  "maxCalls": 77,
+  "kverts": 173,
+  "maxKverts": 185,
+  "jsMs": 0.2
+ },
+ "manchewe": {
+  "calls": 86,
+  "maxCalls": 102,
+  "kverts": 310,
+  "maxKverts": 351,
+  "jsMs": 0.27
+ },
+ "yungas": {
+  "calls": 81,
+  "maxCalls": 86,
+  "kverts": 285,
+  "maxKverts": 327,
+  "jsMs": 0.2
  }
 }

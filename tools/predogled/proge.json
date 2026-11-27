@@ -688,5 +688,126 @@
   },
   "n": 17,
   "bbox": "20.585,48.648,20.630,48.680"
+ },
+ "svalvogar": {
+  "key": "Svalvogavegur",
+  "sec": [
+   [
+    65.91761,
+    -23.76976
+   ],
+   [
+    65.91995,
+    -23.77853
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "sea",
+  "cfg": {
+   "ground": "grass",
+   "cover": "none",
+   "tree": "shrub",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 12897490,
+   "bld": 14210248,
+   "roof": 9054754,
+   "rock": 5591630,
+   "sea": 1
+  },
+  "n": 1,
+  "bbox": "-23.83,65.90,-23.72,65.94"
+ },
+ "fairymeadows": {
+  "key": "Fairy Meadows jeep track",
+  "sec": [
+   [
+    35.47063,
+    74.59132
+   ],
+   [
+    35.46929,
+    74.59089
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "cliff",
+  "cfg": {
+   "ground": "alpine",
+   "cover": "sparse",
+   "tree": "pine",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 13685976,
+   "bld": 12101776,
+   "roof": 6969928,
+   "rock": 9076594
+  },
+  "n": 2,
+  "bbox": "74.57,35.43,74.63,35.47"
+ },
+ "manchewe": {
+  "key": "Golodi Road",
+  "sec": [
+   [
+    -10.59617,
+    34.14158
+   ],
+   [
+    -10.59551,
+    34.1415
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "cliff",
+  "cfg": {
+   "ground": "tropic",
+   "cover": "patchy",
+   "tree": "broad",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 14211276,
+   "bld": 11038796,
+   "roof": 6974052,
+   "rock": 9071184
+  },
+  "n": 3,
+  "bbox": "34.12,-10.61,34.16,-10.58"
  }
 }

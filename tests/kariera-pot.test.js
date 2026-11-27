@@ -287,8 +287,8 @@ const darilaOk = (g) => { const want = []; for (let s = g.igral ? 2 : g.o0 + 1; 
   const dir = (track, o, car) => K.poDirki(car || K.novo({ on: true }), Object.assign({ track, pos: 1, cat: 'mali', km: 3 }, o), P);
   const prva = (r) => r.nagrade.filter(x => x.id.startsWith('prva:')), ids = (r) => r.nagrade.map(x => x.id).sort();
   const own = (id) => P.pokali.find(c => c.vrsta !== 'finale' && c.tracks.includes(id)).stopnja;
-  const tt = cupIn(P, 's4-tt').tracks[0];
-  const firsts = P.stopnje.map(st => cupIn(P, st.pokali[0]).tracks[0]).concat(['spa', cupIn(P, 's4-dolge').tracks[0], tt]);
+  const tt = P.pokali.find(c => c.vrsta === 'tt').tracks[0];   // (s4-tt or s4-tt-1: the time trials split in NAJVEC)
+  const firsts = P.stopnje.map(st => cupIn(P, st.pokali[0]).tracks[0]).concat(['spa', P.pokali.find(c => c.vrsta === 'dolge').tracks[0], tt]);
   const badF = firsts.filter(id => { const r = prva(dir(id)); return r.length !== 1 || r[0].id !== 'prva:' + id || r[0].amount !== N.prva[own(id)] || r[0].name !== 'Prva zmaga na progi' || r[0].en !== 'First win on the track'; });
   check('the first win on a track of each stage (' + firsts.join(', ') + '): »Prva zmaga na progi«, by the stage of its cup', !badF.length, badF.join());
   const fin = cupIn(P, 's4-finale').tracks, badFin = fin.filter(id => (prva(dir(id))[0] || {}).amount !== N.prva[own(id)]);
