@@ -1101,13 +1101,14 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (!replay) return;
     if (replay.here) { rpRace(); return; }   // (the race so far: back into the race, never the results)
     if (recd && recd.file) { Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); Napake.konec(); toTitle(); return; }   // (an opened file: the moments kept to share, then the title)
-    const kept = replay.rpK;
+    const keep = replay.keep;
     Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
-    if (recd) for (const c of recd.cars) { if (c.rl) delete c.rl; if (c.rpPit) delete c.rpPit; if (c.fall && c.fall.rp) { c.fall = null; c.air = 0; } }   // (a roll the replay posed, its pit stop, a fall of its own (rpFall: no body the race could step): over with it)
-    if (kept) for (const [c, K] of kept) rpBack1(c, K);   // (a car that was falling behind the results when the replay began, rpOwn: as the race left it, its body with it; the race steps its fall on)
+    // the replay posed the race's own cars, and behind the results the race goes on (restOn) and is recorded on (recStep): every car back as the
+    // race had it before the replay first posed one (rpPoseAll: where it is and how fast, its lap's place on the road, its wheels, a roll or a
+    // fall of its own, which the race steps on), and the race's own safety car and red flag; never the replay's last picture
+    if (keep && recd && race) rpBack(keep);
     Render.crewSnap();   // (the player's crew as the race has it again)
     hlvStop();   // (the best moment's video: done)
-    if (race && race.fl) race.fl.sc = race.fl.red = null;
     showScreen('results');
     Napake.konec();   // (Orodje za napake: the moments kept, to share or save)
   }
@@ -1371,10 +1372,6 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
     if (c.tl) Core.tlPose(c, W > REC_W ? A[o + 7] + (B[o + 7] - A[o + 7]) * u : 0, track, W > REC_TL ? A[o + 8] + (B[o + 8] - A[o + 8]) * u : 0);   // (its semi-trailer on the kingpin at its angle; an older recording: straight behind)
   }
-  // a car the race has falling when the results' replay begins (behind the results the race goes on until every car is home: restOn): the car
-  // as the race left it, kept once, before the replay first poses it, and put back at the replay's end (replayEnd: its body, its place on the
-  // road and all else the replay posed; the race steps its fall on from there). Posnetek do sem keeps every car (rpKeep), a file has no race
-  function rpOwn(c) { const P = replay; if (P && !P.here && !(recd && recd.file) && !(P.rpK && P.rpK.has(c))) (P.rpK || (P.rpK = new Map())).set(c, rpKeep1(c)); }   // (rpK: the replay's own list of them; P.own is its first camera)
   // a car the recording has falling as a body (recFall's samples) round time t, or one that carries a fall: the car's own numbers as its last
   // sample before the fall has them (its speed, its steering and its place on the road stay the edge's, as in the race), then where it is and
   // how it is turned between the two samples (the turn the shorter way round; after the fall's last sample on as it came to that one, for a
@@ -1442,9 +1439,13 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   function rpPoseAll(t, i) {
     const P = replay, R = recd, F = R.frames;
+    // the results' replay (after the finish: Posnetek, the best moments, the automatic Najboljši trenutek): behind the results the race goes on
+    // until every car is home (restOn), so every car as the race left it, with the race's safety car and red flag, is kept once, before the
+    // replay first poses any, and put back at the replay's end (replayEnd). Posnetek do sem keeps them itself (rpHere), a file has no race
+    if (!P.here && !R.file && !P.keep) P.keep = rpKeep();
     while (i < F.length - 2 && F[i + 1][0] <= t) i++; while (i > 0 && F[i][0] > t) i--;
     const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
-    for (let k = 0; k < R.n; k++) { const c = R.cars[k], o = 1 + k * R.w; if (c.fall && !c.fall.rp) rpOwn(c); if (A[o + 6] >= REC_FB || B[o + 6] >= REC_FB || (c.fall && (c.fall.rp || c.fall.b))) rpFall(c, F, i, o, u, R.w); else rpPose(c, A, B, o, u, R.w); }   // (a body falling down a slope: as it turns, rpFall)
+    for (let k = 0; k < R.n; k++) { const c = R.cars[k], o = 1 + k * R.w; if (A[o + 6] >= REC_FB || B[o + 6] >= REC_FB || (c.fall && (c.fall.rp || c.fall.b))) rpFall(c, F, i, o, u, R.w); else rpPose(c, A, B, o, u, R.w); }   // (a body falling down a slope: as it turns, rpFall)
     rpPit(t);   // (the player's pit stop where the recording has it, for the crew and the film camera)
     const o = 1 + R.n * R.w, scOn = (A[o + 6] & 2) !== 0;   // (the safety car, where it was out: its own car, posed like the others)
     if (race.fl) {
