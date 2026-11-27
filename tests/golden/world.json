@@ -797,12 +797,12 @@
   }
  },
  "ngorongoro": {
-  "meshes": 1154,
-  "verts": 958446,
+  "meshes": 1174,
+  "verts": 1029864,
   "instances": 9791,
   "props": 63,
   "crowd": 30,
-  "world": "63f54029",
+  "world": "150ad185",
   "propsHash": "752dbb08",
   "floor": "cae8594e/6860",
   "groups": {
@@ -820,7 +820,7 @@
    "ng_lionM:MeshLambertMaterial": "9ea899b9",
    "ng_lion:MeshLambertMaterial": "1f2411ed",
    "ng_crane:MeshLambertMaterial": "a3f8ff0b",
-   "rob:MeshLambertMaterial": "47400e73",
+   "rob:MeshLambertMaterial": "3083d23b",
    "ngFar:MeshLambertMaterial": "99a55540",
    "crowd:MeshLambertMaterial": "e8976908",
    "ao:MeshBasicMaterial": "53e05437",
