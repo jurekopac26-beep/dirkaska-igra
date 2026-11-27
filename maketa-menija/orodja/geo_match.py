@@ -46,7 +46,11 @@ GUESS = {
     'luanda': (-8.8199022, 13.2168586, 300),    # the shore road of the western bay (tools/luanda/luanda.json)
     'lusail': (25.4890496, 51.4497373, 300),    # the start / finish (tools/lusail/lusail.json)
     'mapileng': (23.252294, 105.3888758, 300),  # the QL4C up from Đồng Văn (tools/mapileng/mapileng.json)
+    'ghoufi': (35.0544, 6.1652, 300),       # the start on the canyon's rim road (tools/predogled/proge.json, sec); its place held by HOLD
 }
+# a place held after the fit: on Ghoufi's short, almost flat road the heights alone put the start and the finish 35 m west of OSM's line
+# (tools/predogled/proge.json, sec), the same at both ends; the turn and the height offset stay the fit's
+HOLD = {'ghoufi': {'lat0': 35.054441, 'lon0': 6.165218}}
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
 def fit(T, g0, R, z=13, coarse=30, rots=np.arange(-3, 3.01, 0.5)):
@@ -89,6 +93,6 @@ out = json.load(open(out_p)) if os.path.exists(out_p) else {}
 ids = sys.argv[1].split(',') if len(sys.argv) > 1 else list(GUESS)
 for tid in ids:
     T = track(tid); g = GUESS[tid]
-    r = fit(T, g[:2], g[2])
+    r = fit(T, g[:2], g[2]); r.update(HOLD.get(tid, {}))
     out[tid] = r; print(tid, json.dumps(r), flush=True)
     json.dump(out, open(out_p, 'w'), indent=1)

@@ -101,7 +101,8 @@ window.MENU = {
   "bathurst": 240,
   "livorno": 240,
   "furka": 300,
-  "gudauri": 300
+  "gudauri": 300,
+  "ghoufi": 300
  },
  "routeMaps": {
   "vrsic": {
@@ -492,6 +493,14 @@ window.MENU = {
    "alt": [
     1953,
     2213
+   ]
+  },
+  "ghoufi": {
+   "start": "Ghoufi",
+   "finish": "Ghoufi Canyon",
+   "alt": [
+    724,
+    741
    ]
   }
  },

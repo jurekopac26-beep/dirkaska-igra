@@ -58,6 +58,7 @@ CFG = {
     'livorno': dict(kind='real', start='Livorno', country='Italy', region='Tuscany', l1='tuscany'),
     'furka': dict(kind='real', start='Gletsch', finish='Furka Pass', country='Switzerland', region='Valais', l1='alps'),
     'gudauri': dict(kind='real', start='Gudauri', finish='Upper Gudauri', country='Georgia', region='Greater Caucasus', l1='caucasus'),
+    'ghoufi': dict(kind='real', start='Ghoufi', country='Algeria', region='Aurès', l1='aures'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
@@ -67,7 +68,7 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600),
       'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700),
       'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600),
-      'caucasus': (42.5, 44.5, 700)}
+      'caucasus': (42.5, 44.5, 700), 'aures': (35.1, 6.2, 600)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)
