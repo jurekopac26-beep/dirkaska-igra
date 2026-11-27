@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#161b23">
+<title>Real Roads Atlas · zasebnost</title>
+<!-- the world leaderboard's privacy policy and terms (docs/svetovna-lestvica.md, »Pravilnik o zasebnosti in pogoji«); the Slovenian and the
+     English page say the same, the game links the one of its language (js/game.js svPolicy); no scripts, nothing loaded from elsewhere -->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #161b23; color: #f6f6f1; font: 15px/1.5 system-ui, Roboto, 'Segoe UI', Arial, sans-serif;
+    padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  main { max-width: 680px; margin: 0 auto; }
+  h1 { margin: 4px 0 6px; font: 900 italic 24px/1.15 system-ui, Roboto, sans-serif; }
+  h2 { margin: 24px 0 8px; font: 800 italic 17px/1.25 system-ui, Roboto, sans-serif; color: #aeb5f7; }
+  p, ul { margin: 0 0 10px; color: #d6dcea; }
+  ul { padding-left: 20px; }
+  li { margin: 0 0 4px; }
+  b { color: #fff; }
+  a { color: #9fd0ff; }
+  .meta { color: #9fb0c3; font-size: 13px; }
+  .todo { margin: 12px 0; padding: 10px 12px; border: 2px dashed #ff8a3d; border-radius: 10px; color: #ffb27a; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0 0 10px; }
+  th, td { padding: 6px 8px 6px 0; border-top: 1px solid #2a3344; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+  th { color: #9fb0c3; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+<h1>Pravilnik o zasebnosti in pogoji svetovne lestvice</h1>
+<p class="meta">Real Roads Atlas · velja od 1. 2. 2027 · različica 1</p>
+<div class="todo">Osnutek: ime upravljavca in naslov za stike dopolni skrbnik igre pred objavo svetovne lestvice.</div>
+
+<h2>Na kratko</h2>
+<ul>
+  <li>Igra deluje brez računa. Rekordi, prijatelji in profil ostanejo v tvoji napravi, dokler se ne pridružiš svetovni lestvici.</li>
+  <li>Ko se pridružiš, gredo tvoj vzdevek, časi in posnetki voženj na naš strežnik v EU in se pokažejo na javni lestvici.</li>
+  <li>Ne zbiramo pravega imena, e-pošte, telefona, lokacije, imenika ali oglasnega id-ja. Ni oglasov, ni sledenja, podatkov ne prodajamo.</li>
+  <li>Svoje podatke lahko kadar koli izbrišeš v Nastavitvah igre.</li>
+  <li>Uporabi vzdevek, ne pravega imena. Če še nimaš 15 let, prej vprašaj starše.</li>
+</ul>
+
+<h2>Upravljavec</h2>
+<p>Upravljavec podatkov je skrbnik igre Real Roads Atlas. Ime in naslov za stike: <b>dopolni skrbnik pred objavo</b>.</p>
+
+<h2>Kateri podatki in zakaj</h2>
+<table>
+  <thead><tr><th>Podatek</th><th>Zakaj</th></tr></thead>
+  <tbody>
+    <tr><td>Id igralca (12 znakov) in javni ključ, ustvarjena naključno v tvoji napravi</td><td>Podpis oddaje: nihče ne more oddati ali izbrisati časa v tvojem imenu.</td></tr>
+    <tr><td>Vzdevek (3–16 znakov)</td><td>Prikaz na lestvici.</td></tr>
+    <tr><td>Proga, način, vreme in fizika vožnje</td><td>Ločene lestvice za enake pogoje.</td></tr>
+    <tr><td>Čas, vmesni časi, avto, nadgradnje in stopnja pomoči</td><td>Razvrstitev in prikaz.</td></tr>
+    <tr><td>Posnetek vožnje (vnos po korakih) in duh (položaji avta)</td><td>Preverjanje, da je čas pravi. Duh časov med prvimi 100 je javen, da lahko drugi dirkajo proti njemu.</td></tr>
+    <tr><td>Različica igre in družina pogona brskalnika (ne cel niz brskalnika)</td><td>Ponovitev vožnje z isto kodo.</td></tr>
+    <tr><td>Čas oddaje in stanje preverjanja</td><td>Potek preverjanja.</td></tr>
+    <tr><td>Prijave vzdevkov (id prijavitelja, čas)</td><td>Skrivanje neprimernih vzdevkov.</td></tr>
+  </tbody>
+</table>
+<p>Naslov IP strežnik vidi ob vsakem zahtevku (tako deluje splet). Shrani samo njegov zgoščen odtis z dnevno menjano soljo, za omejitev pošiljanja, in ga izbriše po 48 urah. Lokacije iz njega ne izpeljujemo.</p>
+<p>Skrivanje voznikov na lestvici in seznam prijateljev ostaneta v tvoji napravi in ne gresta na strežnik.</p>
+
+<h2>Pravna podlaga</h2>
+<ul>
+  <li>Izvedba storitve, ki jo izbereš sam s pridružitvijo (lestvica, vzdevek, duh).</li>
+  <li>Zakoniti interes za zaščito pred goljufanjem in zlorabo (preverjanje posnetkov, zgoščeni naslov IP, prijave vzdevkov).</li>
+</ul>
+
+<h2>Kdo podatke obdeluje</h2>
+<ul>
+  <li><b>Gostitelj strežnika</b>: strežnik, baza in posnetki so v EU; gostitelj obdeluje podatke samo po naših navodilih (pogodba o obdelavi).</li>
+  <li><b>Storitev za samodejno preverjanje</b>: ponovitev voženj teče v storitvi za samodejne preizkuse kode. Dobi posnetke brez vzdevkov in id-jev. Ta storitev je lahko zunaj EU (tudi v ZDA); prenos ščitijo standardne pogodbene klavzule oziroma okvir EU-ZDA za zasebnost podatkov.</li>
+</ul>
+<p>Podatkov ne delimo z nikomer drugim in jih ne prodajamo.</p>
+
+<h2>Hramba</h2>
+<ul>
+  <li>Čas ostane, dokler je na lestvici ali ga ne izbrišeš.</li>
+  <li>Igralec, ki 24 mesecev ne odda nobenega časa, se izbriše.</li>
+  <li>Zgoščeni naslov IP: 48 ur. Varnostne kopije baze: do 30 dni.</li>
+</ul>
+
+<h2>Tvoje pravice</h2>
+<p>Imaš pravico do dostopa, popravka (vzdevek spremeniš v Nastavitvah), izbrisa in ugovora ter pravico do pritožbe pri Informacijskem pooblaščencu Republike Slovenije.</p>
+
+<h2>Izbris podatkov</h2>
+<ul>
+  <li><b>V igri</b>: Nastavitve → Svetovna lestvica → <i>Izbriši moje podatke na svetovni lestvici</i>. Izbriše vzdevek, čase in posnetke takoj.</li>
+  <li><b>Brez naprave</b>: piši na naslov za stike zgoraj in navedi vzdevek in id igralca (igra ga pokaže v Nastavitvah). Izbrišemo v največ 30 dneh.</li>
+  <li>Izstop iz lestvice (<i>Izstopi</i>) ustavi pošiljanje; rekordi v napravi ostanejo.</li>
+</ul>
+
+<h2>Mladi igralci</h2>
+<p>V Sloveniji se lahko samostojno pridružiš pri 15 letih. Če si mlajši, prej vprašaj starše ali skrbnike.</p>
+
+<h2>Pogoji uporabe</h2>
+<ul>
+  <li>Prepovedani so žaljivi vzdevki, vzdevki, ki posnemajo druge osebe, in prava imena drugih ljudi.</li>
+  <li>Prepovedano je goljufanje (spremenjena igra, ponarejeni posnetki) in samodejno pošiljanje zahtevkov.</li>
+  <li>Skrbnik sme skriti vzdevek, izbrisati čas ali onemogočiti pošiljanje igralcu, ki krši pogoje.</li>
+  <li>Lestvica je brezplačna in je na voljo, kot je; lahko se spremeni ali ustavi.</li>
+</ul>
+
+<h2>Spremembe</h2>
+<p>Spremenjen pravilnik objavimo na tej strani z novo različico in datumom.</p>
+<p class="meta"><a href="privacy.html" lang="en">English</a> · <a href="index.html">Real Roads Atlas</a></p>
+</main>
+</body>
+</html>

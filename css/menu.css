@@ -461,6 +461,20 @@ svg { display: block; }
 .fnone small { font: 500 12px/1.3 var(--f-ui); color: var(--lbl); }
 .fsend { flex: 0 0 auto; align-self: center; height: 32px; padding: 0 16px; margin-bottom: auto; border-radius: 999px; background: linear-gradient(180deg, var(--gold-hi), var(--gold-lo)); color: var(--gold-ink); font: 900 italic 13px/1 var(--f-ui); letter-spacing: .03em; text-transform: uppercase; box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
 .fsend:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.ftabs { flex: 0 0 auto; align-self: flex-start; display: flex; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(7, 12, 20, .62); }   /* (the Friends view's tabs: Friends, World; Svetovna lestvica) */
+.ftabs button { height: 26px; padding: 0 12px; border-radius: 999px; color: var(--lbl); font: 800 italic 12px/1 var(--f-ui); letter-spacing: .03em; text-transform: uppercase; }
+.ftabs [aria-selected="true"] { background: var(--cyan); color: #04121c; }
+.wtab th:nth-child(4), .wtab td:nth-child(4) { width: 66px; padding-right: 7px; text-align: right; }
+.wtab th:first-child, .wtab td:first-child { width: 34px; }
+@media (orientation: portrait) { .wtab tbody tr:nth-child(n+6) { display: none; } }   /* (the world's top 6 on its side, 5 upright) */
+.wline { flex: 0 0 auto; display: flex; justify-content: center; align-items: baseline; gap: 8px; margin: 0 0 auto; font: 800 italic 14px/1.2 var(--f-ui); color: #fff; font-variant-numeric: tabular-nums; }
+.wline small { font: 500 11px/1.2 var(--f-ui); color: var(--lbl); }
+.fjoin { margin: 0 0 auto; overflow-y: auto; min-height: 0; }
+.fjoin small { max-width: 34em; }
+.fjb { display: flex; gap: 8px; justify-content: center; }
+.fjb .fsend { margin: 0; }
+.flater { height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .25); color: #fff; font: 800 italic 13px/1 var(--f-ui); text-transform: uppercase; }
+.fpol { font: 600 12px/1.2 var(--f-ui); color: var(--cyan); text-decoration: underline; }
 .trow .best { position: relative; }
 .fbadge { position: absolute; top: -14px; right: -2px; z-index: 1; padding: 3px 6px 2px; border-radius: 999px; background: var(--cyan); color: #04121c; font: 900 italic 11px/1 var(--f-ui); font-variant-numeric: tabular-nums; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
 /* ---------------- single race, step 2: the track (js/menu.js vTrack) ----------------
@@ -1093,6 +1107,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .ftab td { height: max(18px, calc(25 * var(--u))); }
   #s-track .ftab th { padding: max(3px, calc(6 * var(--u))) 4px max(3px, calc(5 * var(--u))); }
   #s-track .fsend { height: max(24px, calc(32 * var(--u))); }
+  #s-track .ftabs button, #s-track .flater { height: max(22px, calc(26 * var(--u))); }   /* (the World tab at the card's size: the join note shorter) */
+  #s-track .fjoin { padding: 6px 10px; gap: 4px; } #s-track .fjoin small { font-size: 11px; }
   /* under the card at the screen's foot, a small edge over the phone's bar (the user, 11. 11. 2026: »povsem do dna«): the row as wide as
      the card; at its right Race!, its middle at the row's; at the bottom left the car (no wall, no floor, no sign: the picture behind it) */
   #s-track { --rb: calc(var(--sb, 0px) + max(6px, calc(8 * var(--u)))); }

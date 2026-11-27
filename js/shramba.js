@@ -24,7 +24,8 @@ const Shramba = (function () {
   'use strict';
   const KEY = 'tdgp-shramba';
   const GHOST = /^tdgp-(pklegend|fghost|ghost)-/;
-  const OWN = new Set(['tdgp-noadapt', KEY]);   // (the device's own and this module's: never in a copy, never put back)
+  const OWN = new Set(['tdgp-noadapt', 'tdgp-sl-vrsta', 'tdgp-sl-cache', KEY]);   // (the device's own and this module's: never in a copy, never put back;
+  // the world leaderboard's queue and cache too: its consent and nickname, tdgp-sl, go with the profile)
   const EXTRA = ['rra-misije'];   // (progress kept outside the tdgp- keys: the missions' records, js/missions.js)
   const DAY = 864e5, KEEP_N = 5, RACES = 5, AGAIN = 30 * DAY, LATER = 7 * DAY;
   const QUOTA = 5242880;   // (localStorage for one page in Chromium: 10 MiB counted in two-byte characters; measured)
