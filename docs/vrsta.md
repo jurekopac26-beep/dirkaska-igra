@@ -26,6 +26,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
+| Kamera za avtom, tla ob cesti, skupina 98 (nadaljnji prehod): Pembrey, Quezaltepeque (`js/world-chase-bt98.js`) | biketraveler | PR #1146, vprašanje `chase-skupina-98` 26. 11. |
 | Kamera za avtom, tla ob cesti, skupina 52 (drugi prehod): Koli, Pikes Peak (makadam) (`js/world-chase-bt52.js`) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 43 (drugi prehod): Luanda, Portobelo (`js/world-chase-bt43.js`, v #821) | biketraveler | PR #884, vprašanje `chase-skupina-43` 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 49 (drugi prehod): Montréal, Spa (barve tal v `js/world-montreal.js`, `js/world-spa.js`, v #821) | biketraveler | PR #890, vprašanje `chase-skupina-49` 21. 11. |

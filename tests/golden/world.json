@@ -560,12 +560,12 @@
   }
  },
  "pembrey": {
-  "meshes": 394,
-  "verts": 486802,
+  "meshes": 408,
+  "verts": 532372,
   "instances": 4026,
   "props": 37,
   "crowd": 5,
-  "world": "92ca62a",
+  "world": "c962af80",
   "propsHash": "f0b7f66c",
   "floor": "cb4f29c2/4676",
   "groups": {
@@ -573,10 +573,10 @@
    "-:MeshBasicMaterial": "b3abe476",
    "roadside-asphalt:MeshLambertMaterial": "6261cd6e",
    "rsFar:MeshBasicMaterial": "d9a33940",
-   "rob:MeshLambertMaterial": "bf552bf0",
+   "rob:MeshLambertMaterial": "872999eb",
    "crowd:MeshLambertMaterial": "853e5d59",
    "flags:MeshLambertMaterial": "a42558da",
-   "ao:MeshBasicMaterial": "2b628dce",
+   "ao:MeshBasicMaterial": "eacc5ed5",
    "roadwear:MeshLambertMaterial": "213e55fa",
    "worn:MeshLambertMaterial": "619bbe20",
    "brakeBoards:MeshLambertMaterial": "38370a10",
@@ -1504,12 +1504,12 @@
   }
  },
  "quezaltepeque": {
-  "meshes": 430,
-  "verts": 543823,
+  "meshes": 442,
+  "verts": 568855,
   "instances": 5547,
   "props": 46,
   "crowd": 10,
-  "world": "35eca274",
+  "world": "37b60d23",
   "propsHash": "7600c0e1",
   "floor": "14e6777b/6440",
   "groups": {
@@ -1518,7 +1518,7 @@
    "quezaltepeque service roads:MeshLambertMaterial": "f68b2f13",
    "quezaltepeque dirt tracks:MeshLambertMaterial": "e505f33d",
    "rsFar:MeshBasicMaterial": "b90bbb46",
-   "rob:MeshLambertMaterial": "47c7c65d",
+   "rob:MeshLambertMaterial": "9ff4792",
    "crowd:MeshLambertMaterial": "2e1c7e6",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "84d20387",
