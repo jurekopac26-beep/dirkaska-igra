@@ -47,9 +47,10 @@ try {
   const d1 = await pa.evaluate(() => { const b = document.getElementById('stats-body'), cols = [...b.querySelectorAll('.st-wk-c')], ach = [...b.querySelectorAll('.ach')];
     return { cols: cols.length, now: cols.map(c => c.classList.contains('now')), nowH: (cols[7] && cols[7].querySelector('i').style.height) || '', fav: (b.querySelector('.st-fav') || {}).textContent, favN: (b.querySelector('.st-fav + em') || {}).textContent,
       got: ach.map(a => a.classList.contains('got')), first: ach.filter(a => a.classList.contains('got')).map(a => a.querySelector('b').textContent), head: (b.querySelector('.ltab-h') || {}).textContent }; });
-  T.check('Dosežki: 8 weeks, this week (the last) gold and full, the favourite track Aguascalientes (1 race), the unlocked achievement at the end of the list',
+  const nAch = Object.keys(s1.ach).length, gotN = d1.got.filter(Boolean).length;
+  T.check('Dosežki: 8 weeks, this week (the last) gold and full, the favourite track Aguascalientes (1 race), the unlocked ones (Prvi cilj among them) all at the end, as many as counted',
     d1.cols === 8 && d1.now.join() === 'false,false,false,false,false,false,false,true' && d1.nowH === '100%' && /Aguascalientes/.test(d1.fav) && /dirke: 1/.test(d1.favN) &&
-    d1.first.length === 1 && d1.got[d1.got.length - 1] === true && d1.got.indexOf(true) === d1.got.length - 1 && /^Dosežki 1\/\d+$/.test(d1.head), JSON.stringify(d1));
+    gotN === nAch && d1.got.indexOf(true) === d1.got.length - gotN && d1.first.includes('Prvi cilj') && d1.head === 'Dosežki ' + nAch + '/' + d1.got.length, JSON.stringify(d1));
 
   // 2. the copies: only the last two races; three made at once still three, only two of them kept; a broken copy put back changes nothing
   const c1 = await pa.evaluate(async () => {
@@ -75,7 +76,7 @@ try {
   await pa.waitForTimeout(300);
   const [dl] = await Promise.all([pa.waitForEvent('download'), pa.evaluate(() => window.__game.onAction('prof-export'))]);
   const fpath = await dl.path(), file = JSON.parse(fs.readFileSync(fpath, 'utf8'));
-  const prog = (o) => { const r = {}; for (const k of Object.keys(o).sort()) if (/^tdgp-(stats|records|career|champ|settings)$/.test(k)) r[k] = o[k]; return r; };
+  const prog = (o) => { const r = {}; for (const k of Object.keys(o).sort()) if (/^tdgp-(stats|records|career|champ)$/.test(k)) r[k] = o[k]; return r; };
   const keep0 = await pa.evaluate(() => { const o = {}; for (const k of Object.keys(localStorage)) o[k] = localStorage.getItem(k); return o; });
   T.check('the file: a profile with the progress as it is saved (stats, settings) and the missions\' records', file.kind === 'profile' && file.data['tdgp-stats'] === keep0['tdgp-stats'] && file.data['tdgp-settings'] === keep0['tdgp-settings'] && file.extra['rra-misije'] === keep0['rra-misije'],
     Object.keys(file.data).join());
@@ -88,7 +89,8 @@ try {
     await reloaded();
   }
   const i1 = await pa.evaluate(async () => { const o = {}; for (const k of Object.keys(localStorage)) o[k] = localStorage.getItem(k); return { o, stats: window.__game.stats, list: (await Shramba.list()).map(r => r.why + ':' + r.sum.races) }; });
-  const diff = Object.keys(file.data).filter(k => i1.o[k] !== file.data[k]);
+  const HARNESS = /^tdgp-(settings|menu|defaults-v\d|nu1|noadapt|nostartcam)$/;   // (written again on every load by tests/browser/lib.mjs, not by the game)
+  const diff = Object.keys(file.data).filter(k => !HARNESS.test(k) && i1.o[k] !== file.data[k]);
   T.check('imported back (after the restart): every key of the file as it was in it, the missions\' records too; the stats the file\'s, not the 77 races',
     diff.length === 0 && i1.o['rra-misije'] === file.extra['rra-misije'] && i1.stats.races === s1.races && JSON.stringify(prog(i1.o)) === JSON.stringify(prog(file.data)), JSON.stringify({ diff, races: i1.stats.races }));
   T.check('the import asked first and kept a copy of the saved game before it (pred uvozom, the 77 races)', dialogs.length === 1 && /Uvozim profil Ana/.test(dialogs[0]) && i1.list[0] === 'uvoz:77', JSON.stringify({ dialogs, list: i1.list }));
@@ -150,8 +152,9 @@ try {
       await t('snap', () => Shramba.snap('dirka', 'a')); await t('apply', () => Shramba.apply({ data: { 'tdgp-stats': '{}' } }));
       return r;
     };
-    const keysThat = (f, extra) => Object.assign({ get length() { return f(); }, key: f, getItem: f, setItem: f, removeItem: f }, extra);
-    const out = { deny: await run(keysThat(deny)), full: await run(Object.assign(keysThat(() => null, { get length() { return 0; } }), { setItem: full })) };
+    const denied = { get length() { return deny(); }, key: deny, getItem: deny, setItem: deny, removeItem: deny };
+    const noRoom = { length: 0, key: () => null, getItem: () => null, setItem: full, removeItem: () => { } };
+    const out = { deny: await run(denied), full: await run(noRoom) };
     Shramba.use(null);
     return out;
   });

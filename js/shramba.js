@@ -118,8 +118,10 @@ const Shramba = (function () {
   // put a copy back: the progress keys as they were in it (the ones it did not have removed), the ghosts and the device's own untouched;
   // false (and the saved game as it was) when it does not fit
   function apply(rec) {
-    const L = LS(); if (!L || !rec || typeof rec.data !== 'object') return false;
+    const L = LS(); if (!L || !rec || !rec.data || typeof rec.data !== 'object' || Array.isArray(rec.data)) return false;
     const ok = (k) => /^tdgp-/.test(k) && !GHOST.test(k) && !OWN.has(k);
+    const mine = Object.keys(rec.data).filter(ok);   // (a broken copy: nothing of the game's in it, or a value not text; the saved game left as it is)
+    if (!mine.length || mine.some(k => typeof rec.data[k] !== 'string')) return false;
     const back = collect(), put = (o, ex) => { for (const k in o) if (ok(k) && typeof o[k] === 'string' && !keep(k, o[k])) return false;
       for (const k of EXTRA) { const v = ex && typeof ex[k] === 'string' ? ex[k] : null; if (v == null) { try { L.removeItem(k); } catch (_) { } } else if (!keep(k, v)) return false; } return true; };
     for (const k of Object.keys(back.data)) { try { L.removeItem(k); } catch (_) { } }
@@ -146,8 +148,14 @@ const Shramba = (function () {
   async function all(d) { const a = (await req(d, 'readonly', (s) => s.getAll())) || []; return a.sort((x, y) => y.id - x.id); }
   async function withDb(fn) { const d = await open(); try { return await fn(d); } finally { d.close(); } }
   // a copy now (why: 'dirka' | 'dan' | 'uvoz' | 'obnova' | 'roka'; track: the race's track id, for 'dirka'); null when there is nothing to keep
+  let queue = Promise.resolve();   // (copies one after another: two at the same moment would read the same newest id and one write over the other)
   function snap(why, track) {
-    const c = collect(), sum = summary(c.data); if (!worth(sum, c.data)) return Promise.resolve(null);
+    const c = collect(), sum = summary(c.data); if (!worth(sum, c.data)) return Promise.resolve(null);   // (the game as it is now, before an import puts another in)
+    const run = () => write(c, sum, why, track), p = queue.then(run, run);
+    queue = p.catch(() => null);
+    return p;
+  }
+  function write(c, sum, why, track) {
     let t = Date.now();
     return withDb(async (d) => {
       const have = await all(d); if (have.length && have[0].id >= t) t = have[0].id + 1;   // (two copies in one millisecond: still two)
