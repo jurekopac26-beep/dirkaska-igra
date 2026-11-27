@@ -511,6 +511,7 @@
     'Proti amfiteatru': 'To the Amphitheatre', 'Amfiteater': 'The Amphitheatre', 'Za areno': 'Behind the Arena', 'Skozi mesto': 'Through the Town', 'Severni izhod': 'North Way Out', 'Do severnega roba mesta': 'To the north edge of the town',   // (El Jem)
     'Ob reki': 'By the River', 'Dolina': 'The Valley', 'Verižni most': 'Chain Bridge', 'Proti Paru': 'Towards Paro',   // (Isuna: the HUD, the results of an escape)
     'Gozd': 'Forest', 'Proti Plaine Champagne': 'Towards Plaine Champagne', 'Do Plaine Champagne': 'To Plaine Champagne',   // (Chamarel: the HUD, the results of an escape; Case Noyale and Chamarel the same in English)
+    'Bukov gozd': 'Beech Forest', 'Lasnice': 'Hairpins', 'Stara bob steza': 'Old Bobsleigh Track', 'Mimo Draguljca': 'Past Draguljac',   // (Trebević: the HUD, the results of an escape; Dolovi, Vidikovac and Draguljac the same in English)
     'Zahodna vrata': 'West Gate', 'Ob obzidju': 'Along the Walls', 'Severna vrata': 'North Gate', 'Zunanje mesto': 'Outer Town', 'Vzhodna vrata': 'East Gate', 'Pod minaretom': 'Under the Minaret', 'Južna vrata': 'South Gate', 'Ob južnem obzidju': 'Along the South Wall', 'Obzidje': 'City Walls',   // (Hiva: the HUD)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)

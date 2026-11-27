@@ -212,7 +212,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Venezuela | El Castaño (rezerva uporabnika 13. 11. 2026; pot in zanimivosti potrjene 25. 11. 2026: možnost A, ~8 km, dva mostova, reka, La Regresiva del Diablo) | narejena (partyslo, #1090, veja `proga/el-castano`, id `elcastano`); čaka #788 na `main`; prva proga države |
 | Poljska | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | v delu (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Mavricij | Chamarel (rezerva uporabnika 13. 11. 2026; PR #1091, veja `proga/chamarel`) | v delu (partyslo, od 25. 11. 2026); pot Case Noyale – Chamarel 5,0 km (možnost 1 kartice, odgovor 25. 11. 2026); na `main` po #788; prva proga države |
-| Bosna in Hercegovina | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Bosna in Hercegovina | Trebević (Dolovi–Vidikovac–Draguljac, 4,3 km; cesta izbrana 26. 11. 2026, uporabnik potrdi ali zamenja na strani Odločitve) | v delu (partyslo), PR #1096, veja `proga/trebevic`; prva proga države |
 | Ciper | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Bolgarija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026; med njimi Šipka, rezerva uporabnika 8. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Armenija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
