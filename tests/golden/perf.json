@@ -112,11 +112,11 @@
   "jsMs": 1.24
  },
  "silkeborg": {
-  "calls": 244,
-  "maxCalls": 290,
-  "kverts": 660,
-  "maxKverts": 785,
-  "jsMs": 1.8
+  "calls": 245,
+  "maxCalls": 298,
+  "kverts": 716,
+  "maxKverts": 809,
+  "jsMs": 1.48
  },
  "kagerod": {
   "calls": 243,
@@ -273,11 +273,11 @@
   "jsMs": 1.86
  },
  "sakhir": {
-  "calls": 209,
+  "calls": 210,
   "maxCalls": 236,
-  "kverts": 741,
-  "maxKverts": 860,
-  "jsMs": 1.3
+  "kverts": 764,
+  "maxKverts": 886,
+  "jsMs": 1.19
  },
  "lusail": {
   "calls": 190,
