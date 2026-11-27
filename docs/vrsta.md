@@ -140,6 +140,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.2 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: takoj za #1075) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
-| 10.21 | #657 | Realizem E, Livorno: stranske ceste samo za videz iz OSM, jeklena ograja, stebrički, svetilke in postaje | croatiadata | osnutek, svež `main` 26. 11.; na `main` samo eden od #657, #779, #1025 (odloči Združevanje). |
+| 10.21 | #657 | Realizem E, Livorno: stranske ceste samo za videz iz OSM, jeklena ograja, stebrički, svetilke in postaje | partyslo (od 27. 11.) | osnutek, svež `main` 27. 11., testi 12/12; vsebovan v #862 (z #779 in #1025), na `main` samo eden (odloči Združevanje; vprašanje `pr657-vsebovan-v-862`). |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
