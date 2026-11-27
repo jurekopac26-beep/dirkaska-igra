@@ -161,11 +161,11 @@
   "jsMs": 1.38
  },
  "kotor": {
-  "calls": 219,
-  "maxCalls": 264,
-  "kverts": 693,
-  "maxKverts": 887,
-  "jsMs": 1.02
+  "calls": 226,
+  "maxCalls": 271,
+  "kverts": 701,
+  "maxKverts": 896,
+  "jsMs": 2.16
  },
  "bikernieki": {
   "calls": 195,
@@ -462,11 +462,11 @@
   "jsMs": 0.89
  },
  "krasnahorka": {
-  "calls": 113,
-  "maxCalls": 124,
-  "kverts": 200,
-  "maxKverts": 239,
-  "jsMs": 0.89
+  "calls": 121,
+  "maxCalls": 133,
+  "kverts": 235,
+  "maxKverts": 283,
+  "jsMs": 1.17
  },
  "cpalace": {
   "calls": 206,
