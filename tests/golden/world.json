@@ -1933,5 +1933,28 @@
    "lifeShadow:MeshBasicMaterial": "b46a5933",
    "life:MeshBasicMaterial": "55cf5a12"
   }
+ },
+ "meteora": {
+  "meshes": 2535,
+  "verts": 1233008,
+  "instances": 56517,
+  "props": 3,
+  "crowd": 148,
+  "world": "b36b71bc",
+  "propsHash": "cd615e8a",
+  "floor": "97036710/12628",
+  "groups": {
+   "-:MeshLambertMaterial": "a575b9c3",
+   "-:MeshPhongMaterial": "9b585903",
+   "-:MeshBasicMaterial": "9228e220",
+   "irFar:MeshLambertMaterial": "6e1dfa4a",
+   "crowd:MeshLambertMaterial": "6830d487",
+   "ao:MeshBasicMaterial": "2e604190",
+   "tyremarks:MeshBasicMaterial": "d270b828",
+   "roadwear:MeshLambertMaterial": "7b611fa9",
+   "life:MeshLambertMaterial": "815601da",
+   "lifeShadow:MeshBasicMaterial": "a3e258b2",
+   "life:MeshBasicMaterial": "ec5e8ade"
+  }
  }
 }
