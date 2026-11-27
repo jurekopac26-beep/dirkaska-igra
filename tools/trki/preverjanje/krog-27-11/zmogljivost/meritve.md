@@ -35,6 +35,9 @@ Tisoč oglišč; krepko je nad mejo tistega dne (Mombasa do #1026: referenca 375
 - **Livorno je na veji nad mejo vsaj od 25. 11.** (`96a181d`: 553, enaki vzorci kot danes). Dirka 100 avtov na veji teče drugače kot na `main`
   že od prvega vzorca (škoda igralca 0,329 proti 0,164; avto je 7–97 m bolj zadaj; pri četrtem vzorcu 36 tekmecev do 150 m proti 66). Veja ima
   od spoja `0c316c9` (24. 11.) referenco `main` (370, največ 461; pred tem 289, največ 352, `b4832bc`), torej mejo, posneto na drugi dirki.
+  Prej padec ni bil zapisan, ker testi v brskalniku na veji niso tekli: po `docs/trki-realizem.md` je povezani krog 25. 11. in prej 27. 11.
+  tekel samo brez brskalnika (`TEST_JOBS=2 npm run test:related -- node`: 67 od 67 in 76 od 76; 44 testov v brskalniku ni pognanih), 24. 11.
+  pa brskalniški testi po popravku niso bili potrjeni.
 - **Lusail je ob meji 900 tisoč tudi na `main`.** Tretji vzorec pade na isti odsek (s 1 897–1 918 m, 21 tekmecev do 150 m) in da štiri različne
   izide: 842 (veja 25. 11., s 1 897), 920 (`main` 25. 11., s 1 902), 909 (veja zdaj, s 1 910), 896 (`main` zdaj, s 1 918). Drevo `main`
   `1e42a0b` da torej samo 920, nad mejo `CLAUDE.md` (test je na `main` med `1e42a0b` in `777993a` enak; ali je bil takrat na `main` rdeč, ni
@@ -53,8 +56,7 @@ Sklep: v vseh treh primerih so vzorci drugje kot ob snemanju referenc; meritev n
 
 - Križni izris (stanje avtov z veje, narisano z izrisom `main`, in obratno), kot ga je seja 17. 11. naredila za Livorno. Brez njega je sklep
   »izris se ni podražil« podprt samo z vzorci, kjer je prizor isti (Lusail in Mombasa, po dva vzorca); za Livorno takega vzorca ni.
-- Kateri commit veje je prvi premaknil Livorno čez mejo (najstarejše izmerjeno drevo je `96a181d`) in zakaj krogi 25.–27. 11. padca niso
-  zabeležili (v `docs/trki-realizem.md` ga ni).
+- Kateri commit veje je prvi premaknil Livorno čez mejo (najstarejše izmerjeno drevo je `96a181d`).
 - Kateri commit `main` med `1e42a0b` in `a8cde61` je premaknil dirko na Lusailu (25 commitov; kodo igre spreminjajo `860caba`, `722c517`,
   `a348499`, `33602de`, `277fd30`). Sliki drobirja in gume, ki ju `Render.precompile(true)` zdaj naredi že ob startu, po branju kode
   uporabljata lasten generator (`Core.rng(83)`, `Core.rng(84)`).
