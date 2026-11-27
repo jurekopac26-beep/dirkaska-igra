@@ -1,4 +1,12 @@
 [
+["aguascalientes", "top", "isle-aguascalientes", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["batangas", "top", "isle-batangas", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["bikernieki", "top", "isle-bikernieki", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["buriram", "top", "isle-buriram", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["canaries", "top", "isle-canaries", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["cusco", "top", "isle-cusco", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["eljem", "top", "isle-eljem", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["ella", "top", "isle-ella", {"W": 824, "H": 620, "wet": true, "skirt": false}],
  [
   "vrsic",
   "top",

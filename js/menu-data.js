@@ -50,6 +50,14 @@ window.MENU = {
   }
  ],
  "wideMaps": {
+  "aguascalientes": 240,
+  "batangas": 240,
+  "bikernieki": 240,
+  "buriram": 240,
+  "canaries": 300,
+  "cusco": 300,
+  "eljem": 300,
+  "ella": 300,
   "vrsic": 300,
   "pikes": 300,
   "ouninpohja": 300,
