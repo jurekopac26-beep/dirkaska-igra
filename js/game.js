@@ -5092,7 +5092,15 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     return l < Infinity ? { l, t, b } : null;
   }
   const hudCache = {};
-  function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
+  // (the text goes into the element's own text node: textContent would swap the node for a new one, and every node put into the page makes the
+  // browser look again at the `:root:has(#hud…)` rules and restyle all the menu's screens: with the clock, each frame of the race)
+  // (a text with an emoji the old way: js/sence.js puts each emoji of a new text node into a span of its own)
+  const EMOJI = /[\p{Extended_Pictographic}\p{Emoji_Presentation}]/u;
+  function setText(id, v) {
+    if (hudCache[id] === v) return; hudCache[id] = v;
+    const e = $(id), t = e.firstChild, s = typeof v === 'number' ? String(v) : v;
+    if (t && t.nodeType === 3 && !t.nextSibling && typeof s === 'string' && s && !EMOJI.test(s)) t.data = s; else e.textContent = v;
+  }
   // the lap in the second row (#h-lap: its text as the game writes it, whole, in its textContent): the word before the number small (KROG, CP),
   // the number bigger (1/2, 12/36, 2,4/12,3), what follows small (KM, a long lap's km); a word with no number (KVALIFIKACIJE, LETEČI
   // KROG, CILJ) small, the whole of it. Written only when it changes (lapTxt: cleared with hudCache, a new language writes it again)
