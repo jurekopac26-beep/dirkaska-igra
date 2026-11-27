@@ -1,0 +1,7 @@
+  k 1054 touch vogal 1 lokalno [1.975,0.9] pen 0.062 n [0.464, 0.886] kotKaroserijeDoOgraje 10.872 deg vnVogal -2.324 vnSredisce -3.168 w -0.4
+      wallR tockaSunka lokalno [-0.01,0.495] vnTockaSunka -3.135 sunek
+k 1054 rally hit 2.324 skoda 0.562 -> 0.562 dolzina 3.95 sirina 1.8 plin 0.8 volan -1 v 28.411
+
+real	0m1.192s
+user	0m1.397s
+sys	0m0.235s

@@ -1,0 +1,12 @@
+    vogal 0 lok [2.6,-0.98] d -16.053 bl 16.053 br 17.083 prostoDoOgraje 0 poNormaliVogalaK 0
+    vogal 1 lok [2.6,0.98] d -14.097 bl 16.074 br 17.085 prostoDoOgraje 1.976 poNormaliVogalaK 1.955
+    vogal 2 lok [-2.6,-0.98] d -15.449 bl 17.365 br 16.425 prostoDoOgraje 1.916 poNormaliVogalaK -0.365
+    vogal 3 lok [-2.6,0.98] d -13.75 bl 17.327 br 16.605 prostoDoOgraje 3.577 poNormaliVogalaK 1.59
+    proga i 209 smer 46.607,22.32,18.67 deg, korak vzorca 2 m, bl/br 16.443/17.125 smerAvta 25.52
+  k 1327 touch vogal 0 lokalno [2.6,-0.98] pen 0.056 n [-0.366, 0.93] kotKaroserijeDoOgraje 4.029 deg vnVogal -4.628 vnSredisce -5.846 w 0.457
+      wallR tockaSunka lokalno [1.43,-0.539] vnTockaSunka -5.176 sunek
+k 1327 formula hit 4.628 skoda 0.005 -> 0.065 dolzina 5.2 sirina 1.96 plin 0.8 volan 1 v 23.576
+
+real	0m1.225s
+user	0m1.568s
+sys	0m0.207s
