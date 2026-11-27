@@ -47,6 +47,10 @@ GUESS = {
     'lusail': (25.4890496, 51.4497373, 300),    # the start / finish (tools/lusail/lusail.json)
     'mapileng': (23.252294, 105.3888758, 300),  # the QL4C up from Đồng Văn (tools/mapileng/mapileng.json)
     'ghoufi': (35.0544, 6.1652, 300),       # the start on the canyon's rim road (tools/predogled/proge.json, sec); its place held by HOLD
+    'izoard': (44.8395148, 6.7234205, 300),   # group 3 of the menu's maps, 27. 11.: the start of tools/proga/proge.json
+    'kanaba': (-1.2561077, 29.8021448, 300),
+    'koli': (63.101285, 29.784938, 300),       # the origin in js/tracks/<id>.js (tools/proga-uvoz.mjs)
+    'isuna': (27.331833, 89.518573, 300),
 }
 # a place held after the fit: on Ghoufi's short, almost flat road the heights alone put the start and the finish 35 m west of OSM's line
 # (tools/predogled/proge.json, sec), the same at both ends; the turn and the height offset stay the fit's

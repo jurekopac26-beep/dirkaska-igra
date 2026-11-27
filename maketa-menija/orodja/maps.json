@@ -125,6 +125,10 @@
    "pad": 1.0
   }
  ],
+["izoard", "top", "top-izoard", {"W": 824, "H": 620, "wet": true}],
+["kanaba", "top", "top-kanaba", {"W": 824, "H": 620, "wet": true}],
+["koli", "top", "top-koli", {"W": 824, "H": 620, "wet": true}],
+["isuna", "top", "top-isuna", {"W": 824, "H": 620, "wet": true}],
  [
   "medvode",
   "top",

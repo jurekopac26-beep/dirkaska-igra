@@ -67,6 +67,10 @@ window.MENU = {
   "suzuka": 240,
   "spa": 240,
   "nring": 240,
+  "izoard": 300,
+  "kanaba": 300,
+  "koli": 300,
+  "isuna": 300,
   "medvode": 300,
   "baldy": 300,
   "beartooth": 300,
@@ -279,6 +283,38 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "izoard": {
+   "start": "Le Laus",
+   "finish": "Col d'Izoard",
+   "alt": [
+    1978,
+    2361
+   ]
+  },
+  "kanaba": {
+   "start": "Kanaba Gap",
+   "finish": "Kanaba",
+   "alt": [
+    2302,
+    2172
+   ]
+  },
+  "koli": {
+   "start": "Koli",
+   "finish": "Ylä-Koli",
+   "alt": [
+    158,
+    306
+   ]
+  },
+  "isuna": {
+   "start": "Chuzom",
+   "finish": "Isuna",
+   "alt": [
+    2144,
+    2181
+   ]
   },
   "medvode": {
    "start": "Medvode",
