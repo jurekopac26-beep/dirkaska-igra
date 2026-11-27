@@ -131,6 +131,7 @@
       if (sd > -22 && h < 3.0) { const t = sstep(-22, -6, sd) * sstep(3.0, 1.2, h); r = lerp(r, 1.1, t); g = lerp(g, 1.0, t); b = lerp(b, 0.82, t); }
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.86, t); g = lerp(g, 0.8, t); b = lerp(b, 0.72, t); }
       o[0] = r; o[1] = g; o[2] = b; return o; };
+    const OB = World.ext.mombasaOb ? World.ext.mombasaOb({ eh, EHC, exclPush, seaD, inFort, root, tex }) : null;   // (the car parks, the parks, the golf course and its ponds of OSM, laid on the ground: js/world-mombasa-obcestje.js)
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(moGroundTex()), vertexColors: true });
     const tiles = [];
     const loop = [];   // (a tile inside the road's convex hull that the corridor leaves out gets the coarse ring's tile: no hole of far land in the menu's model or from the hill)
@@ -319,6 +320,7 @@
         cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [FL[Math.floor(crH(d, side, 5) * FL.length)]], 1.2, 0.8);   // (waving: js/world-zastave.js)
       }
     }
+    if (OB) OB.open();   // (the lawns open again to the crowd and the trees)
     let nFans = 0;
     {   // few spectators (fewFans): at the start, under the fortress, at the finish
       const runs = [[-60, 80, 1, 0.35], [dFin - 60, dFin + 20, 1, 0.3]];   // (one row: the start and the finish are inland, both sides dry)
