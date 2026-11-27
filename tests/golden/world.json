@@ -1111,12 +1111,12 @@
   }
  },
  "lusail": {
-  "meshes": 745,
-  "verts": 1059720,
+  "meshes": 775,
+  "verts": 1066440,
   "instances": 3356,
   "props": 68,
   "crowd": 44,
-  "world": "b748b912",
+  "world": "6a1319ef",
   "propsHash": "18e857c3",
   "floor": "27a1ef37/10836",
   "groups": {
@@ -1128,7 +1128,7 @@
    "lusail service roads:MeshLambertMaterial": "7fd5639f",
    "lusail glass fronts:MeshLambertMaterial": "8be6466e",
    "rsFar:MeshBasicMaterial": "de679eb9",
-   "rob:MeshLambertMaterial": "759fff7b",
+   "rob:MeshLambertMaterial": "d3cf7f6c",
    "crowd:MeshLambertMaterial": "cf30a785",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "e6a1e6bf",
@@ -1450,18 +1450,19 @@
   }
  },
  "mapileng": {
-  "meshes": 615,
-  "verts": 311555,
+  "meshes": 631,
+  "verts": 346289,
   "instances": 5136,
   "props": 20,
   "crowd": 73,
-  "world": "726c93bc",
+  "world": "d65dd760",
   "propsHash": "cb1dc0b6",
   "floor": "ae0d56c2/2940",
   "groups": {
-   "-:MeshLambertMaterial": "e24bdfcf",
+   "-:MeshLambertMaterial": "8978795a",
    "-:MeshBasicMaterial": "98eccd17",
    "irFar:MeshLambertMaterial": "ad971d2c",
+   "rob:MeshLambertMaterial": "da1ad0e3",
    "crowd:MeshLambertMaterial": "7973c469",
    "ao:MeshBasicMaterial": "b65a8643",
    "tyremarks:MeshBasicMaterial": "42c2a69c",
