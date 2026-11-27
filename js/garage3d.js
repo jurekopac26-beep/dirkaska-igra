@@ -339,7 +339,8 @@ const Garage3D = (function () {
 
   /* ---------------- particles: soft puffs (smoke, water, paint mist) and glowing dots (sparks, flames, glints) ---------------- */
   class Puffs {
-    constructor(max, additive) {
+    // (streak: each one a thin falling line, its head down, fading up its tail: the paint's mist)
+    constructor(max, additive, streak) {
       this.max = max; this.cur = 0;
       this.P = new Float32Array(max * 3); this.Vl = new Float32Array(max * 3); this.C = new Float32Array(max * 4); this.S = new Float32Array(max);
       this.life = new Float32Array(max); this.ml = new Float32Array(max); this.s0 = new Float32Array(max); this.s1 = new Float32Array(max); this.a0 = new Float32Array(max);
@@ -351,6 +352,7 @@ const Garage3D = (function () {
         uniforms: { uScale: { value: 400 } },
         vertexShader: 'attribute float psize; attribute vec4 pcol; uniform float uScale; varying vec4 vC; void main(){ vC = pcol; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = psize * uScale / max(0.2, -mv.z); gl_Position = projectionMatrix * mv; }',
         fragmentShader: additive ? 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(vC.rgb * ' + EMI.spark.toFixed(2) + ', vC.a * pow(1.0 - r, 1.6)); }'
+          : streak ? 'varying vec4 vC; void main(){ float w = abs(gl_PointCoord.x - 0.5) * 14.0; if (w > 1.0) discard; float t = gl_PointCoord.y; gl_FragColor = vec4(vC.rgb, vC.a * (1.0 - w * w) * smoothstep(0.0, 0.85, t) * (1.0 - smoothstep(0.92, 1.0, t))); }'
           : 'varying vec4 vC; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; if (r > 1.0) discard; float a = vC.a * (1.0 - r) * (1.0 - 0.5 * r); gl_FragColor = vec4(vC.rgb * (1.04 - 0.14 * gl_PointCoord.y), a); }',
         transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
       });
@@ -377,7 +379,7 @@ const Garage3D = (function () {
     }
     clear() { this.life.fill(0); }
   }
-  let puffs = null, sparks = null;
+  let puffs = null, sparks = null, streaks = null;
 
   /* ---------------- quads with uv in metres (the walls) ---------------- */
   class QB {
@@ -3245,8 +3247,9 @@ const Garage3D = (function () {
   /* ---------------- the ring's chamber: its glass bands round the car (painted in them), stored up in the ring ----------------
      THE CHAMBER: under the ring five glass bands, one inside another: the outer one fixed in the ring, the others stored inside it, up
      over the arms' reach. Down (k 1) they run out one after another till the inner one stands on the floor, each one over the next: a
-     closed wall from the floor into the ring. Clear glass, brighter at a slant, a rail along each band's top, one along its foot with a
-     line of light (its colour set: chamberColor; dimmed while stored). It never hides the car ---------------- */
+     closed wall from the floor into the ring. Clear glass, brighter at a slant, a rail along each band's top, one along its foot, posts
+     between them; a line of light along the cage's foot and one under the ring (their colour set: chamberColor; off while stored). It
+     never hides the car ---------------- */
   // (the chamber's outline in by d: its points round it ({ x, z, the outward normal nx nz, end: a corner's end, the straight sides between
   // them }), nc to a corner's quarter)
   function rrect(d, nc) { const { hx, hz, r } = CH, q = r - d, c = nc || 8, P = [];
@@ -3290,17 +3293,21 @@ const Garage3D = (function () {
   }
   // the chamber's glass and its frame (each one mesh; the glass the main camera's only): each band built
   // standing on y 0 (poseChamber moves it up to where it is): its panes on the outline in by IN j, a rail along its top, one along its foot
-  // with a line of light on both its faces (CH.led: their vertices, all the bands' after their frames: sent in one range), a post at
-  // each corner's ends. Stored only the outer band is drawn (the others in it, at the same height)
+  // (the inner band's with a line of light on both its faces: the cage's foot when it is down, the only band lit (five lit ones were five
+  // bright hoops across the picture); CH.led: its vertices after all the frames, the other bands' ranges empty), posts all round, a cage's
+  // bars. Stored only the outer band is drawn (the others in it, at the same height)
   function buildChamber() {
     const gg = new World.GB(), fg = new World.GB(), gls = [[0, METAL]], { n, BH, IN } = CH, AL = [0.66, 0.68, 0.72];
     const mk = (g, mat, gl) => { const geo = g.geometry(); if (gl) withGloss(geo, gl); geo.attributes.position.setUsage(THREE.DynamicDrawUsage); geo.boundingSphere = new THREE.Sphere(new V3(0, 2, 0), 5); const m = new THREE.Mesh(geo, mat); scene.add(m); return m; };
     for (let j = 0; j < n; j++) { const d = IN * j, g0 = gg.P.length / 3, f0 = fg.P.length / 3;
       rwall(gg, d, 0.035, BH - 0.025, [1, 1, 1], 1);
       for (const [y0, y1] of [[BH - 0.025, BH], [0, 0.035]]) { rwall(fg, d - 0.008, y0, y1, AL, 1); rwall(fg, d + 0.008, y0, y1, AL, -1); rflat(fg, d - 0.008, d + 0.008, y1, AL, 1); rflat(fg, d - 0.008, d + 0.008, y0, AL, -1); }
-      for (const p of rrect(d)) if (p.end) obox(fg, [p.x, 0.035, p.z], [p.x, BH - 0.025, p.z], 0.016, 0.016, AL);
+      // (the posts: one at each corner's ends, more along the straight sides between them, some 1.8 m apart: a cage's bars, each band's over the next's)
+      const R = rrect(d), post = (x, z, ax) => obox(fg, [x, 0.035, z], [x, BH - 0.025, z], ax ? 0.03 : 0.024, ax ? 0.024 : 0.03, AL);
+      for (let i = 0; i < R.length; i++) { const a = R[i], b = R[(i + 1) % R.length]; if (!a.end) continue; const ax = Math.abs(a.nx) > Math.abs(a.nz); post(a.x, a.z, ax);
+        if (b.end) { const m = Math.round(Math.hypot(b.x - a.x, b.z - a.z) / 1.8); for (let k = 1; k < m; k++) post(lerp(a.x, b.x, k / m), lerp(a.z, b.z, k / m), ax); } }
       CH.gv.push([g0, gg.P.length / 3]); CH.fv.push([f0, fg.P.length / 3]); }
-    gls.push([fg.P.length / 3, PAINT]); for (let j = 0; j < n; j++) { const d = IN * j, l0 = fg.P.length / 3; rwall(fg, d - 0.0095, 0.011, 0.024, CH.col, 1); rwall(fg, d + 0.0095, 0.011, 0.024, CH.col, -1); CH.led.push([l0, fg.P.length / 3]); }
+    gls.push([fg.P.length / 3, PAINT]); for (let j = 0; j < n; j++) { const d = IN * j, l0 = fg.P.length / 3; if (j === n - 1) { rwall(fg, d - 0.0095, 0.006, 0.05, CH.col, 1); rwall(fg, d + 0.0095, 0.006, 0.05, CH.col, -1); } CH.led.push([l0, fg.P.length / 3]); }
     // (clear glass: a faint tint, the room's lights in it; at a slant it brightens and shows more (its edges, the bands' curves))
     const gm = new THREE.MeshPhongMaterial({ color: 0xe2f3ff, specular: 0xffffff, shininess: 140, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false });
     gm.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <tonemapping_fragment>', 'float gF = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 4.0);\ngl_FragColor.rgb += vec3(0.3, 0.4, 0.48) * gF; gl_FragColor.a = min(0.55, gl_FragColor.a + 0.4 * gF);\n#include <tonemapping_fragment>'); };
@@ -3319,16 +3326,19 @@ const Garage3D = (function () {
     const st = CH.k === 0; CH.glass.geometry.setDrawRange(0, st ? CH.gv[0][1] : Infinity); CH.frame.geometry.setDrawRange(0, st ? CH.fv[0][1] : Infinity);
     CH.dirty = false; shadowDirty = Math.max(shadowDirty, 1); chamberLeds();
   }
-  // (the bands' lines of light: off while the glass is stored, up to full as it comes down; only theirs sent again)
+  // (the foot's line of light: off while the glass is stored, up to full as it comes down; only its vertices sent again)
   function chamberLeds() { const f = smooth(0, 0.12, CH.k); if (CH.lf === f) return; CH.lf = f; const c = CH.col.map(v => v * f), fa = CH.frame.geometry.attributes.color, l0 = CH.led[0][0], l1 = CH.led[CH.n - 1][1];
     for (let v = l0; v < l1; v++) fa.array.set(c, v * 3); sendRange(fa, l0, l1); }
   // the chamber at k at once; chamberTo: in s seconds (the glass runs out with a hiss)
   function setChamber(k) { k = clamp(k, 0, 1); CH.k = k; CH.dirty = true; }
   function* chamberTo(k, s) { k = clamp(k, 0, 1); if (Math.abs(k - CH.k) < 1e-4) return; s = s == null ? 3.2 : s; const k0 = CH.k;
     SFX.servo(s * 0.9); SFX.hiss(Math.min(1.6, s * 0.5), 0.5); yield* tween(s, (e) => { CH.k = lerp(k0, k, e); CH.dirty = true; }, EZ.io); SFX.clunk(0.3); }
-  // its lights' colour (the bands' and the ring's): the paint's (hex), the cyan's with none
+  // its lights' colour (the foot's and the ring's): the paint's (hex), the cyan's with none
   function chamberColor(hex) { const c = CH.col = hexRgb(hex == null ? 0x47c6ff : hex).map(v => v * 2.25), ra = FX.rails.geometry.attributes.color; CH.lf = null; chamberLeds();
     for (let v = CH.ring[0]; v < CH.ring[1]; v++) ra.array.set(c, v * 3); sendRange(ra, CH.ring[0], CH.ring[1]); }
+  // (its glass tinted by the paint's mist (t 0..1): clear again with none)
+  const CH_CLEAR = new THREE.Color(0xe2f3ff), CH_TINT = new THREE.Color();
+  function chamberTint(hex, t) { const m = CH.glass.material; m.color.copy(CH_CLEAR); if (t > 0) m.color.lerp(CH_TINT.setHex(hex), 0.75 * t); m.opacity = 0.08 + 0.14 * t; }
   /* THE DRYING COLUMN (the plan's plate an_barvanje, the user 13. 11. 2026: »Sušilni steber iz tal, kot na plošči«; back as it was on
      29. 10., its hatch out past the chamber's glass now the ring is longer): in the lane before the car's nose a hatch in the floor (a
      steel frame flush with it, yellow and black, bolted; the column's lid in it); the column rises out of it (2.5 m, white and navy as the
@@ -4724,12 +4734,12 @@ const Garage3D = (function () {
   // fresh)), the scanner's line on the paint and what it has passed, the scratches on the polisher's lane lit red behind it, the polish
   // over them and the check (green) after which none is left. Two of render.js's lines replaced (both must be found: a page error else),
   // its variables used as they are. SVU: one set for all (only the car on the table is serviced), all in its own frame (vLp)
-  const SVU = {}; for (const k of ['uSvW0', 'uSvW1', 'uSvW2', 'uSvW3', 'uSvW4', 'uSvB', 'uSvZ', 'uPol', 'uScN', 'uScA', 'uVeA', 'uScD', 'uPnD']) SVU[k] = { value: new THREE.Vector4() };
+  const SVU = {}; for (const k of ['uSvW0', 'uSvW1', 'uSvW2', 'uSvW3', 'uSvW4', 'uSvB', 'uSvZ', 'uPol', 'uScN', 'uScA', 'uVeA', 'uScD', 'uPnD', 'uPnE']) SVU[k] = { value: new THREE.Vector4() };
   const SVW = [0, 1, 2, 3, 4].map(i => SVU['uSvW' + i].value);   // (0 pre-rinse, 1 foam, 2 scrub, 3 rinse, 4 dry: each (side lo, hi, top lo, hi) along x)
   function svuOff() { for (const w of SVW) w.set(9, -9, 9, -9); SVU.uSvB.value.set(9, 0, 0, 0); SVU.uSvZ.value.set(0, 0, 0, 0); SVU.uPol.value.set(9, -9, 9, -9); SVU.uScN.value.set(0, 0, 1, 99);
-    SVU.uScA.value.set(0, 9, 1, 0); SVU.uVeA.value.set(0, 9, 1, 0); SVU.uScD.value.set(0, 0, 0, 0); SVU.uPnD.value.set(-9, 9, 0, 0); }
+    SVU.uScA.value.set(0, 9, 1, 0); SVU.uVeA.value.set(0, 9, 1, 0); SVU.uScD.value.set(0, 0, 0, 0); SVU.uPnD.value.set(-9, 9, 0, 0); SVU.uPnE.value.set(-9, 0, 0, 0); }
   svuOff();
-  const SV_HEAD = ['uniform vec4 uSvW0, uSvW1, uSvW2, uSvW3, uSvW4, uSvB, uSvZ, uPol, uScN, uScA, uVeA, uScD, uPnD;', 'float svPol = 0.0;',
+  const SV_HEAD = ['uniform vec4 uSvW0, uSvW1, uSvW2, uSvW3, uSvW4, uSvB, uSvZ, uPol, uScN, uScA, uVeA, uScD, uPnD, uPnE;', 'float svPol = 0.0;',
     'float svH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }',
     'float svN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(svH(i), svH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(svH(i + vec3(0.0, 1.0, 0.0)), svH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y), mix(mix(svH(i + vec3(0.0, 0.0, 1.0)), svH(i + vec3(1.0, 0.0, 1.0)), f.x), mix(svH(i + vec3(0.0, 1.0, 1.0)), svH(i + 1.0), f.x), f.y), f.z); }',
     'float svIn(vec4 w, float x, float tb) { vec2 r = mix(w.xy, w.zw, tb); return smoothstep(r.x - 0.05, r.x + 0.05, x) * (1.0 - smoothstep(r.y - 0.05, r.y + 0.05, x)); }'].join('\n');
@@ -4778,6 +4788,16 @@ const Garage3D = (function () {
     '  float ht = exp(-pow((px - uPnD.x) / 0.32, 2.0)) * uPnD.w * SV_OUT;',
     '  totalEmissiveRadiance += vec3(1.25, 0.42, 0.1) * ht * (0.35 + 0.65 * dot(diffuseColor.rgb, vec3(0.33)));',
     '  cgD -= 0.5 * uPnD.z * (1.0 - wt) * SV_OUT; }',
+    // (the paint's edge as it runs down the car (uPnE: x its height, yzw the paint): a bright line along it; under it on the car's sides
+    // (vt: where the body stands upright) the paint's runs, each one its own length, a drop at its end)
+    'if (uPnE.x > -8.0) { float ey = vLp.y - uPnE.x; vec3 gq = fwidth(vLp); float vt = smoothstep(0.18, 0.4, gq.y / (gq.x + gq.y + gq.z + 1e-6));',
+    '  float cx = (vLp.x + vLp.z * 0.31) * 4.2, ci = floor(cx), r0 = svH(vec3(ci, 3.0, 7.0)), r1 = svH(vec3(ci, 5.0, 1.0));',
+    '  float fx = (fract(cx) - 0.25 - 0.5 * r1) / 4.2, rl = step(0.22, r0) * (0.05 + 0.2 * r0 * r0) * (0.6 + 0.4 * sin(uPnE.x * 19.0 + ci * 1.9));',
+    '  float rn = (1.0 - smoothstep(0.007, 0.012, abs(fx))) * step(-rl, ey) * step(ey, 0.0);',
+    '  float dr = 1.0 - smoothstep(0.016, 0.026, length(vec2(fx, (ey + rl) * 0.75)));',
+    '  float pm = max(rn, dr) * step(0.001, rl) * step(ey, 0.004) * vt * SV_OUT, eg = exp(-ey * ey / 0.0009) * (0.25 + 0.75 * vt) * SV_OUT;',
+    '  diffuseColor.rgb = mix(diffuseColor.rgb, uPnE.yzw, pm);',
+    '  totalEmissiveRadiance += (uPnE.yzw * 1.3 + 0.12) * eg + vec3(0.5) * exp(-ey * ey / 0.00012) * vt * SV_OUT + uPnE.yzw * 0.22 * pm; }',
     '}'].join('\n');
   function svcPaint(c) { const ob = c.onBeforeCompile, k0 = c.customProgramCacheKey;
     c.onBeforeCompile = (sh, r) => { ob.call(c, sh, r); Object.assign(sh.uniforms, SVU); const f = sh.fragmentShader, n = (DIRT_OLD.test(f) ? 1 : 0) + (f.includes(SCR_OLD) ? 1 : 0);
@@ -7930,17 +7950,22 @@ const Garage3D = (function () {
       if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(cv, false);   // (painted on the floor)
       const K = cv.kit, x0 = K.front + 0.25, x1 = K.rear - 0.25, up = new V3(), o = new V3();
       PAINT_C.on = true; hud('paint', { step: 'chamber' });
-      // (the camera, its plan's plate: the first view, a little nearer, as the glass comes down; drifting along the car's side as the
-      // paint runs down; the first view again, a little to the right, the column by the nose in the picture as it dries)
-      const dC = clamp(5.6 + (K.front - K.rear) * 0.52 + Math.max(0, K.top - 1.5) * 0.6, 7.2, 9.6), yC = 0.5 + K.top * 0.3;   // (farther for a long or a tall one)
-      const VP0 = view({ at: [x0 * 0.12, yC, 0], yaw: HOME.yaw + 0.1, pitch: 0.24, dist: dC }), VP1 = view({ at: [x1 * 0.12, yC, 0], yaw: HOME.yaw - 0.08, pitch: 0.24, dist: dC });
+      // (the camera, its plan's plate: from outside the cage, back till the whole of it is in the picture (its foot's line, its posts, the
+      // ring over it), a little from above, as the glass comes down; drifting a little round it as the paint runs down; the first view
+      // again, nearer and a little to the right, the column by the nose in the picture as it dries)
+      const dC = clamp(5.6 + (K.front - K.rear) * 0.52 + Math.max(0, K.top - 1.5) * 0.6, 7.2, 9.6);   // (the drying's: farther for a long or a tall one)
+      // (the painting's: from outside the cage and below the roof's beams, the whole of it in the picture: the cage's size sets it, not the car's)
+      const VP0 = view({ at: [0.1, 1.7, 0], yaw: HOME.yaw + 0.1, pitch: 0.16, dist: 10.6 }), VP1 = view({ at: [-0.1, 1.7, 0], yaw: HOME.yaw - 0.06, pitch: 0.16, dist: 10.6 });
       const VPD = view({ at: [(K.front + DRY.x) * 0.22, 0.85 + K.top * 0.15, 0], yaw: HOME.yaw + 0.12, pitch: 0.25, dist: dC + 0.8 });
       chamberColor(color);
       yield* par(chamberTo(1, 1.2), armsPark(1.2), camTo(VP0, 1.2));
-      const col = hexRgb(color);
-      // (the mist: from under the chamber's top over the whole car, falling; the drops: at the paint's edge on the car's sides, running down)
-      const mist = (n) => { for (let j = 0; j < n; j++) { const p = carPt(cv, rnd(x1, x0), K.top + rnd(0.5, 1.1), rnd(-1.1, 1.1) * K.hw); puffs.emit(p.x, p.y, p.z, rnd(-0.12, 0.12), rnd(-1.4, -0.8), rnd(-0.12, 0.12), rnd(0.6, 1), 0.1, 0.6, col, 0.3, 0.5, 1.4, 0.02); } };
-      const drip = (h, n) => { for (let j = 0; j < n; j++) { const sd = Math.random() < 0.5 ? -1 : 1, p = carPt(cv, rnd(x1 + 0.2, x0 - 0.2), h - 0.02, sd * K.hw * 1.01); puffs.emit(p.x, p.y, p.z, 0, rnd(-0.5, -0.25), 0, rnd(0.25, 0.5), 0.025, 0.04, col, 0.85, 0.2, 0.4, 0); } };
+      const col = hexRgb(color), colL = col.map(v => v + (1 - v) * 0.3), lin = new THREE.Color(color), PE = SVU.uPnE.value, q = new V3();
+      // (the mist: thin streaks of the paint falling from under the ring all through the cage, a soft haze of it over the car; the drops:
+      // at the paint's edge on the car's sides, falling off it)
+      const mist = (n) => { for (let j = 0; j < n; j++) { let x, z; do { x = rnd(-1, 1) * (CH.hx - 0.2); z = rnd(-1, 1) * (CH.hz - 0.2); } while (chSd(x, z) > -0.2);
+        const y = rnd(2.9, 3.95), v = rnd(2.4, 3.3), sz = rnd(0.45, 0.75); streaks.emit(x, y, z, 0, -v, 0, 1.6 * y / v, sz, sz, colL, 0.85, 0, 0); }
+        const p = carPt(cv, rnd(x1, x0), K.top + rnd(0.3, 0.9), rnd(-1.1, 1.1) * K.hw); puffs.emit(p.x, p.y, p.z, rnd(-0.12, 0.12), rnd(-1.2, -0.7), rnd(-0.12, 0.12), rnd(0.6, 1), 0.2, 0.8, col, 0.16, 0.5, 1.4, 0.02); };
+      const drip = (h, n) => { for (let j = 0; j < n; j++) { const sd = Math.random() < 0.5 ? -1 : 1, p = carPt(cv, rnd(x1 + 0.2, x0 - 0.2), h - 0.04, sd * K.hw * 1.01); puffs.emit(p.x, p.y, p.z, 0, rnd(-0.6, -0.2), 0, rnd(0.4, 0.65), 0.045, 0.06, col, 0.9, 2.6, 0.3, 0.02); } };
       hud('paint', { step: 'spray' });
       const spec = Object.assign({}, cv.spec, { color, stripe, cond: Object.assign({}, cv.spec.cond, { clean: 1, body: 1 }) });
       const nw = makeCar(spec);
@@ -7949,14 +7974,16 @@ const Garage3D = (function () {
       for (const k in nw.parts) nw.parts[k].visible = false; nw.contact.visible = false;
       cv.root.add(nw.root); nw.root.position.set(0, 0, 0);
       // (the cut at a height h over the car's origin: the old body below it, the new one above)
-      const cut = (h) => { cv.v.grp.updateMatrixWorld(true); o.setFromMatrixPosition(cv.v.grp.matrixWorld); up.set(0, 1, 0).transformDirection(cv.v.grp.matrixWorld); const c = up.dot(o) + h; cv.clip.set(up.clone().negate(), c); nw.clip.set(up.clone(), -c); PAINT_C.h = h; };
-      const h0 = K.top + 0.05, h1 = -0.15;
+      const cut = (h) => { cv.v.grp.updateMatrixWorld(true); o.setFromMatrixPosition(cv.v.grp.matrixWorld); up.set(0, 1, 0).transformDirection(cv.v.grp.matrixWorld); const c = up.dot(o) + h; cv.clip.set(up.clone().negate(), c); nw.clip.set(up.clone(), -c); PAINT_C.h = h;
+        PE.set(cv.v.bodyG.worldToLocal(q.copy(o).addScaledVector(up, h)).y, lin.r, lin.g, lin.b); };   // (the edge in the body's own frame, the shader's)
+      // (down to the car's waist (hB) fast: its roof and upper part the colour at once; from there slowly down its sides, the edge with its runs)
+      const h0 = K.top + 0.05, h1 = -0.15, hB = Math.min(K.bottom + 0.62 * (K.top - K.bottom), K.hoodY - 0.1);
       cut(h0); SVU.uPnD.value.set(9, -9, 0, 0);   // (the new paint wet all over (the drying's front past the nose))
       sLoop('paint', 'bandpass', 3800, 0.6, 0.16);
       yield* par(camTo(VP1, 2.0, EZ.sine), (function* () {
-        yield* tween(0.3, () => mist(6));   // (the mist first: the roof the colour under it)
-        yield* tween(1.7, (k, u) => { const h = lerp(h0, h1, EZ.sine(u)); cut(h); mist(3); if (h < K.top - 0.15 && h > 0.15) drip(h, 2); }); })());
-      sLoop('paint', 'bandpass', 3800, 0.6, 0); PAINT_C.h = -9;
+        yield* tween(0.3, (k, u) => { mist(8); chamberTint(color, u); });   // (the mist first: the glass tinted by it)
+        yield* tween(1.7, (k, u) => { const h = u < 0.24 ? lerp(h0, hB, EZ.out(u / 0.24)) : lerp(hB, h1, (u - 0.24) / 0.76); cut(h); if (u < 0.85) mist(6); chamberTint(color, 1 - smooth(0.8, 1, u)); if (h < hB && h > K.bottom + 0.06) drip(h, 1); }); })());
+      sLoop('paint', 'bandpass', 3800, 0.6, 0); PAINT_C.h = -9; PE.x = -9; chamberTint(color, 0);
       // the swap: the new car takes the old one's place (its own wheels, its parts moved over)
       cv.root.remove(nw.root); nw.v.grp.traverse(o => { if (o.isMesh) o.visible = true; }); nw.contact.visible = true;
       if (!spec.num) { nw.v.dec.visible = false; nw.v.bodyG.traverse(o2 => { if (o2.isMesh && o2.material === nw.v.dec.material) o2.visible = false; }); }
@@ -8143,7 +8170,7 @@ const Garage3D = (function () {
     env = cubeRT.texture; ENVU.value = env;
     for (const m of decorEnv) { m.envMap = env; m.needsUpdate = true; }
     makePartMats();
-    puffs = new Puffs(1400, false); sparks = new Puffs(900, true); scene.add(puffs.pts, sparks.pts); buildSvc(); buildFlames();
+    puffs = new Puffs(1400, false); sparks = new Puffs(900, true); streaks = new Puffs(500, false, true); scene.add(puffs.pts, sparks.pts, streaks.pts); buildSvc(); buildFlames();
     Render.garageLight(new V3(1, 0.35, 0.1).normalize(), 0xffe2bc, 0.3, 0xffffff);   // (the glint on the paint and the glass, its fresnel rim: from the sunny right door, warm, low; overhead the rear glass seen from behind went white)
     bindInput(canvas);
     ready = true;
@@ -8158,7 +8185,7 @@ const Garage3D = (function () {
   }
   // (the sparks', puffs' and motes' sizes by the view's height)
   function fxScale() { const sc = H * renderer.getPixelRatio() / (2 * Math.tan(tallFov(HV.fov) * Math.PI / 360));
-    puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc; }
+    puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = streaks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc; }
   // the car shown first: no drive-in, it stands there
   function show(spec) {
     openShut(); svcStop(); if (!fxParked()) fxRest();   // (the robots parked: the tools in their nests, folded over their carriages; what they held back on the old car first)
@@ -8179,7 +8206,7 @@ const Garage3D = (function () {
     openStep(dt);
     for (let k = 0; k < ns; k++) { stepFixtures(dt / ns, dts); svcFx(dt / ns, dts); }
     engFrame(dt);
-    puffs.update(dt); sparks.update(dt); stepFlames(dt);
+    puffs.update(dt); sparks.update(dt); streaks.update(dt); stepFlames(dt);
     motes.material.uniforms.uT.value = time;
     ringGlow.material.uniforms.uK.value = GLOW.ring * (0.16 + 0.03 * Math.sin(time * 1.6));   // (the ring's halo breathing: within about 0.4 m)
     if (signGlow) signGlow.material.userData.op = GLOW.sign * (0.94 + 0.08 * Math.sin(time * 2.3));
