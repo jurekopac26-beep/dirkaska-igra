@@ -1,4 +1,4 @@
-drevo: 31f12e4, js/core.js spremenjen v delovnem drevesu
+drevo: f283eed
 == razredi (zadetki; avtoNic = zadetki, pri katerih se spremeni samo stvar; rast energije avta in para; pri kupu par brez stranskega razleta in energija razleta; pri celem predmetu omejitev hitrosti; gkMax = največja razlika gibalne količine para, kg m/s)
 giblje, avto se vrti {"zadetkov":5119,"avtoNic":100,"avtoGor":1016,"avtoGorMaxJ":6310.9,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"omejitev":2871,"omejitevZavrla":1654,"parGorOmejitev":0,"gkMax":2242.9,"vrste":{}}
 giblje, w=0 {"zadetkov":2775,"avtoNic":29,"avtoGor":573,"avtoGorMaxJ":5077.1,"parGor":0,"parGorMaxJ":0,"parGorMaxDelez":0,"omejitev":1458,"omejitevZavrla":873,"parGorOmejitev":0,"gkMax":1692.6,"vrste":{}}
