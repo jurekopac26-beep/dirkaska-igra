@@ -125,6 +125,14 @@ Kamera za avtom, skupina 89 (`js/world-chase-bt89.js`): Bathurst (ob robu asfalt
 3. Biķernieki brez zaplat v pesku (samo gozd), Bathurst tako.
 4. Ne, odstrani skupino 89.
 
+### `chase-skupina-90`
+
+Kamera za avtom, skupina 90 (tretji prehod, `js/world-chase-bt90.js`): Buriram (na trati za ograjo 8–85 m redki nizki šopi v zelenih trate in bolj suhe lise; kjer so riževa polja dovolj blizu, stoječi riž po parcelah, zlat, zelen, mlad, strnišče, in trava na mejah; riževa polja so večinoma dlje od ~85 m, zato je sprememba tu majhna; +5 klicev, +2 tisoč oglišč, na najgostejšem mestu 262 klicev in 881 tisoč) in Canaries (3–60 m za ograjo: pod gozdom temno listje in nizka praprot, na grmišču grmički in šopi, na travi mokre in suhe zaplate in mehki šopi, na skali in strminah andezitni kamni in rdeče-rjava prst; +6 klicev, +6 tisoč oglišč, največ 229 klicev in 809 tisoč). Brez gledalcev, fizika nespremenjena.
+
+1. **Ok, tako (priporočeno).**
+2. Samo Canaries, Buriram brez tega prehoda.
+3. Ne, odstrani skupino 90.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
