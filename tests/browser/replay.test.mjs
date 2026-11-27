@@ -66,6 +66,13 @@ try {
   // the end: back to the results
   await act('rp-exit'); await page.waitForTimeout(300); const e = await st();
   T.check('"Končaj": back to the results', e.screen === 'results' && !e.ui, JSON.stringify(e));
+  // the rivals after it: as the race left them (the race behind the results goes on from there, not from the replay's last pose); the race
+  // stands while the replay plays, so the cars before the replay (in the same step as its start) and after it (in the same step as its end)
+  await page.evaluate(() => { window.__cars = () => window.__game.race.cars.map(c => [c.x, c.z, c.h, c.vl].map(v => (+v).toFixed(4)).join(',')); });
+  const k0 = await page.evaluate(() => { const a = window.__cars(); window.__game.onAction('replay'); return a; });
+  await frames(6); const k1 = await page.evaluate(() => window.__cars());
+  const k2 = await page.evaluate(() => { window.__game.onAction('rp-exit'); return window.__cars(); });
+  T.check('the replay poses the rivals (near the start), "Končaj" puts every car back as the race left it', k1.some((v, j) => v !== k0[j]) && k2.every((v, j) => v === k0[j]), JSON.stringify({ k0, k1, k2 }));
 
   // the highlights: from the results
   const hl = () => page.evaluate(() => { const g = window.__game, P = g.replay, el = (id) => document.getElementById(id), H = P && P.hl;

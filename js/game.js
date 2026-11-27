@@ -1092,6 +1092,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const own = RP_CAM[S.camera] ? S.camera : 'tv';   // (own: the camera the player drove with, the first of the replay's)
     const F = R.frames, t1 = F[F.length - 1][0], t = here ? Math.max(F[0][0], t1 - RP_BACK) : F[0][0];
     replay = { t, t1, i: rpIdx(F, t), speed: 1, play: true, cam: own, own, k: Math.max(0, R.cars.indexOf(race.player)), sc: null, here: here || null, mode: 'all' };
+    if (!here && !R.file) replay.rpK = new Map(R.cars.map(c => [c, rpKeep1(c)]));   // (the results' replay: every car as the race left it, put back at its end, replayEnd; the race behind the results goes on from there, not from the replay's last pose)
     showScreen('none'); $('hud').classList.add('off'); $('btn-pause').classList.add('off'); $('touch').classList.add('off'); $('replay-ui').classList.remove('off');
     $('rp-wait').textContent = here ? here.wait : '';
     Sfx.setRunning(false); Sfx.silence(); Input.buzzOff(); Comm.stop(); Render.setGhost(null); Render.setGhostF(null); Render.resetCam(); replayUI();
@@ -1365,9 +1366,9 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
     if (c.tl) Core.tlPose(c, W > REC_W ? A[o + 7] + (B[o + 7] - A[o + 7]) * u : 0, track, W > REC_TL ? A[o + 8] + (B[o + 8] - A[o + 8]) * u : 0);   // (its semi-trailer on the kingpin at its angle; an older recording: straight behind)
   }
-  // a car the race has falling when the results' replay begins (behind the results the race goes on until every car is home: restOn): the car
-  // as the race left it, kept once, before the replay first poses it, and put back at the replay's end (replayEnd: its body, its place on the
-  // road and all else the replay posed; the race steps its fall on from there). Posnetek do sem keeps every car (rpKeep), a file has no race
+  // a car the results' replay poses (behind the results the race goes on until every car is home: restOn): the car as the race left it, kept
+  // once, before the replay first poses it, and put back at the replay's end (replayEnd: its body, its place on the road and all else the
+  // replay posed; the race steps it on from there). replayStart keeps every car so; Posnetek do sem keeps them its own way (rpKeep), a file has no race
   function rpOwn(c) { const P = replay; if (P && !P.here && !(recd && recd.file) && !(P.rpK && P.rpK.has(c))) (P.rpK || (P.rpK = new Map())).set(c, rpKeep1(c)); }   // (rpK: the replay's own list of them; P.own is its first camera)
   // a car the recording has falling as a body (recFall's samples) round time t, or one that carries a fall: the car's own numbers as its last
   // sample before the fall has them (its speed, its steering and its place on the road stay the edge's, as in the race), then where it is and
