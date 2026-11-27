@@ -102,6 +102,29 @@ Razred izida se je spremenil v 10 prizorih (našteti na koncu `zid-matrika.log`)
 - **Negativne vrednosti iz sredine:** odboj v točki dotika je 0,03–0,04, par se ob zamiku zavrti okoli dotika, zato se težišči po sunku še približujeta (do 5,7 km/h pri 200 km/h). Prej je bil odboj v dotiku (0,12) večji od tega deleža, zato je bila vrednost pozitivna. Preverjanje v `tests/trki.test.js` (»Realistična, the traffic«) je za zamaknjene nalete zato prilagojeno z 0–0,2 na −0,05–0,2; po sredini ostane 0–0,2. To je sprememba meje testa, ne samo reference.
 - Zasuk avta ob zamiku: pri 120 in 200 km/h 7 % manjši (sorazmerno s sunkom). Pri 60 km/h gre večji del v zdrs zadka (`csKc`) namesto v vrtenje: avto −0,256 → 0 rad/s (zdrs −0,119 → −0,130 rad), kombi −1,483 → −0,841 rad/s (zdrs −0,055 → −0,089 rad). Delitev je obstoječe pravilo in ni spremenjena.
 
+## Kaj sledi naletu v promet v naslednjih korakih (`promet2.js`, `promet2-*.log`)
+
+Prizor kot zgoraj (vozilo stoji 60 m pred avtom, avto 5 cm v njegovem zadku, zamik 0 ali ±0,6 m). Prvi dotik je en klic `_hitVeh`, nato tečejo 3 s korakov dirke brez vnosa; skripta zabeleži vsak sunek para (hitrost zbliževanja, energija para pred in po, gibalna količina, prekrivanje, odboj med težiščema) in v vsakem koraku, od kod zrastejo poškodbe (sunek prometa nad pragom 3,5 m/s, ograja, drugo). Prvi dotik se konča, ko 0,05 s ni prekrivanja. **Pred** = 737b389, **po** = eff3af0 (veja po fizika-4, 5, 6 in spoju `main`). 36 primerov na drevo (4 vozila × 60 / 120 / 200 km/h × zamik 0, +0,6, −0,6 m); zrcalna primera imata enake sunke. Ukaz: `node promet2.js`, za drugo drevo `TRKI_SNAP=<drevo> node promet2.js`; `VSE=1` izpiše vsak sunek.
+
+| | pred | po |
+|---|---|---|
+| sunkov skupaj / od tega v prvem dotiku | 1 548 / 36 | 2 921 / 502 |
+| sunkov, pri katerih energija para zraste | 0 | 0 |
+| primerov s ponovnim dotikom po koncu prvega | 15 | 17 |
+| največji poznejši sunek (hitrost zbliževanja) | 27,92 km/h (14,0 % prvega) | 9,14 km/h (4,6 % prvega) |
+| poznejši sunki skupaj, delež začetne energije para | 0,0 do −1,2 % | 0,0 do −0,9 % |
+| največje prekrivanje po prvem koraku | 5,7 cm | 5,9 cm |
+| primerov z rastjo poškodb po prvem sunku: sunek prometa / ograja / drugo | 5 / 3 / 0 | 0 / 7 / 0 |
+| NaN; vozilo izključeno iz igre | 0; 0 | 0; 0 |
+
+- **Pred:** v vsakem primeru en sam sunek v prvem dotiku (konec ob 0,000–0,033 s, odboj med težiščema 0,050–0,120). Avto se odbije, odbito vozilo zavira, avto brez plina ga dohiti in zadene še enkrat. Po sredini: pri 60 km/h ob 0,63–0,98 s s 6,80–7,09 km/h (11,3–11,8 % prve hitrosti), pri 120 km/h ob 1,47–2,15 s s 14,22–14,37 km/h (11,9–12,0 %), pri 200 km/h v 3 s ne; avtobus nikoli. Zamaknjeno: avto 60 km/h ob 0,34 s z 1,85 km/h, avto 200 km/h ob 2,29–2,35 s s 24,85–27,92 km/h (12,4–14,0 %), kombi 60 km/h ob 0,53 s s 4,12 km/h, motor 60 km/h ob 0,33 s s 3,41 km/h, motor 200 km/h (+0,6 m) ob 2,22 s s 6,41 km/h. V 5 primerih je bil ponovni sunek nad pragom poškodb (+0,003 do +0,068).
+- **Po, po sredini:** en sunek v prvem dotiku (konec ob 0,017–0,025 s, odboj 0,029–0,077), ponovni dotik ob 0,41–1,15 s s 4,11–6,03 km/h (2,9–7,5 % prve hitrosti; avtobus pri 60 km/h ne). Nato avto zavirajoče vozilo potiska s sunkom v vsakem koraku (skupaj 107–302 sunkov v 3 s, avtobus 1–15); vsak paru energijo odvzame.
+- **Po, zamaknjeno:** pri 120 in 200 km/h sledi drugi sunek po 1–3 korakih (0,008–0,025 s) z 1,82–6,73 km/h (1,2–3,4 % prve hitrosti), pri 60 km/h ob 0,08–0,71 s z 0,01–1,66 km/h. Največji poznejši sunek je 9,14 km/h (kombi, 200 km/h) = 2,54 m/s: pod pragom poškodb (3,5 m/s) in pod pragom dogodka trka (3 m/s).
+- **Negativen odboj ob koncu prvega dotika** (8 primerov: avto 60 km/h in motor 60 / 120 / 200 km/h, oba zamika; −0,000 do −0,116): avto zasukano vozilo potiska in gre mimo njega. Avto 60 km/h: po prvem še 127 sunkov po 0,01–0,22 km/h do 1,31 s, vsak odvzame 0,3–13,7 J; po 3 s avto 16,8 km/h, zasukan 6,3°, vozilo stoji, zasukano 35,9° (pred: 17,0 km/h, 6,7° in 38,4°).
+- **Poškodbe:** po prvem sunku rastejo samo še ob ograji po zasuku (7 primerov, +0,019 do +0,136; pred 3 primeri, +0,070 do +0,081, in 5 iz ponovnega sunka v promet). Zrcalna primera se pri tem razlikujeta, ker pas vozila ni na sredini ceste.
+- **Sklep:** napaka ni izmerjena, koda ni spremenjena. Nobeden od 2 921 sunkov paru ne doda energije, prekrivanje ostane do 5,9 cm, poznejši sunki so pod obema pragoma.
+- **Meje meritve:** ena proga, en avto, nalet od zadaj v stoječe vozilo, 3 s. Nalet v vozeče vozilo, bočni nalet in kolesar niso zajeti.
+
 ## Kaj ostaja zunaj virov
 
 - Pod 5 km/h: avto–avto 0,28–0,29 in zid 0,07 (vir 0,4–0,7). `e0` ostane enak Simulaciji (to preverja test), razlika v razmiku je do približno 1,5 km/h.
@@ -112,7 +135,7 @@ Razred izida se je spremenil v 10 prizorih (našteti na koncu `zid-matrika.log`)
 
 ## Česa ta krog ni izmeril
 
-- Kaj sledi zamaknjenemu naletu v promet v naslednjih korakih (ali pride do drugega sunka, ko se težišči še približujeta): `promet.js` in test merita en klic.
+- Koraki po naletu v promet so izmerjeni naknadno (razdelek zgoraj); ostane nalet v vozeče vozilo in bočni nalet.
 - Kolesar (`_runBikeR`) z novo krivuljo posebej; pokrit je samo s testom (80/80).
 - `tools/trki/pocez.js` po tem popravku.
 - Testi v brskalniku in `npm run test:related` (44 testov, približno 4,6 h): tečejo enkrat, v zbirnem krogu ali pred `main`.
