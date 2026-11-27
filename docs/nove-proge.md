@@ -111,7 +111,7 @@ Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvest
 - Nikjer imen oseb, podjetij, lokalov, prireditev, filmov, oddaj, znamk ali logotipov; table in napisi generični; ovinki z opisnimi imeni.
 - Vsi viri odprti in v »Zasluge«; nič iz Googla.
 - `tests/golden/perf.json`: nova proga pod ~300 klicev in ~900 tisoč oglišč (`maxCalls`, `maxKverts`), druge proge nespremenjene.
-- Sliki za meni, `node tests/browser/menu.test.mjs` zelen.
+- Sliki za meni, `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs` zelen.
 - Test proge, `tests/run.js`, `tests/README.md`, `docs/kazalo.md`, `node tools/stamp.js`.
 
 ## Recept (dopolni vsaka seja; do ~1 stran)

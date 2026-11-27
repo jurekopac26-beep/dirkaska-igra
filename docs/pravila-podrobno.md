@@ -40,7 +40,7 @@ Citati, datumi in zgodovina so v `docs/odlocitve.md` (razdelki kot tu); podrobno
 - Vsak vir z licenco gre v `README.md`, »Zasluge« (OSM in izpeljano: ODbL 1.0).
 
 ## Meni (`js/menu.js`, `css/menu.css`)
-- Nov meni v angleščini (`README.md`, »Nov meni«) bere progo iz `js/lang.js`; nova proga potrebuje `assets/tracks/<id>.webp` in `<id>-rain.webp` (`maketa-menija/README.md`); deluje pokonci in ležeče od 360 × 640; po spremembi `node tests/browser/menu.test.mjs`.
+- Nov meni v angleščini (`README.md`, »Nov meni«) bere progo iz `js/lang.js`; nova proga potrebuje `assets/tracks/<id>.webp` in `<id>-rain.webp` (`maketa-menija/README.md`); deluje pokonci in ležeče od 360 × 640; po spremembi `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`.
 
 ## Postopek
 - **Žigov** (`?v=…`) v repozitoriju ni (doda jih objava). Po spremembi `node tools/stamp.js --check`; sicer samo `--merge`, `--strip`, `--find`. Spoj `main`: `node tools/spoji-main.mjs [veja]`. Nove reference: `npm run golden:update`.

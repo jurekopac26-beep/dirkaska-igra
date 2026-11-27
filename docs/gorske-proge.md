@@ -126,7 +126,7 @@ Graditelji obstoječih gorskih prog imajo po 50–80 KB in vsak svoje živali in
 3. Detajle postavljaj samo v pas ~60 m ob cesti (razdelek Kaj vidi kamera); kar je dlje, je megla.
 4. `js/tracks/<id>.js`, `js/world-<id>.js`, vrstica v `index.html`, angleščina v `js/lang.js`, `docs/proge/<id>.md`, vrstica v »Proge« in »Zasluge« v `README.md`, test po vzoru obstoječih, kazalo.
 5. Slika za meni `assets/tracks/<id>.webp` in `<id>-rain.webp` (`maketa-menija/README.md`).
-6. `node tools/stamp.js`, `npm run golden:update`, `npm run test:related`, `node tests/browser/menu.test.mjs`; obremenitev pod mejami iz `CLAUDE.md` (~300 klicev, ~900 tisoč oglišč) in brez povečanja na drugih progah.
+6. `node tools/stamp.js`, `npm run golden:update`, `npm run test:related`, `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`; obremenitev pod mejami iz `CLAUDE.md` (~300 klicev, ~900 tisoč oglišč) in brez povečanja na drugih progah.
 7. Pull request kot osnutek; ko je lokalno zeleno, vrni začasni commit z naporom (`git revert`, razen pri progi 1), označi pull request kot pripravljenega in koordinacijski seji pošlji eno vrstico. Nato čakaj: združi ga koordinacijska seja; če test na GitHubu pade, ti pošlje napako.
 
 ## Varčevanje s tokeni (brez izgube kakovosti)

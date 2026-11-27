@@ -20,7 +20,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - Samo zemljepisna imena; brez logotipov, podjetij, lokalov, sponzorjev, prireditev, znamk avtov; **nikoli imen resničnih oseb**. Samo OSM in javni višinski modeli; **nikoli Google Maps, Earth, Street View**. Vir z licenco: `README.md`, »Zasluge«.
 
 ## Postopek
-- Meni: `assets/tracks/<id>.webp`, `<id>-rain.webp`; `node tests/browser/menu.test.mjs`. `node tools/stamp.js --check`; `node tools/spoji-main.mjs`; `npm run golden:update`.
+- Meni: `assets/tracks/<id>.webp`, `<id>-rain.webp`; `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`. `node tools/stamp.js --check`; `node tools/spoji-main.mjs`; `npm run golden:update`.
 - Commit: »Co-Authored-By: Claude <noreply@anthropic.com>«, »Claude-Session: …«; brez imen modelov.
 - Lokalno `npm run test:related` brez ponavljanja; celoten krog samo na zbirnih vejah (ena na temo, en pregled) in ponoči. Nove proge prek `tools/proga-podatki.py`.
 - PR osnutek ob začetku; »Ready for review« med prvima dvema v `docs/vrsta.md`; **Združevanje vodi seja Združevanje**, seja s kodo se ne naroči na PR. Pravila enkrat na dan v en PR.

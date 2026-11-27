@@ -119,7 +119,7 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
     - rezultati (kot izpadli v eliminaciji, `ZB_OUT`).
   - `js/lang.js`: prevodi. `index.html`: skripta.
 
-**Meni:** ploščica za igro s prijatelji ostane, izbira je v sobi (`buildRoom` v `js/game.js`): *Race*, *Elimination* in *Police chase*. *Police chase* je samo na cesti s prometom in v zasebni sobi (hitra igra do 22 ostane dirka). Po spremembi: `node tests/browser/menu.test.mjs`.
+**Meni:** ploščica za igro s prijatelji ostane, izbira je v sobi (`buildRoom` v `js/game.js`): *Race*, *Elimination* in *Police chase*. *Police chase* je samo na cesti s prometom in v zasebni sobi (hitra igra do 22 ostane dirka). Po spremembi: `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`.
 
 **Nagrade:** na spletu ni nagrad kariere in rekordov (kot pri dirki s prijatelji).
 

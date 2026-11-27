@@ -73,7 +73,7 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
     ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
     ['README.md', ['viri.test.js', 'fleet.test.js']],
     ['tools/carshots.mjs', []],
-    ['assets/maps/corner-spa.webm', ['testne-proge.test.js', 'menu-corner.test.js', 'browser/menu.test.mjs']],   // (an asset: its tests by RELATED only, not the track's by its name)
+    ['assets/maps/corner-spa.webm', ['testne-proge.test.js', 'menu-corner.test.js', 'browser/menu.test.mjs', 'browser/menu-2.test.mjs', 'browser/menu-3.test.mjs']],   // (an asset: its tests by RELATED only, not the track's by its name)
     ['assets/tracks/gozd.webp', ['testne-proge.test.js']],   // (a test track's picture: only the freeze, CLAUDE.md »Testne proge«)
   ];
   const off = cases.map(([f, want]) => [f, rel(f)]).filter(([f, got], i) => got.join() !== cases[i][1].join());

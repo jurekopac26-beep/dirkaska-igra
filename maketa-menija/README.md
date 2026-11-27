@@ -347,7 +347,7 @@ Prava proga je dokončana, ko ima vse, kar imajo Vršič, Pikes Peak, Ouninpohja
 8. Prelet (po koraku 5: resnična okolica `geo_far.py` in `geo_lc.py`): vrstica v `flyovers.json` (hitrost, kamera in megla so skupni, `CAMERA` v `flyover.mjs`; `places` z angleškimi imeni iz `R.places` v `routes.js`; `kbps`), `GAME=../game_main node flyover.mjs flyovers.json <ids>`, nato `python3 routes.py raw/site <ids> --fly` (v `routes.js` doda samo prelet, prenese `fly-<id>.webm|webp`). Ob morju `heli.json` (`sea`, po potrebi `seaHouses`, `ownFar`; velja tudi za prelet); najprej sličice (`PREVIEW=1 AT=…`), ker napake v dorisani okolici (kopno v vodi, luknje ob robu sveta) pokaže šele pogled od zgoraj.
 9. Let s helikopterjem: kraji v `landmarks.json` (samo zemljepisna imena), vrstica v `drones.json` (`{"mode": "demo", "warm": 2, "kbps": …, "shots": []}`), po potrebi `heli.json` (`sea: true` ob morju), `EXPORT=1 node heli.mjs nring` enkrat, nato `GAME=../game_main node heli.mjs <ids>`, `python3 intro_data.py raw/site <ids>` in `python3 intro_assets.py raw/site` (kopiraj `heli-<id>.*` in glasbo v igro).
 10. Glasba nove države: `glasba/<država>.py` po vzoru drugih (`glasba/synth.py`), `MUSIC` v `intro_data.py`.
-11. `node tools/stamp.js --check`, testi (`npm run test:related`, `node tests/browser/menu.test.mjs`).
+11. `node tools/stamp.js --check`, testi (`npm run test:related`, `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`).
 
 ## Viri podatkov
 
