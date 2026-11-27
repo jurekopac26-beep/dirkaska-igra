@@ -11,8 +11,9 @@
    - persist(): asks the browser to keep the page's storage when the phone runs short of space (navigator.storage.persist: Chrome
      answers by itself, Firefox asks the player). Once a visit; persisted() only reads the answer.
    - copies: the progress (the tdgp- keys without the ghosts, the device's own and this module's key) and the missions' records
-     (rra-misije), kept in IndexedDB (rra-shramba, store kopije), the newest KEEP_N: one on the first start of a day ('dan', daily), one
-     before a profile is brought in ('uvoz') and one before a copy is put back ('obnova'). apply() puts a copy back (the ghosts stay as
+     (rra-misije), kept in IndexedDB (rra-shramba, store kopije), the newest KEEP_N: one after every race to the line ('dirka', the
+     newest RACE_N of them kept, with the track: profil igralca d1), one before a profile is brought in ('uvoz') and one before a copy is
+     put back ('obnova'); daily() (one on the first start of a day, 'dan') is no longer called by the game. apply() puts a copy back (the ghosts stay as
      they are). The copies live in the same
      browser as the saved game: they help against a broken build or a mistaken import, not when the phone clears the browser's data
      (the profile file is for that, hence the reminder).
@@ -26,7 +27,7 @@ const Shramba = (function () {
   const GHOST = /^tdgp-(pklegend|fghost|ghost)-/;
   const OWN = new Set(['tdgp-noadapt', KEY]);   // (the device's own and this module's: never in a copy, never put back)
   const EXTRA = ['rra-misije'];   // (progress kept outside the tdgp- keys: the missions' records, js/missions.js)
-  const DAY = 864e5, KEEP_N = 5, RACES = 5, AGAIN = 30 * DAY, LATER = 7 * DAY;
+  const DAY = 864e5, KEEP_N = 5, RACE_N = 2, RACES = 5, AGAIN = 30 * DAY, LATER = 7 * DAY;
   const QUOTA = 5242880;   // (localStorage for one page in Chromium: 10 MiB counted in two-byte characters; measured)
   const DB = 'rra-shramba', ST = 'kopije';
   let store = null, asked = null, hooks = { phys: null, onFreed: null, storage: null };
@@ -144,17 +145,19 @@ const Shramba = (function () {
   }
   async function all(d) { const a = (await req(d, 'readonly', (s) => s.getAll())) || []; return a.sort((x, y) => y.id - x.id); }
   async function withDb(fn) { const d = await open(); try { return await fn(d); } finally { d.close(); } }
-  // a copy now (why: 'dan' | 'uvoz' | 'obnova' | 'roka'); null when there is nothing to keep
-  function snap(why) {
+  // a copy now (why: 'dirka' | 'dan' | 'uvoz' | 'obnova' | 'roka'; track: the race's track id, for 'dirka'); null when there is nothing to keep
+  function snap(why, track) {
     const c = collect(), sum = summary(c.data); if (!worth(sum, c.data)) return Promise.resolve(null);
     let t = Date.now();
     return withDb(async (d) => {
       const have = await all(d); if (have.length && have[0].id >= t) t = have[0].id + 1;   // (two copies in one millisecond: still two)
       const rec = { id: t, t, why: String(why || 'roka'), data: c.data, extra: c.extra, sum };
+      if (typeof track === 'string' && track) rec.track = track.slice(0, 80);
       await req(d, 'readwrite', (s) => s.put(rec));
-      const old = (await all(d)).slice(KEEP_N);
+      const now = await all(d), races = now.filter(r => r.why === 'dirka');
+      const old = now.slice(KEEP_N).concat(races.slice(RACE_N).filter(r => now.indexOf(r) < KEEP_N));   // (the newest RACE_N race copies, KEEP_N in all)
       if (old.length) await req(d, 'readwrite', (s) => { for (const r of old) s.delete(r.id); return null; });
-      return { id: rec.id, t: rec.t, why: rec.why, sum: rec.sum };
+      return { id: rec.id, t: rec.t, why: rec.why, track: rec.track, sum: rec.sum };
     });
   }
   const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
@@ -163,12 +166,12 @@ const Shramba = (function () {
     now = now || Date.now();
     return withDb(all).then((have) => (have.some(r => r.why === 'dan' && sameDay(r.t, now)) ? null : snap('dan')));
   }
-  const list = () => withDb(all).then((a) => a.map(r => ({ id: r.id, t: r.t, why: r.why, sum: r.sum || summary(r.data || {}) })));
+  const list = () => withDb(all).then((a) => a.map(r => ({ id: r.id, t: r.t, why: r.why, track: r.track, sum: r.sum || summary(r.data || {}) })));
   const get = (id) => withDb((d) => req(d, 'readonly', (s) => s.get(id)));
 
   function set(o) { hooks = Object.assign({}, hooks, o || {}); }
   function use(s) { store = s || null; asked = null; state.persisted = null; state.freed = 0; }   // (tests: a store of their own)
 
-  return { KEY, KEEP_N, RACES, AGAIN, LATER, QUOTA, EXTRA, keep, victims, usage, persist, persisted, due, days, info, exported, later, extras, collect, summary, apply, snap, daily, list, get, set, use, state };
+  return { KEY, KEEP_N, RACE_N, RACES, AGAIN, LATER, QUOTA, EXTRA, keep, victims, usage, persist, persisted, due, days, info, exported, later, extras, collect, summary, apply, snap, daily, list, get, set, use, state };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Shramba;

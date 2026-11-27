@@ -298,15 +298,17 @@
         <div class="row"><span class="rlbl">Zvoki okolja</span><div class="seg" data-set="amb"><button data-v="0">Izklop</button><button data-v="0.5">Tiho</button><button data-v="1">Normalno</button><button data-v="2">Glasno</button></div></div>
         <div class="row" title="Osnovno: kratki sunki ob trkih in pristankih, v boksih le postanek, izpust in VOZIŠ TI!. Vse: v boksih še vsak trenutek dela mehanikov ter pot v bokse in iz njih."><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Osnovno</button><button data-v="2">Vse</button></div></div>
         <div class="prof-box">
-          <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
-          <div class="set-note" id="prof-note"></div>
+          <div class="set-sub">Shranjena igra</div>
+          <div class="row prof-row"><span class="rlbl">Izvozi v datoteko<small id="prof-exp-t"></small></span><button class="btn mini" data-act="prof-export">Izvozi</button></div>
+          <div class="row prof-row"><span class="rlbl">Uvozi iz datoteke<small>zamenja trenutni napredek</small></span><button class="btn mini" data-act="prof-import">Uvozi</button></div>
           <details class="set-cat" id="set-kopije">
-            <summary>Samodejne kopije napredka</summary>
+            <summary>Varnostne kopije <small id="kop-n"></small></summary>
             <div class="set-body">
-              <div class="set-note">Igra sama shrani kopijo napredka ob prvem zagonu dneva, pred uvozom profila in pred obnovo kopije (brez duhov, zadnjih pet). Kopije so v tem brskalniku: če telefon izbriše podatke brskalnika, izginejo skupaj z igro. Za to je izvoz v datoteko.</div>
+              <div class="set-note">Igra sama shrani kopijo napredka po vsaki končani dirki (zadnji dve), pred uvozom profila in pred obnovo kopije (brez duhov). Kopije so v tem brskalniku: če telefon izbriše podatke brskalnika, izginejo skupaj z igro. Za to je izvoz v datoteko.</div>
               <div id="kopije-list"></div>
             </div>
           </details>
+          <div class="set-note" id="prof-note"></div>
         </div>
         <details class="set-cat" id="set-test">
           <summary>Preizkus: tekmeci in trki</summary>

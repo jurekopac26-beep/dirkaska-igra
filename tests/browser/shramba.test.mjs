@@ -1,10 +1,10 @@
 // The saved game kept safe, in the game (js/shramba.js; its logic without a browser in tests/shramba.test.js). On Trois-Rivières (a real
-// track), four races already driven and a mission's record: the day's copy made a few seconds after the start (the progress without the
-// ghosts, the missions' records beside; not a second one the same day). A race to the line: the browser asked once to keep the storage;
-// the fifth race: the offer on the results to save the profile as a file (Ne zdaj: hidden for a week; Shrani profil: the file with the
+// track), four races already driven and a mission's record: no copy at the start any more (profil igralca d1); the day's copy, made by
+// Shramba.daily (the progress without the ghosts, the missions' records beside; not a second one the same day). A race to the line: the
+// browser asked once to keep the storage, a copy after the race (po dirki, the track named); the fifth race: the offer on the results to save the profile as a file (Ne zdaj: hidden for a week; Shrani profil: the file with the
 // missions' records, noted, the offer gone). Nastavitve: the storage kept, the last file, how full; the copies listed (Samodejne kopije
 // napredka). A storage full to the last character: a setting still saved (Nevihta), one ghost dropped for it, the player told. A copy put
-// back (asked; the saved game before it copied too): the progress of the morning, the race's ghost kept. A profile imported: a copy of
+// back (asked, the dialog saying what is lost; the saved game before it copied too): the progress of the morning, the race's ghost kept. A profile imported: a copy of
 // the saved game made before it, the file's progress and missions' records in.
 //   node tests/browser/shramba.test.mjs
 import fs from 'node:fs';
@@ -22,16 +22,16 @@ try {
   };
   const A = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, track: 'troisrivieres', name: 'Ana', length: 'short', weather: 'dry' }, { width: 390, height: 844 }, { init });
   const pa = A.page;
-  pa.on('dialog', (d) => d.accept());
+  const dialogs = [];
+  pa.on('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
 
-  // 1. the day's copy, a few seconds after the start
-  // (polled inside the page: waitForFunction takes a promise for a yes)
-  const made = await pa.evaluate(async () => { for (let i = 0; i < 120; i++) { if ((await Shramba.list()).length) return true; await new Promise(r => setTimeout(r, 500)); } return false; });
-  if (!made) throw new Error('no day\'s copy within a minute');
-  const c1 = await pa.evaluate(async () => { const a = await Shramba.list(), r = await Shramba.get(a[0].id), again = await Shramba.daily(), b = await Shramba.list();
+  // 1. no copy at the start (profil igralca d1: after every race now); the day's copy as Shramba.daily makes it
+  await pa.waitForTimeout(6000);
+  const c0 = await pa.evaluate(async () => (await Shramba.list()).length);
+  const c1 = await pa.evaluate(async () => { await Shramba.daily(); const a = await Shramba.list(), r = await Shramba.get(a[0].id), again = await Shramba.daily(), b = await Shramba.list();
     return { n: a.length, why: r.why, sum: r.sum, keys: Object.keys(r.data), extra: r.extra, again, n2: b.length }; });
-  T.check('the day\'s copy: made after the start (ob zagonu), the progress (4 races, settings) without ghosts, the missions\' records beside; not a second one the same day',
-    c1.n === 1 && c1.why === 'dan' && c1.sum.races === 4 && c1.keys.includes('tdgp-stats') && c1.keys.includes('tdgp-settings') && !c1.keys.some(k => /^tdgp-(ghost|fghost|pklegend)-|^tdgp-noadapt$|^tdgp-shramba$/.test(k)) && typeof c1.extra['rra-misije'] === 'string' && c1.extra['rra-misije'].includes('95.2') && c1.again === null && c1.n2 === 1,
+  T.check('no copy 6 s after the start; the day\'s copy (ob zagonu): the progress (4 races, settings) without ghosts, the missions\' records beside; not a second one the same day',
+    c0 === 0 && c1.n === 1 && c1.why === 'dan' && c1.sum.races === 4 && c1.keys.includes('tdgp-stats') && c1.keys.includes('tdgp-settings') && !c1.keys.some(k => /^tdgp-(ghost|fghost|pklegend)-|^tdgp-noadapt$|^tdgp-shramba$/.test(k)) && typeof c1.extra['rra-misije'] === 'string' && c1.extra['rra-misije'].includes('95.2') && c1.again === null && c1.n2 === 1,
     JSON.stringify(c1));
 
   // 2. a race to the line: the browser asked to keep the storage, the offer on the results
@@ -69,9 +69,12 @@ try {
   const s1 = await pa.evaluate(() => document.getElementById('prof-note').textContent);
   T.check('Nastavitve, under Profil: the storage kept, the last file (today), how full', /Shramba je trajna/.test(s1) && new RegExp('Zadnji izvoz v datoteko: ' + new Date().toLocaleDateString('sl-SI').replace(/\./g, '\\.')).test(s1) && /Zasedeno je \d+ % prostora/.test(s1), s1);
   await pa.evaluate(() => { document.getElementById('set-kopije').open = true; });
-  await pa.waitForFunction(() => document.querySelectorAll('#kopije-list .kop-row').length > 0, null, { timeout: 15000 });
+  await pa.evaluate(async () => { for (let i = 0; i < 30 && (await Shramba.list()).length < 2; i++) await new Promise(r => setTimeout(r, 500)); });   // (the race's copy, 1.5 s after the line; polled inside the page: waitForFunction takes a promise for a yes)
+  await pa.evaluate(() => { const b = document.getElementById('set-kopije'); b.open = false; b.open = true; });
+  await pa.waitForFunction(() => document.querySelectorAll('#kopije-list .kop-row').length > 1, null, { timeout: 15000 });
   const s2 = await pa.evaluate(() => [...document.querySelectorAll('#kopije-list .kop-row')].map(r => r.innerText.replace(/\s+/g, ' ')));
-  T.check('Samodejne kopije napredka: the day\'s copy listed (when, ob zagonu, 4 races) with Obnovi', s2.length === 1 && /ob zagonu · dirke: 4/.test(s2[0]) && /Obnovi/.test(s2[0]), JSON.stringify(s2));
+  T.check('Varnostne kopije: the race\'s copy on top (po dirki Trois-Rivières, 5 races), the day\'s below (ob zagonu, 4 races), each with Obnovi',
+    s2.length === 2 && /po dirki Trois-Rivi.+ · dirke: 5/.test(s2[0]) && /ob zagonu · dirke: 4/.test(s2[1]) && s2.every(t => /Obnovi/.test(t)), JSON.stringify(s2));
 
   // 4. a storage full to the last character: a setting still saved, one ghost dropped for it, the player told
   const f1 = await pa.evaluate(() => {
@@ -94,11 +97,12 @@ try {
   await pa.evaluate(() => window.__game.onAction('to-settings'));
   await pa.waitForTimeout(300);
   await pa.waitForFunction(() => document.querySelectorAll('#kopije-list [data-act="kop-back"]').length > 0, null, { timeout: 15000 });
-  await Promise.all([pa.waitForNavigation({ timeout: 60000 }), pa.evaluate(() => document.querySelector('#kopije-list [data-act="kop-back"]').click())]);
+  dialogs.length = 0;
+  await Promise.all([pa.waitForNavigation({ timeout: 60000 }), pa.evaluate(() => [...document.querySelectorAll('#kopije-list .kop-row')].find(r => /ob zagonu/.test(r.innerText)).querySelector('[data-act="kop-back"]').click())]);
   await pa.waitForFunction(() => window.__game && typeof Shramba !== 'undefined', null, { timeout: 180000 });   // (Shramba: a const of the page, not a property of window)
   const b1 = await pa.evaluate(async () => ({ races: window.__game.stats.races, ghost: Object.keys(localStorage).filter(k => k.startsWith('tdgp-ghost-troisrivieres')), list: (await Shramba.list()).map(r => r.why + ':' + r.sum.races), mis: localStorage.getItem('rra-misije') }));
-  T.check('the copy put back (after the restart): the morning\'s 4 races, the race\'s ghost kept, the saved game before it copied too (pred obnovo, 5 races)',
-    b1.races === 4 && b1.ghost.length === r1.ghost.length && b1.list.join() === 'obnova:5,dan:4' && b1.mis.includes('95.2'), JSON.stringify({ b1, ghostBefore: r1.ghost }));
+  T.check('the copy put back (after the restart): the morning\'s 4 races, the race\'s ghost kept, the saved game before it copied too (pred obnovo, 5 races); the dialog said what is lost (1 race)',
+    b1.races === 4 && b1.ghost.length === r1.ghost.length && b1.list.join() === 'obnova:5,dirka:5,dan:4' && b1.mis.includes('95.2') && /Izgubi se: dirke: 1/.test(dialogs.join(' ')), JSON.stringify({ b1, ghostBefore: r1.ghost, dialogs }));
 
   // 6. a profile imported: a copy of the saved game first, then the file's progress and missions' records
   await pa.evaluate(() => localStorage.setItem('rra-misije', '{}'));
@@ -106,7 +110,7 @@ try {
   await Promise.all([pa.waitForNavigation({ timeout: 60000 }), fc.setFiles(fpath)]);
   await pa.waitForFunction(() => window.__game && typeof Shramba !== 'undefined', null, { timeout: 180000 });   // (Shramba: a const of the page, not a property of window)
   const i1 = await pa.evaluate(async () => ({ races: window.__game.stats.races, list: (await Shramba.list()).map(r => r.why + ':' + r.sum.races), mis: localStorage.getItem('rra-misije') }));
-  T.check('a profile imported: a copy made before it (pred uvozom profila, 4 races), the file\'s 5 races and missions\' records in', i1.races === 5 && i1.list[0] === 'uvoz:4' && i1.list.length === 3 && i1.mis.includes('95.2'), JSON.stringify(i1));
+  T.check('a profile imported: a copy made before it (pred uvozom profila, 4 races), the file\'s 5 races and missions\' records in', i1.races === 5 && i1.list[0] === 'uvoz:4' && i1.list.length === 4 && i1.mis.includes('95.2'), JSON.stringify(i1));
 
   T.check('no page errors', A.errors.length === 0, A.errors.slice(0, 5).join(' | '));
 } catch (e) {

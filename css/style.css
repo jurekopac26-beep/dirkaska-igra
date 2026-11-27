@@ -970,10 +970,31 @@ select.txt:disabled { opacity: .75; }
 .ach-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 5px; }
 .ach { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, .04); opacity: .6; }
 .ach.got { opacity: 1; background: rgba(255, 198, 41, .14); box-shadow: inset 0 0 0 1px rgba(255, 198, 41, .45); }
-.ach i { font-style: normal; font-size: 20px; filter: grayscale(1); }
-.ach.got i { filter: none; }
+.ach > i { font-style: normal; font-size: 20px; filter: grayscale(1); }
+.ach.got > i { filter: none; }
 .ach b { display: block; font: 700 clamp(12px, 3.2vh, 14px)/1.2 var(--f-ui); }
 .ach span { display: block; font: 500 clamp(10px, 2.7vh, 12px)/1.25 var(--f-ui); opacity: .8; }
+/* Dosežki (profil igralca b3, a2): the km of the last 8 weeks (this week gold), the wins and the favourite track; an achievement's progress bar */
+.st-card { margin: 4px 0 6px; padding: 8px 10px 6px; border-radius: 10px; background: rgba(255, 255, 255, .06); }
+.st-card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font: 600 clamp(11px, 2.9vh, 13px)/1.2 var(--f-ui); }
+.st-card-h span { opacity: .8; }
+.st-card-h b { font: 700 italic clamp(15px, 4.2vh, 20px)/1.1 var(--f-ui); color: var(--meter); font-variant-numeric: tabular-nums; }
+.st-wk { display: flex; align-items: flex-end; gap: 5px; height: clamp(64px, 16vh, 110px); margin-top: 6px; }
+.st-wk-c { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 3px; }
+.st-wk-c i { display: block; min-height: 2px; border-radius: 3px 3px 0 0; background: #4fc3f7; }
+.st-wk-c.now i { background: #ffc629; }
+.st-wk-c span { font: 600 9px/1 var(--f-ui); text-align: center; opacity: .6; white-space: nowrap; overflow: hidden; }
+.st-wk-c.now span { opacity: 1; color: #ffc629; }
+.st-wk-n { margin-top: 3px; font: 500 10px/1.2 var(--f-ui); opacity: .55; }
+.st-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.st-tile { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 7px 9px; border-radius: 10px; background: rgba(255, 255, 255, .06); }
+.st-tile span { font: 600 clamp(10px, 2.7vh, 12px)/1.2 var(--f-ui); opacity: .75; }
+.st-tile b { font: 700 italic clamp(18px, 5vh, 26px)/1.05 var(--f-ui); color: var(--meter); font-variant-numeric: tabular-nums; }
+.st-tile b.st-fav { font-size: clamp(14px, 3.8vh, 18px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-tile em { font: 500 clamp(10px, 2.6vh, 12px)/1.2 var(--f-ui); font-style: normal; opacity: .7; }
+.ach > div { flex: 1 1 auto; min-width: 0; }
+.ach-bar { height: 4px; margin-top: 4px; border-radius: 2px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.ach-bar i { display: block; height: 100%; border-radius: 2px; background: #4fc3f7; filter: none; font-size: 0; }
 /* the ghosts on the leaderboard: the player's to share (a link or a file), a friend's shared one */
 .gh-box { margin-top: 10px; }
 .gh-box .desc { margin: 4px 0; }
@@ -1255,6 +1276,10 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .res-prvi { border-color: rgba(255,198,41,.45); background: rgba(255,198,41,.08); }
 /* Nastavitve: Samodejne kopije napredka, a copy a row (when, why, the races, the money) with its Obnovi */
 .kop-row .rlbl { flex: 1 1 200px; min-width: 0; }
+/* Nastavitve, Shranjena igra (profil igralca c2): a row's line below its name (the last file; zamenja trenutni napredek), the copies' number */
+.prof-row .rlbl { flex: 1 1 200px; min-width: 0; }
+.prof-row .rlbl small, #set-kopije summary small { display: block; margin-top: 3px; font: 500 clamp(10px, 2.6vh, 12px)/1.2 var(--f-ui); color: var(--muted); }
+#set-kopije summary small { display: inline; margin: 0 0 0 6px; }
 /* Pikes Peak: the course flyover before the start (TV captions at the famous places; the touch controls out of the picture while it runs) */
 #pk-fly { display: none; position: absolute; left: calc(14px + var(--sl)); top: calc(14px + var(--st)); max-width: calc(100% - 90px); padding: 8px 14px 9px; border-left: 4px solid var(--lcd); border-radius: 0 8px 8px 0; background: linear-gradient(90deg, rgba(10, 14, 22, .82), rgba(10, 14, 22, .55)); color: var(--chalk); pointer-events: none; opacity: 0; }
 #pk-fly.show { display: block; }
