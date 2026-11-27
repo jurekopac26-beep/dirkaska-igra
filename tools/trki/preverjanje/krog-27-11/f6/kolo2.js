@@ -12,6 +12,7 @@
 // Jedro je instrumentirano v pomnilniku, drevo ostane nedotaknjeno.
 // Zagon: N=12000 SEED=3 node kolo2.js                          to drevo
 //        TRKI_SNAP=<drevo pred> N=12000 SEED=3 node kolo2.js   drevo pred spremembo (git worktree add --detach <mapa> 6ee8653)
+//        IZPIS=<datoteka> ...                                  zapiše še izid vsakega zadetka (za primerjaj.js: drevesi po prizorih)
 const path = require('path');
 const { SNAP, loadInst, rng } = require('../../krog-25-11/fizika/lib.js');
 const A = '      if (!c.air) c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.24', G = '        kTake(c, Px, Pz, rax, raz, ma, Ia, K, null, ka); }';
@@ -20,7 +21,7 @@ const { C, SIM } = loadInst(SNAP, [
   [A, '      globalThis.__BK = { nx, nz, vn, k, sd, lx, lz, ma, mb, sp, kick: [mb * sh * sd * k, -mb * ch * sd * k], push: [Px - mb * sh * sd * k, Pz + mb * ch * sd * k] };\n' + A]]
   .concat(NOVO ? [[G, '        globalThis.__BKa = ka; kTake(c, Px, Pz, rax, raz, ma, Ia, K, null, ka); }']] : []));
 C.setTest({ cv: 6 });
-const E = process.env, N = +(E.N || 12000), R = rng(+(E.SEED || 3)), u = (a, b) => a + (b - a) * R(), r3 = (x) => +x.toFixed(3), DT = 1 / 120;
+const E = process.env, N = +(E.N || 12000), R = rng(+(E.SEED || 3)), u = (a, b) => a + (b - a) * R(), r3 = (x) => +x.toFixed(3), DT = 1 / 120, OUT = E.IZPIS ? [] : null;
 function ovalPts(L, Rr) { const p = [], r = Math.PI / 180; for (let x = 0; x < L; x += 100) p.push([x, 0]); for (let a = -90; a < 90; a += 15) p.push([L + Rr * Math.cos(a * r), Rr + Rr * Math.sin(a * r)]); for (let x = L; x > 0; x -= 100) p.push([x, 2 * Rr]); for (let a = 90; a < 270; a += 15) p.push([Rr * Math.cos(a * r), Rr + Rr * Math.sin(a * r)]); return p; }
 const T = new C.Track({ id: 'predmeti-krog', name: 'Ravnina, Preizkus', halfWidth: 6, points: ovalPts(1600, 220), startX: 50 });
 const ids = C.MODELS.filter((m) => !m.trailer).map((m) => m.id), races = {};
@@ -55,6 +56,8 @@ for (let n = 0; n < N; n++) {
   if (dv > s.dvMax) { s.dvMax = dv; s.worst = rec(); }
   if (dEa > 1) { s.eAvtoGor++; if (dEa > s.eAvtoMaxJ) s.eAvtoMaxJ = dEa; }
   if (dEp > 1) { s.eParGor++; if (dEp > s.eParMaxJ) { s.eParMaxJ = dEp; s.najPar = rec(); } }
+  if (OUT) OUT.push([n, b.vn, b.k, k0, globalThis.__BKa === undefined ? '-' : globalThis.__BKa, P.vx, P.vz, P.w, veh.vx, veh.vz, veh.w, P.dmg, sp].join(' '));
   drop();
 }
 for (const k of Object.keys(S)) { const s = S[k]; s.dvMax = r3(s.dvMax); s.eAvtoMaxJ = r3(s.eAvtoMaxJ); s.eParMaxJ = r3(s.eParMaxJ); s.metDelez = s.zapira ? r3(s.metSum / s.zapira) : null; delete s.metSum; if (!NOVO) delete s.varovalo; console.log(k.padEnd(26), JSON.stringify(s)); }
+if (OUT) require('fs').writeFileSync(E.IZPIS, OUT.join('\n') + '\n');
