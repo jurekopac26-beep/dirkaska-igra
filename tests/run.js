@@ -39,10 +39,10 @@ const SUITES = {
 // it (LIMIT_OF). Update it from the summaries when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not
 // listed counts as DEF_SECS
 // (menu: 1374 on 24. 11. 2026, main's 1294 plus the row's police chase side, ~80 s; one slow PR machine stopped it at 30 min; split in three
-// on 27. 11. 2026, each part under 15 min: its share of the 1374 s by the parts' times on a cloud session, 353, 321 and 345 s of 1019)
+// on 27. 11. 2026, each part under 15 min: its share of the 1374 s by the parts' own times on a cloud session, 342, 312 and 344 s; 322 checks as before)
 const SECS = {
   'browser/memory.test.mjs': 3365, 'browser/perf.test.mjs': 2629, 'browser/memory2.test.mjs': 2577, 'browser/smoke2.test.mjs': 1544,
-  'browser/smoke.test.mjs': 1348, 'browser/crash.test.mjs': 1343, 'browser/menu.test.mjs': 476, 'browser/menu-2.test.mjs': 433, 'browser/menu-3.test.mjs': 465, 'browser/gfx.test.mjs': 1030,
+  'browser/smoke.test.mjs': 1348, 'browser/crash.test.mjs': 1343, 'browser/menu.test.mjs': 471, 'browser/menu-2.test.mjs': 430, 'browser/menu-3.test.mjs': 474, 'browser/gfx.test.mjs': 1030,
   'browser/garage.test.mjs': 1021, 'browser/world.test.mjs': 953, 'browser/world2.test.mjs': 937, 'browser/gfx2.test.mjs': 830,
   'browser/garages.test.mjs': 656, 'browser/pitstats.test.mjs': 530, 'browser/covers.test.mjs': 520, 'browser/crew.test.mjs': 506,
   'browser/pitcam.test.mjs': 490, 'browser/okolje.test.mjs': 481, 'browser/pitkit.test.mjs': 418, 'browser/hudcol.test.mjs': 358,
