@@ -889,13 +889,14 @@ for (const tid of ['spa', 'bathurst']) {
     const hx = Math.cos(v.h), hz = Math.sin(v.h), h = v.h + (o.bok || 0) / D, off = o.off || 0;
     if (o.bok) { const side = -(v.wid / 2 + P.m.wid / 2 - 0.05); P.x = v.x - hx * (v.len / 2 - 3) - hz * side; P.z = v.z - hz * (v.len / 2 - 3) + hx * side; }   // (its nose into the flank, 3 m ahead of the tail)
     else { const back = v.len / 2 + P.m.len / 2 - 0.05; P.x = v.x - hx * back - hz * off; P.z = v.z - hz * back + hx * off; }   // (from behind, 5 cm in)
-    P.px = P.x; P.pz = P.z; P.h = P.ph = h; P.vx = Math.cos(h) * o.v; P.vz = Math.sin(h) * o.v; P.w = 0; P.net = !!o.net;
+    P.px = P.x; P.pz = P.z; P.h = P.ph = h; P.vx = Math.cos(h) * o.v; P.vz = Math.sin(h) * o.v; P.w = o.w || 0; P.net = !!o.net;
     const ma = P.m.mass + (P.fuelKg || 0), mb = v.mass, Ia = P.I * ma / P.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
     const vv = () => v.st === 0 ? [T.tx[v.i] * v.v * v.dir, T.tz[v.i] * v.v * v.dir] : [v.vx, v.vz];
-    const b0 = vv(), p0x = ma * P.vx + mb * b0[0], p0z = ma * P.vz + mb * b0[1], E0 = 0.5 * ma * o.v * o.v + 0.5 * mb * (b0[0] * b0[0] + b0[1] * b0[1]);
+    const b0 = vv(), k0x = v.vx || 0, k0z = v.vz || 0, c0x = P.vx, c0z = P.vz, p0x = ma * P.vx + mb * b0[0], p0z = ma * P.vz + mb * b0[1], E0 = 0.5 * ma * o.v * o.v + 0.5 * mb * (b0[0] * b0[0] + b0[1] * b0[1]) + 0.5 * Ia * P.w * P.w;
     tf._hitVeh(P, v); const b1 = vv(), dpx = ma * P.vx + mb * b1[0] - p0x, dpz = ma * P.vz + mb * b1[1] - p0z, p0 = Math.hypot(p0x, p0z);
-    const E1 = 0.5 * ma * (P.vx * P.vx + P.vz * P.vz) + 0.5 * Ia * P.w * P.w + 0.5 * mb * (b1[0] * b1[0] + b1[1] * b1[1]) + (v.st === 1 ? 0.5 * Ib * v.w * v.w : 0);
+    const Ew = v.st === 1 ? 0.5 * Ib * v.w * v.w : 0, E1 = 0.5 * ma * (P.vx * P.vx + P.vz * P.vz) + 0.5 * Ia * P.w * P.w + 0.5 * mb * (b1[0] * b1[0] + b1[1] * b1[1]) + Ew;   // (Ew: the fallen bicycle's own spin)
     return { st: v.st, dp: Math.hypot(dpx, dpz) / p0, dpl: (dpx * hx + dpz * hz) / p0, dE: (E1 - E0) / E0, vc: Math.hypot(P.vx, P.vz), vcl: P.vx * hx + P.vz * hz, vb: b1[0] * hx + b1[1] * hz, vbn: Math.hypot(b1[0], b1[1]), vv: v.v, w: P.w, kc: P.csKc || 0,
+      dEk: (E1 - Ew - E0 + 0.5 * mb * (b0[0] * b0[0] + b0[1] * b0[1] - k0x * k0x - k0z * k0z)) / E0, dpk: Math.hypot(dpx + mb * (b0[0] - k0x), dpz + mb * (b0[1] - k0z)) / p0, dvc: Math.hypot(P.vx - c0x, P.vz - c0z), dvb: Math.hypot(b1[0] - k0x, b1[1] - k0z),   // (a cyclist, by the velocity the bicycle holds itself, the one _runBikeR reads: k0)
       R: tf.R(), ev: tf.evK, dmg: P.dmg, hitCar: P.hitCar, wh: tf.win.hit, ma, mb, nan: !Number.isFinite(P.vx + P.vz + P.w + P.x + P.z + v.x + v.z + v.s + v.d + v.v + (v.vx || 0) + (v.vz || 0) + (v.w || 0)) };
   } finally { Math.random = orig; } });
   const V = 120 / 3.6, NAME = ['avto', 'kombi', 'avtobus', 'motor', 'kolo', 'tovornjak'];
@@ -924,6 +925,18 @@ for (const tid of ['spa', 'bathurst']) {
         && Math.abs(o.vc - (v - Math.min(v, 0.15 * v + 1))) < 1e-9 && Math.abs(o.vb - 0.5 * v) < 1e-9; if (!good) okAll = false;
       rows.push(`${f(v * 3.6, 0)} km/h ${off}: the car -${f(loss * 100, 1)} % (cv 1 -${f((1 - o.vc / v) * 100, 1)} %), the bicycle ${f(q.vb / v)} v (cv 1 ${f(o.vb / v)} v), dp ${q.dp.toExponential(1)} (cv 1 ${f(o.dp)})`); }
     ok('Realistična, the traffic: a cyclist run over: the pair keeps its momentum (1e-9), the car loses 4-10 % of its speed, the bicycle leaves faster than the car (under 1.2 v); the same event, damage and count of the traffic\'s random numbers as cv 1, which keeps its rule (the car -(15 % + 1 m/s), the bicycle 0.5 v)', okAll, rows.join('; ')); }
+  // a cyclist run over, the touch not closing (the car slower than the bicycle ahead): nothing to the car, the bicycle keeps its velocity (fizika-6)
+  { const rows = []; let okAll = true;
+    for (const [v, vt, off] of [[3, 8, 0], [20 / 3.6, 30 / 3.6, 0.4], [40 / 3.6, 45 / 3.6, -0.3]]) { const q = hit(REAL, { p: 4, v, vt, off }), o = hit(SIM, { p: 4, v, vt, off });
+      const good = !q.nan && q.st === 1 && q.dvc === 0 && q.w === 0 && q.dvb === 0 && q.ev === 'bike' && o.ev === 'bike' && q.R === o.R && q.dmg === o.dmg && q.wh === 1; if (!good) okAll = false;
+      rows.push(`${f(v * 3.6, 0)} km/h behind ${f(vt * 3.6, 0)} km/h, ${off}: the car ${q.dvc.toExponential(1)} m/s, ${q.w.toExponential(1)} rad/s, the bicycle ${q.dvb.toExponential(1)} m/s`); }
+    ok('Realistična, the traffic: a cyclist run over, the touch not closing (the car slower than the bicycle ahead): the car keeps its velocity and turn and the bicycle its velocity to the last bit, the rider falls; the same event, damage and count of the traffic\'s random numbers as cv 1', okAll, rows.join('; ')); }
+  // a cyclist caught up slowly (the throw aside is worth more than the touch loses): the two gain no energy, the momentum kept (fizika-6)
+  { const rows = []; let okAll = true;
+    for (const [v, vt] of [[35 / 3.6, 30 / 3.6], [28 / 3.6, 25 / 3.6], [60 / 3.6, 30 / 3.6]]) for (const w of [0, 3, -3]) for (const off of [0, 0.4]) { const q = hit(REAL, { p: 4, v, vt, w, off });
+      const good = !q.nan && q.st === 1 && q.dpk < 1e-9 && q.dEk < 1e-9 && q.ev === 'bike' && q.wh === 1; if (!good) okAll = false;
+      rows.push(`${f(v * 3.6, 0)}/${f(vt * 3.6, 0)} km/h, ${w} rad/s, ${off}: dE ${q.dEk.toExponential(2)}, dp ${q.dpk.toExponential(1)}, the bicycle +${f(q.dvb)} m/s`); }
+    ok('Realistična, the traffic: a cyclist caught up slowly, the car straight or turning (3 rad/s either way): the two gain no energy (1e-9 of it; the fallen bicycle\'s own spin not counted), the pair keeps its momentum (1e-9)', okAll, rows.join('; ')); }
   // cv 1 and cv 5, a friend's car online in cv 6: the old touch
   { const rows = []; let okAll = true; const key = (q) => [q.st, q.vc, q.vcl, q.vb, q.vbn, q.vv, q.w, q.kc, q.R, q.ev, q.dmg, q.hitCar, q.dp, q.dE].join(' ');
     for (const o of [{ p: 0, v: V }, { p: 0, v: V, off: 0.6 }, { p: 1, v: 60 / 3.6 }, { p: 2, v: V, bok: 30 }, { p: 3, v: V }, { p: 4, v: V }]) { const a = hit(SIM, o), b = hit(OLD, o), s3 = hit(SOFT, o), n1 = hit(SIM, Object.assign({ net: 1 }, o)), n6 = hit(REAL, Object.assign({ net: 1 }, o));

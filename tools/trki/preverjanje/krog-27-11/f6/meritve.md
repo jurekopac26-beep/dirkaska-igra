@@ -120,13 +120,16 @@ Drugo seme, večji vzorec (`kolo1-po-seme7.log`, drevo po, 200 000 klicev, 60 89
 
 ## Testi
 
-- `tests/trki.test.js` 80/80, nobena referenca se ne premakne (`tests/golden/trki.json` ni spremenjen; med 150 referenčnimi prizori ni nobenega s kolesarjem). Preverba »a cyclist run over« (6 primerov: 60, 120 in 200 km/h, v sredino in 0,4 m vstran; kolo stoji, avto se ne vrti) velja nespremenjena: gibalna količina para do 1e-9, energija ne zraste, avto izgubi 4 do 10 % hitrosti, isti dogodek, škoda in število naključnih števil prometa kot v Simulaciji.
+- `tests/trki.test.js` 82/82 (prej 80; dodani preverbi sta opisani spodaj), nobena referenca se ne premakne (`tests/golden/trki.json` ni spremenjen; med 150 referenčnimi prizori ni nobenega s kolesarjem). Preverba »a cyclist run over« (6 primerov: 60, 120 in 200 km/h, v sredino in 0,4 m vstran; kolo stoji, avto se ne vrti) velja nespremenjena: gibalna količina para do 1e-9, energija ne zraste, avto izgubi 4 do 10 % hitrosti, isti dogodek, škoda in število naključnih števil prometa kot v Simulaciji.
+- Nova preverba »a cyclist run over, the touch not closing« (3 primeri od zadaj: 11 km/h za kolesom pri 29 km/h, v sredino; 20 za 30 km/h, 0,4 m vstran; 40 za 45 km/h, 0,3 m na drugo stran): avto obdrži hitrost in vrtenje, kolo hitrost do zadnjega bita, kolesar pade, isti dogodek, škoda in število naključnih števil prometa kot v Simulaciji. Na drevesu pred spremembo pade: avto dobi 0,11 / 0,12 / 0,15 m/s, kolo 1,4 / 1,6 / 2,0 m/s.
+- Nova preverba »a cyclist caught up slowly« (18 primerov od zadaj: 35 za 30, 28 za 25 in 60 za 30 km/h; avto naravnost ali v vrtenju 3 rad/s v eno in drugo smer; v sredino in 0,4 m vstran): energija para ne zraste (meja 1e-9 energije para; največ 2,7e-11, velikostni red dopustnega 1e-6 J varovala), gibalna količina para do 1e-9 (največ 8,5e-17). Oboje je merjeno po hitrosti, ki jo kolo nosi samo (`v.vx`, `v.vz`; to bere `_runBikeR`); lastno vrtenje kolesa ni šteto. Na drevesu pred spremembo pade: energija para zraste v 12 od 18 primerov (vseh 12 pri 35 za 30 in 28 za 25 km/h), za 0,15 do 0,60 % energije para. Pri 60 za 30 km/h dotik izgubi 1,4 do 1,6 % energije para in poln met ostane (številke na obeh drevesih enake).
+- Preostalih 80 preverb izpiše na obeh drevesih enake vrstice. Po dodanih preverbah je tekel samo `tests/trki.test.js` (na tem drevesu in na drevesu pred spremembo); koda se od `130ceaf` ni spremenila, zato spodnji izidi veljajo naprej.
 - `tests/poskodbe.test.js` 14/14, `tests/golden.test.js` 504 od 504 enakih, `tools/stamp.js --check` v redu.
 - `tests/races.test.js`: 360 od 360 dirk enakih (`OK: all races fine`, 1380 s; del časa je tekel hkrati s `tests/golden.test.js`).
 
 ## Česa ta krog ni izmeril
 
 - Več zaporednih dotikov z istim kolesom: skripti merita prvi dotik oziroma en klic.
-- `tests/trki.test.js` ne preverja dotika, ki se ne zapira, in avta v vrtenju ob kolesarju; to merita samo skripti v tej mapi.
+- `tests/trki.test.js` dotik, ki se ne zapira, in počasno dohitevanje preverja samo v legi od zadaj (avto v smeri kolesa, 5 cm prekrivanja, vrtenje do 3 rad/s); bočne lege, drsenje in hitrejše vrtenje merita samo skripti v tej mapi.
 - Slik zdaj in potem ni.
 - Testi v brskalniku in `npm run test:related` (približno 4,6 h): tečejo enkrat, v zbirnem krogu ali pred `main`.
