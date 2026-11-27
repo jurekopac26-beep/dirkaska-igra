@@ -301,11 +301,11 @@
   "jsMs": 3.67
  },
  "killar": {
-  "calls": 155,
-  "maxCalls": 182,
-  "kverts": 371,
-  "maxKverts": 424,
-  "jsMs": 1.56
+  "calls": 160,
+  "maxCalls": 188,
+  "kverts": 383,
+  "maxKverts": 436,
+  "jsMs": 1.4
  },
  "luanda": {
   "calls": 140,

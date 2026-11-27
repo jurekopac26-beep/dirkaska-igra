@@ -85,6 +85,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 101 (Sosnová tretji prehod, Tapini prvi): Sosnová, Tapini (`js/world-chase-bt101.js`, veja `grafika/chase-bt101`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-101` |
 | Kamera za avtom, tla ob cesti, skupina 108 (tretji prehod): Pikes Peak makadam, Rio do Rastro (`js/world-chase-bt108.js`) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-108` |
 | Kamera za avtom, tla ob cesti, skupina 111 (četrti prehod): Isuna (`js/world-chase-bt111.js`, `grafika/chase-bt111`); Hiva izpuščena, obcestje ji spreminja #1079 (partyslo) | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-111` |
+| Kamera za avtom, tla ob cesti, skupina 112 (nadaljnji prehod): Killar (`js/world-chase-bt112.js`); Luanda izpuščena, njeno obcestje spreminja #862 | biketraveler | pripravljeno 26. 11.; vprašanje `chase-skupina-112` |
 | Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
 | Redčenje gozda na pravih progah | 1 | prestavljeno; najprej drevesa A (#419) |
 | Ljudje ob progi in grafika (`docs/ljudje-predlogi.md`) | partyslo | ko uporabnik reče; po #400; pred novimi progami |
