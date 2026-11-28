@@ -44,10 +44,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
     traffic: { mix: [0.6, 0.14, 0.08, 0.18, 0], bike: 900 },
     // the police of the run (their patrol cars: the label on the band along both sides, its colour, the body's)
     police: { label: 'POLICE', band: '#1d3f8f', text: '#ffffff' }, escTo: 'Do razgledišča',   // (and the results of an escape: 'Do razgledišča v ...')
+    // the course flyover before a fresh start (Render.pkFly, as on Pikes Peak): its captions, [metres after the start line (-1: the finish), name]
+    // (the places of def.names and the bridge over the ravine, OpenStreetMap bridge=yes; docs/proge/chapman.md, »Raziskava za dodelavo«)
+    fly: [[0, 'START'], [521, 'East Fort'], [1083, 'Razgledišče nad Hout Bayem'], [1610, 'Most čez grapo'], [1899, 'Cestninska postaja'], [2888, 'Razgledišče · The Sentinel'], [-1, 'CILJ']],
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n":"East Fort","d":521,"say":["Past the old East Fort, its cannons still watching the bay!","The East Fort, guarding Hout Bay since the seventeen hundreds!"]},
       {"n":"Razgledišče","d":1083,"say":["The lookout over the bay! Whales are seen from here in spring!","Hout Bay far below, the Sentinel across the water!"]},
+      {"n":"Most","d":1610,"say":["Over the little bridge across the ravine!","Across the ravine, the sea right below!"]},
       {"n":"Cestninska postaja","d":1899,"say":["Through the toll plaza, no stopping today!","Past the toll booths, and onto the cliffs!"]},
       {"n":"Razgledišče · The Sentinel","d":2888,"say":["The Sentinel across the bay, guarding Hout Bay!","Look across the water, that's the Sentinel!"]},
       {"n":"Chapman's Peak · 153 m","d":4649,"say":["The view point at Chapman's Peak, the top of the road!","At the top of Chapman's Peak Drive, the Atlantic below!","Chapman's Peak! What a view over the ocean!"]},
