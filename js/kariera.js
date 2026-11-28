@@ -34,7 +34,7 @@
   /* ---- ATLAS (22. 11., »kariera hitreje«): every stage a fixed number of events (VELIKOST: 44 in all; the cups and class cups first, the single
      events fill the rest; a stage with more cups grows), a stage opens with the stars of all events (PRAG: of 132; scaled to the path's own
      maximum, so a smaller or bigger path keeps the same share), the class cups in the stages by the price of their class's cheapest car ---- */
-  const VELIKOST = [7, 8, 9, 10, 10];
+  const VELIKOST = [7, 8, 10, 10, 10];
   const PRAG = [0, 9, 21, 36, 54], PRAG_OD = 132;
   const VRSTE_POS = ['dirka', 'kronometer', 'dvoboj'];   // a stage's single events in turn (a time trial only where the track has one and its medals)
   const POS_IME = { dirka: ['Dirka', 'Race'], dvoboj: ['Dvoboj', 'Duel'], kronometer: ['Kronometer', 'Time trial'] };
