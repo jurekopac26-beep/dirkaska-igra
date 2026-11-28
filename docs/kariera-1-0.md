@@ -157,7 +157,7 @@ Deli so v različnih datotekah, zato se ne prekrivajo. Hkrati tečeta največ 2 
 |---|---|---|
 | A · Logika | `js/kariera.js` (nova, brez DOM, kot `js/lang.js` za Node in brskalnik), `tests/kariera.test.js` (nov), vpis testa v `tests/run.js` | stopnje in pokali po pravilu iz `TRACKS` (brez `test`, `pending`), odklepanje, cilji razredov, nagrade poti, `view(stanje)`, `migrate(v1)`; test: samo prave proge, vsaka prava proga na poti, nova prava proga pride sama, simulacija ekonomije, prehod v1 → v2, `name` in `en` povsod |
 | B · Igra | `js/game.js`, `index.html` (skripta `js/kariera.js`), `js/lang.js` (angleščina novih `tr()`), po potrebi `js/core.js` (`CAREER`, `CHAMPS`), `tests/browser/career.test.mjs` | stanje v2 in prehod, plačila nagrad poti, odklepanje po dirki in pokalu, pokali poti na obstoječem pogonu prvenstev (preveri ceste), mostiček `G.kariera`, `G.karieraStart`; zeleni `career`, `champ`, `onchamp`, `denarnica`, `garage`, `lang` |
-| C · Meni | `js/menu.js`, `css/menu.css`, `tests/browser/menu.test.mjs` | središče kariere (točka 5) po potrjeni skici; `node tests/browser/menu.test.mjs`; »ok« na predogledu |
+| C · Meni | `js/menu.js`, `css/menu.css`, `tests/browser/menu.test.mjs` | središče kariere (točka 5) po potrjeni skici; `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`; »ok« na predogledu |
 | D · Dokumenti | `docs/igra.md` (»Kariera«, »Prvenstvo«: nove številke in pot), `docs/kazalo.md`, `tests/README.md` | opis po izvedbi; brez kode |
 
 - **Vrstni red**: najprej se A združi v `kariera-1-0`. Nato tečeta B (veja `kariera-1-0-b`) in C (`kariera-1-0-c`) hkrati, vsak na svojih datotekah, in se združita v zbirno vejo. Na koncu pride D.

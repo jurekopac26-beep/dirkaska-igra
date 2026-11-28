@@ -56,7 +56,7 @@ Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtoce
 - **Izbira načina**: nova ploščica *Endless traffic* (podnapis »Denser and denser traffic on the open road. One crash ends the run.«, oznaka *BEST 48 210* ali *NEW*, slika `assets/menu/mode-endless.webp` s kamere za avtom v prometu, brez HUD-a). V `js/menu.js` gre v `MODES` za *Traffic duel* in v preslikavi `GAME_MODE` / `MENU_MODE` (`endless` ↔ `'endless'`).
 - **Izbira proge**: v tem načinu samo odprte ceste (kot pri dvoboju). Način ne zahteva sprememb datotek prog: velja za vsako pravo progo z `'traffic'` v `def.modes` in brez `test` (testne proge, tudi ceste ZDA po #355, ga nimajo; manj sporov z razdelitvijo prog, #319).
 - **Hitri vstop**: `index.html?proga=<id>&nacin=neskoncno` (testi in orodja; opis v `tests/README.md`).
-- Meni mora delovati pokonci in ležeče (360 × 640, 640 × 360): `node tests/browser/menu.test.mjs`.
+- Meni mora delovati pokonci in ležeče (360 × 640, 640 × 360): `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`.
 
 ## Prevodi
 

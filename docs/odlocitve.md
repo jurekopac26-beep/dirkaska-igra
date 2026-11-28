@@ -244,7 +244,7 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - Samo zemljepisna imena; brez logotipov, podjetij, lokalov, sponzorjev, prireditev, znamk avtov; **nikoli imen resničnih oseb**. Podatki samo OSM in javni višinski modeli; **nikoli Google Maps, Earth, Street View**. Vir z licenco gre v `README.md`, »Zasluge«.
 
 ### Postopek
-- Meni (`js/menu.js`): nova proga potrebuje `assets/tracks/<id>.webp` in `<id>-rain.webp`; po spremembi `node tests/browser/menu.test.mjs`.
+- Meni (`js/menu.js`): nova proga potrebuje `assets/tracks/<id>.webp` in `<id>-rain.webp`; po spremembi `node tests/browser/menu.test.mjs`, `menu-2.test.mjs`, `menu-3.test.mjs`.
 - Žigov (`?v=…`) v repozitoriju ni; po spremembi `node tools/stamp.js --check`. Spoj `main`: `node tools/spoji-main.mjs`. Reference: `npm run golden:update`.
 - Commit konča z »Co-Authored-By: Claude <noreply@anthropic.com>« in »Claude-Session: …«; brez imen modelov.
 - Lokalno samo `npm run test:related`, uspešnih ne ponavljaj; krog na GitHubu po vrsti spremembe; celoten krog samo na zbirnih vejah in ponoči (ena zbirna veja na temo, en krog, en pregled). Nove proge samo prek `tools/proga-podatki.py` in obstoječega vzorca testov.
