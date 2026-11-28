@@ -9100,6 +9100,10 @@ const Core = (function () {
       en: { name: 'Home Cup', desc: 'Three short tracks to begin with: a lake, a town and gravel.' } },
     { id: 'superstars', name: 'Kratke proge', desc: 'Kratke proge z boksi in Monako.', tracks: ['gozd', 'toskana', 'grom', 'monaco'],
       en: { name: 'Short tracks', desc: 'Short tracks with pits, and Monaco.' } },
+    // Kratko prvenstvo (Matej, #382, 25. 11.): five real circuits (no test, no pending track) from five continents, about 45 km of racing
+    // in all; the points, the standings after every round and the champion at the end as in every series (docs/igra.md, Prvenstvo).
+    { id: 'kratko', name: 'Kratko prvenstvo', desc: 'Pet pravih prog s petih celin zapored: Kildare, Hiva, Bathurst, Termas de Río Hondo in Aguascalientes.', tracks: ['kildare', 'hiva', 'bathurst', 'riohondo', 'aguascalientes'],
+      en: { name: 'Short Championship', desc: 'Five real tracks from five continents in a row: Kildare, Khiva, Bathurst, Termas de Río Hondo and Aguascalientes.' } },
     { id: 'legende', name: 'Legende', desc: 'Pet slavnih prog v pravem merilu: Bathurst, Spa, Štajerska, Suzuka in Nürburg.', tracks: ['bathurst', 'spa', 'rbring', 'suzuka', 'nring'],
       en: { name: 'Legends', desc: 'Five famous tracks at full scale: Bathurst, Spa, Styria, Suzuka and Nürburg.' } },
     { id: 'veliko', name: 'Veliko prvenstvo', desc: 'Vse krožne proge igre, ena za drugo.', tracks: TRACKS.filter(d => !d.timeTrial && !d.open).map(d => d.id),

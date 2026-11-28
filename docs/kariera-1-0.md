@@ -210,6 +210,18 @@ Pri vsakem vprašanju je prva možnost priporočena. Uporabnik je odgovoril 20. 
    2. Vseh 24 dirkališč (do 70 prog več).
    3. Igralec sam izbere 6–12 dirkališč.
 
+## Kratko prvenstvo v karieri (odločeno 25. 11.)
+Odločitev Mateja 25. 11. (#382, točka 2): »Kratko prvenstvo. 5 prog zapored s točkami.« Zunaj kariere je serija `kratko` v `Core.CHAMPS` (meni Prvenstvo, docs/igra.md »Prvenstvo«): Kildare, Hiva, Bathurst, Termas de Río Hondo, Aguascalientes (5 pravih prog s 5 celin, ~45 km), točke 25, 18, 15, 12, 10, 8, 6, 4, 2, 1. Matej je 25. 11. izbral možnost 1 (#382, komentar 7164268738, 14.47): **pokal poti v stopnji 3, pred Legendami**.
+- **Narejeno** (`js/kariera.js`, `KRATKO`): pokal `s3-kratko` »Kratko prvenstvo« / »Short Championship«, `vrsta: 'krog'`, težavnost 3. stopnje, iste proge in točke kot zunaj kariere (samo prave proge iz seznama); zadnji pokal 3. stopnje, za njim v dolini le pokala razredov, nato vrata v 4. stopnjo (Legende). Zvezdice in kovanci kot pri pokalu 3. stopnje (3, 2, 1 za prva tri mesta).
+- Proge pokala ostanejo tudi v svojih pokalih (kot Bathurst v Legendah). Stopnja 3 ostane pri 9 dogodkih (Atlas, `VELIKOST`): pokal vzame mesto tretjemu posamičnemu dogodku (dvoboj), pot ima še vedno 44 dogodkov in 132 zvezdic, pragovi stopenj so isti.
+- Bathurst je tudi v Legendah: ko igra dobi drugo pravo dirkališče iz Oceanije, ga lahko zamenja (nova odločitev).
+
+8. **`kratko-prvenstvo-kariera` · Kratko prvenstvo v karieri** (odgovorjeno 25. 11.: 1)
+   1. Pokal poti v stopnji 3, pred Legendami v stopnji 4 (priporočeno).
+   2. Pokal poti v stopnji 2.
+   3. Dogodek finala: namesto ali pred Velikim prvenstvom v stopnji 5.
+   4. Samo zunaj kariere (meni Prvenstvo), v karieri ne.
+
 ## Predaja
 - **Stanje 22. 11.**: A, B, C, testi in D (#792, #796, #797, #807) so v zbirni veji `kariera-1-0` na svežem `main`; nanjo gre Atlas Career (dolina, dogodki, zvezdice, kovanci).
 - **Atlas 22. 11. (narejeno)**: logika, igra, dolina, meni in testi so v zbirni veji (`js/kariera.js`, `js/game.js`, `js/kariera-dolina.js`, `css/menu.css`, `js/menu.js`, `tests/browser/*.mjs`; Esc zapre dolino), posnetki dolina, dogodek, izid in napredek (pokonci, ležeče) v `docs/kariera/`, izid povezanih testov v PR #792 (osnutek). **Naprej**: »Ready for review« po vrsti v `docs/vrsta.md`, nato seja Združevanje do `main`.

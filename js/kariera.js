@@ -48,6 +48,9 @@
   const MEJE = { krog: [2.6, 4.7], cesta: [2.2, 3.7] }, DOLGA = 8;
   const NAJVEC = 6;                                     // races in a cup at most: more tracks of one kind and stage make another cup
   const LEGENDE = ['bathurst', 'spa', 'rbring', 'nring'];   // the hand-made exceptions: the Legends cup (stage 4); Suzuka is a test track
+  // Kratko prvenstvo (Matej, #382, 25. 11., kratko-prvenstvo-kariera 1): Core.CHAMPS' series 'kratko' as a path cup of stage 3, before the
+  // Legends; the same five circuits and points as outside the career (their tracks stay in their own cups too, like Bathurst in the Legends)
+  const KRATKO = ['kildare', 'hiva', 'bathurst', 'riohondo', 'aguascalientes'];
   const FINALE_N = 8, FINALE_DIFF = 3;                  // kariera-7: the final's circuits (round the continents) and its difficulty
   const ODKLEP = 2;                                     // kariera-3: in the first three of this many cups of a stage opens the next
   const RAZRED_N = 3;                                   // kariera-4: races in a class cup
@@ -186,6 +189,9 @@
           name: (v === 'krog' ? 'Pokal dirkališč' : 'Pokal cest') + r + ' · ' + S(s).name, en: { name: (v === 'krog' ? 'Circuit Cup' : 'Road Cup') + r + ' · ' + S(s).en } });
       });
     }
+    // stage 3's last cup: Kratko prvenstvo (its real tracks, in the series' order)
+    const kr = KRATKO.filter(id => byId.has(id));
+    if (kr.length) dodaj({ id: 's3-kratko', stopnja: 3, vrsta: 'krog', diff: S(3).diff, tracks: kr, name: 'Kratko prvenstvo', en: { name: 'Short Championship' } });
     // stage 4: the Legends, the long tracks (one lap), the time trials, the final
     const leg = LEGENDE.filter(id => byId.has(id));
     if (leg.length) dodaj({ id: 's4-legende', stopnja: 4, vrsta: 'krog', diff: S(4).diff, tracks: leg, name: 'Legende', en: { name: 'Legends' } });
@@ -401,7 +407,7 @@
     };
   }
 
-  const api = { ODLOCITVE, STOPNJE, MEJE, DOLGA, NAJVEC, LEGENDE, FINALE_N, ODKLEP, RAZRED_N, RAZRED_KM, NAGRADE, AVTO_STOPNJE,
+  const api = { ODLOCITVE, STOPNJE, MEJE, DOLGA, NAJVEC, LEGENDE, KRATKO, FINALE_N, ODKLEP, RAZRED_N, RAZRED_KM, NAGRADE, AVTO_STOPNJE,
     VELIKOST, PRAG, ZVEZDICE, DIRK_REF, RAZRED_RED, VRSTE_POS, prava, vrsta, km, celina, stopnjaProge, pot, novo, novaPot, migrate, odprta, stanje, zvezdice, kovanci,
     poPokalu, poDogodku: poPokalu, poDirki, view };
   if (typeof window !== 'undefined') window.Kariera = api;

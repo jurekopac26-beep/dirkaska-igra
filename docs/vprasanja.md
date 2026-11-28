@@ -116,6 +116,19 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+## Besedila vprašanj kariere (za stran Odločitve partyslo)
+
+### `kratko-prvenstvo-kariera`
+
+Kratko prvenstvo (5 pravih prog zapored s točkami: Kildare, Hiva, Bathurst, Termas de Río Hondo, Aguascalientes) je v meniju Prvenstvo (PR #1067). Kam gre v kariero? Zasnovo kariere vodi Matej (`docs/kariera-1-0.md`, »Kratko prvenstvo v karieri«).
+
+1. **Pokal poti v stopnji 3, pred Legendami (priporočeno).**
+2. Pokal poti v stopnji 2.
+3. Dogodek finala: namesto ali pred Velikim prvenstvom v stopnji 5.
+4. Samo zunaj kariere (meni Prvenstvo), v karieri ne.
+
+Odgovor (Matej, #382, 25. 11. 2026, 14.47): **1**, pokal poti v stopnji 3, pred Legendami; narejeno v PR #1067 (`s3-kratko`).
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.

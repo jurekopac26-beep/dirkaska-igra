@@ -60,6 +60,10 @@ for (const id of ['kildare', 'tianmen', 'livorno']) {
   }));
   check('a duel: one rival', E.filter(e => e.kind === 'dvoboj').every(e => e.n === 1) && E.some(e => e.kind === 'dvoboj'));
   check('every stage a race, a time trial and a duel', P.stopnje.every(s => K.VRSTE_POS.every(k => E.some(e => e.stopnja === s.n && e.kind === k))));
+  const kp = P.pokali.find(c => c.id === 's3-kratko'), s3 = P.stopnje[2].dogodki;
+  check('Kratko prvenstvo in the career: stage 3\'s last cup, before the Legends (stage 4): Kildare, Hiva, Bathurst, Termas de Río Hondo, Aguascalientes, as the series of the menu',
+    !!kp && kp.stopnja === 3 && kp.tracks.join() === 'kildare,hiva,bathurst,riohondo,aguascalientes' && P.stopnje[3].pokali[0] === 's4-legende'
+    && s3.filter(id => P.pokali.some(c => c.id === id)).pop() === 's3-kratko', s3.join(' '));
   const z = (kind, places) => places.map(pl => K.zvezdice({ kind }, pl)).join('');
   check('the stars: a cup the first three, a race the first six, a duel the win, a time trial its medal', z('pokal', [1, 2, 3, 4]) === '3210' && z('razred', [1, 3, 4]) === '310'
     && z('finale', [2]) === '2' && z('dirka', [1, 2, 3, 4, 6, 7]) === '322110' && z('dvoboj', [1, 2]) === '30' && z('kronometer', [1, 2, 3, 4]) === '3210' && z('dirka', [0]) === '0');
