@@ -103,7 +103,7 @@
   LOOK.pre = ({ P, blds }) => {
     PP = P; own = blds.splice(0, blds.length); hc = new Set();
     for (const b of own) { const i0 = Math.floor(b.x / HC), j0 = Math.floor(b.z / HC); for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) hc.add(hKey(i0 + di, j0 + dj)); }
-    st = { rain: 0, emergent: 0, fruit: 0, palm: 0, banana: 0, houses: 0, piers: 0, verandas: 0, boats: 0 };
+    st = { rain: 0, emergent: 0, fruit: 0, palm: 0, banana: 0, houses: 0, piers: 0, verandas: 0, boats: 0, fern: 0, heli: 0, wild: 0, croton: 0, culverts: 0, shelters: 0 };
   };
   LOOK.treeGeo = () => [rainGeo(), palmGeo(), bananaGeo()];   // (the kinds own, own + 1, own + 2 of LOOK.tree)
 
@@ -164,7 +164,86 @@
     for (const u of [-1.3, 0.9]) box(g, P(u, 0, 0)[0], y + 0.5, P(u, 0, 0)[2], 0.22, 0.06, 1.3, rot, [0.6, 0.5, 0.36]);   // (the thwarts)
   }
 
-  LOOK.extra = ({ scen, out }) => {
+  /* ---- round 2: by the road (docs/proge/canaries-raziskava.md). The ground, the red earth of the cuttings, the grass tufts and the low
+     undergrowth are the shared chase packages' (js/world-chase-bt8.js, bt38.js); here the taller plants of the road's edge, 1.5-14 m off
+     the asphalt: in the forest tree ferns (Cyathea), heliconias (the red bracts of the wild ones on the wet slopes) and wild bananas; in
+     the village and the hamlet the gardens' crotons and hibiscus; the two culverts where OpenStreetMap's streams pass under the road (their
+     concrete parapets); a bus shelter at the village and one at the hamlet (an assumption: the island's minibuses stop along the highway,
+     OpenStreetMap maps no stops here). Only into the scenery chunks the world already fills (no new draw call), but the two shelters and
+     the culverts ---- */
+  const hh = (a, b) => { let h = Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  const FERN = [0.2, 0.38, 0.12], FERN2 = [0.27, 0.44, 0.15], TRUNKF = [0.22, 0.18, 0.14], HELI = [0.2, 0.4, 0.13], BRACT = [0.84, 0.16, 0.1], BRACTY = [0.92, 0.74, 0.16];
+  const WILD = [0.3, 0.5, 0.15], WILDS = [0.4, 0.46, 0.24], CROTON = [[0.6, 0.24, 0.12], [0.68, 0.56, 0.14], [0.28, 0.4, 0.12], [0.52, 0.16, 0.18]], HIB = [0.14, 0.3, 0.1];
+  const CONC2 = [0.66, 0.64, 0.6], SHELTER = [[0.86, 0.82, 0.62], [0.6, 0.78, 0.82], [0.9, 0.74, 0.6]];
+  function leaf(g, A, B, C, D, col) { const m = [(A[0] + C[0]) / 2, (A[1] + C[1]) / 2, (A[2] + C[2]) / 2]; g.quadO(A, B, C, D, col, [m[0], m[1] - 1, m[2]]); g.quadO(A, B, C, D, col, [m[0], m[1] + 1, m[2]]); }
+  // a crown of n fronds from (x, y, z): each out L, its middle up by lift, its tip down by drop, wd wide
+  function crown(g, x, y, z, n, L, lift, drop, wd, c1, c2, a0) {
+    for (let k = 0; k < n; k++) { const a = a0 + k / n * TAU, ux = Math.cos(a), uz = Math.sin(a), px = -uz * wd, pz = ux * wd, mx = x + ux * L * 0.5, mz = z + uz * L * 0.5;
+      leaf(g, [x, y, z], [mx + px, y + lift, mz + pz], [x + ux * L, y + lift - drop, z + uz * L], [mx - px, y + lift, mz - pz], k % 2 ? c1 : c2); }
+  }
+  function treeFern(g, x, y, z, h, q) { box(g, x, y - 0.2, z, 0.2, h + 0.2, 0.2, q * 3, TRUNKF); crown(g, x, y + h, z, 7, 1.7 + 0.7 * q, 0.35, 0.75, 0.32, FERN, FERN2, q * 9); st.fern++; }
+  function wildBanana(g, x, y, z, h, q) { box(g, x, y - 0.2, z, 0.24, h + 0.2, 0.24, q * 3, WILDS); crown(g, x, y + h, z, 6, 1.9, 0.6, 0.9, 0.42, WILD, vary(WILD, rng(q * 1e4 | 0), 0.08), q * 7); st.wild++; }
+  function heliconia(g, x, y, z, q) {   // a clump of upright paddle leaves, two hanging red bracts tipped yellow
+    for (let k = 0; k < 5; k++) { const a = q * 11 + k * 1.26, ux = Math.cos(a), uz = Math.sin(a), px = -uz * 0.24, pz = ux * 0.24, hb = 0.7 + 0.25 * k % 0.6, r0 = 0.1, r1 = 0.75;
+      leaf(g, [x + ux * r0, y + hb, z + uz * r0], [x + ux * 0.45 + px, y + hb + 0.6, z + uz * 0.45 + pz], [x + ux * r1, y + hb + 1.3, z + uz * r1], [x + ux * 0.45 - px, y + hb + 0.6, z + uz * 0.45 - pz], k % 2 ? HELI : FERN2); }
+    for (let k = 0; k < 2; k++) { const a = q * 5 + k * 3.1, bx = x + Math.cos(a) * 0.3, bz = z + Math.sin(a) * 0.3, px = -Math.sin(a) * 0.12, pz = Math.cos(a) * 0.12;
+      leaf(g, [bx - px, y + 1.75, bz - pz], [bx + px, y + 1.75, bz + pz], [bx + px * 0.4, y + 1.2, bz + pz * 0.4], [bx - px * 0.4, y + 1.2, bz - pz * 0.4], BRACT);
+      leaf(g, [bx - px * 0.4, y + 1.2, bz - pz * 0.4], [bx + px * 0.4, y + 1.2, bz + pz * 0.4], [bx, y + 1.0, bz], [bx, y + 1.0, bz], BRACTY); }
+    st.heli++;
+  }
+  function shrub(g, x, y, z, q) {   // a garden's croton (its leaves red, yellow and green) or a hibiscus with its red flowers: two rosettes of leaves
+    const hib = q < 0.4, col = hib ? HIB : CROTON[Math.floor(q * 97) % CROTON.length], col2 = hib ? FERN2 : vary(col, rng(q * 1e4 | 0), 0.14), w = 0.75 + q * 0.4;
+    crown(g, x, y + 0.05, z, 7, w, 0.45, -0.35, 0.26, col, col2, q * 9);
+    crown(g, x, y + 0.35, z, 5, w * 0.75, 0.45, -0.3, 0.22, col2, col, q * 9 + 0.6);
+    if (hib) for (let k = 0; k < 4; k++) { const a = q * 13 + k * 1.6; box(g, x + Math.cos(a) * w * 0.6, y + 0.65 + 0.12 * (k % 2), z + Math.sin(a) * w * 0.6, 0.18, 0.12, 0.18, a, BRACT); }
+    st.croton++;
+  }
+  function roadside(scen, excluded, onSide) {
+    if (!onSide || !T || !T.idx) return;
+    const G = (x, z) => caGround(x, z), base = PP.D.base;
+    const chunk = (x, z) => { const g = scen.map.get(Math.floor(x / scen.size) + ',' + Math.floor(z / scen.size)); return g && !g.empty ? g : null; };
+    const inHouse = (x, z, r) => own.some(b => Math.abs(b.x - x) < b.L / 2 + b.W / 2 + r && Math.abs(b.z - z) < b.L / 2 + b.W / 2 + r && Math.hypot(b.x - x, b.z - z) < Math.max(b.L, b.W) / 2 + r);
+    const slope = (x, z) => Math.hypot(G(x + 1, z) - G(x - 1, z), G(x, z + 1) - G(x, z - 1)) / 2;
+    const village = (s) => s < 330 || (s > 2560 && s < 2860);
+    const s0 = T.startS || 0, sF = T.finishS || T.len;
+    for (let s = s0 + 25; s < sF - 25; s += 2.9) for (const side of [-1, 1]) {
+      const q = hh(Math.round(s * 10), side + 31), q2 = hh(Math.round(s * 7), side + 43), o = 1.6 + q * q * 12.5, [x, z] = onSide(s, side, o);
+      if (excluded(x, z)) continue;
+      const g = chunk(x, z); if (!g) continue;
+      const y = G(x, z); if (y + base < 2.5 || slope(x, z) > 1.1 || inHouse(x, z, 1.2)) continue;
+      if (village(s) || nearHouse(x, z)) { if (q2 < 0.34) shrub(g, x, y, z, q); else if (q2 < 0.42 && o > 3) wildBanana(g, x, y, z, 2.2 + q, q); continue; }
+      const hi = y + base > 70;
+      if (q2 < (hi ? 0.2 : 0.1)) treeFern(g, x, y, z, 2 + 3 * q, q);
+      else if (q2 < (hi ? 0.36 : 0.3)) heliconia(g, x, y, z, q);
+      else if (q2 < 0.44 && o > 2.5) wildBanana(g, x, y, z, 2.2 + 1.2 * q, q);
+    }
+    // the culverts: where a stream of OpenStreetMap's (def.streams) passes under the road, a concrete parapet each side behind the edge
+    const done = [];
+    for (const sm of T.def.streams || []) { const p = sm.p || [];
+      for (let j = 0; j + 3 < p.length; j += 2) { const ax = p[j], az = p[j + 1], bx = p[j + 2], bz = p[j + 3], n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / 2));
+        for (let m = 0; m <= n; m++) { const x = ax + (bx - ax) * m / n, z = az + (bz - az) * m / n, r = vrNear(x, z); if (r.i < 0 || r.d > 4) continue;
+          const sc = r.i * T.ds; if (sc < s0 + 40 || sc > sF - 20 || done.some(d => Math.abs(d - sc) < 40)) continue; done.push(sc);
+          const i = T.idx(sc), hd = T.hd[i];
+          for (const side of [-1, 1]) { const [cx, cz] = onSide(sc, side, 1.15), cy = G(cx, cz); box(scen.get(cx, cz), cx, cy - 0.3, cz, 7, 1.05, 0.32, hd, vary(CONC2, rng(i + side), 0.04));
+            for (const e of [-3.6, 3.6]) { const [ex, ez] = [cx + Math.cos(hd) * e, cz + Math.sin(hd) * e]; box(scen.get(ex, ez), ex, G(ex, ez) - 0.3, ez, 0.4, 1.25, 0.4, hd, [0.9, 0.9, 0.88]); } }
+          st.culverts++; } } }
+    // the bus shelters: on the left of the northbound road (the island drives on the left), on the first level spot near s
+    for (const sw of [150, 2720]) for (let d = 0; d < 80; d += 4) {
+      const sc = sw + d, [x, z] = onSide(sc, -1, 2.2); if (excluded(x, z) || slope(x, z) > 0.25 || inHouse(x, z, 2)) continue;
+      const i = T.idx(sc), hd = T.hd[i], g = scen.get(x, z), y = G(x, z), c = Math.cos(hd), s = Math.sin(hd), nx = -s, nz = c, at = (u, v) => [x + c * u + nx * v, z + s * u + nz * v];
+      const wall = SHELTER[st.shelters % SHELTER.length], tin = [0.62, 0.24, 0.17], [bx, bz] = at(0, -1.1);
+      box(g, x, y - 0.3, z, 3.4, 0.45, 2.0, hd, CONC);   // (the slab)
+      box(g, bx, y, bz, 3.4, 2.3, 0.18, hd, wall, null, true);   // (the back wall, away from the road)
+      for (const u of [-1.6, 1.6]) { const [px, pz] = at(u, -0.4); box(g, px, y, pz, 0.16, 2.3, 1.3, hd, wall, null, true); }
+      const [kx, kz] = at(0, -0.75); box(g, kx, y + 0.42, kz, 2.8, 0.08, 0.4, hd, [0.55, 0.4, 0.26]);   // (the bench)
+      const A = at(-1.9, -1.4), B = at(1.9, -1.4), C2 = at(1.9, 1.0), D = at(-1.9, 1.0);
+      g.quadO([A[0], y + 2.45, A[1]], [B[0], y + 2.45, B[1]], [C2[0], y + 2.2, C2[1]], [D[0], y + 2.2, D[1]], tin, [x, y, z]);
+      g.quadO([A[0], y + 2.45, A[1]], [B[0], y + 2.45, B[1]], [C2[0], y + 2.2, C2[1]], [D[0], y + 2.2, D[1]], vary(tin, rng(7), 0.1), [x, y + 5, z]);
+      st.shelters++; break;
+    }
+  }
+
+  LOOK.extra = ({ scen, out, excluded, onSide }) => {
     const RL = rng(LOOK.seed + 71), G = (x, z) => caGround(x, z);
     for (const b of own) {
       const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang), at = (u, v) => [b.x + c * u - s * v, b.z + s * u + c * v];
@@ -223,6 +302,7 @@
         boat(scen.get(x, z), x, G(x, z) - 0.05, z, rot, col, band); placed.push([x, z]); st.boats++;
       }
     }
+    roadside(scen, excluded || (() => false), onSide);
     out.canaries = st;   // (what was planted and built: the tests)
   };
 

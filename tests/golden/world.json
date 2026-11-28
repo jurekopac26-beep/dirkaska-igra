@@ -1625,24 +1625,27 @@
   }
  },
  "canaries": {
-  "meshes": 2368,
-  "verts": 1507857,
+  "meshes": 2395,
+  "verts": 1688863,
   "instances": 57353,
   "props": 101,
   "crowd": 249,
-  "world": "4dfeed0c",
+  "world": "95d95879",
   "propsHash": "de2ec1b5",
   "floor": "20c33ba7/10696",
   "groups": {
-   "-:MeshLambertMaterial": "33001eb7",
+   "-:MeshLambertMaterial": "5ba5cc1",
    "-:MeshPhongMaterial": "cd9c0ea8",
    "-:MeshBasicMaterial": "efc0b23a",
    "rob:MeshLambertMaterial": "cc84064c",
    "irFar:MeshLambertMaterial": "992f168e",
    "crowd:MeshLambertMaterial": "863a683c",
-   "ao:MeshBasicMaterial": "def87c6b",
+   "ao:MeshBasicMaterial": "d6e38e0",
    "tyremarks:MeshBasicMaterial": "fcf55ec7",
-   "roadwear:MeshLambertMaterial": "b34805b0"
+   "roadwear:MeshLambertMaterial": "b34805b0",
+   "life:MeshLambertMaterial": "4aafcd2",
+   "lifeShadow:MeshBasicMaterial": "489414c8",
+   "life:MeshBasicMaterial": "41d4dcd9"
   }
  },
  "savusavu": {

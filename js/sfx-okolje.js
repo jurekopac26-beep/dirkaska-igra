@@ -26,7 +26,7 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608], canaries: [13.91, 0] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
@@ -36,6 +36,7 @@
   // the villages the world has no lamp zones for: [from, to, how much of a village (1 a village, 0.5 a hamlet)], metres from the start
   // (kept here, not in the tracks' files: the places from OpenStreetMap, tools/zvoki-pasovi.mjs --osm, and tools/livorno/livorno.json)
   const VAS = {
+    canaries: [[-60, 330, 1], [2560, 2860, 0.5]],   // (the village of Canaries by the bay, the hamlet on the ridge; docs/proge/canaries-raziskava.md)
     ouninpohja: [[1476, 1676, 0.5], [8534, 8734, 0.5]],   // (Ouni, Kakaristo: a farm, the junction in the fields; js/world.js OB)
     livorno: [[-400, 400, 1], [3250, 3750, 1], [4300, 4580, 0.5], [7330, 7590, 0.5], [16500, 17300, 1]],   // (Livorno, Montenero, Savolano, Castellaccio, Antignano)
     nring: [[7850, 8050, 0.5], [20100, 20500, 0.5]],   // (Breidscheid, Nürburg)
