@@ -4730,7 +4730,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function flyStep() {
     const n = race.flyOn ? clamp(Math.ceil(FLY_T - race.time - 1e-6), 1, FLY_T) : 0;   // (late at the line: 1 until it is over it)
     if (n > 0 && n !== fly.n) { fly.n = n; flyHUD(n); Sfx.beep(520, 0.16, 0.14); Comm.say(['flyOne', 'flyTwo', 'flyThree'][n - 1] || 'flyOne', null, 5); }
-    if (!n) { fly.on = false; fly.n = 0; flyHUD(0); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('VOZIŠ TI!'), 'fast', race.champ ? 1.8 : 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say('flyGo', null, 5); }
+    if (!n) { fly.on = false; fly.n = 0; flyHUD(0); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('VOZIŠ TI!'), 'fast', race.champ ? 1.8 : 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say(ownLine(track.def, 'flyGo'), null, 5); }
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); hap('handBack'); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; teamRadioGo(); pitFightOpen(); pitExitOpen(); }   // (a fight for a place from here: pitFightStep; the reaction's clock for a perfect exit: pitExitStep)
