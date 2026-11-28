@@ -221,7 +221,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `assets/` | slike in posnetki menija: `tracks/` makete prog, `maps/` zemljevidi od zgoraj, preleti, videi zavojev (`corner-<id>`) in helikopterski posnetki, `geo/` Zemlja, `music/` glasba, `menu/` slike načinov, `cars/img/` avti |
 | `fonts/`, `css/fonts.css` | pisava Roboto (Apache 2.0) za meni in prikaz zgoraj levo med dirko |
 | `maketa-menija/` | samostojna maketa menija (HTML) in orodja za izris slik (`orodja/`, glej `maketa-menija/README.md`) |
-| `manifest.webmanifest`, `icons/` | opis aplikacije (ime, ikone, celoten zaslon) za namestitev na telefon; ikone nariše `node tools/icons.mjs` |
+| `manifest.webmanifest`, `icons/` | opis aplikacije (ime, ikone, celoten zaslon) za namestitev na telefon; ikone (Zemlja s cesto okoli, O-28-1) nariše `node tools/icons.mjs` |
 | `sw.js` | service worker: igra brez interneta in vedno najnovejša različica, ko je internet na voljo (opis v datoteki) |
 | `tests/` | samodejni testi (glej `tests/README.md`) |
 | `docs/` | opisi prog (`docs/proge/<id>.md`), opis igre po temah (`docs/igra.md`), kazalo kode (`docs/kazalo.md`), načrt orodja za napake |
