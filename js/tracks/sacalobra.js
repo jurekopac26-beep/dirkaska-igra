@@ -44,8 +44,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // come to the island for this climb in groups all the way (def.descent: the ones going down as fast as the cars)
     traffic: { mix: [0.54, 0.1, 0.1, 0.24, 0.02], bike: 450 },
     // the police of the run (their patrol cars: the label on the band along both sides, its colour, the text's): generic, no agency's name or badge
-    police: { label: 'POLICÍA', band: '#1b3f8f', text: '#f4f6f0' }, escTo: 'Mimo serpentin',
-    fly: [[0, 'START'], [60, 'Nus de sa Corbata'], [767, 'Serpentina 1'], [1609, 'Serpentina 5'], [2739, 'Serpentina 8'], [4505, 'Skalna vrata'], [-1, 'CILJ']],   // (and the results of an escape: 'Mimo serpentin v ...')
+    police: { label: 'POLICÍA', band: '#1b3f8f', text: '#f4f6f0' }, escTo: 'Mimo serpentin',   // (and the results of an escape: 'Mimo serpentin v ...')
+    fly: [[0, 'START'], [60, 'Nus de sa Corbata'], [767, 'Serpentina 1'], [1609, 'Serpentina 5'], [2739, 'Serpentina 8'], [4505, 'Skalna vrata'], [-1, 'CILJ']],   // (the fly-over's stops: metres after the start line, the label)
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Nus de sa Corbata", "d": 30.0, "say": ["Over the bridge at the Nus de sa Corbata, then round the loop and under it!", "The famous knot! Over the bridge, round the loop, and down under the bridge you just crossed!"]},
