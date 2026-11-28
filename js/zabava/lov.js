@@ -56,7 +56,7 @@
       $('res-title').textContent = tr(ok ? 'Ulovljen!' : 'Pobegnil je');
       const why = !S.end ? '' : S.end.why === 'fin' ? tr('Begunec je pripeljal do konca ceste.') : S.end.why === 'far' ? tr('Begunec je bil predaleč.') : S.end.why === 'time' ? tr('Čas je potekel.') : '';
       $('res-sub').textContent = (ok ? tr('Begunca {0} si ustavil po {1}.', S.o.name, G.fmt(t, true)) + (newRec ? tr(' Nov rekord.') : '') : tr('Begunec {0} ti je ušel. {1}', S.o.name, why)) +
-        (ok && G.inCareer() ? G.careerPay(Math.round((typeof Core !== 'undefined' ? Core.careerPrize(1, 2, race.track.raceLen, Math.min(G.S.difficulty, 2)) : 3000) / 100) * 100, 'Nagrada za ulov') : '');
+        (ok && G.inCareer() ? G.careerPay(Math.round((typeof Core !== 'undefined' ? Core.careerPrize(1, 2, race.track.raceLen, G.S.difficulty) : 3000) / 100) * 100, 'Nagrada za ulov') : '');
       $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); const laps = $('res-laps'); if (laps) laps.classList.add('off');
       $('res-table').querySelector('thead').innerHTML = '<tr><th>' + Z.esc(tr('Lov')) + '</th><th></th></tr>';
       const rows = [[tr('Čas'), G.fmt(t, true)], [tr('Begunec'), S.o.name + ' · ' + S.o.m.name], [tr('Rekord'), R0.bestRace ? G.fmt(R0.bestRace, true) : '–']];

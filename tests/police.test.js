@@ -45,9 +45,10 @@ const finite = (r) => r.pol.cars.every(c => Number.isFinite(c.x + c.z + c.vx + c
     up((a, b) => a.hide < b.hide && a.heli > b.heli && a.moto > b.moto && a.uc > b.uc && a.heavy > b.heavy && a.amb < b.amb && a.gap >= b.gap) && D[0].gap > D[3].gap,
     D.map(d => `hide ${d.hide} s, heli ${d.heli}, moto ${d.moto}, unmarked ${d.uc}, heavy ${d.heavy}, ambushes ${d.amb}, plan every ${d.gap} m`).join(' | '));
   const old = [{ atk: 2, bust: 3, hide: 14 }, { atk: 2, bust: 2.5, hide: 18 }];   // (the old normal and hard)
-  check('the old normal is the new easy, the old hard the new medium; a race (not the police) takes super težka as težka',
-    D[0].bust === old[0].bust && D[0].hide === old[0].hide && D[1].bust === old[1].bust && D[1].hide === old[1].hide && new C.Race(T, opts({ police: false, numAI: 3, difficulty: 3 })).diff === new C.Race(T, opts({ police: false, numAI: 3, difficulty: 2 })).diff,
-    `easy: busted in ${D[0].bust} s, lost after ${D[0].hide} s; medium: ${D[1].bust} s, ${D[1].hide} s`);
+  const r3 = new C.Race(T, opts({ police: false, numAI: 3, difficulty: 3 })).diff, r2 = new C.Race(T, opts({ police: false, numAI: 3, difficulty: 2 })).diff;
+  check('the old normal is the new easy, the old hard the new medium; a race (not the police) takes super težka as a level of its own (since 9. 11. 2026, before as težka), no slower than težka',
+    D[0].bust === old[0].bust && D[0].hide === old[0].hide && D[1].bust === old[1].bust && D[1].hide === old[1].hide && r3 !== r2 && r3[0] >= r2[0] && r3[1] >= r2[1] && (r3[6] || 0) >= (r2[6] || 0),
+    `easy: busted in ${D[0].bust} s, lost after ${D[0].hide} s; medium: ${D[1].bust} s, ${D[1].hide} s; a race's težka ${r2.join(' ')}, super težka ${r3.join(' ')}`);
   Math.random = orig;
 }
 

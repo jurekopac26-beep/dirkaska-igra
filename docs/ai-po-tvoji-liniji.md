@@ -43,8 +43,8 @@
 ## Korak 2: poskus na eni progi (4. 11. 2026)
 
 - Uporabnik: »ali lahko danes sprobava samo na eni progi nastimat« (Tianmen, 5 posnetkov) in »v kategoriji lazje vozijo bolj podobno kot jaz v pocasnih voznjah in super teska tako kot jaz v hitrih voznjah. ampak se vedno pa nekje vsi vozijo po liniji mojega povprecja in bremzajo tudi tam kot jaz, prav tako kdaj zavijajo in kdaj dajo gas, tudi ai naj gre kdaj cez travo in to naj ge na tistih delih kjer sem sel jaz«.
-- **Podatki**: `js/data/voznja.js` (`VOZNJA_PROFILI`; samo povprečja po točkah na 5 m od štarta: `dd`, `vq`, `pl`, `ql`, `qh`, `tr`, `dt`, ter `k0`, `ks`). Izvozi jih `node tools/voznja.mjs <posnetki> --js js/data/voznja.js [--k0 0.8–1.1] [--ks 0.5–3]` (`gameData`). Zdaj je v datoteki en profil: Tianmen, suho, avto Perun, 5 voženj.
-- **Vklop**: `index.html?voznja=1` (ostane vklopljen v brskalniku, `rr_voznja`; `?voznja=0` ga izklopi). Velja samo v dirkah s tekmeci, ne v kronometru, pregonu in dvoboju. Brez vklopa je dirka kot doslej (`Race._voznja` ne naredi nič, zlate reference so enake); z vklopom tekmeci na pravih progah brez profila vozijo po slogu (korak 3).
+- **Podatki**: `js/data/voznja.js` (`VOZNJA_PROFILI`; samo povprečja po točkah na 5 m od štarta: `dd`, `vq`, `pl`, `ql`, `qh`, `tr`, `dt`, ter `k0`, `ks`). Izvozi jih `node tools/voznja.mjs <posnetki> --js js/data/voznja.js [--k0 0.8–1.1] [--ks 0.5–3]` (`gameData`). Zdaj sta v datoteki dva profila: Tianmen (suho, avto Perun, 5 voženj) in Chapman's Peak (suho, avto Zmaj, 4 vožnje); posnetki po progah so v razdelku »Posnetki po progah«. `--js` profile drugih prog in vremen v datoteki ohrani, profil iste proge in vremena zamenja.
+- **Vklop**: `index.html?voznja=1` (ostane vklopljen v brskalniku, `rr_voznja`; `?voznja=0` ga izklopi). Velja samo v dirkah s tekmeci, ne v kronometru, pregonu in dvoboju. Brez vklopa je dirka kot doslej (`Race._voznja` ne naredi nič, zlate reference so enake); z vklopom tekmeci na pravih progah brez profila vozijo po slogu (korak 3). Enako stikalo je od 11. 11. 2026 v Nastavitve → Orodje za napake → Nastavitve orodja, vrstica »Tekmeci po moji liniji« (Vklop / Izklop; isti `rr_voznja`, velja od naslednje dirke s tekmeci, dirka med vožnjo ostane, kakršna je; `NK_HOOKS.voznja` v `js/game.js`, vrstica v `js/napake.js`).
 - **Linija** (enaka za vse težavnosti): idealna linija in igralčev odmik od linije avtopilota v istem avtu (`dd`, `c.uRl`). Rezanje ovinkov z volanom je v obeh, zato ni šteto dvakrat. Prehitevanje in obramba ostaneta.
 - **Hitrost** (`c.uT`) je igralčev delež tempa po tleh (`vq`) krat lastni profil tekmeca (njegov avto, vreme in zavore).
   - Orodje vzdolžno hitrost posnetka popravi z razmerjem `kg` (0,9–1,3): to je hitrost igralca po tleh proti hitrosti avtopilota po tleh. Popravek je potreben, ker avto, ki drsi, vzdolžno kaže manj.
@@ -55,9 +55,10 @@
 - **Težavnost** se določi po spretnosti avta (`lamOf`):
   - lahka vozi kot igralčevi počasnejši krogi (`ql`);
   - srednja vozi med njimi in povprečjem;
-  - težka in super težka (ta se dirka kot težka) vozita od povprečja proti hitrejšim krogom (`qh`).
+  - težka vozi od povprečja proti hitrejšim krogom (`qh`);
+  - super težka (v dirki svoja raven od 9. 11. 2026, prej kot težka) vozi kot hitrejši krogi (lam 1), na progi z igralčevim profilom najhitrejši tekmeci naprej proti njegovemu najboljšemu krogu (do lam 1,5, `DIFF_SUP.lam`; orodje najboljšega kroga ne hrani, zato `qh` podaljšan). Po slogu ne, ker so ovinki sloga, izmerjeni drugje, lahko že hitrejši, kot jih avto na tej progi zmore (Crystal Palace: izleti). Meja avta na super težki je 1,20 (`DIFF[3][6]`, od 15. 11. 2026; prej 1,12), na težki 1,11 (prej 1,09); slog gre v ovinkih do meje težke, ker vozi po svoji liniji, meja pa je izmerjena na idealni (na Crystal Palace je super težka s slogom drsela s ceste). Pospešek gumijaste vrvi (tekmec daleč za igralcem) cilja po profilu ne dvigne čez mejo avta, enako kot brez profila (prej na težki do 6 % čez, izleti na ozkih progah).
   - `ql` in `qh` sta tempo počasnejše in hitrejše polovice krogov proti povprečju, glajen na ±5 m. Pri ±50 m je težkim tekmecem zanašalo zadek.
-  - Napaka počasnejšega kroga vzame največ četrtino tempa. Nad povprečjem gre tekmec samo do meje svojega avta (`aiSkCap`).
+  - Napaka počasnejšega kroga vzame največ četrtino tempa. Nad povprečjem gre tekmec samo do meje svojega avta (`aiSkCap`, na težki in super težki višja: `DIFF[d][6]`).
 - **Umeritev**: `k0` je tempo pri srednji vrednosti (lam 0), `ks` raztros proti počasnejšim krogom. Umerjeno s tekmecem samim na progi, brez gumijaste vrvi (`DIFF`): lam −1 vozi kot igralčevi počasnejši krogi, lam 0 kot njihovo povprečje. Za Tianmen `k0` 0,95 in `ks` 1,4.
 - **Čez rob** (`tr`, `dt`): samo tam, kjer je čez rob šlo vsaj 40 % krogov (`trMin`; na Tianmnu 2 od 5), in tam toliko kot igralec.
 - **Odprta cesta**: štart z mesta do prvega ovinka orodje izpusti, kot pri prvem krogu krožne proge. Igralčevo počasno speljevanje bi sicer tekmece ustavilo na štartni črti; tam vozijo svoj tempo.
@@ -67,14 +68,14 @@
   - Povprečja v polju: lahka 3:31,7 (brez profila 3:52,9), srednja 3:26,2 (3:38,5), težka 3:20,4 (3:26,2). Polje je počasnejše od tekmeca samega, ker ga gumijasta vrv drži ob počasnem avtopilotu (3:24,6) in ker je na cesti promet.
 - **Omejitev**: težka ne doseže igralčevih najhitrejših voženj. Igralec skozi ovinke drsi hitreje, kot jih AI zna peljati po povprečni liniji.
 - **Proge brez uporabnikovih posnetkov**: vprašanje `ai-linija-brez-posnetkov` na strani Odločitve. Možnosti: 1. kot zdaj; 2. po splošnem pravilu iz uporabnikove vožnje (kako zgodaj zavira, koliko reže ovinke). **Odgovor uporabnika (5. 11. 2026, »Drugo«):** »Za ostale proge ti se poslem posnetke«. **Odločitev uporabnika (8. 11. 2026 ~23.00, možnost 2):** »naredi da vse proge ki so zbrane (1 proga na 1 drzavo) vozijo po mojih ai sledeh zaenkrat dokler nimas videoposnetkov mojih vozenj predvidevaj kako bi vozili tukaj iz mojih posnetkov z druge proge kjer moje posnetke ze imas«. Do posnetkov drugih prog tekmeci na vseh pravih progah vozijo po splošnem pravilu iz posnetkov Tianmna (razdelek »Korak 3«); proga s posnetki dobi svoj izmerjeni profil.
-- **Stikalo do objave**: **odgovor uporabnika (5. 11. 2026, `ai-linija-privzeto`, »Drugo«):** »Zaenkrat naj imajo vse proge stikalo, kjer je to ze mozno. Kasneje ga bomo izbrisali ko bomo dali igro na google play«. Stikalo `?voznja=1` ostane in velja na vseh progah s profilom (`voznjaOf` vzame vse profile proge, `Race._voznja` tistega za vreme na cesti) in na vseh pravih progah s slogom (korak 3). Izbriše se tik pred objavo na Google Play, skupaj s testnimi progami in sklopom 8 orodja za napake (`docs/orodje-za-napake.md`). Ali bodo tedaj tekmeci po profilu vklopljeni za vse ali ne, uporabnik še ni povedal: seja, ki stikalo briše, ga vpraša.
+- **Stikalo do objave**: **odgovor uporabnika (5. 11. 2026, `ai-linija-privzeto`, »Drugo«):** »Zaenkrat naj imajo vse proge stikalo, kjer je to ze mozno. Kasneje ga bomo izbrisali ko bomo dali igro na google play«. Stikalo `?voznja=1` ostane in velja na vseh progah s profilom (`voznjaOf` vzame vse profile proge, `Race._voznja` tistega za vreme na cesti) in na vseh pravih progah s slogom (korak 3). Izbriše se tik pred objavo na Google Play, skupaj s testnimi progami in sklopom 8 orodja za napake (`docs/orodje-za-napake.md`). Ali bodo tedaj tekmeci po profilu vklopljeni za vse ali ne, uporabnik še ni povedal: seja, ki stikalo briše, ga vpraša. Vrstica »Tekmeci po moji liniji« v Nastavitvah orodja je del orodja za napake in se skrije z njim (ob zamrznitvi 23. 12. 2026); `?voznja=1` ostane do izbrisa.
 - **Naprej**: proge s posnetki dobijo svoj izmerjeni profil (namesto sloga), slog se ob novih suhih profilih izpelje znova (`--slog`).
 
 ## Korak 3: slog na vseh pravih progah (8. 11. 2026)
 
 - **Odločitev uporabnika** (8. 11. 2026 ~23.00, `ai-linija-brez-posnetkov`, možnost 2; citat v razdelku »Korak 2«, »Proge brez uporabnikovih posnetkov«): dokler posnetkov proge ni, tekmeci vozijo, kot bi po posnetkih Tianmna predvidoma vozil uporabnik.
 - **Kje velja**: z vklopom `?voznja=1` na vseh pravih progah (ne `test: true`, ne `pending: true`; tudi prihodnje nove proge), samo na suhem in ne pozimi. Pravilo je v `Race._voznja` (`js/core.js`): `voznjaOf` v `js/game.js` slog vedno doda, `Race._voznja` ga ne uporabi na testni progi, na progi na odločanju (Bathurst in Great Alpine Road do izbire) in v dežju. Izmerjeni profil proge ima prednost: na Tianmnu avti razreda profila (Perun) vozijo po profilu, drugi po slogu.
-- **Podatki**: `VOZNJA_SLOG` v `js/data/voznja.js` (profil Tianmna ostane, kot je). Izpelje ga `node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0.3]` iz suhih profilov v datoteki (`slogOf`; `--js` ga zapiše skupaj s profili). Ovinki profila so razdeljeni v razrede po polmeru idealne linije v temenu (meji 12 in 30 m, razred z vsaj 3 ovinki); zdaj sta razreda r 7,3 m (23 ovinkov) in r 17,1 m (7 ovinkov). Vsak razred ima dve tabeli:
+- **Podatki**: `VOZNJA_SLOG` v `js/data/voznja.js` (profil Tianmna ostane, kot je). Izpelje ga `node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0.3]` iz suhih profilov v datoteki (`slogOf`; `--js` ga zapiše skupaj s profili). Ovinki profila so razdeljeni v razrede po polmeru idealne linije v temenu (meji 12 in 30 m, razred z vsaj 3 ovinki); zdaj (Tianmen in Chapman's Peak) sta razreda r 7,3 m (23 ovinkov) in r 19,5 m (13 ovinkov). Vsak razred ima dve tabeli:
   - po fazi zaviranja `fe` (−1 začetek zaviranja … 0 teme): delež tempa `vq`, plin `pl` ter tempo počasnejših in hitrejših krogov `ql`, `qh`;
   - po razdalji od temena `m` (−80 … 80 m): odmik od linije avtopilota `dd` glede na smer ovinka (igralec gre v teme pozneje in širše od idealne linije).
 - **Ob dirki** (`Core.voznjaFaze`, `Core.voznjaIzSloga`): igra na profilu hitrosti tekmeca poišče ovinke. Teme je najnižja hitrost na ±60 m, vsaj 3 m/s pod najvišjo na 500 m pred njim; polmer je najtesnejša idealna linija na ±12 m. Iz tabel sestavi profil na mreži 5 m z istimi polji kot izmerjeni (`dd`, `vq`, `pl`, `ql`, `qh` in utež `wv`), iz katerega `Race._voznja` naredi `uRl`, `uT` in `uLim` kot pri izmerjenem profilu.
@@ -93,6 +94,28 @@
   - Polpriklopniki (`c.tl`) vozijo svoj tempo in svojo linijo: na Spa jih je slog v dveh dirkah 5-krat vrnil na cesto (lastni AI enkrat), na Rio do Rastro 35 izletov proti 9. Izmerjeni profil jih zadene samo, če so v razredu profila.
 - **Test**: `tests/voznja.test.js`, razdelek 7 (opis v `tests/README.md`).
 
+## Posnetki po progah
+
+Stanje 15. 11. 2026. Profil proge potrebuje 3–5 čistih voženj (suho, brez trka in zleta s ceste, cel krog); vožnja s trkom ali zletom se izpusti. Tekmeci po profilu vozijo v razredu avta, s katerim je proga posneta; ostali avti in proge brez profila vozijo po slogu. Testne proge in proge na odločanju (tudi Suzuka in Medvode) profila ne dobijo. **Ko imajo vse proge v tabeli profil, gre na `main`** (odločitev uporabnika, 15. 11. 2026).
+
+| Proga | Čistih voženj | Še potrebnih | Avto |
+|---|---|---|---|
+| Tianmen, Kitajska | 5 | 0 | Perun |
+| Chapman's Peak, Južna Afrika | 4 (od 6) | 0 (1 do 5) | Zmaj |
+| Pikes Peak, ZDA | 0 | 3–5 | |
+| Pikes Peak (makadam), ZDA | 0 | 3–5 | |
+| Nürburg, Nemčija | 0 | 3–5 | |
+| Spa, Belgija | 0 | 3–5 | |
+| Štajerska, Avstrija | 0 | 3–5 | |
+| Los Caracoles, Čile | 0 | 3–5 | |
+| Katu-Jaryk, Rusija | 0 | 3–5 | |
+| Harju, Finska | 0 | 3–5 | |
+| Bathurst, Avstralija | 0 | 3–5 | |
+| Rio do Rastro, Brazilija | 0 | 3–5 | |
+| Montréal, Kanada | 0 | 3–5 | |
+| Livorno, Italija | 0 | 3–5 | |
+| Bâlea, Romunija | 0 | 3–5 | |
+
 ## Stanje
 
 - 4. 11. 2026: korak 1 narejen (orodje z avtopilotom za primerjavo, test `tests/voznja.test.js`, glava posnetka v `js/game.js`, preverjanje v `tests/browser/napake-posnetek.test.mjs`); čaka posnetke uporabnika.
@@ -100,3 +123,5 @@
 - 5. 11. 2026: #305 v vrsti za `main` (14. mesto, #316). Odgovora na `ai-linija-brez-posnetkov` in `ai-linija-privzeto` sta zapisana v razdelku Korak 2: posnetki drugih prog pridejo, stikalo ostane do objave na Google Play. Odgovor na `dez-sneg-oprijem` (izbira 3, dež in sneg bolj drsita) je nova tema: `docs/dez-sneg.md` (na `main` v #329).
 - 8. 11. 2026: korak 3 v #305 (odločitev uporabnika na `ai-linija-brez-posnetkov`, možnost 2): slog na vseh pravih progah (`VOZNJA_SLOG`, `voznjaIzSloga`), test v razdelku 7; #305 je prvi v vrsti za `main`.
 - 9. 11. 2026: #305 na `main` (ob 5.35, 4a24ef5, squash). Ostane: profili drugih prog, ko pridejo posnetki uporabnika (`tools/voznja.mjs --js`), in stikalo `?voznja=1` do objave na Google Play.
+- 11. 11. 2026: stikalo »Tekmeci po moji liniji« v Nastavitvah orodja za napake (isti `rr_voznja` kot `?voznja=1`, od naslednje dirke; test `tests/browser/napake-samodejno.test.mjs`, razdelek 8), v #605 (veja `ai/super-tezka`).
+- 15. 11. 2026: profil Chapman's Peaka (6 posnetkov, 4 čisti krogi, povprečno 1:45,5, najboljši 1:44,4; avtopilot v istem avtu 2:01,8), slog iz Tianmna in Chapmana; `--js` ohrani profile drugih prog. Tabela »Posnetki po progah«; na `main`, ko imajo vse proge profil.
