@@ -102,8 +102,9 @@ check('track: named "Killar, Indija" ("Killar, India" in English), a real place 
     + `level across on ${(100 * nLv / n).toFixed(0)} % of the road (without the tilt ${(100 * nLvN / n).toFixed(0)} %), away from the quiet places and the crests ${runMax} m at a time at most`);
 }
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('killar'));
-check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrung Nala, the finish)',
-  T.names.map(q => q.n.split(' · ')[0]).join('|') === 'Killar|Reka Chenab|Hangrung Nala|Cilj' && T.names.every(q => q.say), T.names.map(q => q.n + ' @' + Math.round(q.d)).join(', '));
+check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrung Nala, the finish, with the farms, the bend, the cut and the side valley between)',
+  T.names.map(q => q.n.split(' · ')[0]).filter(n => ['Killar', 'Reka Chenab', 'Hangrung Nala', 'Cilj'].includes(n)).join('|') === 'Killar|Reka Chenab|Hangrung Nala|Cilj'
+    && T.names.every((q, i) => q.say && (!i || q.d > T.names[i - 1].d)), T.names.map(q => q.n + ' @' + Math.round(q.d)).join(', '));
 
 // 2. the surface: gravel (makadam) all the way
 {

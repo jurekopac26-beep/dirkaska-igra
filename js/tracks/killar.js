@@ -135,10 +135,32 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the traffic of the open road (the duel): the share of each kind of vehicle [car, van, bus, motorbike, truck] and a cyclist every so many
     // metres each way; jeeps and pickups, motorbikes, a few lorries and buses
     traffic: { mix: [0.42, 0.3, 0.06, 0.14, 0.08], bike: 4000 },
+    // the road's turns (the time trial's OVINEK n/24, as Pikes Peak's def.turnNos): this road has no official count, so they are counted on
+    // the OpenStreetMap centre line between the start and the finish (docs/proge/killar.md): 24 bends of 20 degrees or more with a radius
+    // under 150 m, at turnAt metres after the start line; each modelled corner (T.corners) takes the number of the counted bend nearest it
+    turns: 24,
+    turnAt: [6, 22, 206, 446, 493, 877, 909, 949, 1125, 1205, 1501, 1549, 1572, 1620, 1652, 1803, 1907, 2059, 2162, 2634, 3386, 3490, 4017, 4312],
+    turnNos(T) {
+      if (T.turnList) return T.turnList;
+      const L = T.corners.filter(c => c.s0 > T.startS && c.s0 < T.finishS).sort((a, b) => a.s0 - b.s0), out = [];
+      let n = 0;
+      for (const c of L) {
+        const m = c.s0 - T.startS; let k = 0;
+        this.turnAt.forEach((a, i) => { if (Math.abs(a - m) < Math.abs(this.turnAt[k] - m)) k = i; });
+        n = Math.min(this.turns, Math.max(n + 1, k + 1)); out.push({ s: c.s0, n, sev: c.sev, dir: c.dir });
+      }
+      return (T.turnList = out);
+    },
+    // the intro's flyover (Render pkFly: [metres after the start line (-1: the finish), caption]), the places named above
+    fly: [[0, 'START'], [740, 'Kmetije'], [1790, 'Ostri ovinek'], [2200, 'Dolgi vsek'], [4036, 'Hangrung Nala'], [-1, 'CILJ']],
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n":"Killar","d":10.0,"say":["Off we go from Killar, deep in the Pangi Valley!","Leaving Killar behind, onto the cliff road!","Out of the village of Killar, and the drop starts right away!"]},
+      {"n":"Kmetije","d":740,"say":["Past the farmhouses above the road, the last houses for a while!","A handful of farms, then it is cliff all the way!","The farmhouses go by, keep it tight past the rock!"]},
       {"n":"Reka Chenab","d":900.0,"say":["The Chenab River, far down on the left! No guard rails here!","Look at the Chenab down below. Do not look for long!","The river is a long way down on the left, keep it on the shelf!"]},
+      {"n":"Ostri ovinek","d":1790,"say":["Tight one against the rock here, turn sixteen!","Hard round the rock face, and do not run wide!","The sharpest bend on the shelf, slow in!"]},
+      {"n":"Dolgi vsek","d":2200,"say":["Into the long cut, rock on the right and the drop on the left!","Half a kilometre of rock wall now, listen to that engine!","The road is cut right into the cliff here!"]},
+      {"n":"Dolina Hangrung Nale","d":3830,"say":["Turning in towards the Hangrung Nala, the side valley!","Into the side valley, the bridge is coming!","Away from the Chenab for a moment, in along the stream!"]},
       {"n":"Hangrung Nala","d":4035.6,"say":["Over the bridge across the Hangrung Nala!","Across the stream, deep in the side valley!","The bridge over the Hangrung Nala, and back out along the cliff!"]},
       {"n":"Cilj · 2.412 m","d":4361,"say":["Made it along the cliff road! What a drive!","That is the road out of Killar done, all four wheels still on it!","Across the line, high above the Chenab!"]},
     ],

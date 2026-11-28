@@ -512,7 +512,7 @@
     'Gozd': 'Forest', 'Proti Plaine Champagne': 'Towards Plaine Champagne', 'Do Plaine Champagne': 'To Plaine Champagne',   // (Chamarel: the HUD, the results of an escape; Case Noyale and Chamarel the same in English)
     'Zahodna vrata': 'West Gate', 'Ob obzidju': 'Along the Walls', 'Severna vrata': 'North Gate', 'Zunanje mesto': 'Outer Town', 'Vzhodna vrata': 'East Gate', 'Pod minaretom': 'Under the Minaret', 'Južna vrata': 'South Gate', 'Ob južnem obzidju': 'Along the South Wall', 'Obzidje': 'City Walls',   // (Hiva: the HUD)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
-    'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
+    'Reka Chenab': 'Chenab River', 'Kmetije': 'Farmhouses', 'Ostri ovinek': 'Tight Bend', 'Dolgi vsek': 'Long Rock Cut', 'Dolina Hangrung Nale': 'Hangrung Nala Valley',   // (Killar: the HUD, the flyover; Killar and Hangrung Nala are the same in English)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
