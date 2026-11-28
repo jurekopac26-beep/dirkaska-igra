@@ -38,3 +38,10 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Zvok**: nad gozdno mejo pašniki s svizci (alpski svizec živi na visokih pašnikih Queyrasa in Briançonnaisa); svarilni žvižg je kratek, visok in padajoč.
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py izoard --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
+
+## Dodelava do ravni Pikes Peak (november 2026)
+
+- **Melišča pod vrhom** (`js/world-izoard.js`, gradi `tools/proga/izoard-casse.py` iz predloge `tools/proga/izoard-casse.tpl.js`): od ~3,7 km do vrha je ob cesti (9–70 m od nje) posuto kamenje in nekaj večjih blokov iz bledega apnenca in rumenkaste breče; gostota po golosti tal (NDVI iz posnetka Sentinel-2 L2A 9. 7. 2025, celice 8 m, pragovi 0,28 / 0,21 / 0,14). Kamni so v geometriji tal (brez novih klicev risanja), ne na cesti, ograjah ali parkiriščih; na najnižji grafiki tretjina.
+- **Casse Déserte**: kotanja melišč pod južno stranjo prelaza (teren 31,25 m iz Copernicus DEM, barve iz Sentinel-2, 70 igel breče na OSM `natural=bare_rock`, cesta po južni strani iz OSM) v pogledu v daljavo; s kamere za avtom se vidi le ob pogledu čez vrh.
+- **Lasten zvok** (`js/sfx-izoard.js`): nad ~280 m nad startom (~2.250 m, pašniki nad gozdno mejo) svarilni žvižgi svizcev, eden do štirje zapored, z ene strani ceste, v povprečju na ~9 s; samo med dirko, podnevi in ob zori, ne v dežju ali pozimi, ne z varčevanjem baterije; glasnost po nastavitvi Zvoki okolja. Sinteza (brez posnetkov).
+- **Približki brez vira**: lega kamnov v celici in igel v kotanji (naključno), pragovi NDVI, normalizacija barv Sentinel-2, višina ceste po južni strani (+1,5 m nad terenom); frekvenca (2,6–3,1 kHz, padec ~15 %), dolžina (0,12–0,2 s) in pogostost žvižgov so ocena po opisih, ne meritev.
