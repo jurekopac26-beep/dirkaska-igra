@@ -28,6 +28,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc6d6e8, sun: 0xfff2de, sunI: 1.26, sky: 0xa6c6f0, gnd: 0x4e5a36, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.06, sunOff: [-84, 88, 50], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },   // Furka: a clear summer afternoon in the Alps, the sun from the west-south-west over the Goms (the hairpins on the west-facing slope in its light, the glacier's cirque in the north behind them)
     say: 'the Furka Pass',
+    cloudTh: 0.22,   // (the clouds' shadows: crisp on the bare slopes at 2,000-2,400 m; an assumption, no source)
     id: 'furka', name: 'Furka, Švica', theme: 'furka', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.0,
     maxRivals: 95,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line towards the pass
     desc: 'Zahodna stran ceste čez prelaz Furka v Švici: sedem serpentin nad Ronskim ledenikom, od 2.045 m do 2.416 m tik pod prelazom. 5 km ceste nad Gletschem med alpskimi pašniki, granitnimi skalami in potoki, mimo zaprtega hotela nad ledenikom. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu in beg pred policijo.',
@@ -43,14 +44,18 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1d3f7a', text: '#f4f6f0' }, escTo: 'Na vrh',   // (and the results of an escape: 'Na vrh v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
+      {"n": "Pogled na Gletsch", "d": 160.0, "say": ["Gletsch is down below you, where the Rhône begins!", "Look down: Gletsch, at the foot of the climb!", "The young Rhône down in the valley, and the hairpins up ahead!"]},
       {"n": "Serpentina 1 · 2.090 m", "d": 730.0, "say": ["Hairpin one, and the climb up the Furka is on!", "Into the first hairpin above Gletsch!"]},
       {"n": "Serpentina 2 · 2.124 m", "d": 1251.0, "say": ["Hairpin two! The Grimsel road is winding up the other side of the valley!", "Hairpin two, tight and steep!"]},
       {"n": "Serpentina 3 · 2.201 m", "d": 2163.0, "say": ["Hairpin three, granite slabs all around!", "Hairpin three! The glacier's valley is opening up!"]},
-      {"n": "Serpentina 4 · 2.238 m", "d": 2570.0, "say": ["Hairpin four, the old hotel is just above you!"]},
+      {"n": "Ledeniško jezero", "d": 2250.0, "say": ["The glacier lake, milky green under the ice!", "Down there, the lake the glacier left behind!", "That lake was ice not long ago!"]},
+      {"n": "Serpentina 4 · 2.238 m", "d": 2570.0, "say": ["Hairpin four, the old hotel is just above you!", "Hairpin four! The hotel is up there on the edge of the drop!", "Into hairpin four, the glacier's valley on your shoulder!"]},
       {"n": "Serpentina 5 · 2.266 m", "d": 2924.0, "say": ["Hairpin five, right round the old hotel!", "Round the closed hotel on the edge of the glacier's valley!"]},
       {"n": "Ronski ledenik", "d": 3050.0, "say": ["The Rhône Glacier! Look at the ice up in the cirque!", "There's the Rhône Glacier, under the Galenstock!"]},
-      {"n": "Serpentina 6 · 2.301 m", "d": 3384.0, "say": ["Hairpin six, two to go!"]},
+      {"n": "Serpentina 6 · 2.301 m", "d": 3384.0, "say": ["Hairpin six, two to go!", "Hairpin six! The ice is right across the valley now!", "Six down, the air is getting thin!"]},
       {"n": "Serpentina 7 · 2.317 m", "d": 3618.0, "say": ["The seventh and last hairpin! Now the long climb to the pass!", "Last hairpin! Flat out up the open slope!"]},
+      {"n": "Galenstock · 3.586 m", "d": 4300.0, "say": ["The Galenstock up ahead, its snow above the glacier!", "There's the Galenstock, over three and a half thousand metres!", "The glacier's peak, the Galenstock, right in front of you!"]},
+      {"n": "Furkastock · 3.026 m", "d": 4700.0, "say": ["The Furkastock watching over the pass!", "Furkastock above, the saddle is close now!"]},
       {"n": "Pod prelazom Furka · 2.416 m", "d": 4964.0, "say": ["Just below the Furka Pass, two thousand four hundred and sixteen metres!", "The top! The Furka Pass is right ahead!", "Below the pass! The end of the climb!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)

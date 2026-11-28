@@ -30,4 +30,21 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Obremenitev**: na telefonu ~155 klicev risanja in ~300 tisoč oglišč na sliko (največ 186 in 411 tisoč; `tests/golden/perf.json`).
 - **Pravno**: cesta in hotel sta znana iz filma; v igri in opisih ni nobene omembe filma, njegovih junakov ali igralcev, ne imena hotela; postajališča so brez imen postaj in prevoznika. Samo zemljepisna imena (Furka, Gletsch, Ronski ledenik, Wallis, Grimsel).
 
+## Raziskava kraja (dodelava, O-28-36)
+
+- **Lega**: zahodna stran prelaza Furka (2.429 m) med Gomsom (Valais) in Urserenom (Uri); cesta se nad Gletschem (1.757 m) v sedmih serpentinah vzpne po pragu na vzhodni strani doline Ronskega ledenika. Zgoraj sta Furkastock in Galenstock (3.586 m), na severu Dammastock (3.630 m), čez dolino cesta na Grimsel (2.164 m). Vir: OpenStreetMap (ODbL), Copernicus DEM GLO-30.
+- **Ronski ledenik**: izvir Rone, ~7,5 km dolg, teče z Dammastocka proti jugu. Jezik se umika; pod njim je od 2000-ih ledeniško jezero (~16 ha, OSM `natural=water`). Led v podatkih: ESA WorldCover 2021 (razred sneg in led) in obris OSM `natural=glacier`; jezik spodaj siv od kamene moke in ruševin, više bel, v ledopadu modrikast, ob robu bočni moreni iz sivega grušča. Poleti so deli jezika ob razgledišču pokriti z belimi ponjavami proti taljenju (javno znano; brez imen ponudnikov).
+- **Podnebje**: visokogorsko; cesta je zaprta od pozne jeseni do junija, poleti 5–15 °C, popoldne kopasti oblaki, pogost veter čez sedlo (fen), sneg možen vsak mesec. Igra: jasno poletno popoldne.
+- **Višina in rastje**: od 2.045 do 2.416 m, nad gozdno mejo: alpski travniki, sleč in brin v zaplatah, zelena jelša v grapah, više grušč in gola skala (ESA WorldCover, Sentinel-2).
+- **Kamnina**: svetli granit in gnajs Aarskega masiva, od ledu zglajene plošče in balvani (pod hotelom in ob jezeru); na sedlu meja z Gotthardskim masivom.
+- **Gradnja ob cesti**: cesta iz 1860-ih, kamniti podporni zidovi iz granitnih kvadrov, granitni miljnik, jeklene ograje, rumena postajališča avtobusa (OSM).
+- **Glavne točke**: Muttbach (start), serpentine 1–7, zaprt hotel ob peti serpentini, razgledišče nad ledenikom, ledeniško jezero, Ronski ledenik pod Galenstockom, pobočje pod Furkastockom, prelaz.
+- **Zvoki** (predpostavka po splošno znanem, ne po posnetkih): veter, ki z višino narašča in na sedlu žvižga; bučanje ledeniške vode iz jezika in jezera; žvižgi svizcev na travnikih in v grušču (svizec živi v vsem visokogorju Alp).
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py furka --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`; `led` doda ledenike na daljni teren). Vire glej v `README.md` pod »Zasluge«.
+
+## Dodelava (O-28-36): kaj je narejeno
+- **Ronski ledenik od blizu** (`js/world-furka-ledenik.js`, podatki `tools/furka-ledenik.py`): v oddaljenem pogledu se blok 2,25 × 3,75 km (jezik, ledni slap, spodnji del zgornjega ledenika, jezero) nadomesti z lastno mrežo na 41,7 m (55 × 91 oglišč, 9216 trikotnikov, en klic risanja) iz Copernicus DEM GLO-30 in ESA WorldCover 2021: led po višini in naklonu, razpoke, ledni slap, morene ob robu, pokrivala nad lednim jezikom ob hotelu, mlečno jezero. Robna oglišča so enaka oddaljeni mreži (brez šiva).
+- **Zvok višine** (`js/sfx-furka.js`): veter od 2.045 m do sedla vse močnejši, na sedlu piš; ob hotelu zavetje pobočja; talnica ledenika ob iztoku jezera (stran po kameri); redki žvižgi svizcev nad 2.100 m podnevi. Splošni veter `js/sfx-okolje.js` za Furko utihne.
+- **Zanimivosti**: nove Pogled na Gletsch, Ledeniško jezero, Galenstock (3.586 m), Furkastock (3.026 m); vse po 2–3 vrstice komentatorja; `cloudTh` 0,22.
+- **Predpostavke (brez vira)**: kraj svizcev, `cloudTh`, kraj iztoka (iz WorldCover: najbližja voda ~440 m od hotela), mesto Galenstocka in Furkastocka na cesti (po smeri pogleda). Potok Muttbach ni dodan: kraj prečkanja ceste iz OSM ni preverjen.

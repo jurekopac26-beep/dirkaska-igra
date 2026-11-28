@@ -657,7 +657,7 @@
     for (let j = 1; j <= 5; j++) W[j] = Math.max(WL[j], WR[j]);
     const cl = climate(Z), tg = A.tg;
     tg.rustle = F * (win ? 0.5 : 1); tg.brook = W[BROOK]; tg.river = W[RIVER]; tg.fall = W[FALL]; tg.lake = W[LAKE]; tg.sea = Math.max(W[SEAK], def.sea ? 0.3 : 0);
-    tg.wind = lv.pikes ? 0 : Math.min(1.2, L(Z.wind) * (win ? 1.4 : 1));   // (Pikes Peak: its own, js/sfx.js atmo)
+    tg.wind = lv.pikes || (window.SfxFurka && SfxFurka.owns(def)) ? 0 : Math.min(1.2, L(Z.wind) * (win ? 1.4 : 1));   // (Pikes Peak: its own, js/sfx.js atmo; Furka: js/sfx-furka.js)
     tg.crickets = sum && A.buf.crickets ? cl.cr * (tod === 'night' || tod === 'dusk' ? 1 : tod === 'dawn' ? 0.3 : 0) * (1 - rain) * (0.6 + 0.4 * F) : 0;
     tg.cicadas = sum && A.buf.cicadas && tod === 'day' ? cl.ci * (1 - rain) * (0.3 + 0.7 * F) : 0;
     tg.traffic = Z.city ? (tod === 'night' ? 0.55 : tod === 'dawn' ? 0.75 : 1) * (1 - 0.3 * F) : 0;   // (a town: quieter at night, among trees)
