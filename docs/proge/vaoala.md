@@ -11,6 +11,23 @@ Cesta čez otok Upolu južno od Apie, od vasi Letava skozi Vaoalo in tropski de�
 - **Imena pod uro**: Letava, Vaoala, Gozd nad Vaoalo in Tiapapata · 480 m na cilju; komentator ima na tej progi svoje stavke ob startu, ob cilju in ob pobegu.
 - **Oblika in višine**: sredinska črta je iz OpenStreetMap (zglajena). OpenStreetMap nima podatka o širini ceste; v igri je cesta široka 8 m (ozka gorska cesta). Višine so iz višinskega modela Copernicus DEM GLO-30, očiščene (drseča mediana samo navzgor, glajenje, največ 12 %).
 
+Kraj (raziskava za dodelavo; viri OpenStreetMap, Copernicus DEM, ESA WorldCover, Sentinel-2 in splošno poznavanje otoka, brez fotografij z istih mest):
+
+- **Podnebje**: vlažno tropsko (Köppen Af), deževna doba od novembra do aprila; višavje nad Apio dobi precej več dežja kot obala, sleme je pogosto v nizkih oblakih.
+- **Kamnina in prst**: Upolu je bazaltni ščitasti vulkan; ob cesti rdečkastorjava lateritna prst.
+- **Rastje**: drugotni in gorski deževni gozd; ob robovih gozda in na jasah gosto podrastje z drevesnimi praprotmi, divjimi bananovci in odejami ovijalke (*Merremia peltata*, svetlo zelena), ob vaseh vrtovi z bananovci, kruhovcem, taro in kokosovimi palmami, žive meje iz krotona.
+- **Vasi**: hiše iz betonskih zidakov s strehami iz valovite pločevine, odprti *fale*, cerkve (brez imen), žive meje ob dvoriščih.
+- **Razgled**: z vrha proti severu Apia, laguna in odprto morje za grebenom.
+
+Ob cesti (`js/world-vaoala.js`, samo za Vaoalo, na vrhu skupne okolice prelazov):
+
+- **Rob gozda in grmovje** (raba tal gozd ali grmovje): drevesne praproti, divji bananovci (en list suh), nizke odeje ovijalke čez grmovje, 1–17 m od roba ceste.
+- **Vasi** (raba tal pozidano ali hiša iz OpenStreetMap do 30 m): bananovci, kruhovci dlje od ceste, grmi krotona.
+- **Odprt svet**: posamezne skupine praproti, bananovcev in grmovja.
+- **Žive meje**: tri žive meje iz OpenStreetMap v Vaoali (`barrier=hedge`) kot vrste krotona (vrsta je predpostavka; OpenStreetMap je ne navaja).
+- **Morje na obzorju**: temno modra odprte vode namesto privzete sivomodre (mreža obzorja 250 m je pregroba za laguno in greben, zato sta ena barva).
+- **Približki**: lege rastlin niso resnične (raba tal, naklon, naključje); start ±22 m in cilj ±30 m sta prosta (portala, redarji, gledalci).
+
 Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom `PL_LOOK.vaoala`, tropski kot Savusavu, a bolj oblačno in vlažno višavje):
 
 - **Deževni gozd**: gost tropski gozd na slemenu, palme in grmovje ob vaseh, trava ob cesti (raba tal iz ESA WorldCover, satelitskega posnetka Sentinel-2 z dne 23. 4. 2024 in karte višine krošenj Meta in WRI). Barve tal so iz istega posnetka Sentinel-2. Brez snega, brez ovc in brez predora.
