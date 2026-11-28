@@ -1,0 +1,4 @@
+== phone budget (844x390, normal quality, NIZKA detail, shadows)
+livorno    calls/frame 162 (max 193), vertices/frame 413k (max 553k), JS 3.06 ms/frame
+mombasa    calls/frame 150 (max 216), vertices/frame 356k (max 450k), JS 0.87 ms/frame
+OK   no page errors

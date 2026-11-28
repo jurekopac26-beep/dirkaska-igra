@@ -104,11 +104,11 @@
   "jsMs": 1.22
  },
  "livorno": {
-  "calls": 155,
-  "maxCalls": 185,
-  "kverts": 370,
-  "maxKverts": 461,
-  "jsMs": 2.88
+  "calls": 162,
+  "maxCalls": 193,
+  "kverts": 413,
+  "maxKverts": 553,
+  "jsMs": 3.06
  },
  "balea": {
   "calls": 166,
@@ -342,11 +342,11 @@
   "jsMs": 0.68
  },
  "mombasa": {
-  "calls": 135,
-  "maxCalls": 215,
-  "kverts": 337,
-  "maxKverts": 385,
-  "jsMs": 0.78
+  "calls": 150,
+  "maxCalls": 216,
+  "kverts": 356,
+  "maxKverts": 450,
+  "jsMs": 0.87
  },
  "isalo": {
   "calls": 126,
