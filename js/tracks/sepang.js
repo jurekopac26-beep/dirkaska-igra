@@ -29,6 +29,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Sepang',
     grassNat: 0.75, lawn: [0.93, 1.02, 0.86],
     zivali: { a: ['macaque', 'egret', 'buffalo'], t: ['waterTank', 'signPost'] },
+    // the commentator's own lines for a race here (Comm: intro, go and rain; js/game.js ownLine), by docs/proge/sepang.md: the oil palm estates
+    // of the Selangor lowland, the heat and the damp of the tropics, the afternoon thunderstorms of the inter-monsoon months
+    comm: {
+      intro: ["Welcome to {track}! {laps} laps among the oil palms of Selangor, {cars} cars, and you start {grid}.", "Good afternoon from {track}, hot and humid as ever down here in the tropics. {laps} laps, and you line up {grid}.", "Here we are at {track}, between the palm estates and the airport. {cars} cars, {laps} laps, and you start {grid}."],
+      go: ["Lights out, and away they go into the heat!", "And they're off, down the wide main straight towards Turn 1!", "Green light! The pack charges down to the tightening right!"],
+      rain: ["And here comes the tropical rain! A thunderstorm over the palms, the track is soaking.", "The afternoon storm has arrived! Standing water on a slippery track.", "It's pouring down! Typical for the tropics: the clouds build up over the afternoon, and then the heavens open."],
+    },
     id: 'sepang', name: 'Sepang, Malezija', theme: 'sepang', laps: 2, halfWidth: 7.5,
     desc: "Dirkališče med nasadi oljnih palm južno od Kuala Lumpurja: 5,5 km v smeri urinega kazalca, 15 zavojev in 21 m višinske razlike. Široka ciljna ravnina med boksi in veliko tribuno, ki gleda na obe ravnini, zapirajoči se desni in leva lasnica, spust do hitrega desnega v dolini, vzpon do ostrega desnega na vrhu, hitri levi in desni in dvojni desni. Nato lasnica na dnu, vzpon do najvišje točke, hitri levi navzdol in desni na zadnjo ravnino, ki se vrne po drugi strani tribune do zadnje lasnice. Široke izletne cone s peskom, tropsko zelenje, tribune in boksi (zapelji vanje in mehaniki ti popravijo avto).",
     en: { name: 'Sepang, Malaysia', desc: "A circuit among the oil palm plantations south of Kuala Lumpur: 5.5 km, clockwise, 15 turns and 21 m of height difference. The wide main straight between the pits and the big grandstand that faces both straights, the tightening right and the left hairpin, the drop to the fast right in the valley, the climb to the sharp right at the top, the fast left and right and the double right. Then the hairpin at the bottom, the climb to the highest point, the fast left down the hill and the right onto the back straight, which runs back along the other side of the grandstand to the last hairpin. Wide gravel run-offs, tropical green, grandstands and the pits (drive in and the mechanics fix your car)." },
