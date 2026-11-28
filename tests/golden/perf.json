@@ -114,37 +114,37 @@
  "silkeborg": {
   "calls": 244,
   "maxCalls": 290,
-  "kverts": 660,
-  "maxKverts": 785,
-  "jsMs": 1.8
+  "kverts": 659,
+  "maxKverts": 784,
+  "jsMs": 1.48
  },
  "kagerod": {
-  "calls": 237,
-  "maxCalls": 279,
-  "kverts": 633,
-  "maxKverts": 730,
-  "jsMs": 1.8
+  "calls": 236,
+  "maxCalls": 262,
+  "kverts": 619,
+  "maxKverts": 693,
+  "jsMs": 1.01
  },
  "sosnova": {
   "calls": 204,
   "maxCalls": 249,
   "kverts": 654,
   "maxKverts": 829,
-  "jsMs": 0.82
+  "jsMs": 0.8
  },
  "izoard": {
-  "calls": 190,
-  "maxCalls": 232,
-  "kverts": 428,
-  "maxKverts": 543,
-  "jsMs": 1.2
+  "calls": 202,
+  "maxCalls": 241,
+  "kverts": 503,
+  "maxKverts": 633,
+  "jsMs": 1.27
  },
  "pembrey": {
   "calls": 225,
   "maxCalls": 251,
   "kverts": 633,
   "maxKverts": 806,
-  "jsMs": 1.05
+  "jsMs": 0.98
  },
  "kildare": {
   "calls": 227,
@@ -172,21 +172,21 @@
   "maxCalls": 243,
   "kverts": 471,
   "maxKverts": 563,
-  "jsMs": 1.22
+  "jsMs": 0.78
  },
  "zandvoort": {
   "calls": 212,
   "maxCalls": 253,
   "kverts": 700,
   "maxKverts": 885,
-  "jsMs": 1.09
+  "jsMs": 0.82
  },
  "furka": {
-  "calls": 173,
-  "maxCalls": 211,
-  "kverts": 384,
-  "maxKverts": 532,
-  "jsMs": 1.13
+  "calls": 188,
+  "maxCalls": 231,
+  "kverts": 479,
+  "maxKverts": 668,
+  "jsMs": 1.05
  },
  "santoantao": {
   "calls": 179,
@@ -249,14 +249,14 @@
   "maxCalls": 252,
   "kverts": 595,
   "maxKverts": 757,
-  "jsMs": 1.24
+  "jsMs": 0.76
  },
  "sepang": {
   "calls": 195,
   "maxCalls": 234,
   "kverts": 731,
   "maxKverts": 899,
-  "jsMs": 1.02
+  "jsMs": 0.89
  },
  "lombok": {
   "calls": 219,
@@ -270,28 +270,28 @@
   "maxCalls": 257,
   "kverts": 719,
   "maxKverts": 879,
-  "jsMs": 1.05
+  "jsMs": 0.71
  },
  "sakhir": {
   "calls": 209,
   "maxCalls": 236,
   "kverts": 741,
   "maxKverts": 860,
-  "jsMs": 1.3
+  "jsMs": 0.7
  },
  "lusail": {
   "calls": 182,
   "maxCalls": 241,
   "kverts": 593,
   "maxKverts": 896,
-  "jsMs": 1.1
+  "jsMs": 0.79
  },
  "riohondo": {
   "calls": 214,
   "maxCalls": 286,
   "kverts": 676,
   "maxKverts": 833,
-  "jsMs": 1.15
+  "jsMs": 0.8
  },
  "hakone": {
   "calls": 199,
@@ -403,7 +403,7 @@
   "maxCalls": 225,
   "kverts": 463,
   "maxKverts": 604,
-  "jsMs": 1.56
+  "jsMs": 0.68
  },
  "koli": {
   "calls": 181,
