@@ -14,7 +14,8 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 
 const real = C.TRACKS.filter(d => !d.test && !d.pending), byId = new Map(C.TRACKS.map(d => [d.id, d]));
 const P = K.pot(C.TRACKS, C.CATS);
-const onPath = new Set(P.pokali.flatMap(c => c.tracks)), inClass = new Set(P.razredi.flatMap(c => c.tracks));
+const onPath = new Set(P.pokali.concat(P.posamezne.filter(e => e.stopnja === 3 && e.kind === 'dirka')).flatMap(c => c.tracks)),   // (an ice track: stage 3's single race, in no cup)
+  inClass = new Set(P.razredi.flatMap(c => c.tracks));
 
 /* ---- the path: only the real tracks, every one of them ---- */
 check('every real track is on the path', real.every(d => onPath.has(d.id)), real.filter(d => !onPath.has(d.id)).map(d => d.id).join(', '));

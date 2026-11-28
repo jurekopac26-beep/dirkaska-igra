@@ -98,7 +98,7 @@
   // the continent of a track's country (the English name after the comma): the final's spread. A country not here: 'drugo'
   const CELINE = {
     evropa: ['Ireland', 'Czechia', 'Sweden', 'Wales', 'Denmark', 'Latvia', 'Netherlands', 'Belgium', 'Austria', 'Germany', 'Italy', 'Turkey', 'Romania', 'France', 'Spain',
-      'Montenegro', 'Switzerland', 'Georgia', 'Albania', 'Portugal', 'Finland', 'Slovenia', 'United Kingdom', 'England', 'Scotland', 'Monaco', 'Russia', 'Poland', 'Hungary', 'Norway'],
+      'Montenegro', 'Switzerland', 'Georgia', 'Albania', 'Portugal', 'Finland', 'Slovenia', 'United Kingdom', 'England', 'Scotland', 'Monaco', 'Russia', 'Poland', 'Hungary', 'Norway', 'Andorra'],
     azija: ['Uzbekistan', 'Indonesia', 'Thailand', 'Qatar', 'Bahrain', 'Malaysia', 'Japan', 'China', 'Kazakhstan', 'Sri Lanka', 'South Korea', 'India', 'Bhutan', 'Philippines', 'Vietnam', 'Oman', 'Tajikistan'],
     afrika: ['South Africa', 'Tanzania', 'Angola', 'Algeria', 'Kenya', 'Madagascar', 'Tunisia', 'Uganda', 'Cape Verde', 'Morocco', 'Namibia'],
     sever: ['USA', 'Canada', 'Mexico', 'El Salvador', 'Costa Rica', 'Panama', 'Saint Lucia'],
@@ -130,9 +130,12 @@
   const drzava = (d) => { const s = (d.en && d.en.name) || d.name || ''; const i = s.lastIndexOf(','); return i < 0 ? '' : s.slice(i + 1).trim(); };
   const celina = (d) => { const c = drzava(d); for (const k in CELINE) if (CELINE[k].includes(c)) return k; return 'drugo'; };
   const makadam = (d) => d.roadSurface === 'makadam' || (Array.isArray(d.surf) && d.surf.some(s => s && s[2] === 'makadam'));
-  // the stage of a track's own cup (Legends, long and time trials: stage 4)
+  // an ice track (def.ice: Envalira): in no cup, a single race of stage 3 (the decision kariera-envalira-791, option 1)
+  const led = (d) => !!d.ice;
+  // the stage of a track's own cup (Legends, long and time trials: stage 4; an ice track: stage 3, its single race)
   function stopnjaProge(d) {
     if (LEGENDE.includes(d.id)) return 4;
+    if (led(d)) return 3;
     const v = vrsta(d), L = km(d);
     if (v === 'tt' || L >= DOLGA) return 4;
     const m = MEJE[v];
@@ -176,7 +179,7 @@
     const dodaj = (o) => { o.tracks = o.tracks.slice(); o.km = Math.round(o.tracks.reduce((s, id) => s + L.get(id) * Math.max(1, o.laps || byId.get(id).laps || 1), 0) * 10) / 10; pokali.push(o); };   // (km: a cup's own laps first, the long tracks' one)
     const S = (n) => STOPNJE[n - 1];
     for (let s = 1; s <= 3; s++) for (const v of ['krog', 'cesta']) {
-      const ids = sort(T.filter(d => !LEGENDE.includes(d.id) && vrsta(d) === v && stopnjaProge(d) === s).map(d => d.id)), parts = razdeli(ids);
+      const ids = sort(T.filter(d => !LEGENDE.includes(d.id) && !led(d) && vrsta(d) === v && stopnjaProge(d) === s).map(d => d.id)), parts = razdeli(ids);
       parts.forEach((p, i) => {
         const r = parts.length > 1 ? rimske[i + 1] : '';
         dodaj({ id: 's' + s + '-' + v + (parts.length > 1 ? '-' + (i + 1) : ''), stopnja: s, vrsta: v, diff: S(s).diff, tracks: p,
@@ -215,22 +218,27 @@
     STOPNJE.forEach((st, si) => {
       const s = st.n, cups = pokali.filter(p => p.stopnja === s), cls = razredi.filter(r => r.stopnja === s);
       const need = Math.max(VRSTE_POS.length, VELIKOST[si] - cups.length - cls.length);   // (proge3-kariera: room for a race, a time trial and a duel; a stage with more cups grows)
-      const pool = sort(T.filter(d => s <= 4 ? stopnjaProge(d) === s : stopnjaProge(d) >= 3 && !fin.includes(d.id)).map(d => d.id)), used = new Set(), mine = [];
-      for (let k = 0; k < need && used.size < pool.length; k++) {
-        const want = Math.min(pool.length - 1, Math.floor(pool.length * (k + 0.5) / need));
-        const near = (ok) => { let b = -1; pool.forEach((id, i) => { if (!used.has(id) && ok(byId.get(id)) && (b < 0 || Math.abs(i - want) < Math.abs(b - want))) b = i; }); return b; };
-        const pick = (ok) => { const i = near(d => ok(d) && !prej.has(d.id)); return i >= 0 ? i : near(ok); };
-        let kind = VRSTE_POS[k % VRSTE_POS.length], i = pick(kind === 'kronometer' ? canTT : canRace);
-        if (i < 0 && kind === 'kronometer') { kind = 'dirka'; i = pick(canRace); }
-        if (i < 0) break;
-        const id = pool[i], d = byId.get(id), nm = POS_IME[kind];
-        used.add(id);
+      const pool = sort(T.filter(d => !led(d) && (s <= 4 ? stopnjaProge(d) === s : stopnjaProge(d) >= 3 && !fin.includes(d.id))).map(d => d.id)), used = new Set(), mine = [];
+      const ledene = s === 3 ? sort(T.filter(d => led(d) && canRace(d) && !fin.includes(d.id)).map(d => d.id)) : [];   // (an ice track: stage 3's single race, first of its events)
+      const posamezna = (id, kind) => {
+        const d = byId.get(id), nm = POS_IME[kind];
         const e = { id: 'e' + s + '-' + kind + '-' + id, stopnja: s, kind, vrsta: kind === 'kronometer' ? 'tt' : vrsta(d) === 'tt' ? 'cesta' : vrsta(d), diff: st.diff, tracks: [id],
           name: nm[0] + ' · ' + kraj(d.name), en: { name: nm[1] + ' · ' + kraj((d.en && d.en.name) || d.name) } };
         if (L.get(id) >= DOLGA) e.laps = 1;
         if (kind === 'dvoboj') e.n = 1;
         e.km = Math.round(L.get(id) * Math.max(1, e.laps || d.laps || 1) * 10) / 10;
         mine.push(e);
+      };
+      ledene.slice(0, need).forEach(id => posamezna(id, 'dirka'));
+      for (let k = mine.length; k < need && used.size < pool.length; k++) {
+        const want = Math.min(pool.length - 1, Math.floor(pool.length * (k + 0.5) / need));
+        const near = (ok) => { let b = -1; pool.forEach((id, i) => { if (!used.has(id) && ok(byId.get(id)) && (b < 0 || Math.abs(i - want) < Math.abs(b - want))) b = i; }); return b; };
+        const pick = (ok) => { const i = near(d => ok(d) && !prej.has(d.id)); return i >= 0 ? i : near(ok); };
+        let kind = VRSTE_POS[k % VRSTE_POS.length], i = pick(kind === 'kronometer' ? canTT : canRace);
+        if (i < 0 && kind === 'kronometer') { kind = 'dirka'; i = pick(canRace); }
+        if (i < 0) break;
+        used.add(pool[i]);
+        posamezna(pool[i], kind);
       }
       // the stage's order (the valley's road): a single event, a cup, … in turn, the class cups last
       const dog = [], a = mine.slice(), b = cups.slice();
@@ -248,7 +256,7 @@
   }
   // the final (kariera-7, option 1): circuits shorter than DOLGA, one continent after another (the longest of each first), FINALE_N of them
   function finale(T, L) {
-    const kr = T.filter(d => vrsta(d) === 'krog' && L.get(d.id) < DOLGA), po = {};
+    const kr = T.filter(d => vrsta(d) === 'krog' && !led(d) && L.get(d.id) < DOLGA), po = {};   // (an ice track: none of the final's)
     for (const d of kr) (po[celina(d)] = po[celina(d)] || []).push(d.id);
     for (const k in po) po[k].sort((a, b) => L.get(b) - L.get(a) || (a < b ? -1 : 1));
     const out = [];
@@ -327,7 +335,8 @@
   /* ---- the rewards. Each function gives { career: the new career, nagrade: [{ id, name, en, amount }] }: the game pays the amounts (its
      careerPay, so the earnings and the garage's wallet follow) and saves the career. Pure ---- */
   const cupOf = (P, id) => P.vse.find(c => c.id === id) || null;
-  const stopnjaOf = (P, trackId) => { const c = P.pokali.find(x => x.tracks.includes(trackId) && x.stopnja >= 1); return c ? c.stopnja : 0; };
+  // (an ice track, in no cup: the stage of its single race)
+  const stopnjaOf = (P, trackId) => { const c = P.pokali.find(x => x.tracks.includes(trackId) && x.stopnja >= 1) || (P.posamezne || []).find(x => x.tracks.includes(trackId) && x.stopnja >= 1); return c ? c.stopnja : 0; };
   // the end of an event (a cup's final standings; a single event's place; a time trial's medal: gold 1, silver 2, bronze 3, none 4): the
   // player's place. More stars than before pay the difference of the coins; the stage that opens with them its gift. Also: zvezdice { prej,
   // zdaj } and stopnja { prej, zdaj } (the menu's result screen)
