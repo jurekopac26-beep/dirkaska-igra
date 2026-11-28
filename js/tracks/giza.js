@@ -17,7 +17,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xe8dcc2, sun: 0xfff2d6, sunI: 1.32, sky: 0xa9c6df, gnd: 0xb09268, hemiI: 0.62, tint: [1.06, 1.0, 0.92], sat: 1.0, sunOff: [-60, 80, 50], split: [[0.97, 1.0, 1.05], [1.06, 1.0, 0.92]] },   // Giza: a clear dry afternoon over the desert, a pale dusty haze, the sun in the south-west
     say: 'Giza',
-    zivali: { a: ['camel', 'donkey'], city: true },
+    zivali: { a: ['camel', 'donkey'], t: [], city: true },
     id: 'giza', name: 'Giza, Egipt', theme: 'giza', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~150 m of road past the line, two rows a side
     halfWidth: 4.8,
