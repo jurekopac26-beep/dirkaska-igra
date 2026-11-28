@@ -15,3 +15,24 @@ Dirkališče v ravni obalni puščavi severno od Dohe pri novem mestu Lusail, v 
 - **Obremenitev:** do ~240 klicev risanja in ~850 tisoč oglišč v najbolj obremenjenem trenutku (`tests/golden/perf.json`); palme dlje od 70 m so preprostejše in brez senc.
 - **Viri:** © OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021, višina krošenj Meta in WRI (glej »Zasluge« v `README.md`). Orodja: `tools/proga-podatki.py` (nastavitve `tools/lusail/config.json`), `tools/lusail/zelenje.py` (trate, pesek, parkirišča in palme iz OSM) in `tools/lusail/build.py`.
 - **Test:** `tests/lusail.test.js` (ime, dolžina, smer in zavitost, ovinki po vrsti in smeri, višine in strmine, boksi, izletne cone, tribune, stavba za boksi, servisne ceste, palme, imena, dirka v suhem in v dežju).
+
+## Raziskava kraja (dodelava, 28. 11. 2026)
+
+Samo javni viri (OSM, Copernicus DEM, ESA WorldCover, javni opisi); imen dirkališča, oseb, podjetij in prireditev ni.
+
+- **Lega:** vzhodna obala polotoka Katar, ~20 km severno od središča Dohe, zahodno od novega mesta Lusail, v občini Al Daayen; morje (Perzijski zaliv) ~3 km vzhodno (OSM). Teren je skoraj raven: 10–14 m nad morjem okoli kroga (Copernicus GLO-30), na obzorju ni hribov, samo obrisi mest ob morju.
+- **Podnebje:** vroča puščava (Köppen BWh). Povprečno ~80 mm dežja na leto, skoraj ves od novembra do marca v redkih nalivih; poleti čez dan pogosto nad 40 °C in soparno ob obali, pozimi ~15–25 °C. Snega ni, megla in prašni veter (sever-severozahodnik) občasno. V igri: dež redek (`rainP: 0.04`), brez snega, svetla prašna meglica.
+- **Kamnina in tla:** nizka apnenčasta planota (eocenske plasti apnenca in dolomita); površje je prodnata ravnina iz drobirja apnenca (»hazm«), vmes lise peska in plitve kotanje (»rawdat«), ob obali slane ravnice (sabka). V igri: siva prodnata ravnina in svetlejše lise peska (ESA WorldCover, OSM `natural=sand`).
+- **Rastje:** naravno zelo redko: posamične akacije (*Acacia tortilis*), trnasti grmi (*Ziziphus nummularia*, *Lycium shawii*) in nizko sivo grmičevje, gosteje samo v kotanjah. Ob dirkališču posajene datljeve palme in urejeni vrtovi (OSM). Ob sami progi je **umetna trava**: položena je, da veter ne nanaša peska iz puščave na asfalt (javni opisi dirkališča).
+- **Gradnja ob cesti:** dolga stavba boksov s stekleno fasado, glavna tribuna s streho, manjše tribune, TV stolpi, servisne ceste, karting steza in parkirišča (OSM). Dirkališče ima stalno razsvetljavo za nočne dirke (od 2008; javni opisi), zato so po vsem krogu drogovi z lučmi.
+- **Znamenitosti do 60 m:** 16 ovinkov in ciljna ravnina (opisna imena v `names[]`, vsak s tremi vrsticami komentatorja), glavna tribuna z velikim zaslonom, stavba boksov, tribuna ob severnem koncu (pred 4. ovinkom), karting steza in prazna tribuna ob zadnjem delu kroga (OSM).
+- **Živali:** v odprti puščavi okoli Lusaila so farme kamel (javni opisi Katarja); v igri redke kamele zunaj ograj.
+- **Dolžina:** 5,419 km od 2023 (prej 5,380 km), 16 ovinkov, odprto 2004 (javni opisi).
+
+**Viri:** © OpenStreetMap contributors (ODbL 1.0); Copernicus DEM GLO-30; ESA WorldCover 2021 (CC BY 4.0); [Geography of Qatar](https://en.wikipedia.org/wiki/Geography_of_Qatar) (Wikipedia, CC BY-SA 4.0: podnebje, kamnina, rastje); [enature.qa, Rawdat](https://www.enature.qa/ecosystem/rawdat-and-sinkhole-caves/) (rastje kotanj); [Lusail International Circuit](https://en.wikipedia.org/wiki/Lusail_International_Circuit) (Wikipedia, CC BY-SA 4.0: dolžina, umetna trava, razsvetljava; ime samo kot vir, v igri ga ni).
+
+### Vrzel do merila Pikes Peaka in kaj je narejeno
+
+- **Komentator (točka 9):** proga ni imela lastnih vrstic za uvod in štart dirke. Dodano `comm.intro` in `comm.go` (puščava, luči, ciljna ravnina); `js/game.js` jih uporabi za vsako dirkališče, ki jih ima (drugim se nič ne spremeni).
+- **Opis (točka 12):** umetna trava ob progi namesto »zalitih trat«, podnebje, kamnina in rastje v tem razdelku.
+- **Ne spremenjeno:** svetloba in nočna luč (po resetu Fable), senčilniki, fizika vožnje. Oglišča so z odprtim #1153 že ~898 tisoč (meja ~900 tisoč), zato nove geometrije ob cesti ni; tla ob cesti so v #1153 (tretji prehod chase, ne podvajam).
