@@ -19,10 +19,14 @@ Imen podjetij, lokalov in oseb ni. Uporabljena so samo zemljepisna imena (Koli, 
 
 ## Kaj nariše lastni graditelj (`js/world-koli.js`)
 
-- **Kvarcit:** svetle skrilaste plošče, nagnjene v plasteh, s tanko snežno kapo. Na grebenu Ukko-Kolija nad ciljem in na razgledišču so na gosto. Ob zgornjem delu ceste (strma pobočja, kamnina) so do ~60 m od asfalta.
-- **Tykky:** visoke smreke pod debelim snegom, beli stebri z malo zelenja. Rastejo nad ~270 m (vas, greben in vrh). Nižje rastejo navadne zasnežene smreke.
-- **Tajga:** gozd je gostejši, smreka prevladuje pred borom (2 : 1), drevesa so višja (9–20 m).
-- **Breze:** gola bela debla s temnimi lisami in tankimi vejami, v skupinah ob robu gozda, ob spodnjem delu ceste.
-- **Vas Ylä-Koli:** stene v finski rdeči in rumeni okri, sivi in temni pločevinasti strehi.
+- **Kvarcit:** sive skrilaste plošče v nagnjenih plasteh, s snežno kapo, kadar so položne. Na grebenu Ukko-Kolija nad ciljem in na razgledišču so na gosto. Ob zgornji polovici ceste so 9–60 m od asfalta, bliže manjše.
+- **Tykky:** visoke smreke pod debelim snegom in ivjem, beli stebri z malo zelenja. Rastejo nad ~270 m (vas, greben, vrh), največ 110, najprej 7–45 m od ceste, da se vidijo iz kamere za avtom. Nižje rastejo navadne zasnežene smreke.
+- **Tajga:** smreka in bor 1 : 1, gozd 0,4, drevesa visoka 9–19 m, k temu še tykky.
+- **Breze:** gola bela debla s temnimi lisami in gosto temno krošnjo vej, v skupinah ob robu gozda ob spodnjem delu ceste.
+- **Vas Ylä-Koli:** stene v finski rdeči in rumeni okri, sive in temne pločevinaste strehe.
+- **Tla ob cesti:** `S.extra` kliče `World.ext.goreRob(ctx, 'koli')`. Tako se za Koli prvič vključita že pripravljena paketa `js/world-chase-bt19.js` (bilke, smrečice) in `js/world-chase-bt52.js` (zgrnjen sneg, kamni). Na `main` jih Koli ni klical, ker ni imel `S.extra`. Paketov ne spreminjam.
+- **Komentator** (`js/tracks/koli.js`): kraji Ylä-Kolintie, Ukko-Koli, Serpentina 1, Ylä-Koli; uvod in cilj omenjata Severno Karelijo in razgled na Pielinen.
 
-Mejne vrednosti: brez spremembe fizike vožnje, risanje v mejah `tests/golden/perf.json` (`tools/obremenitev.mjs koli`). Vse je zlito v kose scenerije in ne dodaja klicev risanja na predmet.
+Slike (kamera za avtom, pred / po): `docs/slike/koli/dodelava-{pred,po}-{300,1100,1500,1750}m.webp`.
+
+Mejne vrednosti: fizika vožnje se ne spremeni. Risanje ostane v mejah `tests/golden/perf.json`: telefon 183 klicev in 683 tisoč oglišč (meji 293 in 807 tisoč), `tools/obremenitev.mjs koli` največ 285 klicev in 806 tisoč oglišč. Vse je zlito v kose scenerije in ne dodaja klicev risanja na predmet.

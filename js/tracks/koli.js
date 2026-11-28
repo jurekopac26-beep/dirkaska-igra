@@ -21,19 +21,23 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xccdce0, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0xd8dee6, hemiI: 0.7, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [
-      {"n":"Serpentina 1","d":1726,"say":["Into the hairpin!"]},
-      {"n":"Serpentina 2","d":1986},
+      // (docs/proge/koli-dodelava.md: only the places' own names; d from the start line, the hairpins where the import put them)
+      { n: 'Ylä-Kolintie', d: 40, say: ['Up the Ylä-Kolintie, into the snowy forest!', 'The Ylä-Kolintie climbs away through the spruces!', 'Into the taiga, snow on every branch!'] },
+      { n: 'Ukko-Koli', d: 1440, say: ['Under Ukko-Koli now, the spruces bent white with snow!', 'Up onto the hill of Koli, bare quartzite under the snow!', 'Long left below Ukko-Koli, the trees heavy with rime!'] },
+      { n: 'Serpentina 1', d: 1726, say: ['Into the hairpin!', 'The tight right-hander, hard on the brakes on the packed snow!', 'Round the hairpin, the village just above!'] },
+      { n: 'Ylä-Koli', d: 1880, say: ['Into Ylä-Koli, the finish is in sight!', 'Past the wooden houses of Ylä-Koli, nearly there!', 'Ylä-Koli, the top of the hill, one more push!'] },
+      { n: 'Serpentina 2', d: 1986 },
     ],
     comm: {
-      introPass: ["Welcome to {track}! {cars} cars on a short, twisting road, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
-      goPass: ["And away they go!", "They're off! Every bend counts on a road this short!", "The race is on!"],
-      introPassTT: ["Welcome to {track}! Just you and the clock.", "Here we are at {track}. {cps} checkpoints between you and the finish."],
+      introPass: ["Welcome to {track}! {cars} cars on a short, twisting road, and you start {grid}.", "Welcome to {track}, deep in the snowy forest of North Karelia! {cars} cars, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
+      goPass: ["And away they go!", "And they're off, up the hill of Koli!", "They're off! Every bend counts on a road this short!", "The race is on!"],
+      introPassTT: ["Welcome to {track}! Just you and the clock.", "Welcome to {track}. Up through the snowy taiga to Ylä-Koli, just you and the clock.", "Here we are at {track}. {cps} checkpoints between you and the finish."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack every bend!"],
       introTraffic: ["Welcome to {track}, and the road is open today. Just you and {rival}, first to the finish wins!"],
       introPolice: ["Welcome to {track}! The police are right behind you. Get to the finish without getting caught!"],
       escaped: ["You made it! The police will have to wait for another day!", "Escaped!"],
-      summitRecord: ["At the finish! A new personal best, {time}!"], summitEven: ["{time} at the finish, dead level with your best!"],
-      summit: ["At the finish in {time}, {delta} seconds off your best."],
+      summitRecord: ["At the finish! A new personal best, {time}!", "Up at Ylä-Koli in {time}, a new personal best! Lake Pielinen far below!"], summitEven: ["{time} at the finish, dead level with your best!"],
+      summit: ["At the finish in {time}, {delta} seconds off your best.", "Ylä-Koli in {time}, {delta} seconds off your best. Take in the view over Lake Pielinen!"],
     },
     // ---- uvoz: začetek (tools/proga-uvoz.mjs: ne urejaj ročno; izhodišče 63.101285, 29.784938)
     realKm: 1.99, alt: [159,306],
