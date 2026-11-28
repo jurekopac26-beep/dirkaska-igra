@@ -19,7 +19,35 @@ window.DIO = (function () {
     const sc = new THREE.Scene();
     const tex = Tex.all(1);
     const w = World.build(sc, T, tex, { density: 1 });
+    if (w && w.forceSeason === 'winter') snowOver(w, tex);   // (a world under snow all year, e.g. Envalira: as the game's render paints it)
     return { def, T, sc, w, tex };
+  }
+  // a world whose own look is winter (world.forceSeason; js/render.js seasonWorld): the grass pictures under snow (white, the world's own
+  // colours give the shading; also the brown and olive ground: earth and scree under snow), the road's materials left alone
+  function snowOver(w, tex) {
+    const roads = new Set([tex.asphalt, tex.curb, tex.paving].filter(Boolean)), tone = new Map();
+    const grassy = (t) => {
+      if (!t || !t.image) return false; if (tone.has(t)) return tone.get(t);
+      let g = false; try { const c = document.createElement('canvas'); c.width = c.height = 4; const x = c.getContext('2d'); x.drawImage(t.image, 0, 0, 4, 4); const d = x.getImageData(0, 0, 4, 4).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } g = gg > b * 1.2 || r > b * 1.2; } catch (e) { g = false; }
+      tone.set(t, g); return g;
+    };
+    (w.root || w.group || { traverse() {} }).traverse(o => {
+      for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
+        if (!m.color || !m.map || roads.has(m.map) || !grassy(m.map)) continue;
+        m.map = null; m.color.setRGB(0.97, 0.98, 1); m.needsUpdate = true;
+      }
+      const g = o.geometry, a = g && g.attributes && g.attributes.color;   // (the colours of the world's meshes: plants, soil and grey rock take
+      if (!a || a.noSeason || a.dbSnow) return;                           // the snow as render.js seasonCol does in winter, more where they face up)
+      a.dbSnow = 1; const N = g.attributes.normal, d = a.array, is = a.itemSize, c = new THREE.Color(), hsl = {};
+      for (let i = 0, v = 0; i < d.length; i += is, v++) {
+        c.setRGB(d[i], d[i + 1], d[i + 2]); c.getHSL(hsl); const { h, s, l } = hsl, ground = !!N && N.array[v * 3 + 1] > 0.8;
+        const plant = h > 0.14 && h < 0.47 && s > 0.1 && l > 0.04, soil = h > 0.04 && h <= 0.14 && s > 0.12 && l > 0.08 && l < 0.7;
+        if (!plant && !soil && !(s < 0.12 && l > 0.25 && l < 0.8)) continue;
+        const k = ground ? (plant || soil ? 0.88 : 0.5) : plant ? 0.4 : soil ? 0.6 : 0.3;
+        d[i] += (0.92 - d[i]) * k; d[i + 1] += (0.95 - d[i + 1]) * k; d[i + 2] += (0.99 - d[i + 2]) * k;
+      }
+      a.needsUpdate = true;
+    });
   }
   function probe(id) {
     const { T, sc, w } = buildWorld(id);
