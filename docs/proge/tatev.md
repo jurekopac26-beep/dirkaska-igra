@@ -26,3 +26,22 @@ Okolica (skupni graditelj kratkih prog `buildKratke` v `js/world-kratke.js`, slo
 - **Približki**: drevesa, grmičevje in skale so razporejeni po rabi tal in naklonu, ne po resničnih legah; svetišče, kavarna in hiše so generični. Topli izvir in skalni most nimata svojih modelov (samo imeni v HUD in tabli).
 
 Podatke proge pripravita `tools/proga-podatki.py` (nastavitve v `tools/tatev/config.json`) in `tools/kratke/build.py` (`python3 -I tools/kratke/build.py tatev --osm <surovi OSM>`). Vire glej v `README.md` pod »Zasluge«. Test: `node tests/tatev.test.js`.
+
+## Dodelava 28. 11. 2026: zanimivosti do 60 m (OSM, ODbL)
+
+Iz izvleska OSM (bbox 46.240, 39.383 – 46.270, 39.402), preračunano na točke proge (`d` = metri za startom, razdalja od osi ceste):
+
+| Kraj (HUD) | d | od ceste | Opomba |
+|---|---|---|---|
+| Ruševine Cakuta | ~2060 | 59–60 m, levo | opuščena vas Cakut, ruševine in bogoslužni prostor |
+| Reka Vorotan | ~2465 | ob cesti | dno soteske |
+| Hudičev most · 1.013 m | ~2548 | 9 m | naravni skalni most, reka teče pod cesto; parkirišče ob 2549 |
+| (vhod v jamo pod mostom) | ~2235 | 53 m | za kulise |
+| (bazeni toplega izvira) | ~2230 | 67 m | tik izven 60 m; za kulise |
+| Topli izvir | 2674 | 22 m | izvir ob cesti |
+| Grapa | 4121 | 55 m, levo | grapa v pobočju |
+| Studenec | 4376 | 8 m | pitna voda ob cesti |
+| Drevored | 5325 | 8 m, levo | vrsta dreves (še ena pri ~2718, 11 m) |
+
+Izven 60 m: samostan (cilj je pod njim) in žičnica (≥ 576 m; njeno ime v OSM je blagovna znamka, zato brez imena).
+Lokal ob 2155 (7 m) je podjetje: brez imena. Vira: OpenStreetMap (ODbL), Copernicus DEM GLO-90 (oba že v README, »Zasluge«).
