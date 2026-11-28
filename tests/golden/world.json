@@ -643,16 +643,16 @@
   }
  },
  "kotor": {
-  "meshes": 985,
-  "verts": 899159,
+  "meshes": 996,
+  "verts": 903155,
   "instances": 15415,
   "props": 79,
   "crowd": 125,
-  "world": "2245ad03",
+  "world": "7b7fa2aa",
   "propsHash": "67c890c8",
   "floor": "c3122f3f/10696",
   "groups": {
-   "-:MeshLambertMaterial": "9713f882",
+   "-:MeshLambertMaterial": "3d9f3664",
    "-:MeshPhongMaterial": "b9364527",
    "-:MeshBasicMaterial": "674336a7",
    "rob:MeshLambertMaterial": "87c6e9e9",
@@ -660,7 +660,10 @@
    "crowd:MeshLambertMaterial": "e78ee90f",
    "ao:MeshBasicMaterial": "836866b6",
    "tyremarks:MeshBasicMaterial": "5d9ae004",
-   "roadwear:MeshLambertMaterial": "206e9f05"
+   "roadwear:MeshLambertMaterial": "206e9f05",
+   "life:MeshLambertMaterial": "cf7a5457",
+   "lifeShadow:MeshBasicMaterial": "d36a694",
+   "life:MeshBasicMaterial": "e2953fe6"
   }
  },
  "bikernieki": {
