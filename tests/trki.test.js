@@ -914,8 +914,9 @@ for (const tid of ['spa', 'bathurst']) {
     const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 99, playerModel: C.MODELS.find(m => m.id === 'rally'), assist: 2, phys: 'cs', seed: 9, difficulty: 1, damage: 2, endless: true }); r.start();
     const P = r.player, tf = r.tf; tf.win.dens = 0; for (const q of tf.veh) q.off = true;
     const v = tf._veh(1, o.p === 5 ? 2 : o.p, P.q.s + 60, o.p); v.off = true; tf._winPlace(v, P.q.s + 60, 0); v.v = o.vt || 0; tf._pose(v, 0); tf._pose(v, 0);
-    const hx = Math.cos(v.h), hz = Math.sin(v.h), h = v.h + (o.bok || 0) / D, off = o.off || 0;
+    const hx = Math.cos(v.h), hz = Math.sin(v.h), h = v.h + (o.bok || o.kot || 0) / D, off = o.off || 0;
     if (o.bok) { const side = -(v.wid / 2 + P.m.wid / 2 - 0.05); P.x = v.x - hx * (v.len / 2 - 3) - hz * side; P.z = v.z - hz * (v.len / 2 - 3) + hx * side; }   // (its nose into the flank, 3 m ahead of the tail)
+    else if (o.kot) { const ux = Math.cos(h), uz = Math.sin(h), kr = o.kot / D, dist = P.m.len / 2 + Math.abs(Math.cos(kr)) * v.len / 2 + Math.abs(Math.sin(kr)) * v.wid / 2 - (o.gl || 0.05); P.x = v.x - ux * dist - uz * off; P.z = v.z - uz * dist + ux * off; }   // (its nose into the vehicle at kot degrees to its heading: 90 into the flank, 180 head-on; 5 cm in or gl m, off across the car's heading)
     else { const back = v.len / 2 + P.m.len / 2 - 0.05; P.x = v.x - hx * back - hz * off; P.z = v.z - hz * back + hx * off; }   // (from behind, 5 cm in)
     P.px = P.x; P.pz = P.z; P.h = P.ph = h; P.vx = Math.cos(h) * o.v; P.vz = Math.sin(h) * o.v; P.w = o.w || 0; P.net = !!o.net;
     const ma = P.m.mass + (P.fuelKg || 0), mb = v.mass, Ia = P.I * ma / P.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
@@ -925,6 +926,7 @@ for (const tid of ['spa', 'bathurst']) {
     const Ew = v.st === 1 ? 0.5 * Ib * v.w * v.w : 0, E1 = 0.5 * ma * (P.vx * P.vx + P.vz * P.vz) + 0.5 * Ia * P.w * P.w + 0.5 * mb * (b1[0] * b1[0] + b1[1] * b1[1]) + Ew;   // (Ew: the fallen bicycle's own spin)
     return { st: v.st, dp: Math.hypot(dpx, dpz) / p0, dpl: (dpx * hx + dpz * hz) / p0, dE: (E1 - E0) / E0, vc: Math.hypot(P.vx, P.vz), vcl: P.vx * hx + P.vz * hz, vb: b1[0] * hx + b1[1] * hz, vbn: Math.hypot(b1[0], b1[1]), vv: v.v, w: P.w, kc: P.csKc || 0,
       dEk: (E1 - Ew - E0 + 0.5 * mb * (b0[0] * b0[0] + b0[1] * b0[1] - k0x * k0x - k0z * k0z)) / E0, dpk: Math.hypot(dpx + mb * (b0[0] - k0x), dpz + mb * (b0[1] - k0z)) / p0, dvc: Math.hypot(P.vx - c0x, P.vz - c0z), dvb: Math.hypot(b1[0] - k0x, b1[1] - k0z),   // (a cyclist, by the velocity the bicycle holds itself, the one _runBikeR reads: k0)
+      wb: v.w || 0, dEs: (E1 - E0 + 0.5 * mb * (b0[0] * b0[0] + b0[1] * b0[1] - k0x * k0x - k0z * k0z)) / E0,   // (the fallen bicycle's own spin, and the energy by k0 with that spin counted: fizika-6, 28. 11.)
       R: tf.R(), ev: tf.evK, dmg: P.dmg, hitCar: P.hitCar, wh: tf.win.hit, ma, mb, nan: !Number.isFinite(P.vx + P.vz + P.w + P.x + P.z + v.x + v.z + v.s + v.d + v.v + (v.vx || 0) + (v.vz || 0) + (v.w || 0)) };
   } finally { Math.random = orig; } });
   const V = 120 / 3.6, NAME = ['avto', 'kombi', 'avtobus', 'motor', 'kolo', 'tovornjak'];
@@ -956,15 +958,27 @@ for (const tid of ['spa', 'bathurst']) {
   // a cyclist run over, the touch not closing (the car slower than the bicycle ahead): nothing to the car, the bicycle keeps its velocity (fizika-6)
   { const rows = []; let okAll = true;
     for (const [v, vt, off] of [[3, 8, 0], [20 / 3.6, 30 / 3.6, 0.4], [40 / 3.6, 45 / 3.6, -0.3]]) { const q = hit(REAL, { p: 4, v, vt, off }), o = hit(SIM, { p: 4, v, vt, off });
-      const good = !q.nan && q.st === 1 && q.dvc === 0 && q.w === 0 && q.dvb === 0 && q.ev === 'bike' && o.ev === 'bike' && q.R === o.R && q.dmg === o.dmg && q.wh === 1; if (!good) okAll = false;
-      rows.push(`${f(v * 3.6, 0)} km/h behind ${f(vt * 3.6, 0)} km/h, ${off}: the car ${q.dvc.toExponential(1)} m/s, ${q.w.toExponential(1)} rad/s, the bicycle ${q.dvb.toExponential(1)} m/s`); }
-    ok('Realistična, the traffic: a cyclist run over, the touch not closing (the car slower than the bicycle ahead): the car keeps its velocity and turn and the bicycle its velocity to the last bit, the rider falls; the same event, damage and count of the traffic\'s random numbers as cv 1', okAll, rows.join('; ')); }
+      const good = !q.nan && q.st === 1 && q.dvc === 0 && q.w === 0 && q.dvb === 0 && q.wb === 0 && q.ev === 'bike' && o.ev === 'bike' && q.R === o.R && q.dmg === o.dmg && q.wh === 1; if (!good) okAll = false;
+      rows.push(`${f(v * 3.6, 0)} km/h behind ${f(vt * 3.6, 0)} km/h, ${off}: the car ${q.dvc.toExponential(1)} m/s, ${q.w.toExponential(1)} rad/s, the bicycle ${q.dvb.toExponential(1)} m/s, its spin ${q.wb} rad/s`); }
+    ok('Realistična, the traffic: a cyclist run over, the touch not closing (the car slower than the bicycle ahead): the car keeps its velocity and turn and the bicycle its velocity to the last bit, the fallen bicycle takes no spin of its own, the rider falls; the same event, damage and count of the traffic\'s random numbers as cv 1', okAll, rows.join('; ')); }
   // a cyclist caught up slowly (the throw aside is worth more than the touch loses): the two gain no energy, the momentum kept (fizika-6)
   { const rows = []; let okAll = true;
     for (const [v, vt] of [[35 / 3.6, 30 / 3.6], [28 / 3.6, 25 / 3.6], [60 / 3.6, 30 / 3.6]]) for (const w of [0, 3, -3]) for (const off of [0, 0.4]) { const q = hit(REAL, { p: 4, v, vt, w, off });
-      const good = !q.nan && q.st === 1 && q.dpk < 1e-9 && q.dEk < 1e-9 && q.ev === 'bike' && q.wh === 1; if (!good) okAll = false;
-      rows.push(`${f(v * 3.6, 0)}/${f(vt * 3.6, 0)} km/h, ${w} rad/s, ${off}: dE ${q.dEk.toExponential(2)}, dp ${q.dpk.toExponential(1)}, the bicycle +${f(q.dvb)} m/s`); }
-    ok('Realistična, the traffic: a cyclist caught up slowly, the car straight or turning (3 rad/s either way): the two gain no energy (1e-9 of it; the fallen bicycle\'s own spin not counted), the pair keeps its momentum (1e-9)', okAll, rows.join('; ')); }
+      const good = !q.nan && q.st === 1 && q.dpk < 1e-9 && q.dEs < 1e-9 && q.ev === 'bike' && q.wh === 1; if (!good) okAll = false;
+      rows.push(`${f(v * 3.6, 0)}/${f(vt * 3.6, 0)} km/h, ${w} rad/s, ${off}: dE ${q.dEs.toExponential(2)}, dp ${q.dpk.toExponential(1)}, the bicycle +${f(q.dvb)} m/s, ${f(q.wb)} rad/s`); }
+    ok('Realistična, the traffic: a cyclist caught up slowly, the car straight or turning (3 rad/s either way): the two gain no energy (1e-9 of it; the fallen bicycle\'s own spin counted), the pair keeps its momentum (1e-9)', okAll, rows.join('; ')); }
+  // a cyclist run over, the fallen bicycle's own spin (fizika-6, 28. 11.): by where the push takes it, counted in the two's energy, from every side
+  { const rows = []; let okAll = true;
+    for (const [kot, off] of [[0, 0.4], [90, 0.5], [90, -0.5], [180, 0.4], [45, 0.3], [135, 0.3]]) for (const v of [20 / 3.6, 60 / 3.6, 200 / 3.6]) for (const vt of [0, 20 / 3.6]) {
+      const gl = kot % 90 ? 0.3 : 0, a = hit(REAL, { p: 4, v, vt, off, kot, gl }), b = hit(REAL, { p: 4, v, vt, off: -off, kot: -kot, gl }), o = hit(SIM, { p: 4, v, vt, off, kot, gl });   // (b: the mirror image about the bicycle's length; at 45 and 135 deg 0.3 m in: two round corners meet that much later than two sharp ones, the old touch's circles too)
+      const good = !a.nan && a.st === 1 && a.dpk < 1e-9 && a.dEs < 1e-9 && Math.abs(a.wb + b.wb) < 1e-9 && Math.abs(a.dEs - b.dEs) < 1e-9 && a.ev === 'bike' && o.ev === 'bike' && a.R === o.R && a.dmg === o.dmg; if (!good) okAll = false;
+      rows.push(`${kot} deg ${off} m, ${f(v * 3.6, 0)}/${f(vt * 3.6, 0)} km/h: ${f(a.wb)} / ${f(b.wb)} rad/s, dE ${f(a.dEs * 100, 2)} %, dp ${a.dpk.toExponential(1)}${good ? '' : ' !'}`); }
+    ok('Realistična, the traffic: a cyclist run over from behind, into the flank, head-on and at 45 and 135 deg, off the middle, at 20-200 km/h, the bicycle standing or riding: the two gain no energy with the fallen bicycle\'s own spin counted (1e-9 of it), the pair keeps its momentum (1e-9), the mirror image spins the other way (1e-9); the same event, damage and count of the traffic\'s random numbers as cv 1', okAll, rows.join('; ')); }
+  { const rows = []; let okAll = true, w0 = 0;
+    for (const v of [20 / 3.6, 60 / 3.6, 200 / 3.6]) { const c0 = hit(REAL, { p: 4, v }), c1 = hit(REAL, { p: 4, v, kot: 180 }), a = hit(REAL, { p: 4, v, kot: 90, off: 0.5 }), b = hit(REAL, { p: 4, v, kot: 90, off: -0.5 });
+      const good = Math.abs(c0.wb) < 1e-9 && Math.abs(c1.wb) < 1e-9 && a.wb < -0.2 && b.wb > 0.2 && Math.abs(a.wb + b.wb) < 1e-9 && b.wb > 2 * w0; if (!good) okAll = false; w0 = b.wb;   // (off 0.5: the car's nose behind the bicycle's middle, so its tail is pushed away: the heading turns back, the spin negative)
+      rows.push(`${f(v * 3.6, 0)} km/h: through the middle ${c0.wb.toExponential(1)} / ${c1.wb.toExponential(1)}, the flank behind / ahead of the middle ${f(a.wb)} / ${f(b.wb)} rad/s`); }
+    ok('Realistična, the traffic: a standing cyclist run over: a push through the bicycle\'s middle (from behind, head-on) leaves it no spin of its own, a push into the flank behind the middle turns it one way and ahead of the middle the other, the same size (1e-9), more than twice as fast at 60 as at 20 km/h and at 200 as at 60 km/h', okAll, rows.join('; ')); }
   // cv 1 and cv 5, a friend's car online in cv 6: the old touch
   { const rows = []; let okAll = true; const key = (q) => [q.st, q.vc, q.vcl, q.vb, q.vbn, q.vv, q.w, q.kc, q.R, q.ev, q.dmg, q.hitCar, q.dp, q.dE].join(' ');
     for (const o of [{ p: 0, v: V }, { p: 0, v: V, off: 0.6 }, { p: 1, v: 60 / 3.6 }, { p: 2, v: V, bok: 30 }, { p: 3, v: V }, { p: 4, v: V }]) { const a = hit(SIM, o), b = hit(OLD, o), s3 = hit(SOFT, o), n1 = hit(SIM, Object.assign({ net: 1 }, o)), n6 = hit(REAL, Object.assign({ net: 1 }, o));

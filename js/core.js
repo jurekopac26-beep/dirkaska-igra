@@ -5990,14 +5990,15 @@ const Core = (function () {
       const sp = c.speed, R = this.R, vx = c.vx, vz = c.vz, mb = v.mass, ia = 1 / ma, ib = 1 / mb;
       const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = (px - c.x) * ch + (pz - c.z) * sh, lz = -(px - c.x) * sh + (pz - c.z) * ch, sd = lz >= 0 ? 1 : -1;
       const rax = px - c.x, raz = pz - c.z, rbx = px - v.x, rbz = pz - v.z, vn = -((vx - c.w * raz - v.vx) * nx + (vz + c.w * rax - v.vz) * nz);
-      let Px = 0, Pz = 0, k = 0, bx = v.vx, bz = v.vz;
+      let Px = 0, Pz = 0, k = 0, bx = v.vx, bz = v.vz, wb = 0, Eb = 0;
       if (vn > 0) { const e = vn < K.eT ? 0 : (K.e1 + (K.e0 - K.e1) * Math.exp(-(vn - K.eT) / K.eV)) * sstep(K.eT, K.eT + 0.5, vn), rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx;
         const J = (1 + e) * vn / (ia + ib + rna * rna / Ia + rnb * rnb / Ib); Px = J * nx; Pz = J * nz;
+        wb = -rnb * J / Ib; Eb = 0.5 * Ib * wb * wb;   // (the bicycle's own spin: by where the push takes it, as the traffic in _hitVehR; it counts in the two's energy below)
         let ka;   // (the guard's share of the turn at the throw last tried)
         const pE = (q) => {   // (the two's energy with the bicycle thrown aside at q m/s, the car as it takes the push: kTurnR, the guard as _hitVehR)
           const Qx = Px + mb * sh * sd * q, Qz = Pz - mb * ch * sd * q, dax = Qx / ma, daz = Qz / ma, dwa = (rax * Qz - raz * Qx) / Ia * K.yaw * (c.isPlayer ? K.yawP : 1), ta = kTurnR(c, dax, daz, dwa, K, null);
           const dbx = -Px * ib - sh * sd * q, dbz = -Pz * ib + ch * sd * q;
-          let dE = ma * (dax * (vx + 0.5 * dax) + daz * (vz + 0.5 * daz)) + mb * (dbx * (v.vx + 0.5 * dbx) + dbz * (v.vz + 0.5 * dbz)) + Ia * ta * (c.w + 0.5 * ta);
+          let dE = ma * (dax * (vx + 0.5 * dax) + daz * (vz + 0.5 * daz)) + mb * (dbx * (v.vx + 0.5 * dbx) + dbz * (v.vz + 0.5 * dbz)) + Ia * ta * (c.w + 0.5 * ta) + Eb;
           ka = undefined;
           if (dE > 1e-6) { const wa = c.w + ta, ra = dwa - ta, xa = wa * ra < 0 ? (Math.abs(ra) <= Math.abs(wa) ? ra : -wa) : 0;
             if (xa) { const A = 0.5 * Ia * xa * xa, Bq = Ia * wa * xa, D = Bq * Bq - 4 * A * dE, l = D >= 0 ? Math.min(1, 2 * dE / (-Bq + Math.sqrt(D))) : 1; ka = (ta + l * xa) / dwa; dE += l * (Bq + A * l); } }
@@ -6009,7 +6010,7 @@ const Core = (function () {
         kTake(c, Px, Pz, rax, raz, ma, Ia, K, null, ka); }
       if (!c.air) c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.24, -CSK.tapMax, CSK.tapMax);
       knock(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
-      this._knock(v, 0.8); v.w = (R() - 0.5) * 9; v.vx = bx; v.vz = bz;
+      this._knock(v, 0.8); R(); v.w = wb; v.vx = bx; v.vz = bz;   // (the spin by the push alone, none when the touch does not close; the number drawn stays, so the traffic's count matches cv 1)
       this._throwRider(v, vx, vz, c, true);
       fxSrc(c, null, 2.5); c.fxCar = Math.max(c.fxCar || 0, 2.5); c.contactX = px; c.contactZ = pz;
       return sp - Math.hypot(c.vx, c.vz);

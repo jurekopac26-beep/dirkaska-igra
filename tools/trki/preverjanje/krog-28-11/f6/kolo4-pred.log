@@ -1,0 +1,7 @@
+prizorov 12000 zadetkov 8382 nan 0
+do 30 km/h    {"zapira":2471,"wPovp":2.27,"wMed":2.294,"w90":4.039,"wMax":4.497,"rocicaPovp":0.371,"EsPovpJ":92.177,"EsMaxJ":272.967,"delezIzgube":0.752,"parZ":622,"parZMaxJ":272.967,"neplacano":651,"poSunku":0,"mirujePovpS":0.889,"mirujeMaxS":1.313}
+30-60 km/h    {"zapira":1915,"wPovp":2.178,"wMed":2.195,"w90":4.01,"wMax":4.5,"rocicaPovp":0.35,"EsPovpJ":87.57,"EsMaxJ":273.355,"delezIzgube":0.105,"parZ":163,"parZMaxJ":265.643,"neplacano":174,"poSunku":0,"mirujePovpS":0.859,"mirujeMaxS":1.314}
+60-120 km/h   {"zapira":1661,"wPovp":2.237,"wMed":2.28,"w90":4.063,"wMax":4.499,"rocicaPovp":0.363,"EsPovpJ":91.311,"EsMaxJ":273.291,"delezIzgube":0.04,"parZ":75,"parZMaxJ":266.258,"neplacano":85,"poSunku":0,"mirujePovpS":0.873,"mirujeMaxS":1.314}
+120-200 km/h  {"zapira":1173,"wPovp":2.207,"wMed":2.195,"w90":4.012,"wMax":4.5,"rocicaPovp":0.369,"EsPovpJ":88.049,"EsMaxJ":273.355,"delezIzgube":0.011,"parZ":55,"parZMaxJ":264.674,"neplacano":57,"poSunku":0,"mirujePovpS":0.877,"mirujeMaxS":1.314}
+nad 200 km/h  {"zapira":1103,"wPovp":2.204,"wMed":2.188,"w90":3.967,"wMax":4.497,"rocicaPovp":0.359,"EsPovpJ":87.694,"EsMaxJ":272.967,"delezIzgube":0.003,"parZ":54,"parZMaxJ":269.553,"neplacano":59,"poSunku":0,"mirujePovpS":0.875,"mirujeMaxS":1.313}
+neZapira      {"n":59,"zVrtenjem":59,"wMax":4.176}
