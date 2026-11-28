@@ -33,15 +33,24 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1d3f8a', text: '#ffffff' }, escTo: 'Do Savusavuja',
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Planota pri letališču", "d": 300.0, "say": ["Flat out across the plateau by the airfield!", "The plateau by the airfield, the only easy part of the run!"]},
+      {"n": "Planota pri letališču", "d": 300.0, "say": ["Flat out across the plateau by the airfield!", "The plateau by the airfield, the only easy part of the run!", "Coconut palms on both sides, and the road dead straight across the plateau!"]},
+      {"n": "Mlaka ob cesti", "d": 420.0, "say": ["The pond right by the road on the left, reeds at its edge, keep it on the tarmac!", "Past the little pond on the left! One slip and you're in with the frogs!"]},
+      {"n": "Gozd na pobočju", "d": 1100.0, "say": ["Into the forest on the slope, tree ferns and breadfruit right by the road!", "Up through the wet forest! The orange crowns are the African tulip trees!", "The climb starts in the forest, banana plots by the houses!"]},
       {"n": "Sleme · 78 m", "d": 1615.0, "say": ["Over the top of the ridge, seventy-eight metres, and now it all goes down!", "The crest of the ridge! Watch the car go light!"]},
-      {"n": "Nad zalivom Savusavu", "d": 2150.0, "say": ["The bay of Savusavu opens up below on the left!", "Down through the forest towards the bay!"]},
-      {"n": "Savusavu", "d": 2480.0, "say": ["Into Savusavu, the finish at the edge of the town!", "Savusavu! Down off the ridge and across the line!"]},
+      {"n": "Spust k zalivu", "d": 1900.0, "say": ["Downhill now, the sea is getting close!", "Off the ridge and down through the palms towards the bay!"]},
+      {"n": "Nad zalivom Savusavu", "d": 2150.0, "say": ["The bay of Savusavu opens up below on the left!", "Down through the forest towards the bay!", "There's the bay, a sheltered natural harbour!"]},
+      {"n": "Mangrove pri otoku Nawi", "d": 2380.0, "say": ["The mangroves round Nawi island down by the water!", "Mangroves along the shore of the bay, and little Nawi island just off it!"]},
+      {"n": "Savusavu", "d": 2480.0, "say": ["Into Savusavu, the finish at the edge of the town!", "Savusavu! Down off the ridge and across the line!", "Savusavu, the town of the hot springs! Across the line!"]},
     ],
+    // the course flyover before the race (Render.pkFly: a TV sweep along the road with captions; game.js pkFlyStart)
+    fly: [[0, "START"], [420, "Mlaka ob cesti"], [1100, "Gozd na pobočju"], [1615, "Sleme"], [2150, "Nad zalivom Savusavu"], [2380, "Mangrove pri otoku Nawi"], [-1, "CILJ"]],
+    // the bay (Savusavu Bay, OpenStreetMap's coastline; Copernicus DEM's sea at 0 m): its water past the finish and below the descent (js/world-vrsic.js
+    // P.sea, js/world-prelaz.js the sea plane; the gulls and the surf by def.sea)
+    sea: { y: 0 },
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! {cars} cars, two and a half kilometres over the ridge and down into the town, and you start {grid}.", "Here we are on the plateau by the airfield. A race over the ridge to Savusavu, and you line up {grid}."],
-      goPass: ["And away they go, up towards the ridge!", "And they're off! Two and a half kilometres to Savusavu!", "The race is on! The pack charges across the plateau!"],
+      introPass: ["Welcome to {track}! {cars} cars, two and a half kilometres over the ridge and down into the town, and you start {grid}.", "Here we are on the plateau by the airfield. A race over the ridge to Savusavu, and you line up {grid}.", "Welcome to Vanua Levu! Palms, a forested ridge and the bay at the bottom. {rivals} rivals, and you start {grid}."],
+      goPass: ["And away they go, up towards the ridge!", "And they're off! Two and a half kilometres to Savusavu!", "The race is on! The pack charges across the plateau!", "Go! Through the palms and up into the forest!"],
       introPassTT: ["Welcome to {track}! Just you, the clock and the forest.", "Here we are by the airfield. {cps} checkpoints between you and the town.", "Welcome to {track}! No rivals this time, only the clock and the ridge."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the ridge!", "And you're away! Over the top and down to the bay!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars, minibuses and buses both ways, and they keep left. Just you and {rival}, first into town wins!", "Here we are by the airfield. A duel with {rival} through the traffic of the coast road. Mind the buses!"],
