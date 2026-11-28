@@ -56,6 +56,21 @@ CFG = {
     'balea': dict(kind='real', start='Bâlea Valley', finish='Bâlea Lake', country='Romania', region='Făgăraș Mountains', l1='carpathians'),
     'bathurst': dict(kind='real', start='Bathurst', country='Australia', region='New South Wales', l1='nsw'),
     'livorno': dict(kind='real', start='Livorno', country='Italy', region='Tuscany', l1='tuscany'),
+    'bikernieki': dict(kind='real', start='Riga', country='Latvia', region='Vidzeme', l1='baltic'),
+    'buriram': dict(kind='real', start='Buriram', country='Thailand', region='Isan', l1='isan'),
+    'ella': dict(kind='real', start='Pattiyakumbura', finish='Ella', country='Sri Lanka', region='Uva', l1='srilanka'),
+    'furka': dict(kind='real', start='Gletsch', finish='Furka Pass', country='Switzerland', region='Valais', l1='westalps'),
+    'gudauri': dict(kind='real', start='Gudauri', country='Georgia', region='Greater Caucasus', l1='caucasus'),
+    'hakone': dict(kind='real', start='Hakone-Yumoto', country='Japan', region='Kanagawa', l1='japan'),
+    'izoard': dict(kind='real', start='Le Laus', finish='Col d\'Izoard', country='France', region='Hautes-Alpes', l1='westalps'),
+    # (B2, the menu fly-overs: placed by tools/<id>/<id>.json (the game's own origin) or by geo_roads.py)
+    'kagerod': dict(kind='real', start='Kågeröd', country='Sweden', region='Skåne', l1='skane'),
+    'kildare': dict(kind='real', start='Kildare', country='Ireland', region='County Kildare', l1='ireland'),
+    'kotor': dict(kind='real', start='Kotor serpentine', finish='Above the Bay of Kotor', country='Montenegro', region='Bay of Kotor', l1='adriatic'),
+    'llogara': dict(kind='real', start='Llogara', finish='Llogara Pass', country='Albania', region='Vlorë', l1='adriatic'),
+    'lombok': dict(kind='real', start='Mandalika', country='Indonesia', region='Lombok', l1='lombok'),
+    'lusail': dict(kind='real', start='Lusail', country='Qatar', region='Al Daayen', l1='qatar'),
+    'medeu': dict(kind='real', start='Medeu', finish='Kishi Almaty gorge', country='Kazakhstan', region='Trans-Ili Alatau', l1='almaty'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
@@ -64,7 +79,9 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'morocco': (31.7, -7.6, 800),
       'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600),
       'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700),
-      'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600)}
+      'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600),
+      'baltic': (57.0, 24.2, 600), 'isan': (14.9, 103.0, 600), 'srilanka': (7.0, 80.8, 400), 'westalps': (45.7, 7.6, 600), 'caucasus': (42.5, 44.5, 600),
+      'skane': (56.0, 13.4, 600), 'ireland': (53.3, -7.6, 600), 'adriatic': (41.5, 19.2, 700), 'lombok': (-8.7, 116.3, 500), 'qatar': (25.3, 51.3, 500), 'almaty': (43.2, 77.0, 700)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)

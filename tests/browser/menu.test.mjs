@@ -1292,7 +1292,7 @@ try {
         const m = await ev(page, MEASURE);
         if (id === 'pikes') pk = m;
         if (side && m.names) {   // (on its side, camera 1: an open road's map turned in its card, every card its size)
-          const open = await page.evaluate((id) => { const d = Core.TRACKS.find(x => x.id === id), R = (window.ROUTES || {})[id]; return !d.test && !d.rally && !d.descent && !!d.open && !!(R && R.open); }, id);
+          const open = await page.evaluate((id) => { const d = Core.TRACKS.find(x => x.id === id), R = (window.ROUTES || {})[id]; return !d.test && !d.rally && !(d.descent && d.timeTrial) && !!d.open && !!(R && R.open); }, id);   // (a descent with a race, Sa Calobra, Ngorongoro: a road, as the menu's groups have it)
           if (m.tall !== open) tallBad.push(id);
           if (m.tall) { talls.push(id); if (m.hit.length) hits.push(id + ': ' + m.hit.join(' ')); if (!/^rotate\((-90|-?180) /.test(m.rot || '')) shape.push(id + ' not turned'); }
           if (Math.abs(m.st.h - 236 * g.k) > 1 || Math.abs(m.st.w - 384 * g.k) > 1) shape.push(id);

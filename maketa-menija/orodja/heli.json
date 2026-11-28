@@ -194,5 +194,50 @@
  "livorno": {
   "sea": true,
   "ownFar": false
+ },
+ "pembrey": {
+  "sea": true
+ },
+ "portomoniz": {
+  "sea": true
+ },
+ "sacalobra": {
+  "sea": true
+ },
+ "koror": {
+  "sea": true
+ },
+ "musandam": {
+  "sea": true
+ },
+ "savusavu": {
+  "sea": true
+ },
+ "kotor": {
+  "sea": true
+ },
+ "llogara": {
+  "sea": true
+ },
+ "lombok": {
+  "sea": true
+ },
+ "lusail": {
+  "sea": true
+ },
+ "canaries": {
+  "sea": true
+ },
+ "haivan": {
+  "sea": true
+ },
+ "portobelo": {
+  "sea": true
+ },
+ "luanda": {
+  "sea": true
+ },
+ "mombasa": {
+  "sea": true
  }
 }
