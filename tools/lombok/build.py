@@ -145,6 +145,7 @@ def rle_lc(c):   # World's land-cover classes (0-3), run-length coded as World.n
 
 def b64bytes(a): return base64.b64encode(np.asarray(a, np.uint8).tobytes()).decode()
 
+LAND_MIN = 0.4   # (m a.s.l.: the lowest land, the water's plane at 0 under it without flicker)
 SEA_FLOOR = -1.8   # (m a.s.l.: the sea's cells of the ground model lowered under the water, the shore between them and the land)
 
 def sea_mask(A):   # the ground model's sea: its cells at 0 m (Copernicus DEM's sea) joined to the grid's edge
@@ -157,7 +158,9 @@ def scenery():
     nx = int(math.ceil((P[:, 0].max() + M - x0) / c)) + 1; nz = int(math.ceil((P[:, 1].max() + M - z0) / c)) + 1
     # terrain: Copernicus DEM less the canopy and the buildings (20 m) on 16 m cells, above the finish line in steps of 0.05 m multiples from
     # its lowest point; the sea (the model's 0 m joined to the open water) lowered to SEA_FLOOR under the water (the hills to the east ~140 m)
-    gd, ad = grid('dem'); A = ad.astype(np.float64) / 10 - 100; A[sea_mask(A)] = SEA_FLOOR; ad2 = np.round((A + 100) * 10)
+    # the land just above the sea (not the sea's cells: the lagoons behind the beaches, the bay's head) at least LAND_MIN above it, clear of the water's plane
+    gd, ad = grid('dem'); A = ad.astype(np.float64) / 10 - 100; SM = sea_mask(A); A[SM] = SEA_FLOOR; A[~SM] = np.maximum(A[~SM], LAND_MIN)
+    ad2 = np.round((A + 100) * 10)
     X, Z = np.meshgrid(x0 + np.arange(nx) * c, z0 + np.arange(nz) * c); hv = sample(gd, ad2, X, Z, True) - H0
     lo = math.floor(hv.min() - 2); step = max(0.25, math.ceil((hv.max() + 2 - lo) / 254 * 20) / 20)
     dem = np.clip(np.round((hv - lo) / step), 0, 255)
@@ -203,10 +206,15 @@ def scenery():
     for w in J['water']:
         q = mv(w[3]); str_ += [len(q) // 2, int(w[2])] + q
     # the sea: its level (the finish line's zero: the sea at -H0) and the plane's extent (World: 9 km wide round the circuit's middle x, from z0
-    # to the south; the coast south of the circuit at z 1.0-1.5 km, the bay to the west from z ~0.9 km; the land under it hides the plane)
-    cx = float(P[:, 0].mean())
-    SEA = dict(y=round(-H0, 2), x=round(cx, 1), z0=850)
-    return D, LC, dict(bld=bld, svc=svc, trk=trk, brg=brg, str=str_, sea=SEA)
+    # to the south; z0 the ground model's northernmost sea cell: the bay to the west reaches z ~0.1 km; the land under the plane hides it), d its depth
+    cx = float(P[:, 0].mean()); jz = np.nonzero(SM.any(1))[0]; zs = math.floor((gd['z0'] + jz.min() * gd['cell'] - 20) / 10) * 10
+    SEA = dict(y=round(-H0, 2), x=round(cx, 1), z0=zs, d=round(1450 - zs + 4600, -1))
+    # the coast (tools/lombok/obala.json, OSM): the beaches' outlines (beach: [n, x0, z0, ...] closed, the sand), the cliffs (cliff: [n, x0, z0, ...],
+    # the rock along them), the islet off the bay (islet: [n, x0, z0, ...]); only what lies on the terrain's grid
+    O = json.load(open(os.path.join(HERE, 'obala.json'))); X1 = x0 + (nx - 1) * c; Z1 = z0 + (nz - 1) * c
+    def on(q): return any(x0 < q[k] < X1 and z0 < q[k + 1] < Z1 for k in range(0, len(q), 2))
+    def pack(L): out = []; [out.extend([len(q) // 2] + q) for q in map(mv, L) if on(q)]; return out
+    return D, LC, dict(bld=bld, svc=svc, trk=trk, brg=brg, str=str_, sea=SEA, beach=pack(O['beach']), cliff=pack(O['cliff']), islet=pack(O['islet']))
 
 # ---- the horizon (def.far for Riverside's rsFar): the highest ground in rings round the circuit (the hills of south Lombok, the headlands) ----
 FAR_R = [1500, 2000, 2700, 3500, 4500, 5600, 7000, 8500, 10000, 11500]   # the rings' outer distances (m from the circuit's middle; the far grid reaches ~12 km)

@@ -111,6 +111,28 @@
   const lbRes = (p, step) => { const o = []; for (let q = 0; q + 1 < p.length; q++) { const [ax, az] = p[q], [bx, bz] = p[q + 1], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / step)); for (let t = 0; t < m; t++) o.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); } o.push(p[p.length - 1]); return o; };
   const lbSegD = (x, z, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz, t = l2 > 0 ? clamp(((x - ax) * dx + (z - az) * dz) / l2, 0, 1) : 0; return Math.hypot(x - ax - dx * t, z - az - dz * t); };
   const lbHs = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+  let LBC = null;
+  function lbCoast() {   // once per track definition: the beaches' sand and the cliffs' rock on a 5 m raster from OSM's outlines (def.sk.beach, def.sk.cliff)
+    const def = API.T.def; if (LBC && LBC.def === def) return LBC.at;
+    const sk = def.sk || {}, B = lbPolys(sk.beach || [], 0).map((o) => o.p), K = lbPolys(sk.cliff || [], 0).map((o) => o.p), C = 5, E = 24;
+    let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+    for (const p of B.concat(K)) for (const [x, z] of p) { x0 = Math.min(x0, x); z0 = Math.min(z0, z); x1 = Math.max(x1, x); z1 = Math.max(z1, z); }
+    if (x0 > x1) { LBC = { def, at: null }; return null; }
+    x0 -= E; z0 -= E; const nx = Math.ceil((x1 + E - x0) / C) + 1, nz = Math.ceil((z1 + E - z0) / C) + 1, sand = new Float32Array(nx * nz), rock = new Float32Array(nx * nz);
+    const cells = (ax, az, bx, bz, f) => { for (let j = Math.max(0, Math.floor((az - z0) / C)); j <= Math.min(nz - 1, Math.ceil((bz - z0) / C)); j++) for (let i = Math.max(0, Math.floor((ax - x0) / C)); i <= Math.min(nx - 1, Math.ceil((bx - x0) / C)); i++) f(j * nx + i, x0 + i * C, z0 + j * C); };
+    for (const p of B) {   // (the sand: soft 4 m round the outline)
+      let ax = 1e9, az = 1e9, bx = -1e9, bz = -1e9; for (const [x, z] of p) { ax = Math.min(ax, x); az = Math.min(az, z); bx = Math.max(bx, x); bz = Math.max(bz, z); }
+      cells(ax - 5, az - 5, bx + 5, bz + 5, (k, x, z) => { let ins = false, d = 1e9;
+        for (let q = 0, r = p.length - 1; q < p.length; r = q++) { const [qx, qz] = p[q], [rx, rz] = p[r];
+          if ((qz > z) !== (rz > z) && x < (rx - qx) * (z - qz) / (rz - qz) + qx) ins = !ins; d = Math.min(d, lbSegD(x, z, qx, qz, rx, rz)); }
+        sand[k] = Math.max(sand[k], sstep(-4, 4, ins ? d : -d)); }); }
+    for (const p of K) for (let q = 0; q + 1 < p.length; q++) { const [ax, az] = p[q], [bx, bz] = p[q + 1];   // (the rock: the cliff's face and 14 m round it, fading out by 22 m)
+      cells(Math.min(ax, bx) - 22, Math.min(az, bz) - 22, Math.max(ax, bx) + 22, Math.max(az, bz) + 22, (k, x, z) => { rock[k] = Math.max(rock[k], sstep(22, 12, lbSegD(x, z, ax, az, bx, bz))); }); }
+    const bl = (A, k, fu, fw) => lerp(lerp(A[k], A[k + 1], fu), lerp(A[k + nx], A[k + nx + 1], fu), fw);
+    const at = (x, z, o) => { const u = (x - x0) / C, w = (z - z0) / C, i = Math.floor(u), j = Math.floor(w); o[0] = o[1] = 0;   // (o: [sand, rock], 0..1)
+      if (i < 0 || j < 0 || i >= nx - 1 || j >= nz - 1) return o; const k = j * nx + i; o[0] = bl(sand, k, u - i, w - j); o[1] = bl(rock, k, u - i, w - j); return o; };
+    LBC = { def, at }; return at;
+  }
   let LBS = null, lbPad0 = null;
   function lbStrPrep() {   // once per track definition (the terrain grid is kept between builds: the same swales every time)
     const T = API.T, def = T.def; if (LBS && LBS.def === def) return LBS;
@@ -222,8 +244,8 @@
   function lbSea({ root, tex, exclPush, out }, st) {
     const S = (API.T.def.sk || {}).sea, G = API.NR && API.NR.G; if (!S || !G) return;
     const Y = S.y, WO = { len: 2.4, amp: 1.1, refl: 0.42, shal: 0.85, lap: 1, surf: 0.85 };
-    const g = new THREE.PlaneGeometry(9000, 4600, 1, 1).rotateX(-Math.PI / 2);
-    const sea = new THREE.Mesh(g, waterMat(tex, Object.assign({ color: 0x5aaabb }, WO))); sea.position.set(S.x, Y, S.z0 + 2300); sea.receiveShadow = true; sea.matrixAutoUpdate = false; sea.updateMatrix(); sea.name = 'lombok sea'; root.add(sea);
+    const D = S.d || 4600, g = new THREE.PlaneGeometry(9000, D, 1, 1).rotateX(-Math.PI / 2);   // (from z0 (the bay to the west) to the south)
+    const sea = new THREE.Mesh(g, waterMat(tex, Object.assign({ color: 0x5aaabb }, WO))); sea.position.set(S.x, Y, S.z0 + D / 2); sea.receiveShadow = true; sea.matrixAutoUpdate = false; sea.updateMatrix(); sea.name = 'lombok sea'; root.add(sea);
     out.dyn.water = tex.water;
     addShore(root, shoreBand(G.x0, G.z0, G.x0 + (G.nx - 1) * NRC, G.z0 + (G.nz - 1) * NRC, Y + 0.015, waterline(nrGH, G.x0, G.z0, NRC, 0, G.nx - 1, 0, G.nz - 1, Y), 22, { F: 4 }), sea.material, WO);
     for (let j = 0; j < G.nz; j += 3) for (let i = 0; i < G.nx; i += 3) {
@@ -448,7 +470,7 @@
       farm: { wall: [0.94, 0.92, 0.86], roof: [0.6, 0.3, 0.2], end: [0.9, 0.88, 0.82], barn: [0.55, 0.45, 0.35], barnRoof: [0.6, 0.3, 0.2], barnEnd: [0.52, 0.42, 0.32] },
       tvSkip: [3, 5, 8, 11, 13], recov: [0, 9, 15], photo: [0, 2, 9, 15, 16], jets: [ID[0], [0.97, 0.97, 0.97], ID[0]],   // (TV towers at the big corners, not at the kinks and the second parts of the double corners)
       colMod: (P) => {   // the south coast of Lombok at the end of the dry season: the plain's grass straw-green, paler and browner in patches, the red earth bare in places; the circuit's watered lawns green by the track; the scrub's ground dark olive; the car parks dusty grey; the beaches' pale sand
-        const SY = ((API.T.def.sk || {}).sea || {}).y; lbStrPrep();
+        const SY = ((API.T.def.sk || {}).sea || {}).y, CO = lbCoast(), cs = [0, 0]; lbStrPrep();
         return (x, z, c, dd) => {
           const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.95 + (n - 0.5) * 0.16 + (m - 0.5) * 0.1;
           const fm = nrLCf(x, z, 0), sc = nrLCf(x, z, 2), se = nrLCf(x, z, 3), far = sstep(3, 15, dd == null ? 99 : dd), v = 0.92 + 0.12 * m;   // (the lawns by the track watered: green, to a few metres beyond the barriers)
@@ -460,7 +482,9 @@
           if (red > 0) { c[0] = lerp(c[0], 1.95 * v, red); c[1] = lerp(c[1], 1.02 * v, red); c[2] = lerp(c[2], 0.95 * v, red); }
           if (sc > 0) { const t = sc * 0.5; c[0] = lerp(c[0], 1.2 * v, t); c[1] = lerp(c[1], 1.0 * v, t); c[2] = lerp(c[2], 0.9 * v, t); }
           if (se > 0) { const t = se * 0.85 * far; c[0] = lerp(c[0], 1.8 * v, t); c[1] = lerp(c[1], 1.24 * v, t); c[2] = lerp(c[2], 2.4 * v, t); }
-          if (SY != null) { const sand = sstep(1.8, 0.6, nrDem(x, z) - SY) * far;   // (the beaches: pale sand down to the water)
+          if (CO) CO(x, z, cs); const rk = cs[1] * (0.75 + 0.25 * m) * far;   // (the cliffs' rock (OSM): grey-brown, the scrub thinned on it)
+          if (rk > 0) { c[0] = lerp(c[0], 1.55 * v, rk); c[1] = lerp(c[1], 1.38 * v, rk); c[2] = lerp(c[2], 1.6 * v, rk); }
+          if (SY != null) { const sand = Math.max(cs[0], sstep(1.8, 0.6, nrDem(x, z) - SY) * (1 - cs[1])) * far;   // (the beaches (OSM's outlines) and the shore elsewhere: pale sand down to the water)
             if (sand > 0) { c[0] = lerp(c[0], 2.3 * v, sand); c[1] = lerp(c[1], 1.75 * v, sand); c[2] = lerp(c[2], 2.3 * v, sand); } }
           if (LBS) { const w = lbCarve(x, z, 4) * far;   // (the streams' swales: damp ground, greener along the banks)
             if (w > 0) { const C = LB_STR === 'c', t = Math.min(1, w * 1.4) * (C ? 0.8 : 0.6), g = C ? [0.85, 1.05, 0.72] : [1.0, 1.05, 0.82];
