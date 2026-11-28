@@ -75,8 +75,10 @@ async function newMap() {
 // through the start and the jam at the first corner; after every second a frame is counted and ten render-side updates are timed, and of
 // the racing seconds the time of physics+AI and the cars stepped per physics step (Core LOD, Race._lodPlan: about two thirds of the 101).
 // Then the same with no rival in the same page: the crowd's JavaScript time over the lone car's (x) is the one measure of time that
-// does not go with the machine, so it is checked, with a wide margin (between runs it is 5.1-6.1, and a busy machine spoils it: over the
-// limit it is measured again, twice at most, and the lowest counts); the cars per step and the frame's counts repeat to the unit.
+// does not go with the machine (a busy one slows both alike), so it is checked, but it is a coarse guard: between runs it is 5.1-6.1,
+// hence the limit of 1.4 times the reference, and over it the measure is taken again (twice at most, the lowest counts). It catches
+// what makes every car dearer (about +40 % of the crowd's time); it does NOT see the rivals' LOD going (all 101 cars stepped: the step
+// +26 %, x only +13 %, within its noise). That is what the exact guards are for: the cars per step and the frame's counts repeat to the unit.
 // The limits are written into the entry (limits): the tracks' margins for the counts, +5 % +1 car per step, 1.4 times the time
 const CROWD_S = 34, CROWD_X = (r) => ({ maxCalls: Math.round(r.maxCalls * 1.1 + 5), maxKverts: Math.round(r.maxKverts * 1.1 + 20), cars: +(r.cars * 1.05 + 1).toFixed(1), x: +(r.x * 1.4).toFixed(2) });
 async function crowd() {
