@@ -1,0 +1,78 @@
+{
+ "id": "chamarel",
+ "about": "Chamarel, Mavricij (id chamarel): from the coast above Case Noyale up the B104 through the hairpins, past the Chamarel viewpoint and through the village of Chamarel onto the Plaine Champagne road, 5.0 km, +334 m (option 1 of the card proga-chamarel-pot, answered 25. 11. 2026; docs/proge-po-drzavah.md)",
+ "box": [
+  -20.44,
+  57.355,
+  -20.404,
+  57.415
+ ],
+ "closed": false,
+ "route": [
+  [
+   -20.4182,
+   57.37445,
+   "Baie du Cap Chamarel Case Noyale Road",
+   "start: above Case Noyale, where the straight from the coast ends"
+  ],
+  [
+   -20.41746,
+   57.38022,
+   "Baie du Cap Chamarel Case Noyale Road",
+   "the bends in the forest"
+  ],
+  [
+   -20.41698,
+   57.38558,
+   "Baie du Cap Chamarel Case Noyale Road",
+   "the hairpins"
+  ],
+  [
+   -20.41913,
+   57.38547,
+   "Baie du Cap Chamarel Case Noyale Road",
+   "the Chamarel viewpoint"
+  ],
+  [
+   -20.42352,
+   57.38894,
+   null,
+   "through the village of Chamarel"
+  ],
+  [
+   -20.4272,
+   57.3962,
+   "Plaine Champagne Road",
+   ""
+  ],
+  [
+   -20.42447,
+   57.4015,
+   "Plaine Champagne Road",
+   "finish: on the Plaine Champagne road above the village, 5.0 km from the start"
+  ]
+ ],
+ "prefer": [
+  "Baie du Cap Chamarel Case Noyale Road",
+  "Plaine Champagne Road"
+ ],
+ "geoRoads": [
+  "Baie du Cap Chamarel Case Noyale Road",
+  "Plaine Champagne Road",
+  "Black River Peak Trail"
+ ],
+ "geoWater": [],
+ "marks": [],
+ "places": [
+  [
+   "Case Noyale",
+   "2306405140",
+   null
+  ],
+  [
+   "Chamarel",
+   "828423332",
+   null
+  ]
+ ]
+}
