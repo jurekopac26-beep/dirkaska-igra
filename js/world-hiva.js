@@ -64,6 +64,7 @@
     const wrapI = (i) => ((i % N) + N) % N;
     nrPrep();
     const P = API.NR, G = P.G;
+    if (API.hvPad) P.pad = API.hvPad(P);   // (realizem 15: the ground under the pond, js/world-realizem15-hiva.js)
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
@@ -73,6 +74,7 @@
     const eh = new Map(), EHC = 32;
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
+    if (API.hvFree) for (const [x, z, r] of API.hvFree()) exclPush(x, z, r);   // (realizem 15: no trees on the water, the parking, the shelters)
 
     // ---- the walls of the old town (LD.cwall: OSM's city_wall lines, [height, [x, z, ...]]): their segments hashed for the distance to them ----
     const WS = [], WH = 32, whash = new Map();
@@ -203,7 +205,12 @@
       const gH = (x, z) => nrGround(x, z);
       for (const [ax, az, bx, bz, hgt, os] of WS) {
         const len = Math.hypot(bx - ax, bz - az); if (len < 0.5) continue;
-        const ang = Math.atan2(bz - az, bx - ax), mx = (ax + bx) / 2, mz = (az + bz) / 2, y0 = Math.min(gH(ax, az), gH(bx, bz), gH(mx, mz)) - 1;
+        const ang = Math.atan2(bz - az, bx - ax), ux = -(bz - az) / len, uz = (bx - ax) / len;
+        // (the boxes stand across OSM's outline of the wall; by the road (its east side, s ~2040–2170) the outline is ~1 m off the asphalt, so
+        // there the box stands wholly on the side away from the road, as the model's walls do: tests/browser/znamenitost-asfalt.test.mjs)
+        const hits = (sd) => [0, 0.5, 1].some(t => { const n = nrNear(ax + (bx - ax) * t + ux * sd * 4.4, az + (bz - az) * t + uz * sd * 4.4); return n.i >= 0 && n.d < T.wAt(n.i) + 0.6; });
+        const hp = hits(1), hm = hits(-1); if (hp && hm) continue;
+        const sh = hp ? -3.8 : hm ? 3.8 : 0, mx = (ax + bx) / 2 + ux * sh, mz = (az + bz) / 2 + uz * sh, y0 = Math.min(gH(ax, az), gH(bx, bz), gH(mx, mz)) - 1;
         box(gF, mx, y0, mz, len + 1.2, hgt * 0.55 + 1, 7.5, ang, mudD, mud, true);   // (the battered foot)
         box(gF, mx, y0, mz, len + 0.8, hgt + 1, 5, ang, mud, mudT, true);
         const n = Math.max(1, Math.round(len / 2.6)), ca = Math.cos(ang), sa = Math.sin(ang);
@@ -224,6 +231,10 @@
         }
         if (!best) continue;
         const cx = best.u * best.ca - best.v * best.sa, cz = best.u * best.sa + best.v * best.ca;
+        // (the rectangle overshoots the footprint's rounded corners: by the east gate the service lane runs ~3.5 m from it, OSM; so it
+        // shrinks until its corners and edge middles stay off the asphalt, as the model's footprint does: tests/browser/znamenitost-asfalt.test.mjs)
+        const onRoad = () => { for (const [a, b] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]]) { const du = a * best.Lb / 2, dv = b * best.Wb / 2, n = nrNear(cx + du * best.ca - dv * best.sa, cz + du * best.sa + dv * best.ca); if (n.i >= 0 && n.d < T.wAt(n.i) + 0.6) return true; } return false; };
+        for (let k = 0; k < 12 && onRoad(); k++) { best.Lb = Math.max(2, best.Lb - 0.5); best.Wb = Math.max(2, best.Wb - 0.5); }
         let y0 = 1e9; for (const [x, z] of P2) y0 = Math.min(y0, gH(x, z)); y0 -= 1;
         box(gF, cx, y0, cz, best.Lb, h + 1, best.Wb, best.a, mud, mudT, true);
         for (const [du, dv, l, w] of [[0, best.Wb / 2 - 0.35, best.Lb, 0.7], [0, -best.Wb / 2 + 0.35, best.Lb, 0.7], [best.Lb / 2 - 0.35, 0, 0.7, best.Wb], [-best.Lb / 2 + 0.35, 0, 0.7, best.Wb]])
@@ -264,7 +275,8 @@
       if (clash || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
       const hh = Hb || (big ? (2 + Math.floor(hk * 2)) * 3.1 : area < 45 || k0 === 4 ? 3 + hk : 3.4 + hk * 2.6);
-      house(g, bx, bz, Lb, Wb, ang, y0, hh, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
+      const wc = vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
+      if (!(API.hvHouse && API.hvHouse(g, bx, bz, y0, hh, wc, R))) house(g, bx, bz, Lb, Wb, ang, y0, hh, wc);   // (realizem 15: the building by the pond by its outline)
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
     }
     // (no houses beyond OpenStreetMap's footprints: where it has none, the town is left to the land cover's colour and the trees)
@@ -354,6 +366,7 @@
         else box(g, mx, y - 0.4, mz, len + 0.2, k === 1 ? 2.2 : 1.8, 0.45, ang, vary([0.82, 0.7, 0.54], R, 0.04), [0.86, 0.75, 0.58], true);
       }
     }
+    if (API.hvDraw) API.hvDraw(scen, out, tex);   // (realizem 15: what OSM maps by the road and this world does not draw, js/world-realizem15-hiva.js)
 
     /* ---- the far land beyond the corridor (200 m cells): the oasis's fields and gardens and the town, a little lower so its edge hides under
        the near tiles ---- */

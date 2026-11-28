@@ -294,11 +294,11 @@
   "jsMs": 1.15
  },
  "hakone": {
-  "calls": 199,
-  "maxCalls": 220,
-  "kverts": 305,
-  "maxKverts": 345,
-  "jsMs": 3.67
+  "calls": 207,
+  "maxCalls": 230,
+  "kverts": 344,
+  "maxKverts": 397,
+  "jsMs": 3.73
  },
  "killar": {
   "calls": 155,
@@ -371,11 +371,11 @@
   "jsMs": 0.92
  },
  "hiva": {
-  "calls": 167,
-  "maxCalls": 206,
-  "kverts": 543,
-  "maxKverts": 611,
-  "jsMs": 0.94
+  "calls": 171,
+  "maxCalls": 207,
+  "kverts": 552,
+  "maxKverts": 633,
+  "jsMs": 0.83
  },
  "mapileng": {
   "calls": 141,

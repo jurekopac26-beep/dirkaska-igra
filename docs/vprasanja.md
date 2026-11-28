@@ -116,6 +116,14 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-117`
+
+Kamera za avtom, skupina 117 (`js/world-chase-bt117.js`): Hakone, pas od ~10 do ~50 m za ograjo: v gozdu nizke gruče sase in praproti (jeseni rjave), na grmovju gostejša sasa, na travnikih šopi ter suhe in sočne zaplate, dlje od ~30 m susuki s svetlimi latmi, na skalah andezit (+7 klicev, 207 od 300, 344 tisoč oglišč, največ 397). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Pol redkeje.
+3. Ne, odstrani skupino 117.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
