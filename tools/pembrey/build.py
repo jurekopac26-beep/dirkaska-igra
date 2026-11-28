@@ -48,11 +48,13 @@ TURNS = [374, 507, 665, 905, 1170, 1372, 1430, 1805, 2045, 2120]
 DESC = ('Kratko dirkališče na nekdanjem letališču pri vasi Pembrey ob zalivu Carmarthen v južnem Walesu: 2,3 km v smeri urinega kazalca, '
         'ravno kot miza, kjer dirkajo tudi tovornjaki. Ciljna ravnina ob boksih, severna lasnica, hitri desni, dolgi levi in levi pri depoju, '
         'desni na vzhodu, vzhodna lasnica, dolga ravnina ob gozdu, desni ob gozdu in dolgi desni nazaj na ravnino. Ob progi trava, gume in '
-        'ograje, boksi in depo, borov gozd ob morju (zapelji v bokse in mehaniki ti popravijo avto).')
+        'ograje, boksi in depo. Letališče je iz let 1937–1940, ravnina leži na pesku nekdanjih sipin, ki jih od let 1929–1954 drži posajen gozd '
+        'korziškega bora; za gozdom so sipine in obala zaliva, z morja piha jugozahodnik in pogosto dežuje (zapelji v bokse in mehaniki ti popravijo avto).')
 DESC_EN = ('A short circuit on an old airfield by the village of Pembrey on Carmarthen Bay in south Wales: 2.3 km, clockwise, flat as a table, '   # (no č, š or ž in the English: tests/lang.test.js)
            'where trucks race too. The finish straight past the pits, the north hairpin, the fast right, the long left and the left by the paddock, '
            'the right on the east side, the east hairpin, the long straight by the woods, the right by the woods and the long right back onto the '
-           'straight. Grass, tyre walls and fences, the pits and the paddock, the pine woods by the sea (drive into the pits and the mechanics fix your car).')
+           'straight. Grass, tyre walls and fences, the pits and the paddock. The airfield was built in 1937-1940 on the sand of old dunes, held since '
+           '1929-1954 by planted Corsican pines; beyond the woods the dunes and the shore of the bay, the south-west wind off the sea and frequent rain (drive into the pits and the mechanics fix your car).')
 
 # ---- the pits (Core.Track.pitAt): the lane on the right of the finish straight (OSM: way 893412424, raceway=pit_lane, ~13 m from the centre
 # line; here 14 m, as on the other circuits), from the exit of the long right (the real lane leaves the circuit after the right by the woods
@@ -67,6 +69,18 @@ WALLS = [[-190, 150, 1, 2.5]]
 # and one outside the east hairpin
 STANDS = [[25, 75, -1, 6, 0, 2, 0, 'PEMBREY'], [1385, 1420, -1, 5, 0, 2, 0, 'CYMRU']]
 SECTORS = [700, 1450]
+# the commentator's own lines at the race's start (Comm.addLines through def.comm, js/game.js ownLine): the place as it is (docs/proge/pembrey.md,
+# Raziskava kraja): the old airfield on the flat sand by Carmarthen Bay, the pine woods planted on the dunes, the wind off the sea
+COMM = {
+    'intro': ['Welcome to {track}! {laps} laps on the old airfield by the sea, {cars} cars, and you start {grid}.',
+              'Good day from {track}, on the flat ground by Carmarthen Bay. {laps} laps ahead, and you line up {grid}.',
+              'Here we are at {track}! The pines on one side, the dunes and the sea beyond, {laps} laps, and you start {grid}.',
+              'Welcome to south Wales! {rivals} rivals, {laps} laps round the old airfield, and you start {grid}.'],
+    'introOne': ['Welcome to {track}! One lap on the old airfield by the sea, and you start {grid}.'],
+    'go': ['Lights out, and away they go into the north hairpin!', "And they're off, down the finish straight towards the hairpin!",
+           'Green light! {cars} cars charge across the old airfield!', 'Go, go, go! The race is on by the sea!'],
+}
+CLOUD_TH = 0.22   # (a cloud's shadow on the ground, def.cloudTh: else 0.2; the coast of Wales under quick Atlantic clouds, a little darker)
 REAL_KM = 2.3
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
@@ -202,11 +216,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc3cdd4, sun: 0xfff1de, sunI: 0.98, sky: 0xaec6dc, gnd: 0x4d6a34, hemiI: 0.7, tint: [0.98, 1.0, 0.99], sat: 1.0, sunOff: [-60, 66, 74], split: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.96]] },   // the coast of south Wales in summer: a soft, clean sea light, the sun from the south-west, a little haze off the bay
     say: 'Pembrey', rainP: 0.45,
-    grassNat: 0.4, lawn: [0.96, 1.02, 0.94],
+    cloudTh: %(cloud)s, grassNat: 0.4, lawn: [0.96, 1.02, 0.94],
     zivali: { a: ['fox', 'hare', 'roe'], t: ['logPile', 'fallenTree'], open: true },
     id: 'pembrey', name: 'Pembrey, Wales', theme: 'pembrey', laps: 6, halfWidth: 5.5,
     desc: %(desc)s,
     en: { name: 'Pembrey, Wales', desc: %(desc_en)s },
+    comm: %(comm)s,   // the commentator's own lines at the start (Comm.addLines): the old airfield, the bay, the pines on the dunes
     start: %(start)s, runoff: 0.9, inner: 3.5, side: 5.5, gradeForce: true, elevSmooth: 10, realKm: %(real)s,
     elev: PE_H.map((h, i) => [i / PE_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
@@ -230,7 +245,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     points: [%(pts)s]
   });
 })();
-''' % dict(km='%.2f' % (LEN / 1000), start=json.dumps(at(0)).replace(',', ', '), peh=peh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+''' % dict(km='%.2f' % (LEN / 1000), start=json.dumps(at(0)).replace(',', ', '), peh=peh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, cloud=CLOUD_TH, comm=json.dumps(COMM), names='\n'.join(names), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), stands=js(STANDS).replace(',', ', '), sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), nfar=len(FAR_R), rfar='%g' % (FAR_R[-1] / 1000), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'pembrey.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights; dem', D['nx'], 'x', D['nz'], '; lc', LC['nx'], 'x', LC['nz'],
