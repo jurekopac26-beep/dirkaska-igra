@@ -1571,21 +1571,24 @@
   }
  },
  "koli": {
-  "meshes": 410,
-  "verts": 617189,
+  "meshes": 465,
+  "verts": 618355,
   "instances": 6932,
   "props": 79,
   "crowd": 195,
-  "world": "f6362423",
+  "world": "4c7d025f",
   "propsHash": "e208c7c7",
   "floor": "5239e5c0/4536",
   "groups": {
-   "-:MeshLambertMaterial": "97da108",
+   "-:MeshLambertMaterial": "38b7403d",
    "-:MeshBasicMaterial": "6fe4118b",
    "rob:MeshLambertMaterial": "9aa2d738",
    "crowd:MeshLambertMaterial": "1b8a2e66",
+   "-:ShaderMaterial": "c6c3c846",
    "flags:MeshLambertMaterial": "82734531",
-   "ao:MeshBasicMaterial": "e530de45"
+   "ao:MeshBasicMaterial": "e530de45",
+   "tyremarks:MeshBasicMaterial": "cf6c3fb",
+   "roadwear:MeshLambertMaterial": "eb80df71"
   }
  },
  "kanaba": {
