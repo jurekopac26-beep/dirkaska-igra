@@ -40,8 +40,22 @@
     } else if (kind === 1) {
       cyl(g, 0, -0.02, 0, 0.04, 0.45, 5, [0.36, 0.3, 0.26], null, 0.028);
       ico(g, 0, 0.66, 0, 0.42, 0.62, [0.3, 0.38, 0.18], R, 0.24); nrLump(g, 0.16, 0.7, 0.1, 0.24, 0.6, [0.34, 0.42, 0.2], R, 0.2);
-    } else {
-      ico(g, 0, 0.42, 0, 0.5, 0.9, [0.78, 0.66, 0.4], R, 0.32);
+    } else if (kind === 2) {   // (a clump of the tall savanna grass: thin blades fanning out from the root, darker at the foot, the tips pale straw)
+      const ft = [0.62, 0.5, 0.3], tp = [0.9, 0.8, 0.52];
+      for (let k = 0; k < 13; k++) {
+        const a = k / 13 * TAU + R() * 0.5, lean = 0.18 + R() * 0.32, hh = 0.7 + R() * 0.3, w = 0.085, ca = Math.cos(a), sa = Math.sin(a);
+        const b0 = [-sa * w + ca * 0.05, 0, ca * w + sa * 0.05], b1 = [sa * w + ca * 0.05, 0, -ca * w + sa * 0.05], t = [ca * lean, hh, sa * lean], c = vary(tp, R, 0.06);
+        g.tri(b0, b1, t, ft, ft, c); g.tri(b1, b0, t, ft, ft, c);   // (both faces: the blade seen from either side)
+      }
+    } else {   // (Pachypodium rosulatum on the sandstone: the swollen pale grey trunk, a few short thick arms, small leaf tufts and yellow flowers)
+      const bk = [0.74, 0.72, 0.66], lf = [0.4, 0.5, 0.24], fl = [0.98, 0.84, 0.22];
+      ico(g, 0, 0.26, 0, 0.3, 0.95, bk, R, 0.12);
+      for (let k = 0; k < 4; k++) {
+        const a = k / 4 * TAU + R() * 0.5, ox = Math.cos(a) * 0.12, oz = Math.sin(a) * 0.12, hb = 0.3 + R() * 0.25;
+        cyl(g, ox, 0.42, oz, 0.07, hb, 5, bk, null, 0.05);
+        ico(g, ox, 0.42 + hb + 0.04, oz, 0.1, 0.6, lf, R, 0.3);
+        if (k % 2 === 0) ico(g, ox + 0.04, 0.42 + hb + 0.12, oz, 0.05, 0.8, fl, R, 0.2);
+      }
     }
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
@@ -201,10 +215,13 @@
       if (World.znamenitost) World.znamenitost.add('isalo', root, { x: QX, z: QZ, fallback: qm, out });
     }
 
+    const pachy = [];
+    // the burnt patches of the grass (each dry season the plains along the RN7 are burnt for the grazing: docs/proge/isalo-raziskava.md), ~15 % of it
+    const burnN = valueNoise2(2291, 42), burnt = (x, z) => burnN(x, z) > 0.64 && nrDist(x, z) > 3.5;   // (where the Pachypodium grow, by the rocks: planted with the trees)
     /* ---- the sandstone outcrops within 60 m of the road: where the ground rises steeply (the massif's foot) and in patches on the plain,
        groups of weathered blocks, stacked, pale ochre and pink with grey crusts ---- */
     {
-      const RK = [[0.86, 0.66, 0.5], [0.88, 0.72, 0.58], [0.74, 0.62, 0.54], [0.66, 0.6, 0.54]], Lt = NRC * 32; let nR = 0;
+      const RK = [[0.86, 0.66, 0.5], [0.88, 0.72, 0.58], [0.74, 0.62, 0.54], [0.66, 0.6, 0.54]], Lt = NRC * 32; let nR = 0, nTow = 0;
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
@@ -217,10 +234,18 @@
           const g = scen.get(x, z), big = sl > 0.25 && rd > 18, r0 = (big ? 2.2 : 1.0) + crH(x, z, 54) * (big ? 3.2 : 1.6), y = nrGround(x, z), c = RK[Math.floor(crH(x, z, 55) * RK.length)];
           nrLump(g, x, y - r0 * 0.3, z, r0, big ? 0.9 : 0.6, vary(c, R, 0.06), R, 0.28);
           if (big && crH(x, z, 56) < 0.6) ico(g, x + (crH(x, z, 57) - 0.5) * r0, y + r0 * 0.7, z + (crH(x, z, 58) - 0.5) * r0, r0 * 0.6, 0.8, vary(RK[(Math.floor(crH(x, z, 59) * 4))], R, 0.06), R, 0.2);
+          else if (big && rd > 22 && crH(x, z, 60) < 0.5) {   // (a ruiniform tower: the sandstone in flat beds, each a little narrower, the cap wider again where the harder bed holds)
+            let yy = y + r0 * 0.3, rr = r0 * 0.75; const nb = 3 + Math.floor(crH(x, z, 61) * 3);
+            for (let k = 0; k < nb; k++) { const c2 = RK[(k + Math.floor(crH(x, z, 62) * 4)) % 4], last = k === nb - 1, rk = last ? rr * 1.25 : rr;
+              ico(g, x + (crH(x, z, 63 + k) - 0.5) * 0.3 * rr, yy + rk * 0.38, z + (crH(x, z, 70 + k) - 0.5) * 0.3 * rr, rk, 0.42, vary(c2, R, 0.05), R, 0.14);
+              yy += rk * 0.7; rr *= 0.82; }
+            nTow++;
+          }
+          if (crH(x, z, 64) < (big ? 0.35 : 0.15)) pachy.push([x + (crH(x, z, 65) - 0.5) * r0 * 1.6, z + (crH(x, z, 66) - 0.5) * r0 * 1.6]);
           exclPush(x, z, r0 + 1); nR++;
         }
       }
-      out.rocks = nR;
+      out.rocks = nR; out.towers = nTow;
     }
 
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls; a banner at the finish too ---- */
@@ -260,14 +285,14 @@
         'float wK = position.y * position.y * 0.018;\ntransformed.x += wK * sin( uWind * 1.1 + wPh );\ntransformed.z += wK * 0.6 * sin( uWind * 0.83 + wPh * 1.7 );');
     };
     tMat.customProgramCacheKey = () => 'isTreeWind';
-    const TK = [new IChunks(isTreeGeo(0), tMat, 256), new IChunks(isTreeGeo(1), tMat, 256), new IChunks(isTreeGeo(2), tMat, 256)];
+    const TK = [new IChunks(isTreeGeo(0), tMat, 256), new IChunks(isTreeGeo(1), tMat, 256), new IChunks(isTreeGeo(2), tMat, 256), new IChunks(isTreeGeo(3), tMat, 256)];
     let nTrees = 0;
     const NEAR = 60;
     const plant = (sp, x, z, hgt, wid, c) => {   // sp: 0 fan palm, 1 round tree, 2 grass tuft
       const y = nrGround(x, z) - 0.1, rot = crH(x, z, 21) * TAU;
-      if (sp === 2) TK[2].add(x, y - 0.25 * hgt, z, rot, wid, hgt, c);
+      if (sp >= 2) TK[sp].add(x, y - (sp === 2 ? 0.25 : 0.05) * hgt, z, rot, wid, hgt, c);
       else TK[sp].add(x, y, z, rot, wid, hgt, c);
-      if (sp !== 2) nrShade(x, z, wid * (sp === 0 ? 0.3 : 0.42), 1); nTrees++; };
+      if (sp < 2) nrShade(x, z, wid * (sp === 0 ? 0.3 : 0.42), 1); nTrees++; };
     {
       const Lt = NRC * 32, maxT = Math.round(30000 * (opts.density || 1));
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
@@ -286,12 +311,39 @@
           if (cl === 1) sp = hs < 0.35 ? 0 : hs < 0.8 ? 1 : 2;
           else if (cl === 2) sp = hs < 0.15 ? 0 : hs < 0.35 ? 1 : 2;
           else sp = hs < 0.06 ? 0 : hs < 0.12 ? 1 : 2;
-          const hgt = sp === 0 ? 6 + hq * 5 : sp === 1 ? 4 + hq * 3 : 0.8 + hq * 0.7;
+          const bu = burnt(x, z);
+          if (bu && sp === 1) continue;   // (the fire leaves the fan palms, it takes the small trees)
+          let hgt = sp === 0 ? 6 + hq * 5 : sp === 1 ? 4 + hq * 3 : 0.8 + hq * 0.7;
+          if (bu && sp === 2) { hgt *= 0.4; if (hs < 0.6) col[0] *= 0.5, col[1] *= 0.52, col[2] *= 0.62; else col[0] *= 0.75, col[1] *= 1.35, col[2] *= 0.95; }
           const wid = sp === 0 ? hgt * 0.8 : sp === 1 ? hgt * (1.0 + hs * 0.3) : hgt * 1.4;
           if (ni >= 0 && ndd < 3 + wid * 0.3 && sp !== 2) continue;   // (no crown over the barriers)
           plant(sp, x, z, hgt, wid, col);
         }
       }
+    }
+    /* ---- the savanna near the road (the chase camera's ground): more clumps of the tall dry grass 4-34 m off the asphalt, and on the burnt
+       patches (the grass burnt off each dry season for the grazing, along the RN7) the black stubble with the fresh green shoots; the
+       Pachypodium by the rocks ---- */
+    let nClump = 0, nBurn = 0, nPachy = 0;
+    {
+      const Lt = NRC * 32, maxC = Math.round(4200 * (opts.density || 1));
+      for (let tj = 0; tj < G.ntz && nClump < maxC; tj++) for (let ti = 0; ti < G.ntx && nClump < maxC; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
+        for (let zz = za; zz < za + Lt; zz += 3.5) for (let xx = xa; xx < xa + Lt; xx += 3.5) {
+          const x = xx + (crH(xx, zz, 81) - 0.5) * 3.2, z = zz + (crH(xx, zz, 82) - 0.5) * 3.2, rd = nrDist(x, z);
+          if (rd > 34) continue;
+          const bu = burnt(x, z), h1 = crH(x, z, 83);
+          if (h1 > (bu ? 0.8 : 0.2 + 0.25 * sstep(0.4, 0.8, P.n2(x, z)))) continue;
+          if (nrLC(x, z) > 2 || excluded(x, z)) continue;
+          const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4) continue;
+          const hq = crH(x, z, 84), hs = crH(x, z, 85), cv = 0.88 + crH(x, z, 86) * 0.24;
+          let col = [cv * (0.98 + hq * 0.08), cv, cv * (0.92 + hs * 0.1)], hgt = 1.0 + hq * 0.8, wid = hgt * (1.3 + hs * 0.5);
+          if (bu) { if (hs < 0.62) { col = [0.36, 0.34, 0.36]; hgt = 0.25 + hq * 0.2; } else { col = [0.7, 1.3, 0.9]; hgt = 0.3 + hq * 0.25; } wid = hgt * 2.2; nBurn++; }
+          plant(2, x, z, hgt, wid, col); nClump++;
+        }
+      }
+      for (const [x, z] of pachy) { if (nrDist(x, z) < 6) continue; const hq = crH(x, z, 87), hgt = 0.7 + hq * 0.8; plant(3, x, z, hgt, hgt * 0.9, [1, 1, 1]); nPachy++; }
     }
     for (const t of TK) t.addTo(root, true);
 
@@ -337,7 +389,7 @@
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'isalo', { gH: nrGround, slope: API.nrSlope, lc: nrLC, near: nrNear });   // (the roadside ground for the chase camera: js/world-chase-bt14.js)
-    out.stats = { tiles: nTiles, trees: nTrees, stone: nStone, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, stone: nStone, fans: nFans, rocks: out.rocks, towers: out.towers, clumps: nClump, burnt: nBurn, pachy: nPachy };   // (read by the tests)
     return out;
   }
 
