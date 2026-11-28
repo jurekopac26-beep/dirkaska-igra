@@ -10,3 +10,15 @@ Mestna proga po današnjih cestah otoka Mombasa: od avenije v mestnem središču
 - **Imena na zaslonu:** samo zemljepisna in opisna (Mestno središče, Krožišče, Stari del mesta, Trdnjava, Obalna cesta, Kanal Likoni).
 - **Približki:** enotna dirkalna širina, ograje namesto pravih robnikov, razporeditev dodatnih hiš in dreves, poenostavljena trdnjava (brez notranjih prostorov in topov).
 - **Viri:** © OpenStreetMap contributors (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0), Meta / WRI High Resolution Canopy Height Maps (CC BY 4.0); glej `README.md`, »Zasluge«.
+
+## Raziskava za dodelavo (28. 11. 2026)
+
+Po virih: OpenStreetMap (ODbL, pobrano 28. 11. 2026 prek `api.openstreetmap.org/api/0.6/map`), Copernicus DEM GLO-30, ESA WorldCover 2021, javni opisi (UNESCO WHC 1295, NGA Pub. 112 *List of Lights*). Razdalje so metri dirke od starta (d) in od sredine ceste.
+
+- **Kraj in podnebje:** otok Mombasa na kenijski obali Indijskega oceana, 4° j. š.; vroče vlažno tropsko podnebje (savanska klima As po Köppnu, deževni dobi april–junij in oktober–november). Teren 7–27 m nad morjem (DEM), otok iz koralnega apnenca (»coral rag«), plitva rdečkasta peščena prst; ob obali nizka koralna stena nad kanalom.
+- **Rastlinje:** kokosove palme, baobabi, mangovci in nim drevesa ob cestah (WorldCover: drevesa in pozidano; krošnje Meta/WRI 5–15 m).
+- **Mestni del (0–1150):** OSM ima ob avenijah poslovne bloke tik ob pločniku: stolp s 16 nadstropji pri d≈330 (4 m od ceste) in stavba s 14 nadstropji pri d≈390 (3 m), krožišči pri d≈260 in d≈960. Med 410 in 1150 cesta teče po robu starega dela mesta (OSM: četrt pri d≈660; hindujski tempelj pri d≈600, 65 m, mošeja pri d≈650, 45 m — zunaj 60 m, zato samo kot ozadje). Stari del ima po javnih opisih (UNESCO) dvo- do trinadstropne hiše iz koralnega kamna z apnenim ometom, ravnimi strehami, rezljanimi lesenimi vrati in lesenimi balkoni.
+- **Trdnjava (d≈1130–1300):** utrdba iz konca 16. stoletja (UNESCO WHC 1295), pred njo park (OSM, d≈1148, 9 m) in spomenik (d≈1058, 31 m; brez napisov in kipov ga ne rišemo). Krožišče pri d≈1317.
+- **Kizingo in obala (1300–3400):** stanovanjska četrt Kizingo (d≈1737) z vilami in vrtovi; morje je pri d≈1300 še ~395 m stran (zato »Obalna cesta« pri 1340 ni točna), obala pride do ~20–80 m šele od d≈2280. **Svetilnik Ras Serani**: spodnji navigacijski svetilnik pri d≈2148, 36 m od ceste (luč 26 m nad morjem, hitro belo, doseg 8 milj; NGA Pub. 112), zadnji svetilnik (33 m) pri d≈2488 je 187 m stran. Golf igrišče d≈2418–2748 z ribnikoma (d≈2698, 23 m; d≈2748, 12 m), park ob obali za ciljem, kanal Likoni na jugu. Trajekt je več kot 740 m stran (ne rišemo).
+- **Ceste (OSM):** secondary → trunk → tertiary ob starem delu → servisna cesta pod trdnjavo → residential → tertiary obalna cesta (en pas v vsako smer od d≈2140).
+- **Pred dodelavo (slike `docs/slike/dodelava/mombasa-pred.webp`):** pri 640 m široki prazni peščeni robovi, hiše daleč zadaj (manjka ulična fronta starega dela); pri 2130 m suha tla s palmami, brez svetilnika. Moji odprti PR #1145 in #1174 (biketraveler) delata drobne predmete ob tleh 7–38 m; ta dodelava jih ne podvaja.
