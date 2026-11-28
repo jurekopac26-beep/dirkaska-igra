@@ -2009,7 +2009,9 @@ const Core = (function () {
   // in winter): its share stays COLD.snow (a makadam road in winter: Race.cold.rk 0, the rain's water does not count for the grip; the gravel
   // of a mixed stage: its wheels without the rain's share, snowK / wx.r), or a rear-driven car no longer climbs a snowy road; on winter's
   // tarmac the two multiply (0.7 x 0.65: the tarmac under falling snow about as a road packed with it)
-  const WET = 0.65, WET_BRK = 0.7, COLD = { road: 0.7, snow: 0.45 };
+  // Ice (def.ice: a track on ice, Envalira): x COLD.ice in every season and weather, its share of dry tarmac within the 11-23 % of
+  // docs/dez-sneg.md (winter tyres on groomed ice, the upper part); the rain does not count for it (rk 0, as snow on snow)
+  const WET = 0.65, WET_BRK = 0.7, COLD = { road: 0.7, snow: 0.45, ice: 0.2 };
   // tyres (Race opts tyres): slicks and rain tyres, their grip on a road with water w (0 dry .. 1 wet): slicks lose half of theirs in the wet,
   // rain tyres have less on a dry road (and wear fast there); the right ones give the plain grip (1 dry, WET in the rain). Worn out: 10 % less.
   // TYRE_BRK: the same for the brakes (of the slicks' on a dry road; the rain tyres' 0.955 there is what the grip's 0.9 leaves them: Car.stepCS)
@@ -7301,8 +7303,8 @@ const Core = (function () {
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
       // winter (opts.winter): cold tarmac grips less (x COLD.road), a gravel road packed with snow much less (x COLD.snow): on every car's grip, its brakes and the AI's profile
-      this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? COLD.snow : COLD.road) : 1, mk: opts.winter && track.sf ? COLD.snow / COLD.road : 0, rk: opts.winter && track.def.roadSurface === 'makadam' ? 0 : 1 };   // (in an object: the golden references digest only the plain fields; mk: a stage of tarmac and gravel, its gravel's grip on top of the tarmac's)
-      if (opts.winter) for (const c of this.cars) if (c.dTy) c.dTy.winter = 1;   // (the garage's tyres on a winter's road: their snow grip)
+      this.cold = track.def.ice ? { gk: COLD.ice, mk: 0, rk: 0 } : { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? COLD.snow : COLD.road) : 1, mk: opts.winter && track.sf ? COLD.snow / COLD.road : 0, rk: opts.winter && track.def.roadSurface === 'makadam' ? 0 : 1 };   // (in an object: the golden references digest only the plain fields; mk: a stage of tarmac and gravel, its gravel's grip on top of the tarmac's)
+      if (opts.winter || track.def.ice) for (const c of this.cars) if (c.dTy) c.dTy.winter = 1;   // (the garage's tyres on a winter's road: their snow grip)
       this.rain = 0; this._wet(opts.rain);
       // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to }: the rain goes from opts.rain to `to` over dur s from race time
       // at). The water on the road follows the rain (wet in about a minute, dry in about four, the racing line twice as fast); a car's grip
