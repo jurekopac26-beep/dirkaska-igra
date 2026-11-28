@@ -500,7 +500,7 @@
     'Gozd nad Vaoalo': 'Forest above Vaoala', 'Do Tiapapate': 'To Tiapapata',   // (Vaoala: the HUD, the results of an escape; Letava, Vaoala and Tiapapata stay as they are, the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
-    'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
+    'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra', 'Lestev serpentin': 'Ladder of Hairpins',   // (Serra do Rio do Rastro)
     'Bunkerji': 'Bunkers', 'Qafa e Llogarasë': 'Llogara Pass', 'Spomenik': 'Monument', 'Znamenje': 'Wayside Shrine', 'Vzletišče': 'Paragliders\' Launch', 'Čez prelaz': 'Over the pass',   // (Llogara: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
     'Kapelica': 'Wayside Shrine', 'Do morja': 'Down to the sea',   // (Porto Moniz: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place, the town as it is)
     'Zaliv Praia do Bispo': 'Praia do Bispo Bay', 'Pod gričem': 'Under the Hill', 'Obroč pod gričem': 'Round the Hill', 'Trdnjava': 'Fortress', 'Ob zalivu': 'Along the Bay', 'Marginal': 'Marginal', 'Do konca zaliva': 'To the end of the bay',   // (Luanda: the HUD, the results of an escape)
