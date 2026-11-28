@@ -2,7 +2,7 @@
 
 [← Vse proge](../../README.md#proge) · proga `mapileng` (`js/tracks/mapileng.js`)
 
-**Na odločanju** (`pending: true`, od 16. 11. 2026): iz Vietnama ostane ena od Mã Pí Lènga in Hải Vâna (#676); obe se dokončata, nato uporabnik izbere (tabla #382, komentar 6906260656; `docs/proge-po-drzavah.md`). V meniju je do izbire za gumbom NEUPORABNO, z oznako PENDING.
+**Prava proga** od 22. 11. 2026 (izbira uporabnika, Matej, tabla #382, komentar 7071810014; `docs/proge-po-drzavah.md`). **Dodelava do ravni Pikes Peaka** (O-28-11, O-28-18): lasten svet `js/world-mapileng.js` (veja `dodelava/mapileng`).
 
 Državna cesta QL4C med Đồng Vănom in Mèo Vạcom na kraški planoti Đồng Văn (provinca Hà Giang, skrajni sever Vietnama), v pravem merilu: kratek kos ceste tik pod prelazom Mã Pí Lèng, ki se s tremi serpentinami vzpne po pobočju nad kanjonom reke Nho Quế. Proga se začne na 1184 m (23,2504° S, 105,3895° V), gre skozi tri serpentine na greben pri spomeniku graditeljem ceste (1256 m, najvišja točka) in se malo spusti do cilja (1245 m): 0,99 km, 72 m vzpona in 11 m spusta. Pred startom je ~220 m ceste za štartno mrežo, za ciljem ~245 m za mesta avtov po dirki in razgledišče. Prva od petih kratkih prog zunaj Evrope (`docs/nove-proge-1-0.md`, Del 4: K1). Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija** (kot na Dadèsu):
 
