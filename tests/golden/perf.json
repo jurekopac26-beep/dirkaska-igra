@@ -545,13 +545,6 @@
   "maxKverts": 492,
   "jsMs": 1.53
  },
- "trebevic": {
-  "calls": 161,
-  "maxCalls": 190,
-  "kverts": 364,
-  "maxKverts": 433,
-  "jsMs": 1.5
- },
  "kudowa": {
   "calls": 165,
   "maxCalls": 192,
