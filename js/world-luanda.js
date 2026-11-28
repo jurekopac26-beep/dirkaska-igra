@@ -93,21 +93,40 @@
 
     // ---- the coast: the signed distance to OSM's coastline (+ on the sea: the land lies on the left of each line), the sea's floor under the shore ----
     const CO = [], CH = 48, chash = new Map();
-    for (const fl of LD.coast) { for (let k = 0; k + 3 < fl.length; k += 2) CO.push([fl[k], fl[k + 1], fl[k + 2], fl[k + 3]]); }
+    // (each piece: [ax, az, bx, bz, open]; open 1 / 2: its first / last point is a loose end of an unclosed line, where the side is not known)
+    for (const fl of LD.coast) { const n = fl.length, shut = Math.hypot(fl[0] - fl[n - 2], fl[1] - fl[n - 1]) < 1;
+      for (let k = 0; k + 3 < n; k += 2) CO.push([fl[k], fl[k + 1], fl[k + 2], fl[k + 3], shut ? 0 : (k === 0 ? 1 : 0) | (k + 4 >= n ? 2 : 0)]); }
     CO.forEach((e, n) => { const x0 = Math.floor(Math.min(e[0], e[2]) / CH), x1 = Math.floor(Math.max(e[0], e[2]) / CH), z0 = Math.floor(Math.min(e[1], e[3]) / CH), z1 = Math.floor(Math.max(e[1], e[3]) / CH);
       for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const k = i + ',' + j; let Lc = chash.get(k); if (!Lc) chash.set(k, Lc = []); Lc.push(n); } });
+    // the built waterfront of the seafront road (the Marginal, from ~2.6 km of the race to the end): the pieces of the coastline within 110 m of
+    // that stretch, with the land's side (QL: the unit normal towards the land). OSM's coastline is where the land ends; how it ends is not
+    // in OSM (only natural=coastline there, no man_made=quay or wall: checked 28. 11. 2026): a filled shore of the bay, its edge walled (assumed:
+    // a vertical quay of dressed stone with a concrete coping, QY m above the sea, about the road's own height there, broken stone at its foot)
+    const QY = 2.0, QU = [];
+    CO.forEach((e, n) => { const mx = (e[0] + e[2]) / 2, mz = (e[1] + e[3]) / 2; let bd = 1e9, bi = 0;
+      for (let i = 0; i < N; i += 3) { const d = (T.px[i] - mx) ** 2 + (T.pz[i] - mz) ** 2; if (d < bd) { bd = d; bi = i; } }
+      if (Math.sqrt(bd) < 110 && dS(bi * ds) > 2600) { const vx = e[2] - e[0], vz = e[3] - e[1], l = Math.hypot(vx, vz) || 1; QU.push([e[0], e[1], e[2], e[3], vz / l, -vx / l, n]); } });
+    const quayD = (x, z) => { let bd = 1e9; for (const [ax, az, bx, bz] of QU) { const vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1); bd = Math.min(bd, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return bd; };
+    const isQuay = new Set(QU.map(q => q[6]));
     const seaD = (x, z) => {
-      let bd = 1e9, bs = 1; const i0 = Math.floor(x / CH), j0 = Math.floor(z / CH);
+      let bd = 1e9, bs = 1, loose = false; const i0 = Math.floor(x / CH), j0 = Math.floor(z / CH);
       for (let r = 0; r <= 3 && bd > r * CH - CH; r++) for (let i = i0 - r; i <= i0 + r; i++) for (let j = j0 - r; j <= j0 + r; j++) {
         if (Math.max(Math.abs(i - i0), Math.abs(j - j0)) !== r) continue; const Lc = chash.get(i + ',' + j); if (!Lc) continue;
-        for (const k of Lc) { const [ax, az, bx, bz] = CO[k], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, d = Math.hypot(dx, dz);
-          if (d < bd) { bd = d; bs = (dx * vz - dz * vx) > 0 ? -1 : 1; } } }
-      if (bd > 25 || bd > 1e8) { const sea = nrDem(x, z) < SEA + 0.6; return (bd > 1e8 ? 200 : bd) * (sea ? 1 : -1); }   // (away from the line its side by the heights)
+        for (const k of Lc) { const [ax, az, bx, bz, op] = CO[k], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, d = Math.hypot(dx, dz);
+          if (d < bd) { bd = d; bs = (dx * vz - dz * vx) > 0 ? -1 : 1; loose = (t <= 0 && (op & 1)) || (t >= 1 && (op & 2)); } } }
+      // away from the line (over 25 m) its side by the heights, unless OSM's coastline is near enough (within 100 m, not past a loose end) to tell:
+      // the waterfront of the bay of Luanda was built out into the sea after the ground model's survey (Copernicus: 2010-2014), whose heights
+      // there are still the sea's (0 m), so by the heights alone a false channel of water would run along the seafront road
+      if (bd > 1e8 || (bd > 25 && (bd > 100 || loose))) { const sea = nrDem(x, z) < SEA + 0.6; return (bd > 1e8 ? 200 : bd) * (sea ? 1 : -1); }
       return bd * bs; };
     P.pad = (x, z, h) => {
       const sd = seaD(x, z);
       if (sd > 0) h = Math.min(h, SEA - 0.6 - Math.min(sd, 70) * 0.07);   // the sea's floor, deeper away from the shore
       else if (sd > -30) h = Math.max(h, SEA + 0.4 + Math.min(-sd, 30) * 0.03);   // (the shore stays above the water)
+      if (sd <= 0 && QU.length) { const q = quayD(x, z); if (q < 95) {   // (the filled waterfront at the quay's height, never over the road: under it within 6 m, as the shared ground)
+        let f = lerp(SEA + QY, h, sstep(70, 95, q)); const n = nrNear(x, z);
+        if (n.i >= 0 && n.dd < 6) f = Math.min(f, n.hn - 0.3 + 0.12 * n.dd * n.dd); if (n.i < 0) n.dd = 999;   // (nrNear's record is the caller's: put back as it was)
+        h = Math.max(h, f); } }
       const fw = fortW(x, z); if (fw > 0) h = lerp(h, nrDem(x, z), fw);
       return h; };
     // the ground's colours (the dry season on the coast of Angola): the red laterite and ochre dust, dry grass in patches, the trees' canopy farther
@@ -123,7 +142,12 @@
       const k = 0.96 + (q - 0.5) * 0.12; r = lerp(r, 0.8 * k, se * 0.55); g = lerp(g, 0.66 * k, se * 0.55); b = lerp(b, 0.52 * k, se * 0.55);
       const rk = sstep(0.9, 0.66, ny) * 0.95;
       r = lerp(r, 0.82 + q * 0.06, rk); g = lerp(g, 0.56 + q * 0.05, rk); b = lerp(b, 0.42 + q * 0.04, rk);
-      if (sd > -22 && h < 3.0) { const t = sstep(-22, -6, sd) * sstep(3.0, 1.2, h); r = lerp(r, 1.1, t); g = lerp(g, 1.0, t); b = lerp(b, 0.82, t); }
+      const qd = QU.length && sd > -40 ? quayD(x, z) : 1e9;
+      // (the paved walk along the quay and the dry lawns behind it, as OSM: footways 8-15 m from the coastline, ways 527981635-527981645;
+      // landuse=grass 10-34 m from it, ways 528099307-528099317)
+      if (qd < 40) { const t = sstep(17, 12, qd), pv = 0.97 + (q - 0.5) * 0.08, gr2 = (0.55 + sstep(0.42, 0.7, P.n2(x, z)) * 0.3) * sstep(12, 16, qd) * sstep(36, 32, qd);
+        r = lerp(lerp(r, 0.64, gr2), 0.86 * pv, t); g = lerp(lerp(g, 0.66, gr2), 0.83 * pv, t); b = lerp(lerp(b, 0.42, gr2), 0.76 * pv, t); }
+      else if (sd > -22 && h < 3.0) { const t = sstep(-22, -6, sd) * sstep(3.0, 1.2, h); r = lerp(r, 1.1, t); g = lerp(g, 1.0, t); b = lerp(b, 0.82, t); }
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.86, t); g = lerp(g, 0.8, t); b = lerp(b, 0.72, t); }
       o[0] = r; o[1] = g; o[2] = b; return o; };
     const OB = World.ext.luandaOb ? World.ext.luandaOb({ exclPush, seaD, inFort, root, tex, T }) : null;   // the side roads (js/world-luanda-obcestje.js): before the fill houses and the trees
@@ -297,6 +321,19 @@
       }
     }
 
+    /* ---- the two old cannons on the slope under the fortress, by the road (OSM historic=cannon; LD.cannons): an iron barrel on a wooden
+       carriage with two wheels, on a low stone plinth, aimed away from the fortress (down the slope) ---- */
+    let nCan = 0;
+    for (const [x, z] of LD.cannons || []) {
+      const g = scen.get(x, z), y = nrGround(x, z), ang = FC ? Math.atan2(z - FC[1], x - FC[0]) : 0, ca = Math.cos(ang), sa = Math.sin(ang);
+      const wood = [0.4, 0.28, 0.18], woodT = [0.46, 0.33, 0.21], iron = [0.3, 0.31, 0.32];
+      box(g, x, y - 0.4, z, 2.8, 0.62, 1.6, ang, [0.8, 0.76, 0.68], [0.86, 0.82, 0.74], true);
+      box(g, x, y + 0.42, z, 1.6, 0.4, 0.8, ang, wood, woodT, true);
+      for (const sd of [-1, 1]) box(g, x - sa * 0.52 * sd, y + 0.22, z + ca * 0.52 * sd, 0.78, 0.78, 0.12, ang, wood, woodT, true);
+      box(g, x + ca * 0.35, y + 0.86, z + sa * 0.35, 2.4, 0.34, 0.34, ang, iron, iron, true);
+      box(g, x + ca * 1.5, y + 0.83, z + sa * 1.5, 0.16, 0.4, 0.4, ang, iron, iron, true);   // (the muzzle's ring)
+      exclPush(x, z, 3); CR.avoid(x, z, 1.8); nCan++;
+    }
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls; a banner at the finish too ---- */
     for (const s0 of [sStart, sFin]) {
       const [x, z, h, i] = atS(s0, 0), gy = T.hy[i], g = scen.get(x, z), span = Math.max(T.bl[i], T.br[i]) + 1.2, nx = T.nx[i], nz = T.nz[i];
@@ -392,15 +429,25 @@
     /* ---- the rocks along the shore within 60 m of the road (red laterite and sandstone where the land meets the sea, not on the beaches) ---- */
     {
       const rk = [0.72, 0.55, 0.44]; let nR = 0;
-      for (const [ax, az, bx, bz] of CO) {
-        const len = Math.hypot(bx - ax, bz - az);
-        for (let t = 0; t < len; t += 3.5) {
-          const x = ax + (bx - ax) * t / len, z = az + (bz - az) * t / len; if (nrDist(x, z) > 75 || crH(x, z, 31) > 0.5) continue;
-          const r0 = 1.2 + crH(x, z, 32) * 2.2, y = Math.max(SEA - 0.6, nrGround(x, z) - r0 * 0.35);
-          nrLump(scen.get(x, z), x, y, z, r0, 0.62, vary(rk, R, 0.1), R, 0.25); nR++;
+      CO.forEach(([ax, az, bx, bz], n) => {
+        const len = Math.hypot(bx - ax, bz - az), qu = isQuay.has(n), Q = qu ? QU.find(e => e[6] === n) : null;
+        for (let t = 0; t < len; t += qu ? 2.2 : 3.5) {
+          let x = ax + (bx - ax) * t / len, z = az + (bz - az) * t / len; if (nrDist(x, z) > (qu ? 115 : 75) || (!qu && crH(x, z, 31) > 0.5)) continue;
+          let r0 = 1.2 + crH(x, z, 32) * 2.2, y = Math.max(SEA - 0.6, nrGround(x, z) - r0 * 0.35);
+          if (qu) { r0 = 0.8 + crH(x, z, 32) * 0.9; const o = -(r0 * 0.7 + crH(x, z, 33) * 1.4); x += Q[4] * o; z += Q[5] * o; y = SEA - r0 * 0.45; }   // (the broken stone at the quay's foot)
+          nrLump(scen.get(x, z), x, y, z, r0, 0.62, vary(qu ? [0.6, 0.57, 0.52] : rk, R, 0.1), R, 0.25); nR++;
         }
-      }
+      });
       out.rocks = nR;
+      // the quay: its face (from under the water to QY) and the coping, on the land's side of the line, piece by piece
+      const st = [0.74, 0.7, 0.62], stT = [0.8, 0.77, 0.7], cop = [0.9, 0.89, 0.85];
+      for (const [ax, az, bx, bz, lx, lz] of QU) {
+        const len = Math.hypot(bx - ax, bz - az); if (len < 0.5) continue;
+        const ang = Math.atan2(bz - az, bx - ax), mx = (ax + bx) / 2 + lx * 0.45, mz = (az + bz) / 2 + lz * 0.45, g = scen.get(mx, mz);
+        box(g, mx, SEA - 1.4, mz, len + 0.9, 1.4 + QY - 0.12, 0.9, ang, vary(st, R, 0.04), stT, true);
+        box(g, mx + lx * 0.05, SEA + QY - 0.12, mz + lz * 0.05, len + 1.0, 0.24, 1.1, ang, cop, cop, true);
+      }
+      out.quay = QU.length;
     }
 
     /* ---- the sea to the horizon (the calm bay), the shore band (foam) along the coast near the road ---- */
@@ -457,7 +504,7 @@
     const rob = World.ext.luandaRob ? World.ext.luandaRob({ scen, excluded, seaD, inFort, root, out }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, cannons: nCan, rocks: out.rocks, rob };   // (read by the tests)
     return out;
   }
 
