@@ -80,6 +80,15 @@
   // stage of its cup; stopnja: the gift when a stage opens; razred: a class cup, 1st, 2nd, 3rd; cilj: a class goal; posamezna: a single event
   // of stage s, 1, 2, 3 stars (Atlas; a better result later: the difference)
   const NAGRADE = EKONOMIJA[ODLOCITVE.ekonomija] || EKONOMIJA.pot;
+  /* ---- proge3-kariera (25. 11., option 2: »the career grows with the tracks«): the path's rewards above are tuned to a path of DIRK_REF races
+     (the cups' races, the class cups' and the single events, at 65 real tracks); a longer path pays every reward times DIRK_REF / its races
+     (P.faktor, P.nagrade; rounded to 500; a shorter path as tuned), so every car is still bought at about the end of the path ---- */
+  const DIRK_REF = 124;
+  function skaliraj(t, f) {
+    if (Array.isArray(t)) return t.map(x => skaliraj(x, f));
+    return Number.isFinite(t) && t > 0 ? Math.max(500, Math.round(t * f / 500) * 500) : t;
+  }
+  const nagradeOf = (P) => (P && P.nagrade) || NAGRADE;
   // a car worth the stage (the simulation's measure »a car of the next stage after ~10–15 races of a stage«; the menu may show it): the price from
   const AVTO_STOPNJE = [null, 0, 200000, 500000, 1000000, 1200000];
 
@@ -152,8 +161,8 @@
     return t[best - 1] || 0;
   }
   // an event's coins for 1, 2, 3 stars (a better result later pays the difference)
-  function kovanci(x) {
-    const k = kindOf(x);
+  function kovanci(x, P) {
+    const k = kindOf(x), NAGRADE = nagradeOf(P);
     const t = k === 'razred' ? NAGRADE.razred : k === 'finale' ? NAGRADE.finale : k === 'pokal' ? NAGRADE.pokal[x.stopnja] : NAGRADE.posamezna[x.stopnja];
     if (!t) return [0, 0, 0];
     return k === 'pokal' || k === 'razred' || k === 'finale' ? [t[2], t[1], t[0]] : t.slice();
@@ -206,7 +215,7 @@
     const posamezne = [], stopnje = [], prej = new Set(), zv = [];   // (prej: the tracks of the stages before: another track if there is one; zv: a stage's stars without its class cups)
     STOPNJE.forEach((st, si) => {
       const s = st.n, cups = pokali.filter(p => p.stopnja === s), cls = razredi.filter(r => r.stopnja === s);
-      const need = Math.max(0, VELIKOST[si] - cups.length - cls.length);
+      const need = Math.max(VRSTE_POS.length, VELIKOST[si] - cups.length - cls.length);   // (proge3-kariera: room for a race, a time trial and a duel; a stage with more cups grows)
       const pool = sort(T.filter(d => s <= 4 ? stopnjaProge(d) === s : stopnjaProge(d) >= 3 && !fin.includes(d.id)).map(d => d.id)), used = new Set(), mine = [];
       for (let k = 0; k < need && used.size < pool.length; k++) {
         const want = Math.min(pool.length - 1, Math.floor(pool.length * (k + 0.5) / need));
@@ -232,9 +241,11 @@
       stopnje.push({ n: s, name: st.name, en: { name: st.en }, diff: st.diff, pokali: cups.map(p => p.id), dogodki: dog.map(x => x.id) });
     });
     const vse = pokali.concat(razredi, posamezne), max = vse.length * 3;
+    const dirk = vse.reduce((a, x) => a + x.tracks.length, 0), faktor = dirk && DIRK_REF ? Math.min(1, DIRK_REF / dirk) : 1;
     // a threshold at most the stars of the stages before without their class cups (a small or odd set of tracks: every stage can open)
-    const pragovi = PRAG.map((x, i) => Math.min(Math.round(x * max / PRAG_OD), zv.slice(0, i).reduce((a, b) => a + b, 0)));
-    return { stopnje, pokali, razredi, posamezne, vse, max, pragovi };
+    const pragovi = PRAG.map((x, i) => Math.min(i === 1 ? x : Math.round(x * max / PRAG_OD), zv.slice(0, i).reduce((a, b) => a + b, 0)));   // (proge3-kariera: stage 2 at 9★ always; stage 1 does not grow)
+    const nagrade = {}; for (const k in NAGRADE) nagrade[k] = skaliraj(NAGRADE[k], faktor);
+    return { stopnje, pokali, razredi, posamezne, vse, max, pragovi, dirk, faktor, nagrade };
   }
   // the final (kariera-7, option 1): circuits shorter than DOLGA, one continent after another (the longest of each first), FINALE_N of them
   function finale(T, L) {
@@ -327,11 +338,11 @@
     const before = p.pokali[cupId] || 0, zPrej = zvezdice(cup, before);
     if (!cup || !(Number.isInteger(place) && place >= 1)) return { career: c, nagrade: out, zvezdice: { prej: zPrej, zdaj: zPrej }, stopnja: { prej: was, zdaj: was } };   // (a place: a whole number from 1)
     if (!before || place < before) p.pokali[cupId] = place;
-    const zZdaj = zvezdice(cup, p.pokali[cupId]), k = kovanci(cup), add = (zZdaj ? k[zZdaj - 1] : 0) - (zPrej ? k[zPrej - 1] : 0);
+    const zZdaj = zvezdice(cup, p.pokali[cupId]), k = kovanci(cup, P), add = (zZdaj ? k[zZdaj - 1] : 0) - (zPrej ? k[zPrej - 1] : 0);
     if (add > 0) out.push({ id: 'pokal:' + cupId, name: cup.name + ' · ' + place + '. mesto', en: cup.en.name + ' · P' + place, amount: add });
     // the gifts from the stage the career has had (p.stopnja; an odd save: the missing ones once, at its next event)
     const now = odprta(p, P), dano = ODLOCITVE.zgradba === 'odprto' || ODLOCITVE.odklep === 'nic' ? was : Math.min(was, p.stopnja);
-    for (let s = dano + 1; s <= now; s++) { if (NAGRADE.stopnja[s]) out.push({ id: 'stopnja:' + s, name: 'Nova stopnja · ' + STOPNJE[s - 1].name, en: 'New stage · ' + STOPNJE[s - 1].en, amount: NAGRADE.stopnja[s] }); }
+    for (let s = dano + 1; s <= now; s++) { if (nagradeOf(P).stopnja[s]) out.push({ id: 'stopnja:' + s, name: 'Nova stopnja · ' + STOPNJE[s - 1].name, en: 'New stage · ' + STOPNJE[s - 1].en, amount: nagradeOf(P).stopnja[s] }); }
     p.stopnja = Math.max(p.stopnja, now);
     return { career: c, nagrade: out, zvezdice: { prej: zPrej, zdaj: zZdaj }, stopnja: { prej: dano, zdaj: now } };
   }
@@ -347,13 +358,13 @@
     if (cat && Number.isFinite(d) && d > 0) { const v = Math.round(((p.km[cat] || 0) + d) * 1000) / 1000; if (Number.isFinite(v)) p.km[cat] = v; }
     if ((ev.pos === 1 || ev.medal === 'gold') && ev.track && !p.prve.includes(ev.track)) {
       const s = stopnjaOf(P, ev.track);
-      if (s) { p.prve.push(ev.track); out.push({ id: 'prva:' + ev.track, name: 'Prva zmaga na progi', en: 'First win on the track', amount: NAGRADE.prva[s] }); }
+      if (s) { p.prve.push(ev.track); out.push({ id: 'prva:' + ev.track, name: 'Prva zmaga na progi', en: 'First win on the track', amount: nagradeOf(P).prva[s] }); }
     }
     const R = cat && P.razredi.find(r => r.cat === cat);
     if (R) for (const g of R.cilji) {
       if (p.cilji[g.id]) continue;
       const done = g.id.endsWith('-zmaga') ? ev.pos === 1 : g.id.endsWith('-medalja') ? ['gold', 'silver', 'bronze'].includes(ev.medal) : (p.km[cat] || 0) >= g.need;
-      if (done) { p.cilji[g.id] = true; out.push({ id: 'cilj:' + g.id, name: R.name.replace('Pokal razreda · ', '') + ' · ' + g.name, en: R.en.name.replace('Class Cup · ', '') + ' · ' + g.en, amount: NAGRADE.cilj }); }
+      if (done) { p.cilji[g.id] = true; out.push({ id: 'cilj:' + g.id, name: R.name.replace('Pokal razreda · ', '') + ' · ' + g.name, en: R.en.name.replace('Class Cup · ', '') + ' · ' + g.en, amount: nagradeOf(P).cilj }); }
     }
     return { career: c, nagrade: out };
   }
@@ -364,7 +375,7 @@
   // rival), laps, stanje, best, zvezdice); atlas: the same stages with the stars of the path
   function view(car, P, cats) {
     const c = isObj(car) ? car : {}, p = cistaPot(c.pot), s = odprta(p, P), own = cats || [];
-    const cup = (x) => { const o = Object.assign({ id: x.id, name: x.name, en: x.en, stopnja: x.stopnja, vrsta: x.vrsta, kind: kindOf(x), tracks: x.tracks.slice(), km: x.km, diff: x.diff, kovanci: kovanci(x) },
+    const cup = (x) => { const o = Object.assign({ id: x.id, name: x.name, en: x.en, stopnja: x.stopnja, vrsta: x.vrsta, kind: kindOf(x), tracks: x.tracks.slice(), km: x.km, diff: x.diff, kovanci: kovanci(x, P) },
       stanjeS(p, x, s, own)); if (x.cat) o.cat = x.cat; if (x.n) o.n = x.n; if (x.laps) o.laps = x.laps; return o; };
     const z = vseZvezdice(p, P), pr = P.pragovi || [];
     const stopnje = P.stopnje.map(st => {
@@ -383,7 +394,7 @@
   }
 
   const api = { ODLOCITVE, STOPNJE, MEJE, DOLGA, NAJVEC, LEGENDE, FINALE_N, ODKLEP, RAZRED_N, RAZRED_KM, NAGRADE, AVTO_STOPNJE,
-    VELIKOST, PRAG, ZVEZDICE, RAZRED_RED, VRSTE_POS, prava, vrsta, km, celina, stopnjaProge, pot, novo, novaPot, migrate, odprta, stanje, zvezdice, kovanci,
+    VELIKOST, PRAG, ZVEZDICE, DIRK_REF, RAZRED_RED, VRSTE_POS, prava, vrsta, km, celina, stopnjaProge, pot, novo, novaPot, migrate, odprta, stanje, zvezdice, kovanci,
     poPokalu, poDogodku: poPokalu, poDirki, view };
   if (typeof window !== 'undefined') window.Kariera = api;
   if (typeof module !== 'undefined') module.exports = api;
