@@ -3742,11 +3742,11 @@
  "tatev/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 239.14,
-  "spins": 1,
-  "walls": 2,
+  "winner": 238.26,
+  "spins": 0,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "64db45861ac5eeeb938772bb"
+  "digest": "26b790fda7626b915436f131"
  }
 }
