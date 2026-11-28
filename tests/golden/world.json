@@ -1508,7 +1508,7 @@
   "instances": 5547,
   "props": 46,
   "crowd": 10,
-  "world": "35eca274",
+  "world": "ba6b2588",
   "propsHash": "7600c0e1",
   "floor": "14e6777b/6440",
   "groups": {
@@ -1516,7 +1516,7 @@
    "-:MeshBasicMaterial": "be9d9bef",
    "quezaltepeque service roads:MeshLambertMaterial": "f68b2f13",
    "quezaltepeque dirt tracks:MeshLambertMaterial": "e505f33d",
-   "rsFar:MeshBasicMaterial": "b90bbb46",
+   "rsFar:MeshBasicMaterial": "e2500142",
    "rob:MeshLambertMaterial": "47c7c65d",
    "crowd:MeshLambertMaterial": "2e1c7e6",
    "jet smoke:MeshBasicMaterial": "684b759b",

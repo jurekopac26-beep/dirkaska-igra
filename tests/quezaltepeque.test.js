@@ -32,11 +32,11 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
 {
   const want = { 'Desni na koncu ravnine': [-1, 50], 'Dva desna': [-1, 10], 'Desni pred levimi': [-1, 10], 'Dolgi levi pri tribuni': [1, 90],
     'Ostri desni': [-1, 60], 'Dolgi lasnični': [-1, 90], 'Levi lasnični': [1, 90], 'Zadnji lasnični': [-1, 90] };
-  const order = ['Desni na koncu ravnine', 'Dva desna', 'Desni pred levimi', 'Dolgi levi pri tribuni', 'Levi in desni', 'Ostri desni', 'Ravnina ob lavi', 'Dolgi lasnični',
-    'Levi lasnični', 'Zadnji lasnični', 'Ciljna ravnina'];
+  const order = ['Desni na koncu ravnine', 'Pogled na ognjenik', 'Dva desna', 'Desni pred levimi', 'Dolgi levi pri tribuni', 'Levi in desni', 'Ostri desni', 'Ravnina ob lavi',
+    'Dolgi lasnični', 'Levi lasnični', 'Razgledna točka', 'Zadnji lasnični', 'Uvoz v bokse', 'Ciljna ravnina', 'Glavna tribuna'];
   const turn = (s) => { let a = 0; for (let d = -50; d <= 50; d += T.ds) a += T.k[T.idx(s + d)] * T.ds; return -a * 180 / Math.PI; };
   const at = def.names.map(([nm, x, z]) => { const q = near(x, z); return { nm, d: q.d, off: q.off, deg: turn(q.i * T.ds) }; });
-  check('corners: the 11 named places in their order round the lap (the right at the end of the straight ... the main straight), each on the road, the commentator\'s lines for each',
+  check('corners: the 15 named places in their order round the lap (the right at the end of the straight ... the main grandstand), each on the road, the commentator\'s lines for each',
     at.map(c => c.nm).join('|') === order.join('|') && at.every((c, k) => c.off < 6 && (k === 0 || c.d > at[k - 1].d)) && def.names.every(c => Array.isArray(c[3]) && c[3].length >= 2),
     at.map(c => `${c.nm} ${Math.round(c.d)} m`).join(', '));
   const cs = at.filter(c => want[c.nm]);
