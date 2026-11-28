@@ -2,7 +2,7 @@
 // Izpiše na 10 s: ms na korak (povprečje, p95), avte na korak, koliko jih je na polnem koraku in zakaj (blizu igralca, tik ob drugem
 // avtu = LOD.nr, boksi), koliko na 30 Hz in 15 Hz (Core LOD, Race._lodPlan), koliko jih stoji. Fizike ne spreminja, samo meri.
 //   node tools/gneca-korak.js [proga=spa] [lod=1|0] [sekund=60] [mesto igralca na startu=50] [nastavitve LOD (JSON)='{}'] [seme=9]
-//   npr. manjša razdalja polnega koraka: node tools/gneca-korak.js spa 1 60 50 '{"a":30,"r":30}'
+//   npr. brez LOD za primerjavo: node tools/gneca-korak.js spa 0 60 50
 // Zadnja vrstica: povprečje celega teka (ms na korak, avtov na korak) in največ tekmecev v vzvratni hkrati (zastoj: desetine).
 // Telefon: čas pomnoži s ~4 (4× upočasnjen procesor, kot meritev v #1069).
 'use strict';

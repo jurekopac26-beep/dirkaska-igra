@@ -1782,7 +1782,12 @@ const Core = (function () {
       out = out || {};
       let bi = -1, bd = 1e18;
       const open = this.open;
-      if (hint >= 0) {
+      if (hint >= 10 && hint < N - 10) {   // (away from the ends of the lap: the 21 samples round the hint with no wrap to work out, the same samples in the same order as below; a very big field asks hundreds of times a frame)
+        for (let i = hint - 10, e = hint + 10; i <= e; i++) {
+          const dx = x - px[i], dz = z - pz[i]; const d = dx * dx + dz * dz;
+          if (d < bd) { bd = d; bi = i; }
+        }
+      } else if (hint >= 0) {
         for (let o = -10; o <= 10; o++) {
           const i = open ? hint + o : (hint + o + N) % N;
           if (open && (i < 0 || i >= N)) continue;
@@ -4750,8 +4755,10 @@ const Core = (function () {
   // middle to middle with the old one: Nürburg, 100 cars, the default knock, with nr below 0.081 -> 0.048 hard knocks a car-minute, as many passes). A car within 1 m of another's
   // bumper or 0.6 m of its side, more by nrV s of their speed apart, stays at the full rate for nrT steps (Race._pairs, _lodPlan): no touch
   // on an extrapolated place, and two far cars between their steps do not run through each other (Nürburg, 100 cars: hard knocks far ahead
-  // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0)
-  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 4, fol: 1, nrT: 60, nrV: 0.15, off: false };
+  // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0).
+  // fs: with the LOD on the game catches up at most that many steps a frame (4 as in every other race; the quick entry's koraki=4-10
+  // sets it for the visit: js/game.js, frame)
+  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 4, fol: 1, nrT: 60, nrV: 0.15, fs: 4, off: false };
   // the indices 0..n-1 in I sorted by cmp, ties by the index (what a stable sort of the list gives), by insertion from the order I had the last
   // time: from one step to the next only a few cars change places (Race._byDist, the order)
   function isortIx(I, n, cmp) {
@@ -9331,7 +9338,7 @@ const Core = (function () {
   function quickArgs(search) {
     const P = new URLSearchParams(search || ''), id = P.get('proga');
     if (id == null) return null;
-    const q = { track: null, mode: null, t: null, weather: null, car: null, seed: null, rivals: null, lod: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
+    const q = { track: null, mode: null, t: null, weather: null, car: null, seed: null, rivals: null, lod: null, steps: null, bad: [] }, low = (k) => (P.get(k) || '').trim().toLowerCase();
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
@@ -9344,6 +9351,7 @@ const Core = (function () {
     if (P.has('avto')) { const M = MODELS.find(m => m.id === low('avto')); if (M) q.car = heirOf(M).id; else q.bad.push('avto=' + P.get('avto')); }   // (a retired model's: its heir)
     if (P.has('tekmeci')) { const v = P.get('tekmeci').trim(); if (/^\d{1,2}$/.test(v)) q.rivals = +v; else q.bad.push('tekmeci=' + P.get('tekmeci')); }   // (the race's rivals, 0-99: the Nordschleife's 100 cars against 22 or 1 on the same road)
     if (P.has('lod')) { const v = low('lod'); if (v === '0' || v === '1') q.lod = +v; else q.bad.push('lod=' + P.get('lod')); }   // (0: a big field's cars all at the full rate, LOD off)
+    if (P.has('koraki')) { const v = low('koraki'); if (/^\d{1,2}$/.test(v) && +v >= 4 && +v <= 10) q.steps = +v; else q.bad.push('koraki=' + P.get('koraki')); }   // (a big field: at most that many steps caught up a frame, 4-10; LOD.fs)
     return q;
   }
 

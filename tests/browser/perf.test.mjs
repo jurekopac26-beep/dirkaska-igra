@@ -10,9 +10,13 @@
 // Then the new map of NEW VERSION · TEST 1 (js/newmap.js over Toskana, its still meshes merged by js/nvbake.js): the same budget at
 // twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car (the
 // game's one camera), as 'newmap'.
+// And the crowd (#1180), as 'spa101': Spa with 101 cars from the grid, stepped through the start and the jam at the first corner; the
+// frame's counts after every second, the cars the physics steps per step and the JavaScript time over the lone car's, against the limits
+// written in its entry (crowd() below). Its average is within the budget; the busiest second (the jam) has only its reference's margin.
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
 //   PERF_ONLY=newmap,toskana node tests/browser/perf.test.mjs [--update]   only these (--update: the others' values kept)
+//   PERF_ONLY=spa101 node tests/browser/perf.test.mjs [--update]           only the crowd (about a minute)
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker, tapNewVersion } from './lib.mjs';
@@ -64,6 +68,75 @@ async function newMap() {
     T.check('newmap (NEW VERSION · TEST 1): within the phone budget', !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
   }
   T.check('newmap: no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+  await ctx.close();
+}
+// the crowd (the big field, #1180): Spa with 100 rivals from the grid, the player 50th of 101 (the game gives a field over 22 cars a flying
+// start with the player last; here the standing start in the middle of it, the heaviest there is). The race is stepped second by second
+// through the start and the jam at the first corner; after every second a frame is counted and ten render-side updates are timed, and of
+// the racing seconds the time of physics+AI and the cars stepped per physics step (Core LOD, Race._lodPlan: about two thirds of the 101).
+// Then the same with no rival in the same page: the crowd's JavaScript time over the lone car's (x) is the one measure of time that
+// does not go with the machine (a busy one slows both alike), so it is checked, but it is a coarse guard: between runs it is 5.1-6.1,
+// hence the limit of 1.4 times the reference, and over it the measure is taken again (twice at most, the lowest counts). It catches
+// what makes every car dearer (about +40 % of the crowd's time); it does NOT see the rivals' LOD going (all 101 cars stepped: the step
+// +26 %, x only +13 %, within its noise). That is what the exact guards are for: the cars per step and the frame's counts repeat to the unit.
+// The limits are written into the entry (limits): the tracks' margins for the counts, +5 % +1 car per step, 1.4 times the time
+const CROWD_S = 34, CROWD_X = (r) => ({ maxCalls: Math.round(r.maxCalls * 1.1 + 5), maxKverts: Math.round(r.maxKverts * 1.1 + 20), cars: +(r.cars * 1.05 + 1).toFixed(1), x: +(r.x * 1.4).toFixed(2) });
+async function crowd() {
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, rivals: 100, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345 });
+  await page.evaluate(() => {
+    window.__gl = { calls: 0, verts: 0 };
+    const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
+    const P = Object.getPrototypeOf(gl), wrap = (name, count) => { const f = P[name]; if (!f) return; P[name] = function (...a) { window.__gl.calls++; window.__gl.verts += count(a); return f.apply(this, a); }; };
+    wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
+    const R0 = Core.Race; Core.Race = class extends R0 { constructor(t, o) { super(t, o && o.numAI > 21 ? Object.assign({}, o, { playerGrid: 50, flying: 0 }) : o); } };
+    const st = window.__st = { steps: 0, cars: 0 }, step = R0.prototype.step;   // (the cars the step computed: all of them, or the Core LOD's plan)
+    R0.prototype.step = function (dt) { step.call(this, dt); st.steps++; const L = this._lod; if (L && L.on) { for (let i = 0; i < this.cars.length; i++) st.cars += L.st[i]; } else st.cars += this.cars.length; };
+  });
+  await startTrack(page, 'spa');
+  const measure = () => page.evaluate(async (S) => {
+    if (Render.world.landmarkLoad) await Render.world.landmarkLoad;
+    const g = window.__game, st = window.__st;
+    const run = (rivals) => {
+      let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      g.S.rivals = rivals; g.onAction('restart'); g.pause();
+      g.race.lch = null; for (const c of g.race.cars) c.lch = null;
+      g.race.player.kt = null;
+      const P = g.race.player, s = [];
+      let tPhys = 0, tRend = 0, steps = 0, cars = 0;
+      for (let k = 0; k < S; k++) {
+        const racing = g.phase === 'racing', s0 = st.steps, c0 = st.cars;
+        let t0 = performance.now(); g.sim(1, true); if (racing) { tPhys += performance.now() - t0; steps += st.steps - s0; cars += st.cars - c0; }
+        Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});   // the camera settles
+        const c1 = __gl.calls, v1 = __gl.verts; Render.frame(1 / 60, 1, P, g.S.camera, {}); s.push([__gl.calls - c1, __gl.verts - v1]);
+        Render.scene.visible = false; t0 = performance.now(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, g.S.camera, {}); tRend += performance.now() - t0; Render.scene.visible = true;
+      }
+      const c = s.map(x => x[0]), v = s.map(x => x[1]);
+      return { n: g.race.cars.length, grid: P.grid, state: g.race.state, calls: Math.round(c.reduce((a, b) => a + b) / c.length), maxCalls: Math.max(...c), kverts: Math.round(v.reduce((a, b) => a + b) / v.length / 1000),
+        maxKverts: Math.round(Math.max(...v) / 1000), cars: steps ? cars / steps : 0, js: steps ? 2 * tPhys / steps + tRend / (10 * S) : 0 };   // (a frame: two physics steps and one update)
+    };
+    const A = run(100), B = run(0);
+    return { n: A.n, grid: A.grid, state: A.state, n1: B.n, state1: B.state, calls: A.calls, maxCalls: A.maxCalls, kverts: A.kverts, maxKverts: A.maxKverts,
+      jsMs: +A.js.toFixed(2), jsMs1: +B.js.toFixed(2), cars: +A.cars.toFixed(1), x: B.js ? +(A.js / B.js).toFixed(2) : 0 };
+  }, CROWD_S);
+  const r = await measure(), gd = golden.spa101;
+  for (let i = 0; i < 2 && !update && gd && gd.limits && r.x > gd.limits.x; i++) { const q = await measure(); if (q.x < r.x) Object.assign(r, { jsMs: q.jsMs, jsMs1: q.jsMs1, x: q.x }); }
+  const e = { calls: r.calls, maxCalls: r.maxCalls, kverts: r.kverts, maxKverts: r.maxKverts, jsMs: r.jsMs, jsMs1: r.jsMs1, cars: r.cars, x: r.x };
+  out.spa101 = Object.assign(e, { limits: CROWD_X(e) });
+  const line =`calls/frame ${r.calls} (max ${r.maxCalls}), vertices/frame ${r.kverts}k (max ${r.maxKverts}k), ${r.cars} cars per physics step, JS ${r.jsMs} ms/frame = ${r.x}x the lone car's ${r.jsMs1} ms`;
+  if (update) console.log(`${'spa101'.padEnd(10)} ${line}`);
+  else if (!gd || !gd.limits) T.check('spa101: within the phone budget', false, 'no reference');
+  else {
+    const L = gd.limits, why = [];
+    if (r.maxCalls > L.maxCalls) why.push(`draw calls ${r.maxCalls} > ${L.maxCalls}`);
+    if (r.maxKverts > L.maxKverts) why.push(`vertices ${r.maxKverts}k > ${L.maxKverts}k`);
+    if (r.calls > 300 || r.kverts > 900 || r.maxKverts > 900) why.push('over the budget of CLAUDE.md (300 draw calls on average, 900k vertices)');
+    if (r.cars > L.cars) why.push(`cars per physics step ${r.cars} > ${L.cars}`);
+    if (r.x > L.x) why.push(`JavaScript time ${r.x}x the lone car's > ${L.x}x`);
+    T.check('spa101 (Spa, 101 cars from the grid): within the phone budget and the crowd no slower', !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
+  }
+  T.check('spa101: 101 cars racing from the grid, the player 50th; then the car alone', r.n === 101 && r.grid === 50 && r.state === 'racing' && r.n1 === 1 && r.state1 === 'racing' && r.cars > 1 && r.cars < 101,
+    `${r.n} cars, grid ${r.grid}, ${r.state}; alone ${r.n1}, ${r.state1}; ${r.cars} cars per step`);
+  T.check('spa101: no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
 }
 const update = process.argv.includes('--update');
@@ -124,6 +197,7 @@ try {
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();   // (the tracks' game closed first: still running beside the new map's, it slowed that one's loading past page.goto's limit)
   if (!only || only.includes('newmap')) await newMap();
+  if (ids.includes('spa') && (!only || only.includes('spa101'))) await crowd();
 } finally {
   await browser.close(); await srv.close();
 }
