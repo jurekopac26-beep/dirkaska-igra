@@ -469,6 +469,13 @@ const Sfx = (function () {
     put(T.startS + 20, 1.1); put(T.startS + 85, 0.9); put(T.finishS - 60, 1); put(T.finishS, 1.1);
     atmo.T = T; atmo.spots = S;
   }
+  // Killar (docs/proge/killar.md): the engine slaps back off the rock cuts beside the shelf (def.rock: where the cut is steep, the wall
+  // within ~11 m of the road), over the open drop only a faint far echo off the valley's other side, none in the village
+  function killarEcho(race, player) {
+    const T = race && race.track, d = T && T.def; if (!d || d.id !== 'killar' || !player.q) return 0;
+    const m = player.q.s - T.startS, near = (d.rock || []).some(r => m > r[1] - 15 && m < r[1] + 2.5 * r[2].length + 15);
+    return near ? 0.24 : (d.drops || []).some(r => m > r[0] && m < r[1]) ? 0.07 : 0;
+  }
   function atmoUpdate(race, player, pikes, cam) {
     if (!pikes || !enabled) { if (atmo && atmo.on) atmoOff(0.3); return; }
     if (!atmo) atmoBuild();
@@ -1417,7 +1424,7 @@ const Sfx = (function () {
     // Pikes Peak: the engine echoes among the rocks above the treeline; the TV helicopter (World's dyn.pk: Pikes Peak's, and Ouninpohja's
     // that follows the car the whole run) by its distance to the camera
     const pikes = !!(race && race.track && race.track.def && race.track.def.theme === 'pikes');   // (on asphalt and on the historic gravel road)
-    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : race && race.track && race.track.def && race.track.def.id === 'caracoles' ? 0.16 : 0, 0.6);   // (Los Caracoles: off the rock walls of the ladder)
+    set(echo.send.gain, pikes ? Core.sstep(186, 198, player.roadY || 0) * 0.32 : race && race.track && race.track.def && race.track.def.id === 'caracoles' ? 0.16 : killarEcho(race, player), 0.6);   // (Los Caracoles: off the rock walls of the ladder)
     { const tn = Wd && Wd.dyn && Wd.dyn.tunnel, sq = player.q ? player.q.s : -1e9;   // (in a tunnel: the ring of its walls)
       set(tun.send.gain, tn && (tn.test ? tn.test(player, 3) : tn.ranges ? tn.ranges.some(r => sq > r[0] - 3 && sq < r[1] + 3) : sq > tn.s0 - 3 && sq < tn.s1 + 3) ? 0.85 : 0, 0.08); }   // (Los Caracoles: two galleries, tn.ranges)
     const W = Wd, pk = W && W.dyn ? W.dyn.pk || W.dyn.air : null, cam = typeof Render !== 'undefined' ? Render.camera : null;   // (the Red Bull Ring's: dyn.air)

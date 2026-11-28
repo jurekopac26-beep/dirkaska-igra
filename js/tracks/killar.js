@@ -135,6 +135,22 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the traffic of the open road (the duel): the share of each kind of vehicle [car, van, bus, motorbike, truck] and a cyclist every so many
     // metres each way; jeeps and pickups, motorbikes, a few lorries and buses
     traffic: { mix: [0.42, 0.3, 0.06, 0.14, 0.08], bike: 4000 },
+    // the road's turns (the time trial's OVINEK n/24, as Pikes Peak's def.turnNos): this road has no official count, so they are counted on
+    // the OpenStreetMap centre line between the start and the finish (docs/proge/killar.md): 24 bends of 20 degrees or more with a radius
+    // under 150 m, at turnAt metres after the start line; each modelled corner (T.corners) takes the number of the counted bend nearest it
+    turns: 24,
+    turnAt: [6, 22, 206, 446, 493, 877, 909, 949, 1125, 1205, 1501, 1549, 1572, 1620, 1652, 1803, 1907, 2059, 2162, 2634, 3386, 3490, 4017, 4312],
+    turnNos(T) {
+      if (T.turnList) return T.turnList;
+      const L = T.corners.filter(c => c.s0 > T.startS && c.s0 < T.finishS).sort((a, b) => a.s0 - b.s0), out = [];
+      let n = 0;
+      for (const c of L) {
+        const m = c.s0 - T.startS; let k = 0;
+        this.turnAt.forEach((a, i) => { if (Math.abs(a - m) < Math.abs(this.turnAt[k] - m)) k = i; });
+        n = Math.min(this.turns, Math.max(n + 1, k + 1)); out.push({ s: c.s0, n, sev: c.sev, dir: c.dir });
+      }
+      return (T.turnList = out);
+    },
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n":"Killar","d":10.0,"say":["Off we go from Killar, deep in the Pangi Valley!","Leaving Killar behind, onto the cliff road!","Out of the village of Killar, and the drop starts right away!"]},

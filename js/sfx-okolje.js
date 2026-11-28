@@ -658,6 +658,10 @@
     const cl = climate(Z), tg = A.tg;
     tg.rustle = F * (win ? 0.5 : 1); tg.brook = W[BROOK]; tg.river = W[RIVER]; tg.fall = W[FALL]; tg.lake = W[LAKE]; tg.sea = Math.max(W[SEAK], def.sea ? 0.3 : 0);
     tg.wind = lv.pikes ? 0 : Math.min(1.2, L(Z.wind) * (win ? 1.4 : 1));   // (Pikes Peak: its own, js/sfx.js atmo)
+    if (def.id === 'killar') {   // (Killar: the shelf over the Chenab, docs/proge/killar.md: over a drop the wind off the open valley is stronger and the river far below murmurs)
+      const m = s - T.startS, sh = (def.drops || []).reduce((a, d) => Math.max(a, sstep(d[0] - 40, d[0], m) * (1 - sstep(d[1], d[1] + 40, m))), 0);
+      tg.wind = Math.min(1.2, tg.wind * (1 + 0.6 * sh) + 0.12 * sh); tg.river = Math.max(tg.river, 0.22 * sh);
+    }
     tg.crickets = sum && A.buf.crickets ? cl.cr * (tod === 'night' || tod === 'dusk' ? 1 : tod === 'dawn' ? 0.3 : 0) * (1 - rain) * (0.6 + 0.4 * F) : 0;
     tg.cicadas = sum && A.buf.cicadas && tod === 'day' ? cl.ci * (1 - rain) * (0.3 + 0.7 * F) : 0;
     tg.traffic = Z.city ? (tod === 'night' ? 0.55 : tod === 'dawn' ? 0.75 : 1) * (1 - 0.3 * F) : 0;   // (a town: quieter at night, among trees)
