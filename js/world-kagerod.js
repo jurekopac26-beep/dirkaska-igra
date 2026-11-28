@@ -150,7 +150,7 @@
   }
 
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
-    kagerod: { ban: KG_BAN, at: KG_AT, nums: 0, shirts: KG_SHIRTS, smoke: false, camps: 0, seC: [1.1, 1.04, 0.86], gravel: true, noVid: true,
+    kagerod: { zima: {}, ban: KG_BAN, at: KG_AT, nums: 0, shirts: KG_SHIRTS, smoke: false, camps: 0, seC: [1.1, 1.04, 0.86], gravel: true, noVid: true,
       pitBox: [-55, 75, 1], mow: 0.7,   // (the pit building on the right of the straight; fainter mowing stripes)
       woods: KG_WOODS, extra: kgExtra, pad: kgPad, lane: true, fl: { se: SE, sc: SC }, ck: 2,   // (ck: chunks twice as big: from most places much of the short circuit is in view)
       flags: { stand: [{ se: 0.65, sc: 0.2, tm: 0.15 }, { se: 0.5, sc: 0.2, tm: 0.15, rb: 0.15 }], ga: { se: 0.55, sc: 0.2, tm: 0.15, rb: 0.1 }, camp: { se: 0.7, sc: 0.3 }, pole: 'se', podium: 'se' },

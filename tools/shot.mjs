@@ -10,6 +10,7 @@
 //   node tools/shot.mjs spa --m 900 --pokonci --lezece
 //   node tools/shot.mjs spa suzuka --m 0,900 --pred main               (main against the working tree)
 //   node tools/shot.mjs pikes --t 30 --vreme dez                        (the race on the autopilot to 30 s, the car where it got to, the field shown)
+//   node tools/shot.mjs silkeborg --m 300 --letni zima                  (the season: poletje (default), jesen, zima)
 //   node tools/shot.mjs suzuka --m 0 --cas vecer                        (the time of day: jutro, dan (default), vecer, noc)
 //   node tools/shot.mjs --nabor --pred HEAD^1                           (the set the workflow uses: NABOR and the real tracks the change touches)
 //   node tools/shot.mjs spa --m 400 --avto miska --pred main            (--avto <id>: the player's car, as the quick entry's avto=)
@@ -33,8 +34,9 @@ const SIZE = { lezece: { width: 640, height: 360 }, pokonci: { width: 360, heigh
 const CHANGED = 0.5;   // (a picture counts as changed from this share of changed pixels, %: below it a sky's drift or a flag's wave)
 
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
+const LETNI = { poletje: 'summer', jesen: 'autumn', zima: 'winter' };   // (--letni <poletje|jesen|zima>: the season of the pictures)
 const CAS = { jutro: 'dawn', dan: 'day', vecer: 'dusk', 'večer': 'dusk', noc: 'night', 'noč': 'night' };
-const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), pred = flag('--pred'), gumaArg = flag('--guma'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
+const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), letni = flag('--letni'), pred = flag('--pred'), gumaArg = flag('--guma'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
 const root = path.resolve(flag('--root') || process.env.GAME_ROOT || REPO), nabor = has('--nabor'), nizka = has('--nizka'), velika = has('--velika');   // (--nizka: the graphics detail NIZKA, as perf.test.mjs measures the phone's load)
 let orient = ['pokonci', 'lezece'].filter(o => has('--' + o)); if (!orient.length) orient = ['pokonci', 'lezece'];
 const ids = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
@@ -89,7 +91,7 @@ if (nabor) {
 async function takeAll(browser, gameRoot, tag) {
   const srv = await serve(gameRoot), shots = {}, problems = [];
   try {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: cas ? CAS[cas] : 'day', season: 'summer' }, nizka ? { quality: 'normal', detail: 'low' } : {}), SIZE[orient[0]], { seed: 11 });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: cas ? CAS[cas] : 'day', season: LETNI[letni] || 'summer' }, nizka ? { quality: 'normal', detail: 'low' } : {}), SIZE[orient[0]], { seed: 11 });
     for (const [id, places] of jobs) {
       const q = new URLSearchParams({ proga: id, t: String(t != null ? t : places ? 0.5 : 3) }); if (vreme) q.set('vreme', vreme); if (avto) q.set('avto', avto);
       const n0 = errors.length;

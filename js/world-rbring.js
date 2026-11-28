@@ -428,8 +428,18 @@
     const CKF = LK.ck || 1;   // (the chunks of the road, its run-offs and the scenery CKF times as big: fewer draws where much of a short circuit is in view at once, Silkeborg)
     nrPrep();
     const P = API.NR, G = P.G;
-    P.seC = LK.seC;   // built-up land (car parks on grass, service areas): dry, trampled grass
-    P.colMod = LK.colMod(P);   // the open land's own colours
+    // the winter of the North (LK.zima: Silkeborg, Kågeröd; docs/proge-po-drzavah.md, »Sever v snegu«): the world built again for it (out.season,
+    // out.paintFor): the land, the verges and the sand traps under snow, ploughed banks before the barriers; the tarmac cleared (the driving
+    // as on any winter tarmac). thin 0..1: how much dry grass shows through the snow; bank: the banks' height, m.
+    // The colours are ones the render's winter leaves as they are (pale: seasonCol)
+    const ZI = opts.season === 'winter' && LK.zima ? Object.assign({ thin: 0, bank: [0.45, 0.9] }, LK.zima) : null;
+    if (LK.zima) { out.season = ZI ? 'rb-winter' : 'rb-other'; out.paintFor = (s) => (s === 'winter' ? 'rb-winter' : 'rb-other'); }
+    const snowC = (x, z, c) => {   // the snow at (x, z) into c: white, a little blue in the hollows of the drifts; dry grass through it where it is thin
+      const v = 0.975 + (P.n3(x * 0.33 + 17, z * 0.33 - 9) - 0.5) * 0.07, g = ZI.thin ? ZI.thin * sstep(0.46, 0.7, P.n3(x * 0.9 + 33, z * 0.9 + 5)) * (0.55 + 0.45 * P.n5(x * 2.3, z * 2.3 + 40)) : 0;
+      c[0] = lerp(v, 0.84, g); c[1] = lerp(v * 1.005, 0.77, g); c[2] = lerp(v * 1.03, 0.58, g); return c;
+    };
+    P.seC = ZI ? [1, 1, 1.02] : LK.seC;   // built-up land (car parks on grass, service areas): dry, trampled grass
+    P.colMod = ZI ? snowC : LK.colMod(P);   // the open land's own colours
     // the pit complex on level ground: the terrain right of the straight (lane, apron, pit building, paddock) pulled to the road's height
     // (the straight is straight here: a point is projected on the chord between its two ends); none without pits
     P.pad = (x, z, h) => h;
@@ -522,9 +532,9 @@
     }
     /* ---- run-offs: pale asphalt from the kerb (or the edge) to just before the barrier where the barrier stands far out (Core: T.gravL /
        gravR; with def.runoffTarmac the cars drive on asphalt there), tapering in and out; a green band along the track limit ---- */
-    const roMat = new THREE.MeshLambertMaterial({ map: LK.gravel ? tex.sand : tex.asphalt, vertexColors: true });   // (LK.gravel: sand traps instead, Rio in the 1980s)
+    const roMat = new THREE.MeshLambertMaterial({ map: LK.gravel ? (ZI ? tex.makadam : tex.sand) : tex.asphalt, vertexColors: true });   // (LK.gravel: sand traps instead, Rio in the 1980s)
     {
-      const rc = new Chunks(128 * CKF, true), gb = new Chunks(128 * CKF), roC = LK.gravel ? [0.84, 0.8, 0.7] : [1.02, 1.02, 1.04], grn = [0.22, 0.55, 0.32];
+      const rc = new Chunks(128 * CKF, true), gb = new Chunks(128 * CKF), roC = LK.gravel ? (ZI ? [1.12, 1.12, 1.12] : [0.84, 0.8, 0.7]) : [1.02, 1.02, 1.04], grn = [0.22, 0.55, 0.32];
       for (const side of [-1, 1]) {
         const flag = side > 0 ? T.gravR : T.gravL, bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) {
@@ -542,7 +552,7 @@
     /* ---- 2024: the gravel strips just past the kerbs at the exits of Turns 9 and 10 (def.gravelStrips; Core: gravel there), and a blue
        line along the white track limit beside them (a contrast for the stewards' cameras) ---- */
     if (def.gravelStrips) {
-      const gs = new GB(true), gbl = new GB(), blue = [0.1, 0.32, 0.86], gcl = LK.gravel ? [0.86, 0.82, 0.72] : [1.05, 1.05, 1.05], uvg = (p) => [p[0] / 2.5, -p[2] / 2.5];
+      const gs = new GB(true), gbl = new GB(), blue = [0.1, 0.32, 0.86], gcl = LK.gravel ? (ZI ? [1.12, 1.12, 1.12] : [0.86, 0.82, 0.72]) : [1.05, 1.05, 1.05], uvg = (p) => [p[0] / 2.5, -p[2] / 2.5];
       for (const [a, b, side, wd] of def.gravelStrips) {
         for (let d = a; d < b - 0.01; d += ds) {
           const i = T.idx(sAt(d)), j = T.idx(sAt(Math.min(b, d + ds))), o0 = w + T.curbW, e = (q) => { if (!LK.gravel) return 1; const f = clamp(Math.min((q - a) / 30, (b - q) / 30), 0, 1); return Math.max(0.04, Math.sqrt(1 - (1 - f) * (1 - f))); }, o1 = o0 + wd * e(d), o1j = o0 + wd * e(Math.min(b, d + ds));   // (Rio: the sand traps' ends rounded off)
@@ -560,7 +570,7 @@
           gbl.quadUp(Pt(i, side * (w - 0.2), 0.036), Pt(i, side * w, 0.036), Pt(j, side * w, 0.036), Pt(j, side * (w - 0.2), 0.036), [blue, blue, blue, blue]);
         }
       }
-      addM(gs, new THREE.MeshLambertMaterial({ map: LK.gravel ? tex.sand : ownTex(rbGravelTex()), vertexColors: true })); addM(gbl, lMat);   // (Rio: the sand traps of its time)
+      addM(gs, new THREE.MeshLambertMaterial({ map: LK.gravel ? (ZI ? tex.makadam : tex.sand) : ownTex(rbGravelTex()), vertexColors: true })); addM(gbl, lMat);   // (Rio: the sand traps of its time)
     }
     /* ---- on the asphalt: black tyre marks into the slower corners (many: a top-category circuit), a few repair patches and sealed cracks (the
        Nordschleife's decal atlas, its marks only: no fans' paint on this track), and the DRS lines across the road: a solid one at each
@@ -1390,7 +1400,15 @@
 
     const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
     const xScen = garZ.length ? Object.assign(Object.create(scen), { get(x, z) { for (let k = 0; k < garZ.length; k += 2) if ((x - garZ[k]) ** 2 + (z - garZ[k + 1]) ** 2 < 49) return xScen.off || (xScen.off = new GB()); return scen.get(x, z); } }) : scen;   // (not where a garage stands: Batangas' OSM pit building, its front 0.8 m before the player's garage; the piece is built and dropped)
+    const ziC0 = ZI ? new Map([...scen.map].map(([k, g]) => [k, g.C.length])) : null, ziR0 = ZI ? root.children.length : 0;   // (winter: what the world's own scenery adds is snowed in below)
     const xSt = LK.extra ? LK.extra({ root, tex, scen: xScen, exclPush, excluded, CR, out, matV }) : null;   // (a world's own scenery, before the crowds and the trees keep clear of it: Silkeborg's mounds, buildings, fences)
+    if (ZI) {   // the snow blanket over what LK.extra put on the land (roadside tufts, flowers, leaf litter, soil and field patches): what lies flat is snow, what stands shows as dry stalks through it (only the plants' greens and, lying flat, the soil's and the litter's browns and the heather's purple: not walls, posts, boards)
+      const sn = [0, 0, 0], snow = (x, z, up, c, o, low) => { const r = c[o], g = c[o + 1], b = c[o + 2]; if (!((g > r * 1.08 && g > b * 1.15) || (low && r < 0.85 && r > b * 1.4 && g > b * 1.3 && g > r * 0.8) || (up && r > b * 1.25 && g > b * 1.1 && g > r * 0.62) || (up && r > g * 1.2 && r < 0.7 && g < 0.45 && b > g * 0.7))) return false; snowC(x, z, sn); const k = up ? 1 : 0.93, d = up ? 1 : 0.97; c[o] = lerp(c[o], sn[0] * d, k); c[o + 1] = lerp(c[o + 1], sn[1] * d, k); c[o + 2] = lerp(c[o + 2], sn[2] * d * 0.985, k); return up; },
+        deep = (x, y, z) => y - nrGround(x, z) < 0.3;   // (what lies flat on the ground, soil and litter and low heather, is under the blanket: sunk out of sight, its snow would be a plate of another white on the ground's; low: the dry straw of the tufts up to the blanket's 0.9 m)
+      for (const [k, g] of scen.map) { const st = g.A ? 4 : 3; for (let o = ziC0.get(k) || 0, v = o / st; o < g.C.length; o += st, v++) if (snow(g.P[v * 3], g.P[v * 3 + 2], g.N[v * 3 + 1] > 0.8, g.C, o, deep(g.P[v * 3], g.P[v * 3 + 1] - 0.6, g.P[v * 3 + 2])) && deep(g.P[v * 3], g.P[v * 3 + 1], g.P[v * 3 + 2])) g.P[v * 3 + 1] -= 1; }
+      for (let q = ziR0; q < root.children.length; q++) root.children[q].traverse(m => { const G = m.geometry, a = G && m.name === 'rob' && !m.isInstancedMesh && G.attributes.color, p = a && G.attributes.position, nr = a && G.attributes.normal; if (!a || !p) return;
+        for (let v = 0; v < a.count; v++) if (snow(p.getX(v), p.getZ(v), !!nr && nr.getY(v) > 0.8, a.array, v * a.itemSize, deep(p.getX(v), p.getY(v) - 0.6, p.getZ(v))) && deep(p.getX(v), p.getY(v), p.getZ(v))) p.setY(v, p.getY(v) - 1); a.needsUpdate = p.needsUpdate = true; });
+    }
 
     /* ---- spectators on the grass (the hill between Turns 3 and 4, the infield), fans along the fences, a few everywhere ---- */
     {
@@ -1476,6 +1494,7 @@
                 const f = 1 + (P.n4(p[0] * 0.7, p[2] * 0.7) - 0.5) * 0.2 + (P.n3(p[0] * 1.5 + 80, p[2] * 1.5) - 0.5) * 0.12, y = sstep(0.58, 0.8, P.n4(p[0] * 0.5 - 300, p[2] * 0.5 + 120)) * 0.5;   // (the 1930s park: the verges in patches, some drier)
                 return [c[0] * f * (1 + y * 0.2), c[1] * f * (1 + y * 0.04), c[2] * f * (1 - y * 0.3)]; } const gc = nrGCol(p[0], p[2]); return k === nb + 1 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
             if (LK.verge) LK.verge(cols, pr, nb, i, side);   // (Rio: worn to dust along the asphalt)
+            if (ZI) for (let k = 0; k < cols.length; k++) { const c = snowC(pts[k][0], pts[k][2], []); cols[k] = k === 0 ? [c[0] * 0.93, c[1] * 0.935, c[2] * 0.94] : c; }   // (the winter: snow, greyer slush by the asphalt)
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));
             const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];
@@ -1484,6 +1503,25 @@
           }
         }
         addM(gv, gMat);
+      }
+      if (ZI) {   // the winter: the snow ploughed off the track in a bank before the barriers on both sides (not along the pits), rising and falling along it
+        const sb = new GB(), st = Math.max(1, Math.round(4 / ds)), WH = [0.97, 0.98, 1.0], SH = [0.86, 0.89, 0.95];
+        const vh = (i, side, o) => { const vr = rbVerge(i, side); for (let k = 1; k < vr.length; k++) if (o <= vr[k][0]) return vr[k - 1][1] + (vr[k][1] - vr[k - 1][1]) * clamp((o - vr[k - 1][0]) / Math.max(1e-3, vr[k][0] - vr[k - 1][0]), 0, 1); return vr[vr.length - 1][1]; };
+        for (const side of [-1, 1]) {
+          const sec = (i) => {   // the bank's section at i: its foot towards the track, its two crests, its foot at the barrier; null where there is none
+            const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar - w - T.curbW < 3 || (side === PSD && PD && (T.pitAt(i * ds) || T.pitAt(i * ds + 20) || T.pitAt(i * ds - 20)))) return null;
+            const H = lerp(ZI.bank[0], ZI.bank[1], P.n3(T.px[i] * 0.07 + 5 * side, T.pz[i] * 0.07)) * (0.85 + 0.3 * P.n5(T.px[i] * 0.4, T.pz[i] * 0.4)), wd = 0.9 + H * 1.3;
+            return [[bar - 0.2 - wd, 0], [bar - 0.2 - wd * 0.55, H], [bar - 0.2 - wd * 0.2, H * 0.86], [bar - 0.2, 0.05]].map(([o, h]) => Pt(i, side * o, vh(i, side, o) + h));
+          };
+          let a = sec(0);
+          for (let i = 0; i < N; i += st) {
+            const j = (i + st) % N, b = sec(j);
+            if (a && b) { const ins = [(a[1][0] + b[2][0]) / 2, a[0][1] - 3, (a[1][2] + b[2][2]) / 2];
+              sb.quadO(a[0], b[0], b[1], a[1], WH, ins, null, [SH, SH, WH, WH]); sb.quadO(a[1], b[1], b[2], a[2], WH, ins); sb.quadO(a[2], b[2], b[3], a[3], WH, ins, null, [WH, WH, SH, SH]); }
+            a = b;
+          }
+        }
+        const bm = addM(sb, new THREE.MeshLambertMaterial({ vertexColors: true }), true); if (bm) bm.name = 'snowbanks';
       }
       if (PK.gTop && !PK.gTop.empty) addM(PK.gTop, gMat);   // (Crystal Palace: the upper lawns over the terrace walls' cut)
       if (cutBank.length) {   // Bathurst: the bank over the rock cutting, in the hillside's grass: its edge dry, then the hillside's own colours

@@ -103,7 +103,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     silkeborg: { ban: SK_BAN, at: SK_AT, nums: 0, shirts: SK_SHIRTS, smoke: false, camps: 0, seC: [1.12, 1.02, 0.86], gravel: true, noVid: true,
       pitBox: [-40, 90, 1], vg: [0.95, 0.98, 0.8], edge: [1.12, 1.0, 0.88], mow: 0.5,   // (the pit building on the right of the straight; the verge drier at the end of the summer, worn sandy by the asphalt; fainter mowing stripes)
-      woods: SK_WOODS, extra: skExtra, fl: { dk: DK }, ck: 2,   // (ck: chunks twice as big: from most places much of the short circuit is in view)
+      zima: {}, woods: SK_WOODS, extra: skExtra, fl: { dk: DK }, ck: 2,   // (ck: chunks twice as big: from most places much of the short circuit is in view)
       flags: { stand: [{ dk: 0.7, tm: 0.3 }, { dk: 0.55, tm: 0.25, rb: 0.2 }], ga: { dk: 0.6, tm: 0.25, rb: 0.15 }, camp: { dk: 0.7, tm: 0.3 }, pole: 'dk', podium: 'dk' },
       vid: [], poles: [-150, 150, -1], runoff: ['SILKEBORG', 'JYLLAND', 'DANMARK'], straight: [-150, 120, -1],
       farm: { wall: [0.93, 0.84, 0.58], roof: [0.6, 0.24, 0.16], end: [0.91, 0.82, 0.56], barn: [0.56, 0.2, 0.15], barnRoof: [0.22, 0.22, 0.24], barnEnd: [0.54, 0.19, 0.14] },   // a yellow farmhouse under red tiles, a red barn under a dark roof

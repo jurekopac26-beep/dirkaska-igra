@@ -11,3 +11,9 @@ Kratko, zavito dirkališče na peščeni resavi pri Skellerupu vzhodno od Silkeb
 - **Imena:** samo zemljepisna (kraji, pokrajina, reka) in opisna. Imena dirkališča, podjetij in prireditev v igri ni.
 - **Približki:** ovinki so zglajeni (Gauss 3–5 m), zato je naša črta 2.255 m (−1,9 %); višine so iz satelitskega modela, od katerega sta odšteti višina krošenj in stavb (±1 m); velikosti gomil (15–25 m, 2–3 m visoke) so ocenjene, lege so iz OSM; višine stavb so ocenjene, kjer jih OSM nima; gozd (nasadi) je samo iz OSM (`landuse=forest`, `natural=wood`; izbira uporabnika b, 23. 11. 2026, brez modela krošenj), resa iz OSM in ESA WorldCover; drevesa so znotraj teh ploskev, ne po pravih legah posameznih dreves (OSM jih tu nima). Zavitost na naši zglajeni črti je ~606 °/km (načrt: 789 °/km iz točk OSM na 5 m).
 - **Viri:** © OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021, višina krošenj Meta in WRI samo za tla pod gozdom (glej »Zasluge« v `README.md`). Orodji: `tools/proga-podatki.py` (nastavitve `tools/silkeborg/config.json`; prva proga z `highway=raceway` v `DRIVE`) in `tools/silkeborg/build.py`.
+
+## Sneg pozimi
+
+Pravilo »Sever v snegu« (`docs/proge-po-drzavah.md`, `docs/realizem.md` točka 7), PR #1087. Pozimi se svet zgradi znova (`zima` v videzu proge, skupni graditelj `js/world-rbring.js`): snežna odeja na pokrajini, bankinah in peskolovih, splužen zamet pred ograjami (0,45–0,9 m, ne ob boksih), asfalt očiščen (dirkališče: zimski asfalt, fizika vožnje nespremenjena). Nastavitvi: `thin` (koliko suhe trave gleda iz tanke odeje) in `bank` (višina zametov).
+
+Odprto: debelina odeje in višina zametov še nista podprti s podnebnim virom za Silkeborg (javne normale državne meteorološke službe: dnevi s snežno odejo, povprečna debelina); do takrat velja uporabnikova odločitev 8. 11. (zasnežena pokrajina, zameti).
