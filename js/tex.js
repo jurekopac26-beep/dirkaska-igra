@@ -702,6 +702,27 @@ const Tex = (function () {
     return mk(c, true);
   }
 
+  // Grafika AAA, SR1 (docs/grafika-aaa.md): the asphalt's grain for the light, packed: R, G the tilt of the surface (0.5: flat), B how
+  // glossy it is. The aggregate's stones (6-14 mm; a pixel 4 mm, the tile 1 m) with a polished face each, tilted its own way, in the
+  // dull binder; their mipmaps average the tilts out with distance (the gloss smoothed far off, as N4 asks). Its own random stream,
+  // made last: the other textures stay as they were. The road's shader reads it only where World.cesta's gate turns it on
+  function zrno() {
+    const S = 256, r = Core.rng(1607), nx = new Float32Array(S * S), ny = new Float32Array(S * S), gl = new Float32Array(S * S), n1 = makeNoise(16, 1608);
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const o = j * S + i; nx[o] = (r() - 0.5) * 0.08; ny[o] = (r() - 0.5) * 0.08; gl[o] = 0.06 + 0.08 * n1(i / 16, j / 16); }
+    for (let k = 0; k < 2600; k++) {
+      const cx = r() * S, cy = r() * S, rad = 0.8 + r() * 1.0 + (r() < 0.25 ? r() * 0.9 : 0), el = 0.65 + r() * 0.6, a = r() * Math.PI, t = 0.12 + r() * 0.32, b = r() * Math.PI * 2, g = 0.45 + r() * 0.55;
+      const tx = Math.cos(b) * t, ty = Math.sin(b) * t, ca = Math.cos(a), sa = Math.sin(a), R0 = Math.ceil(rad * 1.4) + 1;
+      for (let dy = -R0; dy <= R0; dy++) for (let dx = -R0; dx <= R0; dx++) {
+        const u = ((dx + 0.5 + Math.floor(cx) - cx) * ca + (dy + 0.5 + Math.floor(cy) - cy) * sa) / rad, v = (-(dx + 0.5 + Math.floor(cx) - cx) * sa + (dy + 0.5 + Math.floor(cy) - cy) * ca) / (rad * el), q = u * u + v * v;
+        if (q > 1) continue;
+        const o = (((Math.floor(cy) + dy) % S + S) % S) * S + (((Math.floor(cx) + dx) % S + S) % S), rim = q > 0.6 ? 0.55 : 1;   // (wrapped: the tile stays seamless; the stone's rim rounds off)
+        nx[o] = tx + u * (1 - rim) * 0.5; ny[o] = ty + v * (1 - rim) * 0.5; gl[o] = g * rim;
+      }
+    }
+    const c = pixels(S, S, (i, j) => { const o = j * S + i; return [cl(128 + 127 * nx[o]), cl(128 + 127 * ny[o]), cl(255 * gl[o])]; });
+    const t = mk(c, true); t.anisotropy = Math.min(4, aniso); return t;   // (N4: anisotropy at most 4)
+  }
+
   let cache = null;
   function all(maxAniso) {
     if (cache) return cache;
@@ -712,6 +733,7 @@ const Tex = (function () {
     cache.sponsorsFO = sponsorsFO(); cache.fenceFO = fenceFO(); cache.boardsFO = boardsFO(); cache.curbRWB = curbRWB(); cache.tyreTex = tyreTex(); cache.sponsorsMC = sponsorsMC();
     cache.curbIT = curbIT(); cache.curbRY = curbRY(); cache.sponsorsIT = sponsorsIT(); cache.sponsorsKP = sponsorsKP(); cache.boardsIT = boardsIT(); cache.boardsKP = boardsKP(); cache.flagKP = flagKP();
     cache.wear = wear();
+    cache.zrno = zrno();
     return cache;
   }
   return { all, number, crowdPic, crowdHi, crowdSeats, standKit, STAND_KIT, SPONSORS, marbles, rubber };

@@ -156,7 +156,8 @@ HEAD = """/* Livorno (theme 'livorno'): the scenery data for js/world-livorno.js
    form); lc: the land cover (16 m cells, run-length coded as World.nrPrep reads it: 0 open, 1 forest, 2 scrub, 3 settlement; ESA WorldCover, OSM,
    the canopy); far: the surface (100 m cells, +-12 km, bytes of 2 m); bld: OSM buildings within 60 m [x, z, length, width, angle, height
    (0 unknown), kind: 0 house, 1 church, 2 tower, 3 castle, 4 shed, 5 commercial, 6 public, 7 greenhouse, 8 ruin, 9 flats]; walls [0 wall,
-   1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...]]; coast (the land on the left of each line); cliffs (the lower side on the right);
+   1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...], the make: 'w' wood, 'c' chain link, 'j' a concrete jersey barrier, '' else];
+   treeRows [kind as trees', [x, z, ...]] (OSM natural=tree_row: the avenues by the road); coast (the land on the left of each line); cliffs (the lower side on the right);
    rail [bridge, tunnel, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind]; bridges [s0, s1] (the road on a bridge);
    onRoad [s, kind, x]: OSM's nodes on the lap's own ways (kind 0 a marked pedestrian crossing, x 1 on a primary or secondary road; 1 a stop
    sign, 2 a give-way sign, x the lane the line lies across: 1 the lap's own, -1 the oncoming one). Data: © OpenStreetMap contributors (ODbL 1.0: the
@@ -213,7 +214,8 @@ def build_world():
     data = {
         'dem': D, 'lc': LC, 'far': FAR,
         'bld': [[b[0], b[1], b[2], b[3], round(b[4], 2), b[5], b[6]] for b in J['bld']],
-        'walls': [[KIND_W.get(w[0], 3), pl(w[3])] for w in J['walls']],
+        'walls': [[KIND_W.get(w[0], 3), pl(w[3]), 'j' if w[0] == 'jersey_barrier' else {'wood': 'w', 'chain_link': 'c'}.get(w[2], '')] for w in J['walls']],
+        'treeRows': [[r[0], pl(r[1])] for r in J.get('treeRows', [])],
         'coast': [pl(c_) for c_ in J['coast']],
         'cliffs': [pl(c_) for c_ in J['cliffs']],
         'rail': [[e[1], e[2], pl(e[3])] for e in J['rail'] if e[0] == 'rail'],
