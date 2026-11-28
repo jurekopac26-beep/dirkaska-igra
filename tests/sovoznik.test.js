@@ -21,11 +21,11 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 const PLAN = ['tianmen', 'iroha', 'sani', 'rastro', 'vrsic', 'mountbuller', 'caracoles', 'medvode', 'chapman', 'hotham', 'greatalpine', 'harju', 'ouninpohja', 'katu', 'pikes', 'pikesg'];
 const ROADS = PLAN.filter(id => { const d = C.TRACKS.find(x => x.id === id); return d && !d.test; });
 const US = ['baldy', 'beartooth', 'bigsur', 'maunakea', 'moki', 'mulholland', 'palomar', 'uncompahgre'];
-const roads = C.TRACKS.filter(d => C.codrvRoad(d));
+const roads = C.TRACKS.filter(d => C.codrvRoad(d)), TANK = C.TRACKS.filter(d => d.vehicle).map(d => d.id);   // (the tanker's short roads, def.vehicle: no codriver)
 {
   const ids = roads.map(d => d.id);
   check('roads: every real open road of the plan, none a test track, none of the USA but Pikes Peak, no circuit',
-    ROADS.length >= 9 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test) && !ids.some(id => US.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
+    ROADS.length >= 9 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test && !d.vehicle) && !ids.some(id => US.includes(id) || TANK.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
     `${ids.length}: ${ids.join(' ')}${ROADS.length < PLAN.length ? ' (of the plan now test tracks: ' + PLAN.filter(id => !ROADS.includes(id)).join(' ') + ')' : ''}`);
 }
 

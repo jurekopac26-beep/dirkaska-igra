@@ -104,9 +104,14 @@ function crashDrive(C, race, k) {
   return stuck;   // (true: rescued)
 }
 
+// the vehicle a track is driven in, whatever the player's own (def.vehicle: the tanker's short roads of docs/proge-cisterna.md), as
+// vehOf in game.js gives it; the set-ups and races with a car of their own (formula, lm, car) cannot happen there and are skipped
+const ownModel = (C, tid) => { const d = C.TRACKS.find(x => x.id === tid), M = d && d.vehicle && C.MODELS.find(m => m.id === d.vehicle); return M ? C.heirOf(M) : null; };
+
 function makeRace(C, tid, opts) {
-  const T = new C.Track(C.TRACKS.find(d => d.id === tid));
-  const race = new C.Race(T, opts(C, !!T.def.timeTrial, tid));
+  const T = new C.Track(C.TRACKS.find(d => d.id === tid)), o = opts(C, !!T.def.timeTrial, tid), own = ownModel(C, tid);
+  if (own && !o.noPlayer) o.playerModel = own;   // (the track's own vehicle: the tanker on its roads)
+  const race = new C.Race(T, o);
   race.start();
   return race;
 }
@@ -156,4 +161,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, ownModel, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

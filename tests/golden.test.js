@@ -16,7 +16,7 @@ const path = require('path');
 const os = require('os');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const { loadCore } = require('./lib/core.js');
-const { trackIds, PHYSICS, SETUPS, runScenario } = require('./lib/sim.js');
+const { trackIds, ownModel, PHYSICS, SETUPS, runScenario } = require('./lib/sim.js');
 
 if (!isMainThread) {   // a worker: Core of its own, scenarios one at a time as the main thread hands them out
   const C = loadCore();
@@ -36,6 +36,7 @@ const C = loadCore();
 const golden = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
 const keys = [], todo = [];
 for (const tid of trackIds(C)) for (const sn of Object.keys(SETUPS)) for (const phys of PHYSICS) {
+  if (ownModel(C, tid) && (sn === 'formula' || sn === 'lm' || sn === 'car')) continue;   // (a track with its own vehicle, the tanker's: no other car drives it)
   const key = `${tid}/${sn}/${phys}`;
   keys.push(key);
   if (!(only.length && !only.every(o => key.split('/').includes(o)))) todo.push(key);
@@ -48,7 +49,8 @@ function report(key, r) {
   out[key] = r; n++;
   const g = golden[key], cv = r.cover;
   const ok = g && g.digest === r.digest;
-  const covered = !SETUPS[sn].drive || (cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups)
+  const covered = !SETUPS[sn].drive || (ownModel(C, tid) ? cv.dmg >= 0.03 : cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups;
+  // the tanker on its own roads, docs/proge-cisterna.md: a knock of 3 % or more is enough, at its pace no panel comes off)
   if ((!update && !ok) || !covered) bad++;
   console.log(`${key.padEnd(26)} ${r.digest} lead ${String(r.lead).padStart(7)} m ${SETUPS[sn].drive ? `damage ${cv.dmg} loose ${cv.loose} rescues ${cv.rescues} repairs ${cv.repairs} ` : ''}` +
     `${!covered ? 'FAIL: this run does not really crash (damage 0.2+, a loose panel; the pit repair on a track with pits): adjust crashDrive in tests/lib/sim.js ' : ''}` +
