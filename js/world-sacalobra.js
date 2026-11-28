@@ -37,6 +37,9 @@
     [12, -1197.8,-472.4,-1196.6,-506.4,-1180.1,-537.9,-1174,-574.9,-1153.9,-557.9,-1164.9,-591.9,-1164.9,-622.9,-1153.9,-645.9,-1152.1,-662.9,-1155.2,-679.3,-1139.3,-687.8], // s≈4429 L
     [13, -1090.7,-449.8,-1095.5,-468.4,-1093.4,-477.7,-1087.1,-479.5,-1085,-484.8], // s≈4509 L
     [20, -1098.5,-366.6,-1096.1,-386.1,-1108.1,-410.3,-1101.2,-419.6,-1100.3,-440], // s≈4509 D
+    // the knot (Nus de sa Corbata, docs/proge/sacalobra.md): the low limestone spur the loop winds round, ~8.5 m in from the road's line
+    // all the way, faces out to the road (not an OSM cliff: the DEM's 32 m does not tell it apart, the land cover macchia and dry grass)
+    [10, -29.5,-59.2,-27.8,-64.8,-26.3,-69.7,-24.9,-75.8,-26.5,-82.3,-31.8,-86.2,-38.5,-85.9,-43.6,-81.7,-46.1,-75.8,-46.2,-69.9,-44.4,-64.7,-41.9,-59.6,-38.3,-53.7,-33.6,-55.4,-29.5,-59.2], // s≈30–170 vozel
   ];
   // the terraces' retaining walls (OSM barrier=retaining_wall: the lower side on the right)
   const TERR = [

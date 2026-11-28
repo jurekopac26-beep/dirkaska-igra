@@ -26,3 +26,17 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Pravno**: cesta je znana s kolesarskih dirk in priprav kolesarjev; v igri in opisih ni nobene omembe dirk, kolesarjev, ekip ali oseb, ne imen lokala in kioskov ob vozlu. Samo zemljepisna imena (Sa Calobra, Coll dels Reis, Nus de sa Corbata, Font de sa Mata, Torrent d'Es Racó, Els Castellots, Replà de sa Neu, Serra de Tramuntana, Mallorca) in številka ceste (Ma-2141).
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py sacalobra --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
+
+## Raziskava za dodelavo (28. 11. 2026, `dodelava/sacalobra`)
+
+- **Lega:** Ma-2141 od Coll dels Reis (~680 m) do zaliva Sa Calobra, Escorca, Serra de Tramuntana (Mallorca, Balearski otoki). Cesta je bila odprta leta 1933. Na 4,9 km pade za ~340 m, ima 12 serpentin in »vozel«.
+- **Vozel (Nus de sa Corbata):** zanka za 270°, v kateri gre cesta po kamnitem obokanem mostu čez samo sebe in pod njim spet ven. Pri vožnji navzdol je to na začetku: po podatkih proge so most d ≈ 30 m, zanka d ≈ 30–170 m in križanje pri (-34,-40).
+  - Javni opisi omenjajo, da most kot vrata uokvirja goro na drugi strani, da je prostora za postanek malo in da se pred morjem odpre pogled na golo skalo.
+  - Po DEM (Copernicus GLO-30, 32 m) je sredina zanke ~1–3 m nad cesto. Model sredine ne loči. Raba tal (Overture/OSM, 16 m) kaže makijo (2) in suho travo (0).
+  - V igri je zato sredina zanke **nizek apnenčast hrbet z garigo na temenu**, okoli katerega teče cesta. Hrbet je ~8 m od osi ceste, za zidom. To je približek po javnih opisih in rabi tal: OSM tam skale ne riše.
+- **Podnebje:** sredozemsko; poletja suha in vroča, deževje jeseni in pozimi. Zgoraj občasno megla, sneg redko.
+- **Kamnina in tla:** sivi jurski apnenec Tramuntane s kraškimi žlebiči in temnimi progami vode; rdečkasta prst le v žepih.
+- **Rastje:** zgoraj črničevje in alepski bor, niže makija in gariga (dišeča zelišča, pritlikava palma), med serpentinami gola skala.
+- **Gradnja ob cesti:** suhozidni zidovi in robniki iz apnenca, kamniti most vozla, redki parkirni žepi, terase ob dnu (OSM `barrier=retaining_wall`).
+- **Viri:** OpenStreetMap (ODbL 1.0, cesta, skale, zidovi); Copernicus DEM GLO-30 (© DLR/ESA, prosta licenca Copernicus); Overture Maps (ODbL, raba tal); javni opisi: en.wikipedia.org/wiki/Sa_Calobra (CC BY-SA 4.0) in turistični opisi ceste (samo dejstva, brez besedila). Gostitelji es.wikipedia.org, mallorca.com in dangerousroads.org iz okolja niso dosegljivi (omrežje).
+- **Narejeno (dodelava):** v `js/world-sacalobra.js` je hrbet zanke dodan kot obroč apnenčastih sten z garigo na temenu. Zgrajen je enako kot pečine iz OSM, v istih kosih scene, zato brez novih klicev risanja. V `def.fly` je preletni seznam: start, vozel, serpentine 1, 5 in 8, Skalna vrata, cilj. Slike pred/po so v `docs/slike/dodelava/sacalobra-pred.webp` in `-po.webp` (kamera za avtom, 20 m za startom).
