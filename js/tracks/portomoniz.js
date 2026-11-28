@@ -42,15 +42,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Serpentina 1 · 390 m", "d": 694.0, "say": ["Hairpin one, and there is the ocean below!", "Into the first hairpin, seven more on the way down to the sea!"]},
-      {"n": "Serpentina 2 · 369 m", "d": 923.0},
+      {"n": "Serpentina 2 · 369 m", "d": 923.0, "say": ["Hairpin two, and the cliffs dropping into the ocean beyond!", "Round hairpin two, black rock and white surf far below!"]},
       {"n": "Serpentina 3 · 319 m", "d": 1415.0, "say": ["Hairpin three, down between the terraces!", "Round hairpin three, the town still a long way below!"]},
       {"n": "Razgledišče · 290 m", "d": 1684.0, "say": ["Past the viewpoint on the right, the whole town and the sea below!", "The viewpoint, and the islet with the lighthouse straight ahead!"]},
       {"n": "Kapelica · 288 m", "d": 1719.0, "say": ["Past the little wayside shrine!", "The shrine on the right, mind the drop!"]},
       {"n": "Serpentina 4 · 243 m", "d": 2117.0, "say": ["Hairpin four, halfway down!", "Into hairpin four, the vines either side!"]},
-      {"n": "Serpentina 5 · 217 m", "d": 2388.0},
+      {"n": "Serpentina 5 · 217 m", "d": 2388.0, "say": ["Hairpin five, and the pools in the black lava down by the town!", "Into hairpin five, the sea pools in the rock below!"]},
       {"n": "Serpentina 6 · 193 m", "d": 2584.0, "say": ["Hairpin six, the legs stacked one above the other!", "Round hairpin six, the coast right below you!"]},
       {"n": "Razgledišče · 180 m", "d": 2693.0, "say": ["The viewpoint over the coast on the left!", "Past the second viewpoint, the surf on the black rocks below!"]},
-      {"n": "Serpentina 7 · 147 m", "d": 2941.0},
+      {"n": "Serpentina 7 · 147 m", "d": 2941.0, "say": ["Hairpin seven, the islet and its lighthouse out in the sea!", "Round hairpin seven, the islet just off the point!"]},
       {"n": "Serpentina 8 · 128 m", "d": 3211.0, "say": ["Hairpin eight, the last one!", "Into the last hairpin, and down to the town!"]},
       {"n": "Porto Moniz · 29 m", "d": 3980.0, "say": ["Into Porto Moniz and the line by the roundabout!", "Down among the white houses, and the line!"]},
     ],
