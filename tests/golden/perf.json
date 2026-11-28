@@ -427,11 +427,11 @@
   "jsMs": 0.09
  },
  "canaries": {
-  "calls": 210,
-  "maxCalls": 223,
-  "kverts": 682,
-  "maxKverts": 803,
-  "jsMs": 1.06
+  "calls": 215,
+  "maxCalls": 232,
+  "kverts": 667,
+  "maxKverts": 792,
+  "jsMs": 1.31
  },
  "savusavu": {
   "calls": 191,
