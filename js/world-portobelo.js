@@ -274,12 +274,57 @@
       if (flat) box(g, bx, y0 + hh, bz, Lb, 0.6, Wb, ang, wc.map(v => v * 0.92), [0.7, 0.64, 0.58]);
       else gable(g, bx, y0 + hh, bz, Lb + 0.8, Wb + 0.8, Math.min(1.6, Wb * 0.14), ang, ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], wc);
     };
+    /* the colonial town by the bay (docs/proge/portobelo.md, »Raziskava«; OSM's kind and height): the church (kind 1) white plastered under a
+       red tile roof, its bell tower at the end toward the road; the king's customs house (the one OSM gives two floors, 1630s) of pale coral
+       stone, an arcade of round-headed openings on the ground floor toward the road, small windows above, a low tile roof; the ruins (kind 8)
+       their bare coral-stone walls of uneven height, mossy on top, one wall broken through, no roof */
+    const LIME = [0.93, 0.92, 0.88], CORAL = [0.78, 0.75, 0.68], CORD = [0.6, 0.58, 0.52], TILE = [0.64, 0.33, 0.25], MOSS = [0.46, 0.52, 0.36], DARK = [0.24, 0.22, 0.2];
+    const colonial = (g, bx, bz, Lb, Wb, ang, y0, k0, Hb) => {
+      const ca = Math.cos(ang), sa = Math.sin(ang), at = (a, b) => [bx + ca * a - sa * b, bz + sa * a + ca * b];
+      if (k0 === 8) {
+        const sides = [[0, Wb / 2, Lb, 0], [0, -Wb / 2, Lb, 0], [Lb / 2, 0, Wb, Math.PI / 2], [-Lb / 2, 0, Wb, Math.PI / 2]], gap = Math.floor(crH(bx, bz, 60) * 4);
+        sides.forEach(([a, b, len, r], k) => {
+          const parts = k === gap ? [[-len / 2, -0.9], [0.9, len / 2]] : [[-len / 2, len / 2]];
+          for (const [u0, u1] of parts) {
+            const um = (u0 + u1) / 2, ln = u1 - u0, hgt = 1.4 + crH(bx + k, bz, 61) * 2.4, [x, z] = r ? at(a, b + um) : at(a + um, b);
+            box(g, x, y0 - 0.4, z, ln + 0.7, hgt + 0.4, 0.75, ang + r, vary(CORD, R, 0.06), MOSS, true);
+          }
+        });
+        return;
+      }
+      const toRoad = nrDist(...at(Lb / 2, 0)) < nrDist(...at(-Lb / 2, 0)) ? 1 : -1;   // (the end of the long axis nearer the road)
+      if (k0 === 1) {   // the church
+        const hh = 9.5, tw = Math.min(6.5, Wb * 0.3);
+        box(g, bx, y0 - 0.6, bz, Lb, hh + 0.6, Wb, ang, LIME, LIME, true);
+        box(g, bx, y0 - 0.6, bz, Lb + 0.1, 1.1, Wb + 0.1, ang, [0.7, 0.68, 0.64], null, true);   // (the grey plinth)
+        gable(g, bx, y0 + hh, bz, Lb + 0.6, Wb + 0.8, Math.min(4.5, Wb * 0.22), ang, TILE, LIME);
+        const [fx, fz] = at(toRoad * (Lb / 2 + 0.05), 0); box(g, fx, y0, fz, 0.2, 4.2, 2.6, ang, [0.4, 0.28, 0.2], null, true);   // (the door)
+        const [tx, tz] = at(toRoad * (Lb / 2 - tw / 2), Wb / 2 - tw / 2 + 0.6), th = 19;   // (the bell tower on the front corner)
+        box(g, tx, y0 - 0.6, tz, tw, th + 0.6, tw, ang, LIME, LIME, true);
+        box(g, tx, y0 + th - 4.2, tz, tw + 0.06, 2.4, tw * 0.45, ang, DARK, null, true); box(g, tx, y0 + th - 4.2, tz, tw * 0.45, 2.4, tw + 0.06, ang, DARK, null, true);   // (the belfry openings)
+        box(g, tx, y0 + th, tz, tw + 0.5, 0.5, tw + 0.5, ang, [0.86, 0.85, 0.8], null);
+        cone(g, tx, y0 + th + 0.5, tz, tw * 0.62, 3.2, 4, TILE, TILE, ang + Math.PI / 4);
+        return;
+      }
+      const hh = Hb || 7.5, nA = Math.max(4, Math.round(Lb / 4.2));   // the customs house
+      box(g, bx, y0 - 0.6, bz, Lb, hh + 0.6, Wb, ang, CORAL, CORAL, true);
+      box(g, bx, y0 + hh / 2 - 0.15, bz, Lb + 0.2, 0.3, Wb + 0.2, ang, [0.86, 0.84, 0.78], null, true);   // (the string course between the floors)
+      for (const side of [-1, 1]) for (let q = 0; q < nA; q++) {
+        const a = ((q + 0.5) / nA - 0.5) * Lb, [ox, oz] = at(a, side * (Wb / 2 + 0.03));
+        if (nrDist(ox, oz) > nrDist(...at(0, 0)) + 2) continue;   // (only on the face toward the road)
+        box(g, ox, y0, oz, Lb / nA * 0.58, 2.9, 0.12, ang, DARK, null, true);   // the arcade
+        box(g, ox, y0 + 2.9, oz, Lb / nA * 0.36, 0.45, 0.12, ang, DARK, null, true);   // (the head of the arch, stepped in)
+        box(g, ox, y0 + hh / 2 + 0.9, oz, 1.0, 1.5, 0.12, ang, [0.36, 0.3, 0.26], null, true);   // the windows above
+      }
+      gable(g, bx, y0 + hh, bz, Lb + 0.8, Wb + 0.8, Math.min(3, Wb * 0.16), ang, TILE, CORAL);
+    };
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
       if (inFort(bx, bz, 4)) continue;   // (the fort is its model)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
       let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
+      if (k0 === 1 || k0 === 8 || (Hb > 6 && area > 900)) { colonial(g, bx, bz, Lb, Wb, ang, y0, k0, Hb); nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2); continue; }
       const hh = Hb || (big ? (2 + Math.floor(hk * 2)) * 3.1 : area < 60 || k0 === 4 ? 3 + hk : 6.2 + hk * 0.8);
       house(g, bx, bz, Lb, Wb, ang, y0, hh, big ? crH(bx, bz, 15) < 0.6 : crH(bx, bz, 15) < 0.2, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
