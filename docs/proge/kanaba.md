@@ -28,3 +28,7 @@ Okolica (skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom 
 - **Drevesa**: vrste so iz besedilnih virov (`README.md`, »Zasluge«), njihovi deleži so ocenjeni; drevesa so generična, razporejena po rabi tal, ne po resničnih legah. Slike pred in po: `docs/slike/kanaba/`.
 
 Podatke proge pripravi `tools/proga/proga.py` (`python3 tools/proga/proga.py kanaba --zapisi`, nastavitve v `tools/proga/proge.json`). Vire glej v `README.md` pod »Zasluge«.
+
+## Dodelava do ravni Pikes Peaka (v teku, veja `dodelava/kanaba`)
+
+Po merilu `docs/dodelava-prog.md` (O-28-6, O-28-9): terase in jezera pod prelazom, vasi ob cesti, obcestje, več zanimivosti s komentatorjem. Viri samo OpenStreetMap in javni višinski modeli.
