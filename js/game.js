@@ -90,7 +90,7 @@
   for (const k of ['cmp', 'pitCmp']) if (!['auto', 'S', 'M', 'H'].includes(S[k])) S[k] = 'auto';   // (the slicks: for the start, for a pit stop)
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
   if (!['day', 'dusk', 'night', 'dawn'].includes(S.tod)) S.tod = 'day';
-  if (!['race', 'tt', 'traffic', 'police', 'elim', 'lov', 'endless', 'drag'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
+  if (!['race', 'tt', 'traffic', 'police', 'elim', 'lov', 'endless', 'drag', 'hot'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
   S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
   // Oddaljenost (Nastavitve: Blizu 1.1, Srednje 1.4, Daleč 1.7) read back never nearer than Blizu nor farther than Daleč: Super blizu (0.8,
   // on the preview of PR #650 for a day and gone again, the user 11. 11. 2026: »preblizu«) and anything nearer is Blizu, so it does not stay
@@ -135,7 +135,7 @@
   // a time trial in winter keeps its own too (id-winter, in the snow id-winter-wet): the season of the race on it (a challenge's its own), before a race the season setting
   const winRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!(race.opts && race.opts.winter) : S.season === 'winter');
   // (the endless drive, js/neskoncna.js: its records by the level too, id-endless-1: the race's own while it is on, else the setting)
-  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), m = modeOf(d), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov|endless|drag)$/.test(m)) && m !== (d.timeTrial ? 'tt' : 'race') ? '-' + m : '') + (m === 'endless' ? '-' + (race && race.en && race.track.def.id === id ? race.en.lv : S.difficulty) : '') + (winRec(d) ? '-winter' : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
+  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), m = modeOf(d), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov|endless|drag|hot)$/.test(m)) && m !== (d.timeTrial ? 'tt' : 'race') ? '-' + m : '') + (m === 'endless' ? '-' + (race && race.en && race.track.def.id === id ? race.en.lv : S.difficulty) : '') + (winRec(d) ? '-winter' : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
   const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
@@ -206,7 +206,7 @@
   // modesOf: the ways a track is driven (def.modes, else its own: a race or a time trial) and the novelties' own on top (Zabava, js/zabava.js:
   // the elimination race wherever there is a race, the pursuit wherever the duel in the traffic is); modeSet: the one the settings choose
   const modesOf = (d) => { const L = d.modes ? d.modes.slice() : [d.timeTrial ? 'tt' : 'race']; if (typeof Zabava !== 'undefined') for (const m of Zabava.modes(d, L)) if (L.indexOf(m) < 0) L.push(m); return L; };
-  const modeSet = (d) => !d.modes ? (/^(elim|lov|endless|drag)$/.test(S.mode) && modesOf(d).indexOf(S.mode) >= 0 ? S.mode : 'race') : modesOf(d).indexOf(S.mode) >= 0 ? S.mode : d.modes[0];
+  const modeSet = (d) => !d.modes ? (/^(elim|lov|endless|drag|hot)$/.test(S.mode) && modesOf(d).indexOf(S.mode) >= 0 ? S.mode : 'race') : modesOf(d).indexOf(S.mode) >= 0 ? S.mode : d.modes[0];
   const modeOf = (d) => !d ? 'race' : race && race.track.def.id === d.id && race.zbMode ? race.zbMode : !d.modes ? (race && race.track.def.id === d.id ? 'race' : modeSet(d)) : race && race.track.def.id === d.id ? (race.timeTrial ? 'tt' : race.pol ? 'police' : race.tf && !race.opts.remote ? 'traffic' : 'race') : modeSet(d);   // (a road with no race up it, Sani Pass: its first way)
   const isTT = (d) => !!(d && (d.modes ? hasTT(d) && modeOf(d) === 'tt' : d.timeTrial));   // (Pikes Peak, a time trial with def.modes: as its way)
   const MODE_NAME = { race: 'Dirka', tt: 'Kronometer', traffic: 'Promet', police: 'Policija' };   // (tr() at use)
@@ -2019,7 +2019,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const G = ghLap; if (!G || race.state !== 'racing') return;
     if (P.lap !== G.lap) {   // the line: a lap is over, the next one starts at P.lapStart
       if (G.on && P.lapTimes.length) ghLapEnd(G, P, P.lapTimes[P.lapTimes.length - 1]);
-      G.lap = P.lap; G.n = 0; G.t0 = P.lapStart; G.on = !P.finished && P.lap >= (race.quali ? 1 : 2);   // (a flying lap: qualifying's, a race's from the second)
+      G.lap = P.lap; G.n = 0; G.t0 = P.lapStart; G.on = !P.finished && P.lap >= (race.quali || race.zbMode === 'hot' ? 1 : 2);   // (a flying lap: qualifying's, Hot lap's from the first (js/zabava/hot.js), a race's from the second)
     }
     if (!G.on) return;
     const t1 = race.time, tp = t1 - STEP;
@@ -2036,7 +2036,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, tl: 0, op: 1 }, _gpF = Object.assign({ tag: '' }, _gp);
   function ghAt(G, alpha, g) {   // the ghost G where its run was at this moment of the race clock (a circuit's lap: of the lap clock), into g; null while it is not on
     const P = race.player;
-    if (G.lap && (P.finished || !(P.lap >= (race.quali ? 1 : 2)))) return null;   // (a circuit: only while a flying lap is under way)
+    if (G.lap && (P.finished || !(P.lap >= (race.quali || race.zbMode === 'hot' ? 1 : 2)))) return null;   // (a circuit: only while a flying lap is under way)
     const t = Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP - (G.lap ? P.lapStart : 0)), u = t / GH_DT, k = Math.min(G.n - 2, Math.floor(u)), a = clamp(u - k, 0, 1), end = (G.n - 1) * GH_DT;
     if (t > end + 0.6) return null;   // the run is over (it ends just past the line)
     const f = G.f, ch = G.ch || GH_CH, o = k * ch, n2 = o + ch, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
@@ -2436,7 +2436,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // make the grid: the fastest on pole, the rivals in the order of their times (Race opts playerGrid, aiOrder). "Preskoči kvalifikacije"
   // (pause menu) goes straight to the race: the usual grid, the player at the back of it (PLAYER_GRID).
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
-  const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race) && !/^(elim|lov|endless|drag)$/.test(modeSet(d));   // (Zabava: no lap to fly before the elimination race either, nor before the endless drive)   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
+  const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race) && !/^(elim|lov|endless|drag|hot)$/.test(modeSet(d));   // (Zabava: no lap to fly before the elimination race either, nor before the endless drive)   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
   function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) && !nv ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
   // a very big field (more than Q_BIG rivals, Nürburg's hundred): the rivals' laps worked out at Q_DT (a quarter of the work), in shorter turns
   // between the frames (the time looked at more often: a phone's frame keeps its budget); a lap at 30 Hz is Q_K slower than at the full rate,
@@ -2610,6 +2610,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       else if (race.pol) { Comm.say(ownLine(track.def, 'introPolice'), { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg(tr('POLICIJA TE LOVI!') + wetTxt, 'slow', 1.8); }   // (a road without the checkpoint, Los Caracoles: the chase from the start)
       else if (race.tf && (race.zbLov || race.zbBeg || race.en)) { }   // (Zabava: the pursuit says its own, js/zabava/lov.js; online with friends, js/zabava/beg.js; the endless drive its own, js/neskoncna.js)
       else if (race.zbMode === 'drag') { }   // (the drag race: its own, from its strip, js/zabava/drag.js)
+      else if (race.zbMode === 'hot') showMsg(tr('HOT LAP · {0} KROGI', race.laps) + wetTxt, 'gold', 1.8);   // (Hot lap: alone, a flying start, js/zabava/hot.js)
       else if (race.tf && !on) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
@@ -5821,7 +5822,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (pkF.on) pkFlyStep();
     const on = mp && mp.race;
     if (on && (phase === 'intro' || phase === 'lights')) phaseT = (Net.now() - on.at) / 1000 - (phase === 'lights' ? 1.3 : 0);   // online: both phones follow the host's clock
-    if (phase === 'intro' && phaseT > 1.3 && race.quali) {   // qualifying: no lights, the clock starts at the line
+    if (phase === 'intro' && phaseT > 1.3 && (race.quali || race.zbMode === 'hot')) {   // qualifying, Hot lap (js/zabava/hot.js): no lights, the clock starts at the line
       phase = 'racing'; phaseT = 0; race.start(); showMsg(tr('ČAS SE ZAČNE NA ČRTI'), 'gold', 1.6); Comm.say('qualiGo', null, 3);
     } else if (phase === 'intro' && race.nv && nv && nv.built) {   // NEW VERSION · TEST 1: no lights (nothing to race), the player drives off as soon as the map is built
       phase = 'racing'; phaseT = 0; race.start(); showMsg('NEW VERSION · TEST 1', 'gold', 1.6);

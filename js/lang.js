@@ -1069,6 +1069,16 @@
     'Zdržal si {0}.': 'You held out for {0}.',
     'Izid': 'Result',
     'Vloga': 'Role',
+    // Hot lap (js/zabava/hot.js)
+    'HOT LAP · {0} KROGI': 'HOT LAP · {0} LAPS',
+    'REKORD {0}': 'RECORD {0}',
+    'NAJBOLJŠI KROG {0}': 'BEST LAP {0}',
+    'ZADNJI {0}': 'LAST {0}',
+    'Hot lap': 'Hot lap',
+    'Brez časa: krog ni bil končan.': 'No time: no lap was completed.',
+    'Najboljši krog {0}': 'Best lap {0}',
+    ' ({0} za rekordom)': ' ({0} off the record)',
+    'Krogi: {0}.': 'Laps: {0}.',
     // the drag race (js/zabava/drag.js)
     'DRAG DIRKA · 402 m': 'DRAG RACE · 402 m',
     'Tvoja prednost: {0} m (počasnejše vozilo).': 'Your head start: {0} m (the slower vehicle).',
