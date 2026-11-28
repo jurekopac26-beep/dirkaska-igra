@@ -42,6 +42,7 @@ PAR = {
     'sanssouci': dict(gmax=0.13, gtip=0.5, ncp=2, bare=0.8, resid=0.3, lanes=True),   # (the village's houses among the rainforest's trees: OSM's residential land a third of the corridor)
     'banaue': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
     'atitlan': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8, farBox=(14000, 9000, 9000, 22500), lanes=True, hpDeg=130),   # (the lake and its three volcanoes south of the road, ~3-20 km; the streets of Sololá and the hospital's drives; the second hairpin turns 133 deg, 8.8 m round)
+    'tatev': dict(gmax=0.12, gtip=0.5, ncp=3, bare=0.6, sea=False),   # (Armenia: no sea; the gorge's rock faces and scree on the steeper slopes)
 }[ID]
 GMAX, GTIP = PAR['gmax'], PAR['gtip']
 
