@@ -4,9 +4,9 @@
    (sun(): darker and bluer; the head's globe too; remembered: localStorage tdgp-zemlja-noc; the user's wish of 8. 11. 2026). Drag to
    turn it (north stays up, it glides on a little when let go), pinch, the wheel or + and − to come closer, the target to go back to the
    track shown; the arrow keys turn it too. The countries with tracks in the mode (the real ones and those awaiting the choice, as the quick list's flags;
-   the test tracks are not on it) are gold (their outlines: GEO.outlines, MENU.globe.outlines), each track a pin in the colour of the
+   the test tracks are not on it) are in their tracks' kind's colour, VRSTE, with a white rim (their outlines: GEO.outlines, MENU.globe.outlines), each track a pin in the colour of the
    player's progress (gold, silver, bronze, a tick's green, NEW dark with a light rim), the track shown white and pulsing three times; from
-   afar the countries are named (flag, name, the number of tracks), close in the tracks (name, length): only those whose pin is on the
+   afar the countries are named (flag, name, on the country's middle), close in or in the tapped country the pins and tracks (place, length): only those whose pin is on the
    screen, none over another. A tap on a country or its name colours it, turns the Earth to it and opens its card at the bottom (lying: at
    the side) with its tracks (the quick list's rows, js/menu-izbor.js; one with a single track: that track's card at once, the user's of 12. 11. 2026); a tap on a pin, a track's name or a row the track's card (the quick
    list's: its picture, shape, facts, best, heights, Select and Race!); a tap on the sea closes the card. Back (the phone's: the history, one with
@@ -24,6 +24,19 @@ window.MenuZemlja = (function () {
   const D = Math.PI / 180, DMIN = 1.5, DMAX = 5.4, DFAR = 3.7, TRACKS_AT = 2.75;
   // the camera's angle: standing 60° (from afar the Earth as wide as the screen), lying narrower (from afar as high as nine tenths of it)
   const FOV_UP = 60, FOV_SIDE = 2 * Math.atan(0.5 / (0.45 * Math.sqrt(DFAR * DFAR - 1))) / (Math.PI / 180);
+  // the kind of each track (the user's of 26. 11. 2026): the colour of its country here and of the chosen card's frame (css/menu.css .v-*); a new track goes to one of the five
+  const VRSTE = {
+    dirkalisce: 'aguascalientes batangas bathurst bikernieki buriram cpalace kagerod kildare lombok lusail monterey montreal nring pembrey quezaltepeque rbring riohondo riverside rio sakhir sepang silkeborg sosnova spa suzuka tuzla zandvoort jezero toskana riviera monaco detroit toronto townsville newcastle marrakesh bangsaen london zurich hiva longford livorno troisrivieres',
+    sneg: 'koli longyearbyen mountbuller hotham medeu caracoles harju ouninpohja furka balea beartooth gudauri',
+    mivka: 'hafit dades eljem ghoufi maunakea isalo',
+    nevarne: 'killar moki mapileng tapini katu sani uncompahgre tianmen isuna',
+    trava: 'vrsic izoard kotor sacalobra santoantao rastro irishtown llogara ella canaries portomoniz kanaba ngorongoro haivan krasnahorka medvode ujarras sogeri cusco savusavu chapman vaoala mombasa koror portobelo luanda pikes pikesg baldy bigsur greatalpine espinazo iroha mulholland palomar gora gozd grom hakone seoul',
+  }, VR = {};
+  for (const k in VRSTE) for (const id of VRSTE[k].split(' ')) VR[id] = k;
+  const vrsta = (id) => VR[id] || 'trava', VC = { dirkalisce: '30, 150, 255', sneg: '255, 255, 255', trava: '40, 200, 80', mivka: '255, 205, 40', nevarne: '8, 8, 8' };
+  // a country's kind: most of its tracks' (a tie: dangerous, snow, sand, circuit, grass)
+  const ORD = ['nevarne', 'sneg', 'mivka', 'dirkalisce', 'trava'];
+  function vrstaC(ids) { const n = {}; for (const id of ids) n[vrsta(id)] = (n[vrsta(id)] || 0) + 1; return ORD.reduce((a, k) => (n[k] || 0) > (n[a] || 0) ? k : a, ORD[0]); }
   const calmQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null, calm = () => !!(calmQ && calmQ.matches);   // (asked each time: the setting may change)
   const I = {
     back: '<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M14 4 7 11l7 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -73,6 +86,8 @@ window.MenuZemlja = (function () {
       if (!by.has(k)) by.set(k, { name: k, flag: t.flag, ids: [], rings: [].concat(G.outlines[k] || [], M.outlines[k] || []).map(unwrap) });
       by.get(k).ids.push(t.id);
     }
+    // a country's name: on its middle (the largest outline's centroid, the user's of 26. 11. 2026)
+    for (const c of by.values()) { let ba = 0; for (const r of c.rings) { let a = 0, x = 0, y = 0; for (let i = 0, n = r.length; i < n; i += 2) { const j = (i + 2) % n, f = r[i] * r[j + 1] - r[j] * r[i + 1]; a += f; x += (r[i] + r[j]) * f; y += (r[i + 1] + r[j + 1]) * f; } if (Math.abs(a) > ba) { ba = Math.abs(a); c.mid = [y / (3 * a), x / (3 * a)]; } } }
     for (const c of by.values()) { const v = new THREE.Vector3(); c.ids.forEach(id => { const t = byId(id); v.add(vec(t.lat, t.lon)); }); v.normalize(); c.at = v; [c.lat, c.lon] = ll(v); }
     return by;
   }
@@ -98,9 +113,9 @@ window.MenuZemlja = (function () {
       if (!k.rings.length) continue;
       const on = k.name === R.sel;
       path(k.rings);
-      g.fillStyle = on ? 'rgba(255, 206, 52, .4)' : 'rgba(255, 190, 30, .27)'; g.fill('evenodd');
-      if (on) { g.save(); g.shadowColor = 'rgba(255, 236, 160, .9)'; g.shadowBlur = w / 700; g.lineWidth = w / 1700; g.strokeStyle = '#fff6d6'; g.stroke(); g.restore(); }
-      g.lineWidth = w / (on ? 1600 : 2200); g.strokeStyle = on ? '#fff3c4' : '#ffd23a'; g.stroke();
+      g.fillStyle = 'rgba(' + VC[vrstaC(k.ids)] + ', ' + (on ? .8 : .65) + ')'; g.fill('evenodd');   // (the kind's colour, the user's of 26. 11. 2026: ~65 %, a white rim)
+      if (on) { g.save(); g.shadowColor = 'rgba(255, 255, 255, .9)'; g.shadowBlur = w / 700; g.lineWidth = w / 1500; g.strokeStyle = '#fff'; g.stroke(); g.restore(); }
+      g.lineWidth = w / (on ? 1500 : 2200); g.strokeStyle = 'rgba(255, 255, 255, .85)'; g.stroke();
     }
     R.map.needsUpdate = true;
   }
@@ -167,12 +182,12 @@ window.MenuZemlja = (function () {
       if (!onEarth(t)) continue;
       const k = K.kind(t.id), me = t.id === o.cur;
       h += '<div class="zp ' + k + (me ? ' cur' : '') + '" data-t="' + esc(t.id) + '" aria-hidden="true"><i></i></div>';   // (its progress: the pin's colour)
-      h += '<button class="zl t off' + (me ? ' cur' : '') + '" data-t="' + esc(t.id) + '" aria-label="' + esc(t.name + ', ' + t.km.toFixed(1) + ' km') + '"><span>' + esc(t.name) + '</span><small>' + t.km.toFixed(1) + ' km</small></button>';
+      h += '<button class="zl t off' + (me ? ' cur' : '') + '" data-t="' + esc(t.id) + '" aria-label="' + esc(t.name + ', ' + t.km.toFixed(1) + ' km') + '"><span>' + esc(t.name.split(',')[0] + ', ' + t.km.toFixed(1).replace('.', ',') + ' km') + '</span></button>';
     }
-    for (const c of R.C.values()) h += '<button class="zl c off' + (c.name === curC ? ' cur' : '') + '" data-c="' + esc(c.name) + '" aria-label="' + esc(c.name + ': ' + K.tracks(c.ids.length)) + '">' + K.flag(c.flag, c.name) + '<span>' + esc(c.name) + '</span>' + (c.ids.length > 1 ? '<small>' + c.ids.length + '</small>' : '') + '</button>';
+    for (const c of R.C.values()) h += '<button class="zl c off' + (c.name === curC ? ' cur' : '') + '" data-c="' + esc(c.name) + '" aria-label="' + esc(c.name + ': ' + K.tracks(c.ids.length)) + '">' + K.flag(c.flag, c.name) + '<span>' + esc(c.name) + '</span></button>';
     box.innerHTML = h;
     R.els = [...box.children].map(e => {
-      const id = e.dataset.t, c = e.dataset.c, t = id ? byId(id) : null, p = t ? vec(t.lat, t.lon) : R.C.get(c).at.clone();
+      const id = e.dataset.t, c = e.dataset.c, t = id ? byId(id) : null, p = t ? vec(t.lat, t.lon) : (R.C.get(c).mid ? vec(R.C.get(c).mid[0], R.C.get(c).mid[1]) : R.C.get(c).at.clone());
       return { e, p, pin: e.classList.contains('zp'), id, c, w: 0, h: 0, cur: id ? id === o.cur : c === curC };
     });
   }
@@ -191,15 +206,16 @@ window.MenuZemlja = (function () {
     };
     for (const m of P) {
       const q = at(m); m.q = q;
+      if (!showT && !(R.sel && (byId(m.id).country || '') === R.sel)) q.a = 0;   // (a track's pin: close in, or its country tapped)
       m.e.style.transform = 'translate(' + q.x.toFixed(1) + 'px,' + q.y.toFixed(1) + 'px)'; m.e.style.opacity = q.a.toFixed(2); m.e.style.pointerEvents = q.a > 0.3 ? 'auto' : 'none';
       m.e.classList.toggle('sel', !!R.sel && (byId(m.id).country || '') === R.sel);
       if (q.a > 0.3) boxes.push([q.x - 7, q.y - 7, q.x + 7, q.y + 7, m.cur ? 2 : 1]);   // (close in no name over a pin: it stays to be tapped; from afar none over the track shown's)
     }
     for (const m of L) {
-      const want = m.id ? showT : !showT;   // (far: the countries, close: the tracks)
+      const want = m.id ? showT || (byId(m.id).country || '') === R.sel : !showT && m.c !== R.sel;   // (far: the countries, close: the tracks)
       const q = at(m);
       if (!m.w) { m.w = m.e.offsetWidth; m.h = m.e.offsetHeight; }
-      const x = clamp(q.x - m.w / 2, 4, wide - m.w - 4), y = q.y - m.h - 12, r = [x, y, x + m.w, y + m.h];   // (a name at the screen's edge stays whole)
+      const x = clamp(q.x - m.w / 2, 4, wide - m.w - 4), y = m.c ? q.y - m.h / 2 : q.y - m.h - 12, r = [x, y, x + m.w, y + m.h];   // (a name at the screen's edge stays whole)
       let ok = want && q.a > 0.15 && q.x > 2 && q.x < wide - 2 && y > TOP - 6 && y + m.h < low - 4;   // (only a name whose pin is on the screen)
       if (ok) for (const b of boxes) if (r[0] < b[2] + 4 && r[2] > b[0] - 4 && r[1] < b[3] + 2 && r[3] > b[1] - 2 && !(b[4] && (m.cur || (m.c && b[4] === 1)))) { ok = false; break; }
       if (ok) boxes.push(r);
@@ -477,7 +493,7 @@ window.MenuZemlja = (function () {
     close();
   }
   return {
-    open, close, back, sun, night, isOpen: () => !!el, root: () => el, depth: () => window.MenuIzbor ? NZ().depth('zemlja') : 0,
+    open, close, back, sun, night, vrsta, isOpen: () => !!el, root: () => el, depth: () => window.MenuIzbor ? NZ().depth('zemlja') : 0,
     _R: () => R && { n: R.n, lat: R.lat, lon: R.lon, d: R.d, sel: R.sel, card: R.card, tc: R.tc, weak: R.weak, tex: R.tex, size: [R.cv.width, R.cv.height], moving: !!R.raf,
       countries: [...R.C.keys()], pins: R.els.filter(m => m.pin).length, sun: R.U.sunL.value.toArray(), night: night(), nt: R.U.nt.value, W, H, SIDE, TOP, off: R.off },   // (for the tests)
   };

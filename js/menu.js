@@ -407,7 +407,7 @@
       // carousel's arrows (it may reach in beside them where it is narrow), in the middle or a little to a side; where the land makes it
       // bigger than the room between them (sMin), smaller (the land narrower than the card), else where it lies under the fewest of them
       if (tall) {
-        const fb = box.getBoundingClientRect(), O = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .hgraph, :scope > .wxv > button'), ...app.querySelectorAll('#s-track .rarw')]
+        const fb = box.getBoundingClientRect(), O = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .tlen, :scope > .hgraph, :scope > .wxv > button'), ...app.querySelectorAll('#s-track .rarw')]
           .map(e => e.getBoundingClientRect()).filter(r => r.width > 0).map(r => [r.left - fb.left - 8, r.top - fb.top - 8, r.right - fb.left + 8, r.bottom - fb.top + 8]), P = routeTurned(T, a);
         const hits = (c, most) => { let n = 0; for (const [x, y] of P) { const X = (x - c.vx) * c.s, Y = (y - c.vy) * c.s; if ((X < 10 || X > W - 10 || Y < 10 || Y > H - 10 || O.some(o => X > o[0] && X < o[2] && Y > o[1] && Y < o[3])) && ++n >= most) break; } return n; };   // (nor out to the card's edges)
         // (the nearest places first: a little to a side, or up into the finish's name's room, its name then beside its flag: mapLabels)
@@ -437,7 +437,7 @@
     const hit = (r) => !!r && r.width > 0 && r.bottom > b.top + 1 && r.top < b.bottom - 1 && r.right > b.left + 1 && r.left < b.right - 1;
     const hr = hd && hd.getBoundingClientRect(); if (hit(hr)) K.top = hr.bottom - b.top;
     const w = !isLand() && $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;   // (on its side: a row at the card's top, the route goes under it)
-    for (const e of st.querySelectorAll(':scope > .cams, :scope > .tcount')) { const r = e.getBoundingClientRect(); if (hit(r)) K.bottom = Math.max(K.bottom, b.bottom - r.top); }
+    for (const e of st.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .tlen')) { const r = e.getBoundingClientRect(); if (hit(r)) K.bottom = Math.max(K.bottom, b.bottom - r.top); }
     return K;
   }
   // the names of the map's flags as the flyover's: the name in a box (the finish's dark), its height in a small gold box under it at the
@@ -450,7 +450,7 @@
       return '<div class="fl-s ' + (g.classList.contains('f') ? 'finish' : 'start') + '"><b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub.textContent) + '</small>' : '') + '</div>'; }).join('');
     const fb = box.getBoundingClientRect(), W = fb.width;
     // the cameras' buttons, the weather, the height graph, the counter and (upright) the head lie over the picture: a name keeps out from under them
-    const hd = $('#s-track .thead', app), over = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount')].concat(hd ? [...hd.children] : []);
+    const hd = $('#s-track .thead', app), over = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount, :scope > .tlen')].concat(hd ? [...hd.children] : []);
     const keep = over.map(e => { const r = e.getBoundingClientRect(); return [r.left - fb.left - 4, r.right - fb.left + 4, r.top - fb.top - 4, r.bottom - fb.top + 4]; }).filter(k => k[1] > k[0] + 8 && k[3] > 0);
     const M = mks.map((g, i) => { const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(); return { el, f, x: f.left - fb.left, w0: el.offsetWidth, h0: el.offsetHeight, right: g.classList.contains('f') }; });
     // every clear place of a name, in the order it is wanted: over the flag from its pole (a start's to the right, a finish's to the left),
@@ -671,14 +671,16 @@
   }
 
   /* ---------------- the height graph: the heights along the whole run, in a small frame under the back arrow, in every camera ----------------
-     (docs/meni-izbira-proge.md »Zadnje odločitve«: as wide as the arrow, 0.6 of it high.) The part already driven (up to the glowing point)
-     its line coloured by the climb, as the flyover's trail is (GRADE: 1 % green, 3 % light green, 5 % yellow, 7 % orange, 9 % red, from 12 %
-     a deep red; downhill green), a strong yellow under it; the rest of the run a thin white line over a light yellow. The lowest point on
-     the frame's bottom edge (at least 120 m of height in the frame, so a flat circuit stays low), the lowest height over it at the left, the
-     highest at the right. Every track: the heights of routes.js (R.prof; the real ones by routeMaps, else from the start's height in geo.js),
-     else of the menu's table (MENU.profs, tools/menu-lens.js). The climb is the game's own heights over its own distances (a shortened road,
-     Pikes Peak, keeps its real gradients so). The point is the run's (run: the flyover's video, the map's running point), or (the model of the
-     land, the corner's camera) along the run at the same pace (RUN) from when the graph came */
+     (docs/meni-izbira-proge.md »Zadnje odločitve« and »Vrstica podatkov, graf višine in ocena«: as wide as the arrow, 0.6 of it high.) The
+     graph over the whole frame and nothing else (the length only at the bottom of the selected card, the user's choice of 26. 11., #1012).
+     The part already driven (up to the glowing point) its line coloured by the steepness, up or down (BAND: green under 3 %, yellow 3–6 %,
+     orange 6–9 %, red over 9 %), and under it the colours of the height above the sea (ALT: green low, yellow, orange, red high, as a map's
+     layers; the same height the same colour on every track), strong; the rest of the run a thin white line over the same colours, faint. The
+     graph as high as the track's difference in height, on one scale for every track (HG_SPAN: Pikes Peak high, the Nürburgring low). Every track: the heights of routes.js (R.prof; the real ones by
+     routeMaps, else from the start's height in geo.js), else of the menu's table (MENU.profs, tools/menu-lens.js). The steepness is the
+     game's own heights over its own distances (a shortened road, Pikes Peak, keeps its real gradients so). The point is the run's (run: the
+     flyover's video, the map's running point), or (the model of the land, the corner's camera) along the run at the same pace (RUN) from when
+     the graph came. (The flyover's trail keeps its finer GRADE below.) */
   const GRADE = [[0.01, [47, 191, 74]], [0.03, [154, 209, 58]], [0.05, [255, 210, 58]], [0.07, [255, 138, 42]], [0.09, [232, 52, 42]], [0.12, [158, 20, 32]]];
   function gradeRgb(v) {
     if (v <= GRADE[0][0]) return GRADE[0][1];
@@ -701,22 +703,35 @@
   }
   const withGraph = (t) => cam !== 4 && !!heightsOf(t);   // (every camera but the friends' times)
   // the graph in a frame W × Hh px: its svg, and where on it a fraction f of the run is
+  const BAND = [[0.03, [47, 191, 74]], [0.06, [255, 210, 58]], [0.09, [255, 138, 42]], [Infinity, [232, 52, 42]]];
+  const bandRgb = (v) => BAND.find(b => Math.abs(v) < b[0])[1];
+  // the height above the sea (m) as its colour, the fill under the graph's line
+  const ALT = [[0, [47, 191, 74]], [400, [154, 209, 58]], [800, [255, 210, 58]], [1500, [255, 138, 42]], [2500, [232, 52, 42]], [3500, [158, 20, 32]]];
+  function altRgb(h) {
+    if (h <= ALT[0][0]) return ALT[0][1];
+    for (let i = 1; i < ALT.length; i++) if (h <= ALT[i][0]) { const a = ALT[i - 1], b = ALT[i], k = (h - a[0]) / (b[0] - a[0]); return a[1].map((c, j) => Math.round(c + (b[1][j] - c) * k)); }
+    return ALT[ALT.length - 1][1];
+  }
+  // the graph's one scale on every track (the user's choice 1 of 26. 11., #954): the full frame is the largest difference in height of all the
+  // tracks (Pikes Peak, 1439 m), so a track's graph is as high as its own difference: Pikes Peak the whole frame, a flat circuit a low line
+  const HG_SPAN = 1439;
   function graphOf(t, W, Hh) {
     const P = heightsOf(t); if (!P || W < 40 || Hh < 20) return null;
-    const H = P.H, n = H.length, lo = Math.min(...H), hi = Math.max(...H), span = Math.max(hi - lo, 120), yT = 18;
-    const x = (f) => f * W, y = (h) => Hh - (h - lo) / span * (Hh - yT);
+    const H = P.H, n = H.length, lo = Math.min(...H), hi = Math.max(...H), span = Math.max(hi - lo, HG_SPAN), yT = 3, yB = 3;
+    const x = (f) => f * W, y = (h) => Hh - yB - (h - lo) / span * (Hh - yT - yB);
     const hAt = (f) => { const q = Math.min(n - 1, Math.max(0, f * (n - 1))), i = Math.min(n - 2, Math.floor(q)); return H[i] + (H[i + 1] - H[i]) * (q - i); };
     const line = 'M' + H.map((h, i) => x(i / (n - 1)).toFixed(1) + ' ' + y(h).toFixed(1)).join('L'), area = line + 'L' + W + ' ' + Hh + 'L0 ' + Hh + 'z';
-    // the climb at each height as its colour, a stop of the line's gradient
-    const stops = climbs(P.G, P.L).map((v, i) => '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + gradeRgb(v).join(',') + ')"/>').join('');
-    const lab = (h) => num(Math.round(h)) + ' m';
+    // the steepness at each height as its colour, a stop of the line's gradient
+    const stops = climbs(P.G, P.L).map((v, i) => '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + bandRgb(v).join(',') + ')"/>').join('');
+    // the heights' colours top to bottom of the frame, a stop every tenth (the height at that row of pixels)
+    const alt = (op) => Array.from({ length: 11 }, (_, k) => { const h = lo + (Hh - yB - k / 10 * Hh) / (Hh - yT - yB) * span;
+      return '<stop offset="' + k / 10 + '" stop-color="rgb(' + altRgb(h).join(',') + ')" stop-opacity="' + op + '"/>'; }).join('');
     const svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '" aria-hidden="true"><defs>' +
       '<linearGradient id="hgc" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + stops + '</linearGradient>' +
-      '<linearGradient id="hgs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".82"/><stop offset="1" stop-color="#ffc21a" stop-opacity=".62"/></linearGradient>' +
-      '<linearGradient id="hgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".3"/><stop offset="1" stop-color="#ffd23a" stop-opacity=".15"/></linearGradient>' +
+      '<linearGradient id="hgs" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="' + Hh + '">' + alt(0.8) + '</linearGradient>' +
+      '<linearGradient id="hgl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="' + Hh + '">' + alt(0.28) + '</linearGradient>' +
       '<clipPath id="hgk"><rect x="0" y="0" width="0" height="' + Hh + '"/></clipPath></defs>' +
       '<path d="' + area + '" fill="url(#hgl)"/><path class="ah" d="' + line + '"/><g clip-path="url(#hgk)"><path d="' + area + '" fill="url(#hgs)"/><path class="ln" stroke="url(#hgc)" d="' + line + '"/></g>' +
-      (P.real ? '<text class="lo" x="2" y="' + (y(lo) - 12).toFixed(1) + '">' + lab(lo) + '</text><text class="hi" x="' + (W - 2) + '" y="' + (y(hi) - 6).toFixed(1) + '" text-anchor="end">' + lab(hi) + '</text>' : '') +
       '<g class="pt" transform="translate(0 ' + y(H[0]).toFixed(1) + ')"><circle class="halo" r="7.5"/><circle r="3.8"/></g></svg>';
     return { svg, at: (f) => [x(f), y(hAt(f))] };
   }
@@ -740,7 +755,17 @@
     };
     frame();
   }
-  window.addEventListener('resize', () => { if (screen === 'track') { fitWhere(); graphOn(); } });
+  // the track's length on the chosen card: at its foot, in the middle of the room between the counter and the cameras (the user's choice
+  // of 26. 11., card meni-1012-izbrana-drzava: the length only, once on the card; #954 takes it out of the height graph's frame)
+  function tlenOn() {
+    const st = app && $('#track-stage', app), e = st && $(':scope > .tlen', st), a = st && $(':scope > .tcount', st), c = st && $(':scope > .cams', st); if (!e || !a || !c) return;
+    const sr = st.getBoundingClientRect(), ar = a.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    // (one line: the flag, the country, the length; a long country in a smaller type, down to 9 px, then hidden)
+    const room = cr.left - ar.right - 8; e.hidden = false; e.style.fontSize = ''; let f = parseFloat(getComputedStyle(e).fontSize);
+    while (e.offsetWidth > room && f > 9) { f -= 0.5; e.style.fontSize = f + 'px'; }
+    e.style.left = ((ar.right + cr.left) / 2 - sr.left) + 'px'; e.hidden = e.offsetWidth > room;
+  }
+  window.addEventListener('resize', () => { if (screen === 'track') { fitWhere(); tlenOn(); graphOn(); } });
 
 
 
@@ -1031,7 +1056,7 @@
     rested = null;
     const s = screen === 'track' && shown === 'track' && app && $('#s-track', app); if (!s) return;
     s.classList.remove('rested');
-    flyLabels(); mapDots(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
+    flyLabels(); mapDots(); tlenOn(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
     for (const v of s.querySelectorAll('video')) if (v.__due) { v.__due = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }   // (a flyover that was ready only while the screen rested)
   }
@@ -1115,13 +1140,15 @@
   }
   // the carousel's parts in the track screen (its backdrop, the neighbours' cards: the flyover's first frame, else the model on the sky; the
   // flag, the name, the country and the length under it, the arrows); a short list: as many cards as there are other tracks, more of them
+  // the track's kind (js/menu-zemlja.js vrsta): the colour of the chosen card's frame (css/menu.css .v-*; the user's of 26. 11. 2026)
+  const vrCls = (t) => window.MenuZemlja && MenuZemlja.vrsta && t && !t.test ? ' v-' + MenuZemlja.vrsta(t.id) : '';
   // at the right
   function ringView(list, t) {
     const n = list.length, m = Math.min(RING_N, Math.floor((n - 1) / 2)), mr = Math.min(RING_N, n - 1 - m);
     const at = (k) => list[((trackIdx + k) % n + n) % n];
     const card = (k) => {
       const u = at(k), c = countryOf(u), f = flagUrl(c), [x, y, w, hh, b, r] = RING(k), fly = !!(RT[u.id] && RT[u.id].fly);
-      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
+      return '<div class="rcard' + (fly ? '' : ' mdl') + vrCls(u) + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
         '<div class="rlab">' + (f ? '<img src="' + f + '" alt="">' : '<span class="nf">' + esc((c || u.name).slice(0, 3).toUpperCase()) + '</span>') + '<span><b>' + esc(u.name) + '</b><small>' + esc((c ? c + ' · ' : '') + u.km.toFixed(2) + ' km') + '</small></span></div></div>';
     };
     const arw = (k) => {
@@ -1256,8 +1283,8 @@
     const real = list.filter(u => !u.test), at = t.test ? 'TEST' : (real.indexOf(t) + 1) + '\u2009/\u2009' + real.length, W = wxOn();
     // (on its side the weather is a row at the card's top: the chosen one first, the others after it in their order: --wx, the drawing's px)
     const wo = WX5.filter(w => w[0] !== W), wxX = (id) => id === W ? 0 : (wo.length < WX5.length ? 4 : -40) + 40 * (wo.findIndex(w => w[0] === id) + 1);
-    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + (tallOf(t) ? ' tall' : '') + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
-      '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + (tallOf(t) ? ' tall' : '') + vrCls(t) + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
+      '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' + (t.test ? '' : '<div class="tlen" role="note" aria-label="' + esc((ctry ? ctry + ', ' : '') + 'length ' + t.km.toFixed(2) + ' km') + '">' + (fl ? '<img src="' + fl + '" alt="">' : '') + '<span>' + esc(ctry ? ctry + ' \u00b7 ' : '') + t.km.toFixed(2) + ' km</span></div>') +
       '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '" style="--wx:' + wxX(w[0]) + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the room under the picture: the row of numbers, the yard, the neighbours, Race!
@@ -1544,7 +1571,7 @@
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
     if (screen === 'track') ringFit();   // (on its side: the carousel's scale before anything measures the screen)
-    fitWhere(); signOn(); flyLabels(); mapDots(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
+    fitWhere(); signOn(); flyLabels(); mapDots(); cornerOn(); fitMaps(); globe.on(); tlenOn(); graphOn(); carOn();
     const M = MV(), ts = M && screen === 'track' && $('#s-track', app);   // (the weather over the screen, after the car: its outline)
     if (ts) M.on(ts, wxLook(), { entering: shown !== 'track', tap: wxTap, app }); else if (M) M.off();
     wxTap = null;
@@ -1855,6 +1882,7 @@
     // the music: the country's own, its drop where the helicopter levels out; the rotor under the flight (the Sound and Music settings)
     const sound = setting('sound') === 0, mus = XI[t.id] && XI[t.id].music;
     const A = sound && mus ? voice('assets/music/' + mus + '.mp3') : null, Rt = sound ? voice('assets/music/rotor.mp3', true) : null;
+    for (const k in pool) { pool[k].free(); delete pool[k]; }   // (made in a tap for an intro that did not use them: let go too)
     if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
     for (const o of [A, Rt]) if (o) { const p = o.a.play(); if (p && p.then) p.then(() => { if (!o.a.__go) o.a.pause(); }).catch(() => {}); }   // (unlocked silent in the tap itself: later they may start on their own)
     { const p = v.play(); if (p && p.then) p.then(() => { if (!shots) v.pause(); }).catch(() => {}); }   // (the video too: some browsers start one later only so)
@@ -1974,7 +2002,7 @@
         J.done.then((why) => { pinsOn = true; if (why === 'nogl') { if (mapEl) mapEl.remove(); startShots(); } });
       } else startShots();
     };
-    const stopAll = () => { if (!done) quit(); for (const o of [A, Rt]) if (o) { o.a.pause(); o.a.__held = false; o.set(0); } if (ixLive && ixLive.stop === stopAll) ixLive = null; };
+    const stopAll = () => { if (!done) quit(); for (const o of [A, Rt]) if (o) { o.a.__held = false; o.free(); } if (ixLive && ixLive.stop === stopAll) ixLive = null; };
     heliData(t.id).then(begin);
     ixRaf = requestAnimationFrame(step);
     ixLive = { A, Rt, stop: stopAll }; window.__ixDebug = { A: A && A.a, Rt: Rt && Rt.a, v, get J() { return J; }, get Hd() { return Hd; } };   // (for the mockup's own checks)
@@ -1986,13 +2014,18 @@
   let ixLive = null, actx = null;
   const pool = {};   // (sounds made in the tap itself, where a phone lets sound start: kept for the intro that follows the loading)
   function make(url, loop) {
-    const a = new Audio(url); a.preload = 'auto'; a.loop = !!loop; let g = null;
+    const a = new Audio(url); a.preload = 'auto'; a.loop = !!loop; let g = null, src = null;
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) { actx = actx || new AC(); const src = actx.createMediaElementSource(a); g = actx.createGain(); g.gain.value = 0; src.connect(g); g.connect(actx.destination); }
-    } catch (_) { g = null; }
+      if (AC) { actx = actx || new AC(); src = actx.createMediaElementSource(a); g = actx.createGain(); g.gain.value = 0; src.connect(g); g.connect(actx.destination); }
+    } catch (_) { g = null; src = null; }
     if (!g) a.volume = 0;
-    return { a, set(v) { v = Math.max(0, Math.min(1, v)); if (g) g.gain.value = v; else a.volume = v; }, get() { return g ? g.gain.value : a.volume; } };
+    // (free: once the intro's sound is over, its nodes off the context and the file let go; the context held each element and its
+    // nodes for good before, two more each intro: the 22. 11. review)
+    let gone = false;
+    const free = () => { if (gone) return; gone = true; a.pause(); try { if (src) src.disconnect(); if (g) g.disconnect(); } catch (_) { /* already off */ }
+      src = null; a.removeAttribute('src'); try { a.load(); } catch (_) { /* nothing loaded */ } };
+    return { a, free, get gone() { return gone; }, set(v) { v = Math.max(0, Math.min(1, v)); if (gone) return; if (g) g.gain.value = v; else a.volume = v; }, get() { return gone ? 0 : g ? g.gain.value : a.volume; } };
   }
   function voice(url, loop) { const k = url + (loop ? '#l' : ''), o = pool[k]; if (o) { delete pool[k]; return o; } return make(url, loop); }
   function warm(url, loop) {   // in the tap: made, started silent and stopped at once
@@ -2001,8 +2034,8 @@
     const p = o.a.play(); if (p && p.then) p.then(() => { if (!o.a.__go) o.a.pause(); }).catch(() => {});
   }
   function ixFade(o, sec) {
-    if (!o) return; if (o.a.paused) { o.a.__held = false; o.set(0); return; }   // (held in a hidden tab, or never started: it stays silent)
-    const v0 = o.get(), t0 = performance.now(), stop = () => { o.a.pause(); o.a.__held = false; o.set(0); };
+    if (!o) return; if (o.a.paused) { o.a.__held = false; o.free(); return; }   // (held in a hidden tab, or never started: it stays silent)
+    const v0 = o.get(), t0 = performance.now(), stop = () => { o.a.__held = false; o.free(); };
     const f = () => { const k = (performance.now() - t0) / 1000 / sec; if (k >= 1 || o.a.paused) return; o.set(v0 * (1 - k)); requestAnimationFrame(f); };
     requestAnimationFrame(f); setTimeout(stop, sec * 1000 + 30);
   }
