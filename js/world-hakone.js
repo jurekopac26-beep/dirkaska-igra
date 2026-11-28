@@ -764,6 +764,8 @@
       gpv.addTo(root, pMat, false, true);
     }
 
+    if (API.hkDodelava) API.hkDodelava({ T, scen, excluded, exclPush, inRect, onBr, out, def, at });   // (the finishing pass: js/world-hakone-dodelava.js)
+
     /* ---- the torii at Hatajuku (HK_DATA.gates, the one by the road): two vermilion pillars, the black-topped beam with its ends turned up, the
        tie beam ---- */
     if (D) for (const gt of D.gates) if (!gt[4]) {
