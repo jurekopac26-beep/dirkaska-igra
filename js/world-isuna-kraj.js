@@ -15,7 +15,7 @@
      amenity=place_of_worship, buddhist; a node, no outline: 14 × 10 m and two storeys assumed): white walls, the red-ochre band (kemar)
      under the roof, a raised roof lantern and a gilded pinnacle (serto), on a stone terrace;
      prayer flags (not in OSM: placed by the custom at sacred places, an approximation): strings of five-coloured flags (lungta: blue,
-     white, red, green, yellow) and tall upright banners on poles (darchor, waving: js/world-zastave.js) by the bridge's car park, below
+     white, red, green, yellow) and tall upright banners on poles (darchor, waving: js/world-zastave.js) by the bridge's car park and along the road there, below
      the temple (white ones, manidar), by the chorten and the lhakhang;
      terraced fields where ESA WorldCover 2021 (10 m, CC BY 4.0) has cropland (class 40), sampled to strips about 8 m × 18 m: each strip
      cut into level fields stepping down the slope (harvested rice and wheat stubble, ploughed earth, some green), earth and stone risers.
@@ -249,8 +249,23 @@
     if (lh) { const b = lh.b, c2 = Math.cos(b.ang), s2 = Math.sin(b.ang);
       for (let k = 0; k < 4; k++) { const u = (k - 1.5) * 3, v = b.W / 2 + 4, px = b.x + u * c2 - v * s2, pz = b.z + u * s2 + v * c2;
         if (vrNear(px, pz).dd < 6) continue; darchor(ctx, px, pz, 8, LUNGTA[k % 5], b.ang); } }
+    roadFlags(ctx);
     terraces(ctx, CELLS || fieldCells());
     World.isunaKraj = { stats: Object.assign({}, st), tamchog: { x: TAMCHOG.x, z: TAMCHOG.z, ang, y: tm.base }, vas: lh ? { x: lh.x, z: lh.z, y: lh.base } : null };
+  }
+
+  // the road by the chain bridge: a row of white manidar along its river side, as by Bhutan's bridges and on its passes (seen from the chase
+  // camera, as the car park's row is not); their places approximate, one every 14 m from 1500 to 1660 m after the start, none on the car park,
+  // the path to the bridge or another road
+  function roadFlags(ctx) {
+    const T = API.T; if (!T || typeof T.idx !== 'function') return;
+    for (let d = 1500, k = 0; d <= 1660; d += 14, k++) {
+      const i = T.idx(T.startS + d), x0 = T.px[i], z0 = T.pz[i], tx = T.tx[i], tz = T.tz[i];
+      let nx = -tz, nz = tx; if (nx * (PARK[0] - x0) + nz * (PARK[1] - z0) < 0) { nx = -nx; nz = -nz; }
+      const w = Math.max(T.bl[i], T.br[i]), off = w + 3.2 + hash(k, 5) * 1.2, px = x0 + nx * off, pz = z0 + nz * off;
+      if (Math.hypot(px - PARK[0], pz - PARK[1]) < 16 || Math.hypot(px - GATE[0], pz - GATE[1]) < 12 || vrNear(px, pz).dd < 2.4) continue;   // (dd: from the nearest road's edge)
+      darchor(ctx, px, pz, 6.5 + 1.5 * hash(k, 7), LUNGTA[1], Math.atan2(tz, tx));
+    }
   }
 
   // ---- the hook: World.ext.isuna runs as before, gore.build handed this file's ownBld, keepOut and extra after its own ----
