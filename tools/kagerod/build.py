@@ -29,12 +29,12 @@ NAMES = [
     ('Dolgi desni', 760, ['The long right, round the paddock!', 'Holding it through the long right!', 'Round the long right-hander!']),
     ('Hitri levi', 880, ['Flat through the fast left!', 'The fast left, down towards the hill!', 'Through the fast left-hander!']),
     ('Levi pod klancem', 1045, ['The tight left at the foot of the hill!', 'Hard left, below the hill!', 'Round the left below the hill!']),
-    ('Klanec', 1120, ['Up the hill now!', 'Climbing towards the hairpin!', 'Full throttle up the hill!']),
-    ('Lasnica na vrhu', 1205, ['The hairpin at the top of the hill!', 'Right round the hilltop hairpin!', 'Slow, slow, round the hairpin at the top!']),
+    ('Klanec', 1120, ['Up the hill now!', 'Climbing towards the hairpin, the highest point of the lap!', 'Full throttle up the hill!']),
+    ('Lasnica na vrhu', 1205, ['The hairpin at the top of the hill!', 'Right round the hilltop hairpin!', 'Slow, slow, round the hairpin at the top, ninety-two metres up!']),
     ('Levi na spustu', 1330, ['Left on the way down!', 'The downhill left, careful over the crest!', 'Through the left on the descent!']),
-    ('Desni nad reko', 1470, ['Right, and over the river!', 'The right over the little river!', 'Through the right over the river!']),
-    ('Gozdni ovinek', 1650, ['The forest corner, deep in the trees!', 'Right round the forest corner!', 'Round the long forest corner!']),
-    ('Levi ob reki', 1775, ['Left by the river, back over the water!', 'Hard left by the river!', 'Round the river left!']),
+    ('Desni nad reko', 1470, ['Right, and over the river!', 'The right over the little Vege river!', 'Through the right over the river!']),
+    ('Gozdni ovinek', 1650, ['The forest corner, deep in the beeches!', 'Right round the forest corner!', 'Round the long forest corner!']),
+    ('Levi ob reki', 1775, ['Left by the river, over the water again, alders on the bank!', 'Hard left by the river!', 'Round the river left!']),
     ('Zadnji ovinek', 1880, ['The last corner, onto the straight!', 'The fast right onto the finish straight!', 'Through the last corner!']),
     ('Ciljna ravnina', 2010, ['Down the finish straight past the pits!', 'Flat out along the finish straight, the river beside it!', 'The finish straight, the lap is nearly done!']),
 ]
@@ -42,15 +42,22 @@ NAMES = [
 # the hill, the hilltop hairpin, the downhill left, the right over the river, the forest corner (2), the river left, the last corner
 TURNS = [350, 400, 760, 880, 1045, 1205, 1330, 1470, 1620, 1670, 1775, 1880]
 
-DESC = ('Kratko dirkališče v gozdu ob reki Vege å pri Kågerödu v Skåniji: 2,1 km v smeri urinega kazalca, z vzponi in spusti. '
-        'Ciljna ravnina ob reki, dvojni desni na njenem koncu, dolgi desni okoli depoja, ostri levi pod klancem, vzpon do lasnice na vrhu in spust, '
-        'nato dvakrat čez reko skozi gozdni ovinek in zadnji ovinek nazaj na ravnino. Ob progi bukov in smrekov gozd, reka, travniki in polja, '
-        'boksi ob ciljni ravnini (zapelji vanje in mehaniki ti popravijo avto).')
-DESC_EN = ('A short circuit in the woods by the Vege å river at Kågeröd in Skåne: 2.1 km, clockwise, up and down a hillside. '
-           'The finish straight along the river, the double right at its end, the long right round the paddock, the tight left below the hill, '
-           'the climb to the hairpin at the top and the run back down, then twice over the river through the forest corner and the last corner '
-           'onto the straight. Beech and spruce woods, the river, meadows and fields by the track, the pits along the finish straight '
-           '(drive in and the mechanics fix your car).')
+DESC = ('Kratko dirkališče v bukovem gozdu ob reki Vege å pri Kågerödu v Skåniji, na robu ravnine pod hrbtom Söderåsen: 2,1 km v smeri urinega kazalca, '
+        'od 79 do 92 m nad morjem. Ciljna ravnina ob reki, dvojni desni na njenem koncu, dolgi desni okoli depoja, ostri levi pod klancem, vzpon do lasnice na vrhu in spust, '
+        'nato dvakrat čez reko skozi gozdni ovinek in zadnji ovinek nazaj na ravnino. Ob progi bukve, bloki smrek, breze in jelše ob vodi, travniki ter polja pšenice in sladkorne pese; '
+        'pod njimi pisani peščenjaki in gline, ki so dali ime kraju v geologiji. Boksi ob ciljni ravnini (zapelji vanje in mehaniki ti popravijo avto).')
+DESC_EN = ('A short circuit in the beech woods by the Vege å river at Kågeröd in Skåne, on the edge of the plain below the Söderåsen ridge: 2.1 km, clockwise, '
+           'from 79 to 92 m above the sea. The finish straight along the river, the double right at its end, the long right round the paddock, the tight left below the hill, '
+           'the climb to the hairpin at the top and the run back down, then twice over the river through the forest corner and the last corner onto the straight. '
+           'Beech, blocks of spruce, birch and alders by the water, meadows and fields of wheat and sugar beet; under them the mottled sandstones and clays '
+           'that carry the village\'s name in geology. The pits along the finish straight (drive in and the mechanics fix your car).')
+# the commentator's own lines (Comm; game.js ownLine): a circuit takes a track's own only for a race of one lap (introOne); the rest are the
+# shared circuit lines. From docs/proge/kagerod-raziskava.md: the beech woods, the river, the hill, the ridge to the north-east
+COMM = {
+    'introOne': ['Welcome to {track}, in the beech woods of Skåne! One lap by the river and over the hill, and you start {grid}.',
+                 'Here we are at {track}, down by the Vege river. One short lap, {cars} cars, and you line up {grid}.',
+                 'Welcome to {track}! The Söderåsen ridge on the skyline, one lap through the woods, and you start {grid}.'],
+}
 
 # ---- the pits (Core.Track.pitAt): the lane on the right of the finish straight (OSM: way 401177312, highway=raceway, ~10 m from the centre
 # line; here 14 m, as on the other circuits), from the exit of the last corner to before the double right (the real lane leaves the circuit in
@@ -181,6 +188,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc4d2dc, sun: 0xfff3de, sunI: 1.04, sky: 0xbcd4ec, gnd: 0x4c6634, hemiI: 0.66, tint: [0.99, 1.0, 0.98], sat: 1.02, sunOff: [-64, 68, 78], split: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.96]] },   // Skåne in early summer: a clear northern light, the sun from the south-west, a little haze over the fields
     say: 'Kågeröd',
+    comm: %(comm)s,   // the commentator's own: a race of one lap (introOne); the others are the shared circuit lines
     grassNat: 0.35, lawn: [0.96, 1.02, 0.94],
     zivali: { a: ['roe', 'boar', 'fox', 'hare'], t: ['huntStand', 'logPile', 'fallenTree'], open: true },
     id: 'kagerod', name: 'Kågeröd, Švedska', theme: 'kagerod', laps: 6, halfWidth: 5.5,
@@ -208,7 +216,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     points: [%(pts)s]
   });
 })();
-''' % dict(km='%.2f' % (LEN / 1000), kgh=kgh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+''' % dict(km='%.2f' % (LEN / 1000), kgh=kgh, comm=json.dumps(COMM, ensure_ascii=False), desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), stands=js(STANDS).replace(',', ', '),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'kagerod.js'); open(path, 'w').write(src)
