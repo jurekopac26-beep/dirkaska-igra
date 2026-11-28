@@ -777,11 +777,11 @@
  },
  "gudauri": {
   "meshes": 2385,
-  "verts": 1496580,
+  "verts": 1516236,
   "instances": 53735,
   "props": 126,
   "crowd": 149,
-  "world": "4a00d697",
+  "world": "9a9a6a8a",
   "propsHash": "255957b1",
   "floor": "4bb44d3b/10248",
   "groups": {
@@ -789,7 +789,7 @@
    "-:MeshPhongMaterial": "69c3b7e0",
    "-:MeshBasicMaterial": "170fb582",
    "rob:MeshLambertMaterial": "d3d74993",
-   "irFar:MeshLambertMaterial": "d6264d7",
+   "irFar:MeshLambertMaterial": "bea13c8c",
    "crowd:MeshLambertMaterial": "5a811fda",
    "ao:MeshBasicMaterial": "e02d1812",
    "tyremarks:MeshBasicMaterial": "98977a4",
