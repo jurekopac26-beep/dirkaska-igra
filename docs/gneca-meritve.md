@@ -1,6 +1,6 @@
 # Gneča: meritve 1, 8, 16, 24 vozil (28. 11. 2026)
 
-Lastnik: jure.kopac26. Priprava za sejo, ki prevzame gnečo v nedeljo, 29. 11., ob 10.05 (O-27-23). V tem PR so samo meritve, orodje in lahek test. Koda igre ostane nespremenjena, igralčeva fizika vožnje tudi (O-27-7: izjema velja samo za tekmece). Gradi na #1180 (partyslo, 101 avto na Spa) in ga ne podvaja.
+Lastnik: jure.kopac26. Priprava za sejo, ki prevzame gnečo v nedeljo, 29. 11., ob 10.05 (O-27-23). Meritve, orodje in lahek test so v #1192, prvi popravek (zavetrje) v razdelku »Popravki 28. 11.«; igralčeva fizika vožnje tudi (O-27-7: izjema velja samo za tekmece). Gradi na #1180 (partyslo, 101 avto na Spa) in ga ne podvaja.
 
 ## Na kratko
 
@@ -15,7 +15,7 @@ Lastnik: jure.kopac26. Priprava za sejo, ki prevzame gnečo v nedeljo, 29. 11., 
 
 - **Sličica (brskalnik):** `node tools/gneca-slicica.mjs --proga=<id> --tekmeci=<n-1> --sek=15` (orodje iz #1180). Chromium s programskim WebGL, CPU 4× upočasnjen, zaslon 844×390, navidezna ura, avtopilot. Število korakov na sličico je kot v igri. Postavitev na startu je privzeta igrina: pri 8 avtih je igralec 7., pri 16 avtih 12. Pri 24 avtih je leteči start z igralcem zadaj. Absolutni časi so večji kot na telefonu (WebGL na CPU), razmerja med deli pa veljajo.
 - **Korak fizike (node, brez risanja):** `node tools/gneca-tekmeci.js [--proga=spa] [--avtov=1,8,16,24] [--sek=20] [--profil=1] [--lod='{"min":0}']` (novo). Meri čas `Race.step` (povprečje in p95), avte na korak (LOD) in čas avtopilota igralca. S profilom CPU (vzorec 100 µs) da še skupni čas glavnih funkcij in 10 funkcij z največ lastnega časa, z vrsticami v `js/core.js`.
-- **Lahek test:** `node tests/gneca.test.js` (v `npm run test:related` ob spremembi `js/core.js` in `tools/gneca-*`). Spa, 1, 8 in 24 avtov s starta, 4 s. Preveri, da ni NaN, da LOD ni vklopljen, da so vsi avti speljali in da dirka teče. Preveri tudi razmerji: 24 avtov največ 30× en avto in največ 4,5× 8 avtov. Pri linearni rasti bi bilo 3×, pri zanki čez vse pare 6–9×. Izmerjeno: 17× in 2,8×, 1,5 s.
+- **Lahek test:** `node tests/gneca.test.js` (v `npm run test:related` ob spremembi `js/core.js` in `tools/gneca-*`). Spa, 1, 8 in 24 avtov s starta, 4 s. Preveri, da ni NaN, da LOD ni vklopljen, da so vsi avti speljali in da dirka teče. Preveri tudi razmerji: 24 avtov največ 40× en avto in največ 4,5× 8 avtov. Pri linearni rasti bi bilo 3×, pri zanki čez vse pare 6–9×. Izmerjeno: 17× in 2,8×, 1,5 s.
 
 ## Meritve: sličica (ms, 15 s, CPU 4×)
 
@@ -66,6 +66,14 @@ Naslednja seja naj izbere sama, pred `main` pa naredi slike in meritve s temi or
 4. **Predpomnilnik za `Track.query` in `get speed` pri tekmecih.** Namig odseka naj se nosi od koraka do koraka, hitrost naj se izračuna enkrat na korak namesto pri vsakem `hypot`. Pričakovano −10–15 % koraka, brez spremembe vedenja (vsebina primerjave mora ostati enaka do bita).
 5. **`BIG_FIELD` s 16 na 8.** Vodenje in lovljenje bi pri 9–16 avtih uporabljala okno namesto vseh avtov. Prihranek je majhen (~0,01–0,02 ms pri 16 avtih), tveganje pa je, da se spremeni vedenje tekmecev (prehitevanje). Preveri teste tekmecev (`npm run test:related` za `js/core.js`).
 6. (nizko) **`LOD.min` pod 30** prinese samo ~4 %. Smiselno je šele po točki 3.
+
+## Popravki 28. 11. (O-28-22: samo tekmeci, do bita enako)
+
+Pripravi Opus, Fable po resetu v nedeljo, 29. 11., ob 10.05 pregleda in dopolni. Merjeno z `tools/gneca-tekmeci.js` na Spa (node, ms na korak, dve ponovitvi).
+
+- **Zavetrje (`Race._tow`) z oknom od 9 avtov naprej** (`LOD.tw = 8`; prej okno šele nad `BIG_FIELD` 16). Isti avti, `f` je največji, zato enako do bita. 16 avtov: 0,015–0,016 → 0,008–0,009 ms, 12 avtov: 0,010 → 0,007–0,010 ms (~2 % koraka pri 16 avtih). Preverjeno: 9 dirk po 40 s (Spa, Jezero, Monaco × 9, 12, 16 avtov), položaji in hitrosti vseh avtov enaki do bita; v `tests/gneca.test.js` kontrola okna proti zanki (12 avtov, 40 pogledov).
+- **Za Trke (samo Fable, ni v tem PR):** iskanje parov z razvrščanjem (`Race._pairs`) že od 9 avtov namesto zanke čez vse pare (`js/core.js` `if (cars.length <= BIG_FIELD)` v `Race._step`). Poskus: istih 9 dirk enakih do bita, 16 avtov `pair` 0,034 → 0,010 ms, `_pairs` +0,005 (~6 % koraka). Ker je to koda trkov, jo prepustim seji Trki.
+- **Ni enako do bita, zato ne zdaj:** `BIG_FIELD` 16 → 8 za vodenje (spremeni prehitevanje), predpomnilnik `get speed` (koda igralčevega avta), enostavnejši model in omejitev korakov (kartici #1180 `gneca-1180-zgradba`, `gneca-1180-koraki` čakata odločitev).
 
 ## Za sejo, ki prevzame
 

@@ -4758,7 +4758,9 @@ const Core = (function () {
   // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0).
   // fs: with the LOD on the game catches up at most that many steps a frame (4 as in every other race; the quick entry's koraki=4-10
   // sets it for the visit: js/game.js, frame)
-  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 4, fol: 1, nrT: 60, nrV: 0.15, fs: 4, off: false };
+  // tw: not the LOD itself, from more than that many cars on Race._tow looks along a window sorted by q.s instead of over the whole field (the same
+  // cars, f their largest: the same tow to the bit, tests/gneca.test.js; Spa, 16 cars: 0.015 -> 0.008 ms a step, docs/gneca-meritve.md)
+  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 4, fol: 1, nrT: 60, nrV: 0.15, fs: 4, off: false, tw: 8 };
   // the indices 0..n-1 in I sorted by cmp, ties by the index (what a stable sort of the list gives), by insertion from the order I had the last
   // time: from one step to the next only a few cars change places (Race._byDist, the order)
   function isortIx(I, n, cmp) {
@@ -8712,9 +8714,10 @@ const Core = (function () {
     }
     _tow(dt) {   // (dt: the step; none, at once: the tests' look at the wake itself)
       const cars = this.cars, T = this.track, L = T.len, lv = T.cross.length > 0, racing = this.state === 'racing' || this.state === 'done';
-      // (a big field: the cars that can give a tow sorted by q.s, each car looks only 3-TOW_RNG m ahead of it, over the line on a circuit)
+      // (more than LOD.tw cars: the cars that can give a tow sorted by q.s, each car looks only 3-TOW_RNG m ahead of it, over the line on a circuit;
+      // the same cars as the loop over all of them, and f their largest, so the same to the bit: docs/gneca-meritve.md)
       let W = null;
-      if (cars.length > BIG_FIELD && racing) { W = this._bpO().tw; W.length = 0; for (const o of cars) if (!o.inPit && o.x !== 1e5 && !(o.speed < 10)) W.push(o); W.sort((a, b) => a.q.s - b.q.s); }
+      if (cars.length > LOD.tw && racing) { W = this._bpO().tw; W.length = 0; for (const o of cars) if (!o.inPit && o.x !== 1e5 && !(o.speed < 10)) W.push(o); W.sort((a, b) => a.q.s - b.q.s); }
       const ST = this._lod && this._lod.on ? this._lod.st : null, SD = ST ? this._lod.dt : null;
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci]; if (ST && !ST[ci]) continue;   // (LOD: a far car between its steps, its tow as it was)

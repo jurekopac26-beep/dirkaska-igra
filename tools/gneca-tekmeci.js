@@ -2,7 +2,7 @@
 // Za vsako število avtov: ms na korak dirke (Race.step, povprečje in p95), ms na tekmeca, avti na korak (LOD), in profil CPU
 // (skupni čas funkcije s klici vred, ms na korak) za glavna mesta: korak avta, vodenje tekmecev, trki med avti in z zidom, zavetrje, LOD.
 // Igralčev avto vozi avtopilot (aiControl), kot v tools/gneca-korak.js. Fizike ne spreminja, samo meri.
-//   node tools/gneca-tekmeci.js [--proga=spa] [--avtov=1,8,16,24] [--sek=20] [--seme=9] [--profil=1] [--lod='{"min":0}'] [--vrstice=aiDrive,_tow] [--izhod=pot.json]
+//   node tools/gneca-tekmeci.js [--proga=spa] [--avtov=1,8,16,24] [--sek=20] [--seme=9] [--profil=1] [--lod='{"min":0}'] [--vrstice=aiDrive,_tow] [--vrh=8] [--izhod=pot.json]
 // --vrstice: za naštete funkcije 8 vrstic js/core.js z največ vzorci (lastni čas v tej vrstici, ms/korak)
 // Telefon: čas pomnoži s ~4 (4× upočasnjen procesor, kot tools/gneca-slicica.mjs).
 'use strict';
@@ -59,7 +59,7 @@ async function ena(n) {
     });
     for (const k of Object.keys(mesta)) mesta[k] = Math.round(mesta[k] / K * 1000) / 1000;
     for (const k of Object.keys(mesta)) if (k.startsWith('step@')) { mesta['step:' + (+k.slice(5) - ZAMIK)] = mesta[k]; delete mesta[k]; }
-    var vrst = Object.entries(vr).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => [k, Math.round(v / K * 10000) / 10000]);
+    var vrst = Object.entries(vr).sort((a, b) => b[1] - a[1]).slice(0, +arg('vrh', 8)).map(([k, v]) => [k, Math.round(v / K * 10000) / 10000]);
     var vrh = Object.entries(lastni).filter(([k]) => !/^\(|^post:/.test(k)).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, v]) => [k, Math.round(v / K * 1000) / 1000]);
   }
   const srt = [...ts].sort((x, y) => x - y), avg = ts.reduce((x, y) => x + y, 0) / K;

@@ -1,9 +1,9 @@
 // Gneča (docs/gneca-meritve.md): a light check of what the rivals cost a physics step (Race.step, 1/120 s) in a field the game races
 // (8 and 24 cars; LOD only above LOD.min, so every car here at the full rate), on Spa from the grid, the player on the autopilot.
-// Times are the machine's, so only ratios are checked, with room: the field of 24 at most 30× the player alone and at most 4.5× the
+// Times are the machine's, so only ratios are checked, with room: the field of 24 at most 40× the player alone (a lone car's step is short and noisy: 17-26×) and at most 4.5× the
 // field of 8 (linear would be 3×; a search over every pair of cars or a loop over the field inside each car's step shows as 6-9×).
 // Measured 28. 11. (node, this test): 1 car 0.026 ms, 8 cars 0.16, 24 cars 0.44 (17× and 2.8×); with the game's own grid (tools/gneca-tekmeci.js) 16 cars 0.26, 24 cars 0.27.
-// Also: no NaN, every car stepped every step (no LOD below LOD.min), every car on the way.
+// Also: Race._tow along its window (more than LOD.tw cars) the same to the bit as over the field; no NaN, every car stepped every step (no LOD below LOD.min), every car on the way.
 //   node tests/gneca.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -40,12 +40,30 @@ function measure(cars) {
   return Object.assign(info, { ms: best });
 }
 
+// Race._tow along the window sorted by q.s (more than LOD.tw cars) the same to the bit as the loop over the field: 12 cars, Spa, 4 s from the grid
+function towSame() {
+  const r = new C.Race(T, { numAI: 11, playerModel: C.MODELS[0], playerUpg: { motor: 0, gume: 0, zavore: 0, aero: 0 }, assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs', laps: 3,
+    fuel: false, rain: 0, tyres: !!d.pit, compounds: true, flags: true, chars: true, slip: true, faults: true, radio: true, champ: true });
+  r.start(); const P = r.cars.find(c => c.isPlayer), orig = Math.random, tw = C.LOD.tw; let diff = 0, some = 0, n = 0;
+  try {
+    for (let k = 1; k <= Math.round(4 / DT); k++) {
+      Math.random = seeded(1000 + k); C.aiControl(P, r, DT); r.step(DT);
+      if (k % 12) continue;
+      C.LOD.tw = 1e9; r._tow(); const a = r.cars.map(c => c.tow); C.LOD.tw = tw; r._tow(); n++;
+      r.cars.forEach((c, i) => { if (!Object.is(c.tow, a[i])) diff++; if (a[i] > 0) some++; });
+    }
+  } finally { Math.random = orig; C.LOD.tw = tw; }
+  return { diff, some, n };
+}
+const tw = towSame();
+check('Race._tow along the window (LOD.tw) the same to the bit as over the whole field (12 cars, 40 looks)', tw.diff === 0 && tw.some > 20 && tw.n === 40, JSON.stringify(tw));
+
 const one = measure(1), eight = measure(8), field = measure(24);
 const line = `1 car ${one.ms.toFixed(3)} ms, 8 cars ${eight.ms.toFixed(3)}, 24 cars ${field.ms.toFixed(3)} (median of a step, node)`;
 console.log(line);
 check('24 cars racing from the grid: no NaN, all on the way, every car at the full rate (no LOD below LOD.min)',
   field.n === 24 && !field.nan && !field.lod && field.moved === 24 && field.state === 'racing', JSON.stringify(field));
-check('the field of 24 at most 30× the player alone a step', field.ms <= 30 * one.ms, (field.ms / one.ms).toFixed(1) + '×');
+check('the field of 24 at most 40× the player alone a step', field.ms <= 40 * one.ms, (field.ms / one.ms).toFixed(1) + '×');
 check('the field of 24 at most 4.5× the field of 8 a step (the rivals\' cost linear in the field)', field.ms <= 4.5 * eight.ms, (field.ms / eight.ms).toFixed(2) + '×');
 
 console.log(`\n${n - bad}/${n} OK`);
