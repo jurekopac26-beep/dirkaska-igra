@@ -9,8 +9,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     id: 'cusco', name: 'Cusco, Peru', theme: 'cusco', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 3.8,
     maxRivals: 30,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): a short road past the line and a short grid
-    desc: 'Cusco (Peru): kratka cesta iz mesta v hrib, na 3500 m, z dvema serpentinama mimo cikcakastih inkovskih zidov Sacsayhuamána. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
-    en: { name: 'Cusco, Peru', desc: 'Cusco (Peru): a short road out of the town and up the hill, at 3,500 m, with two hairpins past the zigzag Inca walls of Sacsayhuamán. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
+    desc: 'Cusco (Peru): kratka cesta z zgornjega roba mesta v hrib, od 3531 do 3592 m, skozi evkaliptove gozdove in vsek v pobočje, z dvema serpentinama mimo vhoda v arheološki park in cikcakastih inkovskih zidov Sacsayhuamána, mesto v kotlini spodaj. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
+    en: { name: 'Cusco, Peru', desc: 'Cusco (Peru): a short road from the top of the town up the hill, from 3,531 to 3,592 m, through eucalyptus woods and a cutting in the slope, with two hairpins past the gate of the archaeological park and the zigzag Inca walls of Sacsayhuamán, the town in its valley below. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
     say: 'Cusco',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
@@ -20,10 +20,26 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#16181c', text: '#f4f6f0' }, escTo: 'Do cilja',
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xd8dcd4, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
+    // its own (Pikes Peak's level: docs/dodelava-prog.md): the clouds' shade, the animals and the things of the woods' glades (world-zivali.js:
+    // llamas and alpacas graze the meadows at Sacsayhuamán; the eucalyptus plantations are felled, their stumps and logs), the flyover's places
+    cloudTh: 0.16,
+    zivali: { a: ['llama', 'alpaca'], t: ['stumps', 'logPile', 'signPost'], open: true },
+    fly: [[0, 'START'], [270, 'Zidovi Sacsayhuamána'], [540, 'Serpentina 1'], [561, 'Vhod v arheološki park'], [674, 'Serpentina 2'], [-1, 'CILJ']],
+    // the named places within 60 m of the road, all from OpenStreetMap (docs/proge/cusco.md, »Zanimivosti do 60 m«), in metres after the start
     names: [
+      {"n": "Evkaliptov gozdiček", "d": 200.0, "say": ["Eucalyptus on the left, planted all over these hills!", "Through the gum trees, the smell of eucalyptus in the air!"]},
       {"n": "Sacsayhuamán", "d": 270.0, "say": ["The zigzag Inca walls of Sacsayhuamán, right beside the road!", "Look at those walls, huge stones fitted without mortar!"]},
-      {"n": "Serpentina 1 · 3.572 m", "d": 540.0, "say": ["Into the first hairpin, the town far below!", "Hairpin one, tight and steep!"]},
-      {"n": "Serpentina 2 · 3.577 m", "d": 674.0, "say": ["Hairpin two, and the finish is in sight!"]},
+      {"n": "Čuvajnica parka", "d": 356.0, "say": ["Past the guard's hut of the archaeological park!", "The park's guards watching from their hut!"]},
+      {"n": "Vsek v pobočje", "d": 411.0, "say": ["The road cut into the hillside on the right!", "Rock and earth close on the right, the road cut into the slope!"]},
+      {"n": "Evkaliptov gozd", "d": 426.0, "say": ["Into the eucalyptus wood!", "Tall gum trees right at the edge of the road!"]},
+      {"n": "Arheološki park", "d": 471.0, "say": ["Along the edge of the Sacsayhuamán archaeological park!", "The old fortress grounds right beside us!"]},
+      {"n": "Serpentina 1 · 3.572 m", "d": 540.0, "say": ["Into the first hairpin, the town far below!", "Hairpin one, tight and steep!", "Round the hairpin, and Cusco is down there in the valley!"]},
+      {"n": "Vhod v park", "d": 561.0, "say": ["Past the gate of Sacsayhuamán, where the visitors go in!", "The park's entrance on the side of the road!"]},
+      {"n": "Parkirni pas", "d": 616.0, "say": ["The parking strip along the road, mind the cars!", "Cars parked along the edge here!"]},
+      {"n": "Zapornica", "d": 631.0, "say": ["Past the barrier and the guard's hut!", "The barrier gate flashes by!"]},
+      {"n": "Serpentina 2 · 3.577 m", "d": 674.0, "say": ["Hairpin two, and the finish is in sight!", "The second hairpin, the walls below us now!"]},
+      {"n": "Tretji zid", "d": 706.0, "say": ["The third Inca wall over on the right, out across the meadow!", "Through the eucalyptus by the locked gate!"]},
+      {"n": "Ruševine obzidja", "d": 896.0, "say": ["Old wall ruins beside the road, nearly at the finish!", "Stone ruins on the slope, the line is close!"]},
     ],
     comm: {
       introPass: ["Welcome to {track}! {cars} cars on a short, twisting road, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
