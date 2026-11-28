@@ -524,11 +524,11 @@
   "maxKverts": 632,
   "jsMs": 1.47
  },
- "trebevic": {
-  "calls": 161,
-  "maxCalls": 190,
+ "tatev": {
+  "calls": 169,
+  "maxCalls": 205,
   "kverts": 364,
-  "maxKverts": 433,
-  "jsMs": 1.48
+  "maxKverts": 455,
+  "jsMs": 1.5
  }
 }
