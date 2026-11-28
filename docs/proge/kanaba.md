@@ -28,3 +28,13 @@ Okolica (skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom 
 - **Drevesa**: vrste so iz besedilnih virov (`README.md`, »Zasluge«), njihovi deleži so ocenjeni; drevesa so generična, razporejena po rabi tal, ne po resničnih legah. Slike pred in po: `docs/slike/kanaba/`.
 
 Podatke proge pripravi `tools/proga/proga.py` (`python3 tools/proga/proga.py kanaba --zapisi`, nastavitve v `tools/proga/proge.json`). Vire glej v `README.md` pod »Zasluge«.
+
+## Dodelava do ravni Pikes Peaka (v teku, veja `dodelava/kanaba`)
+
+Po merilu `docs/dodelava-prog.md` (O-28-6, O-28-9): terase in jezera pod prelazom, vasi ob cesti, obcestje, več zanimivosti s komentatorjem. Viri samo OpenStreetMap in javni višinski modeli.
+
+Narejeno (O-28-16, 28. 11. 2026):
+- **Kioski v vasi Kanaba**: 4 lesene stojnice s pločevinasto streho, nadstreškom in pultom z blagom (`js/world-kanaba.js`, `kioskPlan`, `kioskBuild`), na mestih točk OSM 8273273215–8273273219 (trgovinice ob cesti), 3,4 m za ograjo; prostor zanje rezerviran z `exclPush`, zato so se grmi in rastline ob cesti na novo razporedili.
+- **Imeni**: `Gozd Echuya` (d 150, rezervat do d ≈ 2615 po OSM) in `Vas Kanaba` (d 2440) s komentatorjem; Razgledišče na Virunge dobi nevtralna stavka (brez trditev o višinah).
+- **Jezera**: daljna jezera iz maske farDem s ceste niso vidna (preverjeno z vidnostjo iz vseh točk proge), zato brez dela.
+- **Odprto za Fable**: terase pod prelazom (OSM jih nima, potreben vir), več hiš vasi iz OSM, lega razgledišča (OSM d ≈ 2425, igra 2600), obcestje zunaj vasi.

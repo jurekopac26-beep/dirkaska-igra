@@ -38,9 +38,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1f3f7a', text: '#f4f6f0' }, escTo: 'Do Kisora',   // (and the results of an escape: 'Do Kisora v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
+      {"n": "Gozd Echuya", "d": 150.0, "say": ["Into the Echuya forest! Bamboo and the old hardwoods on both sides of the road!", "Through the forest reserve on the ridge, the bamboo right by the road!"]},
       {"n": "Kotanja", "d": 880.0, "say": ["Down into the dip, and up again to the gap!", "Through the dip on the ridge, the terraces all round!"]},
       {"n": "Prelaz Kanaba · 2.343 m", "d": 2350.0, "say": ["The Kanaba gap! The Virunga volcanoes on the horizon!", "Over the top of the gap, and it is all downhill to the finish!"]},
-      {"n": "Razgledišče na Virunge", "d": 2600.0},
+      {"n": "Vas Kanaba", "d": 2440.0, "say": ["Through Kanaba village, the kiosks right by the road!", "Past the little shops of Kanaba village, people on the roadside!"]},
+      {"n": "Razgledišče na Virunge", "d": 2600.0, "say": ["The Virunga volcanoes on the skyline, along the border!", "The view opens to the west, the volcanoes on the border ahead!"]},
       {"n": "Serpentina 1", "d": 4350.0, "say": ["The tightest bend of the road! Hard on the brakes!", "Round the hairpin, and down to the line!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
