@@ -29,19 +29,19 @@ def near(x, z):   # metres from the centre line
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only. The real corners are named after people, a race series
 # and firms (and the circuit after a firm): none of that goes to the game (CLAUDE.md, Pravna varnost); the dune names of the place stay out too ----
 NAMES = [
-    ('Lasnica na koncu ravnine', 365, ['Hard on the brakes for the hairpin at the end of the straight!', 'Right round the hairpin, the dunes towering over it!', 'Into the hairpin, the whole field squeezing in!']),
+    ('Lasnica na koncu ravnine', 365, ['Hard on the brakes for the hairpin at the end of the straight!', 'Right round the hairpin, the dunes towering over it!', 'Into the hairpin, the whole field squeezing in!', 'The grandstand in the hairpin, packed on the dune above the gravel!']),
     ('Desni za boksi', 690, ['The quick right behind the pits!', 'Through the right behind the paddock!', 'Right-hander, behind the pits!']),
-    ('Nagnjeni levi', 830, ['The banked left, lean on the bowl!', 'Round the banked left, flat on the slope!', 'Use the banking through the left!']),
-    ('Greben sipine', 1120, ['Over the crest of the dune!', 'Up and over the dune ridge, light on the wheels!', 'Blind over the top of the dune!']),
+    ('Nagnjeni levi', 830, ['The banked left, lean on the bowl!', 'Round the banked left, flat on the slope!', 'Use the banking through the left!', 'Round the banked left, the crowd on the dune bank right above!']),
+    ('Greben sipine', 1120, ['Over the crest of the dune!', 'Up and over the dune ridge, light on the wheels!', 'Blind over the top of the dune!', 'Over the dune, marram grass and sea buckthorn on both sides!']),
     ('Hitra esa', 1340, ['Left and right through the fast esses!', 'Flat through the esses in the dunes!', 'Through the fast S on the ridge!']),
     ('Desni v dolino', 1730, ['The long fast right, down into the dune valley!', 'Downhill into the fast right!', 'Holding it through the right into the valley!']),
     ('Ostri desni', 2025, ['The sharp right at the far end!', 'Brake for the sharp right-hander!', 'Round the sharp right!']),
-    ('Desni ob ribniku', 2260, ['The tight right by the ponds!', 'Right, past the pond in the dunes!', 'Round the right by the water!']),
-    ('Levi okoli sipine', 2510, ['The long left round the dune!', 'Round the dune, a long left-hander!', 'Through the left round the sand hill!']),
+    ('Desni ob ribniku', 2260, ['The tight right by the ponds!', 'Right, past the pond in the dunes!', 'Round the right by the water!', 'The reeds of the dune pond flash by on the right!']),
+    ('Levi okoli sipine', 2510, ['The long left round the dune!', 'Round the dune, a long left-hander!', 'Through the left round the sand hill!', 'Round the dune, bare sand blown out of the grass!']),
     ('Šikana', 3140, ['Right and left through the chicane!', 'Hard on the brakes for the chicane!', 'Through the chicane at the end of the back straight!']),
     ('Desni pred zadnjim', 3515, ['The right before the last corner!', 'Through the right, the banking ahead!', 'Right-hander, set it up for the bowl!']),
-    ('Nagnjeni zadnji ovinek', 3760, ['The banked last corner, flat out on the slope!', 'Round the banked bowl onto the straight!', 'All the way round the banking!']),
-    ('Ciljna ravnina', 4150, ['Down the straight by the sea!', 'Flat out along the main straight, the pits on the right!', 'The main straight, the lap is nearly done!']),
+    ('Nagnjeni zadnji ovinek', 3760, ['The banked last corner, flat out on the slope!', 'Round the banked bowl onto the straight!', 'All the way round the banking!', 'Round the steep bowl, the orange flags waving on the bank!']),
+    ('Ciljna ravnina', 4150, ['Down the straight by the sea!', 'Flat out along the main straight, the pits on the right!', 'The main straight, the lap is nearly done!', 'Down the straight, the North Sea just beyond the first row of dunes!']),
 ]
 # the corners' apexes (TV towers, photographers, recovery: World.rbring): the hairpin, the right behind the pits, the banked left, the esses (2),
 # the right into the valley, the sharp right, the right by the ponds, the left round the dune, the chicane (2), the right before the last
@@ -217,6 +217,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: %(desc)s,
     en: { name: 'Zandvoort, Netherlands', desc: %(desc_en)s },
     start: [0, 0], runoff: 1.0, inner: 4, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s,
+    // the commentator's own lines for the race round it (Comm; game.js ownLine 'intro' and 'go' of a circuit): the dunes of Kennemerland by
+    // the North Sea, the 4.3 km and two banked corners, the wind off the sea (docs/proge/zandvoort.md, Raziskava kraja)
+    comm: {
+      intro: ["Welcome to {track}, in the dunes by the North Sea! {laps} laps, {cars} cars, and you line up {grid} on the grid.", "Here we are at {track}: four point three kilometres up and down the sand hills, with two banked corners. {laps} laps, and you start {grid}.", "Good day from the coast at {track}! Grey sky, a fresh wind off the sea and sand on the kerbs. {cars} cars, {laps} laps, and you start from {grid}."],
+      go: ["Lights out, and away they go into the dunes!", "And they're off, down the straight to the hairpin!", "Green light! {cars} cars charging for the hairpin at the end of the straight!"],
+    },
     elev: ZV_H.map((h, i) => [i / ZV_H.length, h / 10]),
     bank: %(bank)s,   // the banked left after the hairpin and the banked last corner: 32 %% (18 degrees), as the real ones
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
