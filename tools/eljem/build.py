@@ -33,16 +33,23 @@ def widths():
 # ---- names on the HUD ({n, d: metres after the start line, say}): places and plain descriptions only (no names of people, events or firms) ----
 NAMES = [
     ('Proti amfiteatru', 40, ['The amphitheatre dead ahead, look at it!', 'Straight at the old arena, flat out!']),
-    ('Amfiteater', 470, ['Round the arena, the arches right beside you!', 'Under the walls of the amphitheatre, eighteen centuries of them!']),
-    ('Za areno', 640, ['Left and right behind the arena!', 'The arches in the mirrors, into the town!']),
+    ('Ravnina proti obokom', 200, ['Flat and dusty, the arches growing in the screen!', 'Sandy ochre ground both sides, the Sahel plain!']),
+    ('Zid arheološkega območja', 440, ['The wall of the old site on the left, mind the dip!', 'A little drop now, seven metres down towards the arena!']),
+    ('Amfiteater', 470, ['Round the arena, the arches right beside you!', 'Under the walls of the amphitheatre, eighteen centuries of them!',
+                         'A hundred and forty-eight metres long, room for some thirty-five thousand!']),
+    ('Ostri levi za areno', 515, ['Tight left behind the arena, brake early!', 'Hard left, the stone stands right above you!']),
+    ('Levi v mesto', 625, ['Another tight left, into the town!', 'Left again, the arches in the mirrors!']),
+    ('Glavno križišče', 778, ['The main crossroads, keep it straight and tidy!', 'Across the big junction, north now!']),
     ('Skozi mesto', 900, ['North through the town, the houses flash by!', 'Between the white walls, keep it tidy!']),
     ('Severni izhod', 1300, ['The north end of the town, the olive groves ahead!', 'Out of the town, nearly home!']),
 ]
-EN_NAMES = {'Proti amfiteatru': 'To the Amphitheatre', 'Amfiteater': 'The Amphitheatre', 'Za areno': 'Behind the Arena', 'Skozi mesto': 'Through the Town', 'Severni izhod': 'North Way Out'}
+EN_NAMES = {'Proti amfiteatru': 'To the Amphitheatre', 'Ravnina proti obokom': 'Plain to the Arches', 'Zid arheološkega območja': 'Old Site Wall',
+            'Amfiteater': 'The Amphitheatre', 'Ostri levi za areno': 'Tight Left Behind the Arena', 'Levi v mesto': 'Left into Town',
+            'Glavno križišče': 'Main Crossroads', 'Skozi mesto': 'Through the Town', 'Severni izhod': 'North Way Out'}
 
-DESC = ('Kratka mestna proga v El Jemu v Tuniziji: s ceste z jugozahoda naravnost proti rimskemu amfiteatru iz 3. stoletja, okoli njegove vzhodne strani tik ob '
+DESC = ('Kratka mestna proga v El Jemu v Tuniziji: s ceste z jugozahoda naravnost proti rimskemu amfiteatru iz 3. stoletja (148 × 122 m, okoli 35.000 sedežev, na Unescovem seznamu od 1979), okoli njegove vzhodne strani tik ob '
         'obokih in na sever skozi belo mestece do oljčnikov. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.')
-DESC_EN = ('A short town course in El Jem, Tunisia: from the road in from the south-west straight at the Roman amphitheatre of the 3rd century, round its east side '
+DESC_EN = ('A short town course in El Jem, Tunisia: from the road in from the south-west straight at the Roman amphitheatre of the 3rd century (148 × 122 m, some 35,000 seats, World Heritage since 1979), round its east side '
            'right by the arches and north through the white town to the olive groves. '
            'A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)

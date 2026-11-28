@@ -20,8 +20,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'eljem', name: 'El Jem, Tunizija', theme: 'eljem', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~130 m of road past the line, two rows a side
     halfWidth: 5.2,
-    desc: "Kratka mestna proga v El Jemu v Tuniziji: s ceste z jugozahoda naravnost proti rimskemu amfiteatru iz 3. stoletja, okoli njegove vzhodne strani tik ob obokih in na sever skozi belo mestece do oljčnikov. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
-    en: { name: 'El Jem, Tunisia', desc: "A short town course in El Jem, Tunisia: from the road in from the south-west straight at the Roman amphitheatre of the 3rd century, round its east side right by the arches and north through the white town to the olive groves. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the north edge of the town' },
+    desc: "Kratka mestna proga v El Jemu v Tuniziji: s ceste z jugozahoda naravnost proti rimskemu amfiteatru iz 3. stoletja (148 × 122 m, okoli 35.000 sedežev, na Unescovem seznamu od 1979), okoli njegove vzhodne strani tik ob obokih in na sever skozi belo mestece do oljčnikov. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
+    en: { name: 'El Jem, Tunisia', desc: "A short town course in El Jem, Tunisia: from the road in from the south-west straight at the Roman amphitheatre of the 3rd century (148 \u00d7 122 m, some 35,000 seats, World Heritage since 1979), round its east side right by the arches and north through the white town to the olive groves. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the north edge of the town' },
     realKm: 1.49, alt: [110, 106],
     start: [216.8, -332.1], finish: [744.8, -1544.0], cps: [[434.5, -527.8], [653.0, -679.1], [670.0, -955.0], [721.5, -1250.0]],
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
@@ -35,8 +35,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n": "Proti amfiteatru", "d": 40, "say": ["The amphitheatre dead ahead, look at it!", "Straight at the old arena, flat out!"]},
-      {"n": "Amfiteater", "d": 470, "say": ["Round the arena, the arches right beside you!", "Under the walls of the amphitheatre, eighteen centuries of them!"]},
-      {"n": "Za areno", "d": 640, "say": ["Left and right behind the arena!", "The arches in the mirrors, into the town!"]},
+      {"n": "Ravnina proti obokom", "d": 200, "say": ["Flat and dusty, the arches growing in the screen!", "Sandy ochre ground both sides, the Sahel plain!"]},
+      {"n": "Zid arheološkega območja", "d": 440, "say": ["The wall of the old site on the left, mind the dip!", "A little drop now, seven metres down towards the arena!"]},
+      {"n": "Amfiteater", "d": 470, "say": ["Round the arena, the arches right beside you!", "Under the walls of the amphitheatre, eighteen centuries of them!", "A hundred and forty-eight metres long, room for some thirty-five thousand!"]},
+      {"n": "Ostri levi za areno", "d": 515, "say": ["Tight left behind the arena, brake early!", "Hard left, the stone stands right above you!"]},
+      {"n": "Levi v mesto", "d": 625, "say": ["Another tight left, into the town!", "Left again, the arches in the mirrors!"]},
+      {"n": "Glavno križišče", "d": 778, "say": ["The main crossroads, keep it straight and tidy!", "Across the big junction, north now!"]},
       {"n": "Skozi mesto", "d": 900, "say": ["North through the town, the houses flash by!", "Between the white walls, keep it tidy!"]},
       {"n": "Severni izhod", "d": 1300, "say": ["The north end of the town, the olive groves ahead!", "Out of the town, nearly home!"]},
     ],
