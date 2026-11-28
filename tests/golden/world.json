@@ -1255,18 +1255,19 @@
   }
  },
  "ujarras": {
-  "meshes": 239,
-  "verts": 260056,
+  "meshes": 240,
+  "verts": 270785,
   "instances": 2882,
   "props": 36,
   "crowd": 151,
-  "world": "bbbd3727",
+  "world": "3145d78b",
   "propsHash": "d16e5841",
   "floor": "d0779776/2212",
   "groups": {
    "-:MeshLambertMaterial": "6cfe9337",
    "-:MeshPhongMaterial": "92600b3f",
    "-:MeshBasicMaterial": "2ebecc8c",
+   "irFar:MeshLambertMaterial": "8efcd518",
    "rob:MeshLambertMaterial": "54be33db",
    "roadside-ways:MeshLambertMaterial": "ca2f1154",
    "crowd:MeshLambertMaterial": "b295c1d7",
