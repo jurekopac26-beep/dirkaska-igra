@@ -103,7 +103,7 @@ try {
     await startTrack(page, id);
     const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
     const { nan, resc, rt } = await drive(20);
-    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, fin: !!P.finished, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, fin: !!P.finished, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit, left: g.race.track.open ? g.race.track.finishS - P.q.s : 1e9 }; });
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
@@ -136,7 +136,9 @@ try {
     // (the race started again taken to its green light: the sign is shown only while racing (game.js updateNote), and the new race stands
     // in its intro and lights; Ghoufi got there in real time during the waits below, Tapini's time trial (from 23. 11. across its line in the
     // 20 s) did not: the sign empty, '' top 12 px on GitHub)
-    if (r.fin) { await startTrack(page, id); await page.evaluate(() => { const g = window.__game; for (let i = 0; i < 150 && g.phase !== 'racing'; i++) g.sim(0.1, true); }); }
+    // (also less than 200 m before the line: the car drives on in real time during the waits below, Ghoufi's 20 m left on GitHub 26. 11.:
+    // across the line, the sign empty, upright '' top 86 px)
+    if (r.fin || r.left < 200) { await startTrack(page, id); await page.evaluate(() => { const g = window.__game; for (let i = 0; i < 150 && g.phase !== 'racing'; i++) g.sim(0.1, true); }); }
     const n1 = await sign(null);
     {
       // (upright: right under the clock's block, 6 px under its bottom as placeNote puts it, or where css puts it higher up, 82 px on this
