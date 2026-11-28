@@ -3923,16 +3923,16 @@ const Render = (function () {
   // and beside it, in the same mesh, the dust of it in its own colour, lighter, fading softly outward over a short way (fewer cars drive
   // there). RUB_O: the columns across (m from the line), RUB_A their alpha, RUB_C their colour; a little more of it in the bends (the line's
   // curvature over ±16 m) than on the straights. As the race lays it (rb) it darkens and its sheen grows (a Phong highlight, bluish).
-  // One mesh over the lap (a row every 4 m in the bends, every 8 m on the straights), built the first time it shows; a new world: built
+  // Over the lap a row every 4 m in the bends, every 8 m on the straights, in pieces of RUB_LAP m (one draw range over those this side of the fog's end), built the first time it shows; a new world: built
   // again for its track. Its picture: Tex.rubber.
   // A track with the player's line (Track gl, gld: docs/zgumirana-linija.md) has the layer along that line and wider (RUB_OW, RUB_AW,
   // RUB_CW; kept on the road), darker where the tyres work (gld: braking and cornering) and fainter on the straights, and only on the
   // asphalt (rubberW). The look only: the grip of it stays on the computed line (Track.rubberAt). An open road has no race laying it:
   // there it lies at RUB_OPEN, matt, fading as the road gets wet (the rain washes it off) and fainter in the snow (RUB_SNOW), a row at
-  // every sample in pieces of RUB_CH samples (rubberRoad), of which only those this side of the fog's end are drawn
+  // every sample in pieces of RUB_CH samples (rubberRoad)
   const RUB_O = [-1.75, -0.95, 0, 0.95, 1.75], RUB_A = [0, 0.6, 1, 0.6, 0], RUB_C = [0.3, 0.19, 0.12, 0.19, 0.3];
   const RUB_OW = [-3.1, -2.1, -1.05, 0, 1.05, 2.1, 3.1], RUB_AW = [0, 0.4, 0.85, 1, 0.85, 0.4, 0], RUB_CW = [0.3, 0.25, 0.16, 0.12, 0.16, 0.25, 0.3];
-  const RUB_OPEN = 0.6, RUB_SNOW = 0.6, RUB_CH = 128;
+  const RUB_OPEN = 0.6, RUB_SNOW = 0.6, RUB_CH = 128, RUB_LAP = 150;
   let rbLn = null, rbTex = null;
   const rubberOff = () => { scene.remove(rbLn); (rbLn.isMesh ? [rbLn] : rbLn.children).forEach(c => c.geometry.dispose()); rbLn.userData.m.dispose(); rbLn = null; };
   // (the wide layer's weight per sample: how hard the tyres work there (gld), none off the asphalt, fading in over the first 10 m of it; an open road: fading over 30 m at its two ends)
@@ -3943,7 +3943,7 @@ const Render = (function () {
     for (let i = 0; i < N; i++) { let s = 0; for (let o = -2; o <= 2; o++) s += e[at(i + o)]; w[i] = (0.4 + 0.6 * Math.pow(T.gld[i], 0.7)) * s / 5 * (open ? Core.sstep(0, 15, i) * Core.sstep(0, 15, N - 1 - i) : 1); }
     return w;
   }
-  // (a lap's rubber, one mesh: the old layer along the computed line, or with GL the wide one along the player's line)
+  // (a lap's rubber, one mesh in pieces of about RUB_LAP metres drawn as one range (rubberLine): the old layer along the computed line, or with GL the wide one along the player's line)
   function rubberLap(T, GL, m) {
     const RO = GL ? RUB_OW : RUB_O, RA = GL ? RUB_AW : RUB_A, RC = GL ? RUB_CW : RUB_C, w = GL ? rubberW(T) : null;
     const N = T.N, nc = RO.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
@@ -3961,10 +3961,16 @@ const Render = (function () {
       let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
       i = Math.min(N, i + st);
     }
+    const nr = pos.length / 3 / nc, L = idx.length, K = Math.max(1, Math.round(T.len / RUB_LAP)), rpc = Math.ceil((nr - 1) / K), per = rpc * 6 * (nc - 1), pc = [];
+    for (let k = 0; k * rpc < nr - 1; k++) {   // (each piece's sphere, for the fog's reach: rubberLine)
+      const r0 = k * rpc, r1 = Math.min(nr - 1, r0 + rpc); let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let q = r0 * nc * 3; q < (r1 + 1) * nc * 3; q += 3) { x0 = Math.min(x0, pos[q]); x1 = Math.max(x1, pos[q]); y0 = Math.min(y0, pos[q + 1]); y1 = Math.max(y1, pos[q + 1]); z0 = Math.min(z0, pos[q + 2]); z1 = Math.max(z1, pos[q + 2]); }
+      pc.push({ c: new THREE.Vector3((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), r: Math.hypot(x1 - x0, y1 - y0, z1 - z0) / 2, a: k * per, n: Math.min(per, L - k * per) });
+    }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
-    g.computeVertexNormals();
-    const o = new THREE.Mesh(g, m); o.receiveShadow = true; o.renderOrder = 1; return o;
+    g.computeVertexNormals(); g.setIndex(idx.concat(idx));   // (the lap's triangles twice over: any stretch of it, also over the line, one draw range)
+    const o = new THREE.Mesh(g, m); o.receiveShadow = true; o.renderOrder = 1; o.userData.pc = pc; o.userData.L = L; return o;
   }
   // (an open road's rubber along the player's line GL: a row at every sample, none off the asphalt, in pieces of RUB_CH samples under one plain
   // Object3D: a Group's renderOrder would be its pieces' group order)
@@ -4007,12 +4013,21 @@ const Render = (function () {
       if (!rbTex) rbTex = Tex.rubber();
       const m = new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000, polygonOffset: true, polygonOffsetFactor: -1.5, polygonOffsetUnits: -1.5 });
       rbLn = road ? rubberRoad(T, GL, m) : rubberLap(T, GL, m);
-      rbLn.name = 'rubberline'; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1, gl: GL, m, road }; scene.add(rbLn);
+      rbLn.name = 'rubberline'; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1, gl: GL, m, road, pcs: rbLn.userData.pc }; scene.add(rbLn);
     }
     if (rbLn) {
       const ud = rbLn.userData;
       rbLn.visible = rb > 0.005;
-      if (rbLn.visible && ud.road) { const p = camera.position, f = scene.fog ? scene.fog.far + 20 : Infinity; for (const c of rbLn.children) { const s = c.geometry.boundingSphere; c.visible = s.center.distanceTo(p) - s.radius < f; } }   // (as cullByDistance: the haze hides the far pieces anyway)
+      if (rbLn.visible) {   // (as cullByDistance: the haze hides the far pieces anyway; a lap: one draw range over the pieces within its reach, round the longest stretch of those past it)
+        const p = camera.position, f = scene.fog ? scene.fog.far + 20 : Infinity;
+        if (ud.road) for (const c of rbLn.children) { const s = c.geometry.boundingSphere; c.visible = s.center.distanceTo(p) - s.radius < f; }
+        else {
+          const pc = ud.pcs, K = pc.length; let gap = 0, g0 = 0, run = 0, all = true;
+          for (let k = 0; k < 2 * K; k++) { const q = pc[k % K]; if (q.c.distanceTo(p) - q.r >= f) { if (++run > gap && run <= K) { gap = run; g0 = k - run + 1; } } else { run = 0; all = false; } }
+          if (all) rbLn.geometry.setDrawRange(0, 0);
+          else { const s0 = (g0 + gap) % K; let n = 0; for (let k = 0; k < K - gap; k++) n += pc[(s0 + k) % K].n; rbLn.geometry.setDrawRange(pc[s0].a, n); }
+        }
+      }
       const k = Math.round(Math.min(1, rb) * 100) / 100;   // (in steps: the material only when it changes)
       if (k !== ud.k) { const sk = ud.road ? 0.2 : 1; ud.k = k; ud.m.opacity = ud.road ? (0.3 / RUB_OPEN + 0.6) * k : 0.22 + 0.5 * k; ud.m.specular.setRGB((0.05 + 0.13 * k) * sk, (0.06 + 0.15 * k) * sk, (0.08 + 0.2 * k) * sk); }
     }
