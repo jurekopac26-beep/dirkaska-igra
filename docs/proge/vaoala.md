@@ -8,7 +8,7 @@ Cesta čez otok Upolu južno od Apie, od vasi Letava skozi Vaoalo in tropski de�
 - **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, lestvica najboljših 10, duh in medalje (zlata 0:56, srebrna 0:59, bronasta 1:03, v dežju 1:10 / 1:13 / 1:18; pozimi 1:06 / 1:09 / 1:14, v snegu 1:25 / 1:29 / 1:35; zlato je čas relijskega avta na avtopilotu).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti v obe smeri: predvsem avtomobili in poltovornjaki, kombiji, odprti avtobusi med Apio in južno obalo, nekaj tovornjakov in motorjev; ob cesti redki kolesarji.
 - **Policija**: beg pred policijo do Tiapapate. Patrulje imajo ob bokih generičen napis POLICE (brez imena ali znaka katere koli službe), v rezultatih pobega piše »Do Tiapapate v …«.
-- **Imena pod uro**: Letava, Vaoala, Gozd nad Vaoalo in Tiapapata · 480 m na cilju; komentator ima na tej progi svoje stavke ob startu, ob cilju in ob pobegu.
+- **Imena pod uro**: Letava, Stojnice s sadjem, Vaoala, Igrišče v Vaoali, Gozd nad Vaoalo, Lamosa in Tiapapata · 480 m na cilju (vsako ime ima svoje komentatorjeve stavke); komentator ima na tej progi svoje stavke tudi ob startu, ob cilju in ob pobegu.
 - **Oblika in višine**: sredinska črta je iz OpenStreetMap (zglajena). OpenStreetMap nima podatka o širini ceste; v igri je cesta široka 8 m (ozka gorska cesta). Višine so iz višinskega modela Copernicus DEM GLO-30, očiščene (drseča mediana samo navzgor, glajenje, največ 12 %).
 
 Kraj (raziskava za dodelavo; viri OpenStreetMap, Copernicus DEM, ESA WorldCover, Sentinel-2 in splošno poznavanje otoka, brez fotografij z istih mest):
@@ -25,6 +25,12 @@ Ob cesti (`js/world-vaoala.js`, samo za Vaoalo, na vrhu skupne okolice prelazov)
 - **Vasi** (raba tal pozidano ali hiša iz OpenStreetMap do 30 m): bananovci, kruhovci dlje od ceste, grmi krotona.
 - **Odprt svet**: posamezne skupine praproti, bananovcev in grmovja.
 - **Žive meje**: tri žive meje iz OpenStreetMap v Vaoali (`barrier=hedge`) kot vrste krotona (vrsta je predpostavka; OpenStreetMap je ne navaja).
+- **Senčnice** (`landuse=greenhouse_horticulture` iz OpenStreetMap, ~345 m, desno): dve vrsti mrež na jeklenih stebrih, 2,6 m visoko, s stranicami do tal; drevesa skupne okolice so iz njih umaknjena.
+- **Stojnice s sadjem** (`shop=greengrocer` iz OpenStreetMap, ~380 m): mize s pisano streho ob cesti, banane in kokosi (blago je predpostavka).
+- **Igrišče v Vaoali** (`leisure=pitch`, košarka, ~900 m, desno): betonska ploščad s črtami in dvema košema.
+- **Vrste dreves** (`natural=tree_row`, tri v Vaoali): kruhovci na ~7 m (vrsta je predpostavka; OpenStreetMap je ne navaja).
+- **Živali in stvari ob cesti** (`def.zivali`): črni in rožnati prašiči, kokoši, odprti *fale* in vodni zbiralniki ob hišah; oblaki so temnejši (`cloudTh` 0,22: sleme pogosto v nizkih oblakih).
+- **Zvoki okolja** (`js/sfx-okolje.js`): podnebje Upolu (13,9° J; murni ponoči, škržati podnevi), vasi Letava, Vaoala in hiše pod Lamoso (stavbe iz OpenStreetMap do 60 m od ceste), zvonova dveh cerkva ob cesti v Vaoali, ptice v gozdu.
 - **Morje na obzorju**: temno modra odprte vode namesto privzete sivomodre (mreža obzorja 250 m je pregroba za laguno in greben, zato sta ena barva).
 - **Približki**: lege rastlin niso resnične (raba tal, naklon, naključje); start ±22 m in cilj ±30 m sta prosta (portala, redarji, gledalci).
 

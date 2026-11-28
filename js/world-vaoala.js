@@ -30,6 +30,16 @@
     [-339.8, 528.8, -323, 495.4],
   ];
 
+  // more of OpenStreetMap's own, in the same frame: the two shade houses of the market garden behind the produce shops of Letava
+  // (landuse=greenhouse_horticulture, ~26 x 6 m each), the two produce shops (shop=greengrocer: their stalls go between the shop and the
+  // road; the shops themselves are the shared world's houses), the village's court in Vaoala (leisure=pitch, sport=basketball) and the
+  // three rows of trees (natural=tree_row; OpenStreetMap gives no species: breadfruit, the common shade tree of the villages, an assumption)
+  const SHADE = [[-81.9, 290.9, -56.2, 276.7, -53.0, 282.5, -78.7, 296.7], [-85.4, 284.5, -59.8, 270.3, -56.5, 276.2, -82.2, 290.4]];
+  const SHOPS = [[-91.0, 291.0], [-102.9, 302.0]];
+  const COURT = [-371.2, 612.3, -332.4, 628.3, -338.6, 643.5, -377.5, 627.5];
+  const ROWS = [[-221.0, 531.7, -241.8, 579.1], [-288.4, 514.7, -297.9, 546.4], [-298.0, 484.1, -315.2, 547.4, -310.0, 564.0]];
+  const box = World.box;
+
   const mix = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
   const FERN = [0.24, 0.46, 0.13], FERN2 = [0.36, 0.56, 0.18], TRUNK = [0.24, 0.17, 0.12], VINE = [0.42, 0.58, 0.12], VINE2 = [0.34, 0.5, 0.1];
   const BAN = [0.32, 0.56, 0.16], BAN2 = [0.5, 0.6, 0.22], BANDRY = [0.55, 0.47, 0.26], STEM = [0.44, 0.5, 0.26];
@@ -63,6 +73,64 @@
   function vine(g, x, y, z, r, q, r_) {   // the vine's blanket over the bush: a low lime-green mound
     ico(g, x, y + r * 0.35, z, r, 0.55, mix(VINE, VINE2, q), r_, 0.3);
   }
+
+  const CLOTH = [0.12, 0.3, 0.17], CLOTH2 = [0.16, 0.36, 0.2], POST = [0.6, 0.6, 0.58], CONC = [0.62, 0.6, 0.56], PAINT = [0.86, 0.86, 0.82];
+  const AWN = [[0.2, 0.42, 0.66], [0.72, 0.2, 0.16]], WOOD = [0.5, 0.36, 0.22], FRUIT = [[0.86, 0.76, 0.2], [0.42, 0.6, 0.16], [0.42, 0.3, 0.18], [0.5, 0.36, 0.3]];
+  // a quad seen from both sides (the shade cloth: the camera sees its roof from the hill above and its underside from the road)
+  function quad2(g, a, b, c, d, col) { g.tri(a, b, c, col, col, col); g.tri(a, c, d, col, col, col); g.tri(a, c, b, col, col, col); g.tri(a, d, c, col, col, col); }
+  // a shade house: steel posts every ~4 m, a flat roof and the sides of green shade cloth down to ~0.4 m above the ground
+  function shadeHouse(get, p, clear) {
+    const A = [p[0], p[1]], B = [p[2], p[3]], D = [p[6], p[7]], ux = B[0] - A[0], uz = B[1] - A[1], vx = D[0] - A[0], vz = D[1] - A[1];
+    const nu = Math.max(1, Math.round(Math.hypot(ux, uz) / 4)), nv = Math.max(1, Math.round(Math.hypot(vx, vz) / 3)), H = 2.6;
+    const P = (i, j) => [A[0] + ux * i / nu + vx * j / nv, A[1] + uz * i / nu + vz * j / nv];
+    let y0 = Infinity; for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) { const [x, z] = P(i, j); y0 = Math.min(y0, caGround(x, z)); }
+    const top = y0 + H; let n = 0;
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+      const [ax, az] = P(i, j), [bx, bz] = P(i + 1, j), [cx, cz] = P(i + 1, j + 1), [dx, dz] = P(i, j + 1), mx = (ax + cx) / 2, mz = (az + cz) / 2;
+      if (!clear(mx, mz, 1.2)) continue; const g = get(mx, mz); if (!g) continue; n++;
+      quad2(g, [ax, top, az], [bx, top, bz], [cx, top, cz], [dx, top, dz], (i + j) % 2 ? CLOTH : CLOTH2);
+      const side = (x0, z0, x1, z1) => quad2(g, [x0, caGround(x0, z0) + 0.4, z0], [x1, caGround(x1, z1) + 0.4, z1], [x1, top, z1], [x0, top, z0], CLOTH);
+      if (j === 0) side(ax, az, bx, bz); if (j === nv - 1) side(dx, dz, cx, cz); if (i === 0) side(ax, az, dx, dz); if (i === nu - 1) side(bx, bz, cx, cz);
+      for (const [x, z] of [[ax, az], [bx, bz], [cx, cz], [dx, dz]]) if (clear(x, z, 0.6)) { const y = caGround(x, z); cyl(g, x, y - 0.2, z, 0.05, top - y + 0.2, 4, POST); }
+    }
+    return n;
+  }
+  // a produce stall: a trestle table under a striped awning on four poles, the fruit in heaps on it (bananas, coconuts, taro)
+  function stall(g, x, y, z, rot, q) {
+    const c = Math.cos(rot), s = Math.sin(rot), at = (a, b) => [x + a * c - b * s, z + a * s + b * c];
+    box(g, x, y + 0.75, z, 2.4, 0.08, 0.9, rot, WOOD);
+    for (const [a, b] of [[-1.1, -0.38], [1.1, -0.38], [-1.1, 0.38], [1.1, 0.38]]) { const [px, pz] = at(a, b); box(g, px, y, pz, 0.07, 0.75, 0.07, rot, WOOD); }
+    for (const [a, b] of [[-1.35, -0.7], [1.35, -0.7], [-1.35, 0.7], [1.35, 0.7]]) { const [px, pz] = at(a, b); cyl(g, px, y, pz, 0.04, 2.3, 4, POST); }
+    for (let k = 0; k < 4; k++) { const [px, pz] = at(-1.35 + 0.675 * k + 0.3375, 0); box(g, px, y + 2.25, pz, 0.675, 0.05, 1.6, rot, AWN[(k + q) % 2]); }
+    for (let k = 0; k < 5; k++) { const [px, pz] = at(-0.9 + 0.45 * k, -0.1 + 0.1 * (k % 2)); ico(g, px, y + 0.88, pz, 0.2, 0.7, FRUIT[(k + q) % 4], null, 0); }
+  }
+  // the court: a slab of concrete draped over the ground, its white lines, a hoop at each end on a steel post
+  function court(get, p) {
+    const A = [p[0], p[1]], B = [p[2], p[3]], D = [p[6], p[7]], ux = B[0] - A[0], uz = B[1] - A[1], vx = D[0] - A[0], vz = D[1] - A[1];
+    const Lu = Math.hypot(ux, uz), Lv = Math.hypot(vx, vz), nu = 8, nv = 4, cx = A[0] + (ux + vx) / 2, cz = A[1] + (uz + vz) / 2;
+    const P = (i, j, e = 0) => { const x = A[0] + ux * i / nu + vx * j / nv, z = A[1] + uz * i / nu + vz * j / nv; return [x, caGround(x, z) + 0.06 + e, z]; };
+    const g = get(cx, cz); if (!g) return 0;
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) { const a = P(i, j), b = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1); leafTri(g, a, b, c, CONC, CONC); leafTri(g, a, c, d, CONC, CONC); }
+    const line = (i0, j0, i1, j1) => { const a = P(i0, j0, 0.01), b = P(i1, j1, 0.01), dx = b[0] - a[0], dz = b[2] - a[2], l = Math.hypot(dx, dz) || 1, wx = -dz / l * 0.06, wz = dx / l * 0.06;
+      leafTri(g, [a[0] - wx, a[1], a[2] - wz], [b[0] - wx, b[1], b[2] - wz], [b[0] + wx, b[1], b[2] + wz], PAINT, PAINT); leafTri(g, [a[0] - wx, a[1], a[2] - wz], [b[0] + wx, b[1], b[2] + wz], [a[0] + wx, a[1], a[2] + wz], PAINT, PAINT); };
+    const m = 0.08 * nv; line(0.5, m, nu - 0.5, m); line(0.5, nv - m, nu - 0.5, nv - m); line(0.5, m, 0.5, nv - m); line(nu - 0.5, m, nu - 0.5, nv - m); line(nu / 2, m, nu / 2, nv - m);
+    const rot = Math.atan2(uz, ux);
+    for (const e of [0.5, nu - 0.5]) { const [x, y, z] = P(e, nv / 2), k = e < nu / 2 ? 1 : -1, ex = ux / Lu * k, ez = uz / Lu * k;
+      cyl(g, x - ex * 0.6, y - 0.2, z - ez * 0.6, 0.07, 3.3, 5, POST);
+      box(g, x, y + 2.9, z, 0.05, 1.05, 1.8, rot, PAINT);
+      const rx = x + ex * 0.35, rz = z + ez * 0.35; for (let t = 0; t < 8; t++) { const a0 = t / 8 * 6.283, a1 = (t + 1) / 8 * 6.283;
+        box(g, rx + Math.cos((a0 + a1) / 2) * 0.23, y + 3.05, rz + Math.sin((a0 + a1) / 2) * 0.23, 0.18, 0.03, 0.03, (a0 + a1) / 2 + 1.571, AWN[1]); } }
+    return 1;
+  }
+
+  // room for them before the shared world spreads its trees, bushes and rocks (L.pre: exclusion circles over the shade houses and the court)
+  const pre0 = L.pre;
+  L.pre = function (o) {
+    const r = pre0 ? pre0.call(this, o) : undefined;
+    for (const p of SHADE.concat([COURT])) { const ux = p[2] - p[0], uz = p[3] - p[1], vx = p[6] - p[0], vz = p[7] - p[1], nu = Math.ceil(Math.hypot(ux, uz) / 3), nv = Math.ceil(Math.hypot(vx, vz) / 3);
+      for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) o.exclPush(p[0] + ux * i / nu + vx * j / nv, p[1] + uz * i / nu + vz * j / nv, 2.6); }
+    return r;
+  };
 
   const ex0 = L.extra;
   L.extra = function (k) {
@@ -105,6 +173,19 @@
       const n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / 1.1));
       for (let j = 0; j <= n; j++) { const x = lerp(ax, bx, j / n), z = lerp(az, bz, j / n); const g = chunk(x, z); if (!g || !clearOf(x, z, 1)) continue;
         ico(g, x, caGround(x, z) + 0.55, z, 0.62, 1.15, CROTON[(j * 7 + 3) % 4], r_, 0.25); st.hedge++; }
+    }
+    // OpenStreetMap's shade houses, the stalls by the produce shops, the court, the rows of trees
+    st.shade = 0; st.stall = 0; st.court = 0; st.row = 0;
+    for (const p of SHADE) st.shade += shadeHouse(chunk, p, clearOf);
+    SHOPS.forEach(([bx, bz], q) => {   // the stall on the shop's road side, its long side along the road
+      const n = vrNear(bx, bz), i = n.i, side = n.lat > 0 ? 1 : -1; if (i < 0) return;   // (vrNear's answer is one shared object: read it at once)
+      const [x, z] = onSide(i * T.ds, side, 1.4); if (!clearOf(x, z, 0.9)) return; const g = chunk(x, z); if (!g) return;
+      stall(g, x, caGround(x, z), z, Math.atan2(T.nz[i], T.nx[i]) + 1.571, q); st.stall++; });
+    st.court = court(chunk, COURT);
+    for (const r of ROWS) for (let j = 0; j + 3 < r.length; j += 2) {
+      const ax = r[j], az = r[j + 1], bx = r[j + 2], bz = r[j + 3], n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / 7));
+      for (let i = 0; i <= n; i++) { const x = lerp(ax, bx, i / n), z = lerp(az, bz, i / n); if (!clearOf(x, z, 3)) continue; const g = chunk(x, z); if (!g) continue;
+        breadfruit(g, x, caGround(x, z), z, rpHash(i, j + 5) * 0.6, r_); st.row++; }
     }
     if (k.out) k.out.vaoala = st;
   };
