@@ -47,10 +47,16 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Pattiyakumbura · 686 m", "d": 40.0, "say": ["Past Pattiyakumbura, and the climb begins!", "Through the hamlet of Pattiyakumbura, the hills ahead!"]},
+      {"n": "Razgledišče", "d": 403.0, "say": ["Past the viewpoint, the whole gap opening below!", "The viewpoint, and the valley drops away below!"]},
+      {"n": "Gozd Meegollegama", "d": 640.0, "say": ["Into the Meegollegama forest reserve, the trees close in over the road!", "Deep in the Meegollegama forest now, dark and damp under the canopy!"]},
       {"n": "Ella Rock", "d": 990.0, "say": ["A sharp right-hander, and Ella Rock towers on the left!", "Look up to the left, that's Ella Rock!"]},
+      {"n": "Most čez potok", "d": 1327.0, "say": ["Over the little bridge, the stream rushing down below!", "Across the bridge, and back into the trees!"]},
+      {"n": "Stojnica ob cesti", "d": 1668.0, "say": ["Past the roadside stall, the forest opens up!", "A stall by the road, and the fields begin!"]},
+      {"n": "Polja v soteski", "d": 2050.0, "say": ["Fields and home gardens on the slope, palms and bananas by the road!", "Out of the forest, through the little fields of the gap!"]},
       {"n": "Serpentina 1 · 883 m", "d": 2715.0, "say": ["Hairpin one, right over the stream from the Kital Ella falls!", "Into the first hairpin, the waterfall's stream below!"]},
       {"n": "Serpentina 2 · 928 m", "d": 3236.0, "say": ["Hairpin two, the tightest of them all!", "Hairpin two! Hard on the brakes!"]},
       {"n": "Serpentina 3 · 967 m", "d": 3606.0, "say": ["Hairpin three, the last of the ladder!", "The third hairpin! Ella is just above!"]},
+      {"n": "Svetišče ob cesti", "d": 3895.0, "say": ["A little shrine by the road, Ella is right there!", "Past the roadside shrine, one last push!"]},
       {"n": "Ella · 992 m", "d": 3940.0, "say": ["Into Ella, and the line is just ahead!", "The town of Ella! The finish is in sight!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's; an uphill road's, as Izoard: introPass ... summit)

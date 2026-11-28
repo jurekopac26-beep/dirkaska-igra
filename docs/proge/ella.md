@@ -21,6 +21,7 @@ Okolica (gradi jo svoj graditelj `buildElla` v `js/world-ella.js`; teren s pomo�
 - **Dirka**: start z lučmi pod portalom START, portali kontrolnih točk z višino, cilj FINISH s tablo ELLA in višino, transparent ELLA · UVA · A23 · 3 HAIRPINS (samo zemljepisna imena in splošne besede), table krajev (Ella, Wellawaya, Bandarawela, Passara, Ella Rock), VIEWPOINT, DANGEROUS BENDS, SLOW. Gledalcev je malo (redarji in redke mirne skupine ob startu, cilju, kontrolnih točkah in v dveh serpentinah, nekaj ljudi na razgledišču).
 - **Živali**: makaki, vodni bivoli in čaplje ob cesti, majhna obcestna svetišča (`zivali`).
 - **Fotografije**: videz je narejen po podatkih (OpenStreetMap, ESA WorldCover, višinski model) in splošnem poznavanju kraja, brez Google Maps, Google Earth ali Street View.
+- **Dodelava** (`docs/proge/ella-dodelava.md`): čajni vrtovi v vrstah grmov po plastnicah samo na poligonih OSM (`crop=tea`, 250–650 m od ceste pri prvi serpentini), ob cesti jih ni. Nove zanimivosti s komentarjem: razgledišče, gozd Meegollegama, most čez potok, stojnica ob cesti, polja v soteski, svetišče ob cesti.
 - **Približki**: drevesa, palme, grmičevje, čajni grmi in kamni so razporejeni po rabi tal, bližini potokov in naklonu, ne po resničnih legah. Hiše so generične.
 - **Pravno**: samo zemljepisna imena (Ella, Ella Rock, Kital Ella, Pattiyakumbura, Wellawaya, Bandarawela, Passara, Uva, A23). Gostišča, hoteli, kavarne in trgovine so brez imen.
 
