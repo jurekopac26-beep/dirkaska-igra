@@ -28,6 +28,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Batangas',
     grassNat: 0.25, lawn: [0.96, 1.04, 0.9],
     zivali: { a: ['buffalo', 'egret'], t: ['palmHut'], open: true },
+    // the commentator's own lines for a race here (Comm: intro, go and rain; js/game.js ownLine), by docs/proge/batangas.md: the plateau of
+    // Batangas above the sea, the sugar cane and the coconut palms round it, the heat, the afternoon storms of the wet season (June to November)
+    comm: {
+      intro: ["Welcome to {track}! {laps} laps on the green plateau of Batangas, {cars} cars, and you start {grid}.", "Good afternoon from {track}, warm and humid among the cane fields and the coconut palms. {laps} laps, and you line up {grid}.", "Here we are at {track}, on the high ground of southern Luzon. {cars} cars, {laps} laps, and you start {grid}."],
+      go: ["Lights out, and away they go down the main straight!", "And they're off, flat out towards the hairpin of Turn 1!", "Green light! The pack charges down to the first right!"],
+      rain: ["And here comes the rain! A tropical downpour over the plateau, the track is soaking.", "The afternoon storm has arrived! Standing water in the braking zones.", "It's pouring down! In the wet season the clouds build up over the hills, and then the heavens open."],
+    },
     id: 'batangas', name: 'Batangas, Filipini', theme: 'batangas', laps: 3, halfWidth: 6,
     desc: "Dirkališče na planoti v pokrajini Batangas južno od Manile, pri Rosariu: 3,6 km v smeri urinega kazalca, 13 zavojev (8 desnih in 5 levih) na skoraj ravni planoti okoli 100 m nad morjem. Ciljna ravnina mimo glavne tribune in boksov do ostrega desnega, dolgi desni, ostri levi in desni za njim, trije levi drug za drugim, ravnina proti zahodu do ostrega desnega na zahodnem koncu, šikana, desni za njo in dvojni desni na ciljno ravnino. Tropsko zelenje, kokosove palme, mangovci in sladkorni trs, griči na obzorju, tribune ob progi in boksi (zapelji vanje in mehaniki ti popravijo avto).",
     en: { name: 'Batangas, Philippines', desc: "A circuit on the plateau of Batangas province south of Manila, near Rosario: 3.6 km, clockwise, 13 turns (8 right, 5 left) on a nearly level plateau about 100 m above the sea. The main straight past the main grandstand and the pits to the tight right, the long right, the tight left and the right after it, three lefts one after another, the straight to the west to the tight right at the far end, the chicane, the right after it and the double right onto the main straight. Tropical green, coconut palms, mango trees and sugar cane, hills on the horizon, grandstands by the track and the pits (drive in and the mechanics fix the car)." },
