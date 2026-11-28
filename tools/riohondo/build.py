@@ -49,23 +49,32 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races or the circuit
 # (CLAUDE.md, Pravna varnost); the turns by their numbers in the lines, as the circuit numbers them (14: 9 right, 5 left) ----
 NAMES = [
-    ('Desni na koncu ravnine', 285, ['Hard on the brakes for Turn 1!', 'The long right at the end of the main straight!', 'Into the first right, two apexes to hit!']),
-    ('Dolgi desni', 415, ['Still turning, the second apex of Turn 2!', 'The long right goes on and on!', 'Round Turn 2, the grandstands on the outside!']),
-    ('Ostri levi', 755, ['Hard on the brakes for the tight left!', 'The left of Turn 3!', 'Round Turn 3, then the right onto the long straight!']),
-    ('Desni na dolgo ravnino', 990, ['The right of Turn 4, onto the long straight!', 'A good exit here is worth a lot!', 'Through Turn 4, then flat out!']),
-    ('Dolga ravnina', 1400, ['Flat out down the long straight!', 'A kilometre of straight across the plain!', 'Full throttle, the hairpin ahead!']),
-    ('Lasnica na koncu ravnine', 2085, ['Hard on the brakes for the hairpin!', 'The tight right of Turn 5!', 'Round the hairpin, the slowest of the lap!']),
-    ('Hitri levi', 2440, ['Flat through the fast left of Turn 6!', 'The long fast sweep to the left!', 'Through Turn 6, keep it tight!']),
-    ('Ostri desni', 2925, ['Hard on the brakes for Turn 7!', 'The tight right of Turn 7!', 'Round Turn 7, and the long right goes on!']),
+    ('Desni na koncu ravnine', 285, ['Hard on the brakes for Turn 1, the grandstands on the outside!', 'The long right at the end of the main straight, two apexes to hit!', 'Into Turn 1, a wide run-off out towards the stands!']),
+    ('Dolgi desni', 415, ['Still turning, the second apex of Turn 2!', 'The long right goes on, right under the covered grandstand!', 'Round Turn 2, the lowest corner of the lap, the lake out beyond the trees!']),
+    ('Ostri levi', 755, ['Hard on the brakes for the tight left of Turn 3!', 'The left of Turn 3!', 'Round Turn 3, then the right onto the long straight!']),
+    ('Desni na dolgo ravnino', 990, ['The right of Turn 4, onto the long straight!', 'A good exit here is worth a lot, a kilometre of straight ahead!', 'Through Turn 4, then flat out across the plain!']),
+    ('Dolga ravnina', 1400, ['Flat out down the long straight, gently uphill all the way!', 'A kilometre of straight across the plain, carob trees and fields either side!', 'Full throttle, the hairpin at the top of the circuit ahead!']),
+    ('Lasnica na koncu ravnine', 2085, ['Hard on the brakes for the hairpin, the highest point of the lap!', 'The tight right of Turn 5, the white radar dome out beyond it!', 'Round the hairpin, the slowest corner of the lap!']),
+    ('Hitri levi', 2440, ['Flat through the fast left of Turn 6!', 'The long fast sweep to the left, downhill now towards the lake!', 'Through Turn 6, keep it tight!']),
+    ('Ostri desni', 2925, ['Hard on the brakes for Turn 7, the tightest corner of the lap!', 'The tight right of Turn 7!', 'Round Turn 7, and the long right goes on!']),
     ('Desni na vzhodu', 3070, ['The long right of Turn 8!', 'Right again, on the east side of the circuit!', 'Through Turn 8, the infield ahead!']),
-    ('Levi v notranjosti', 3390, ['The left of Turn 9!', 'Hard on the brakes, left into the infield!', 'Round Turn 9!']),
+    ('Levi v notranjosti', 3390, ['The left of Turn 9!', 'Hard on the brakes, left into the infield!', 'Round Turn 9, dry grass and bare earth all round!']),
     ('Hitri desni', 3530, ['The quick right of Turn 10!', 'Right, and the long left ahead!', 'Through Turn 10!']),
     ('Dolgi levi', 3670, ['The long left of Turn 11!', 'Round the long left-hander, the load builds!', 'Through the long sweep of Turn 11!']),
     ('Desni pregib', 4240, ['The right kink of Turn 12!', 'Flat through Turn 12!', 'The kink, and the last corners ahead!']),
-    ('Desni pred ciljem', 4340, ['Hard on the brakes for Turn 13!', 'The tight right before the finish!', 'Round Turn 13, the pit entry on the left!']),
+    ('Desni pred ciljem', 4340, ['Hard on the brakes for Turn 13, nearly a hairpin!', 'The tight right before the finish!', 'Round Turn 13, the pit entry on the left!']),
     ('Levi na ciljno ravnino', 4520, ['The left of Turn 14, onto the main straight!', 'Left, and the last corner of the lap!', 'Through Turn 14, a good exit is vital!']),
-    ('Ciljna ravnina', 4640, ['Down the main straight, the pits on the left!', 'Flat out along the main straight!', 'The main straight, the lap is nearly done!']),
+    ('Ciljna ravnina', 4640, ['Down the main straight, the pits on the left!', 'Flat out along the main straight, the reservoir glinting out to the left!', 'The main straight, the lap is nearly done!']),
 ]
+# the commentator's own lines for the race here (game.js ownLine: def.comm; the shared ones where a key is missing): the welcome and the start,
+# from the place (docs/proge/riohondo.md, »Raziskava za dodelavo«): the plain of the Gran Chaco, the reservoir on the river Dulce, the hot
+# springs of the town, a dry warm climate
+COMM = {
+    'intro': ['Welcome to {track}, out on the plain of the Gran Chaco! {cars} cars, {run}, and you start {grid}.',
+              'Good afternoon from {track}, by the great reservoir on the river Dulce. We have {run} ahead, and you line up {grid}.',
+              'Here we are at {track}, the spa town on the dry plain of Santiago del Estero! {cars} cars, {run}, and you start {grid}.'],
+    'go': ['Lights out, and away they go towards Turn 1!', "And they're off, down the main straight to the grandstands!", 'Green light! The pack charges into the long right!'],
+}
 # the apexes of the circuit's 14 turns (their number boards, TV towers, photographers, recovery: World.rbring): 1 and 2 the long right at the
 # end of the main straight, 3 the tight left, 4 the right onto the long straight, 5 the hairpin, 6 the fast left, 7 and 8 the long right on
 # the east side, 9 the left into the infield, 10 the quick right, 11 the long left, 12 the right kink, 13 the tight right, 14 the left onto
@@ -280,6 +289,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     start: [0, 0], runoff: 1.1, inner: 4.2, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s, runoffTarmac: true,
     elev: RH_H.map((h, i) => [i / RH_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
+    // the commentator's own welcome and start (game.js ownLine; the place's: docs/proge/riohondo.md)
+    comm: %(comm)s,
     names: [
 %(names)s
     ],
@@ -301,7 +312,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   });
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), brh=brh, h0='%.1f' % H0, hmin='%.0f' % H.min(), hmax='%.0f' % H.max(), desc=json.dumps(DESC, ensure_ascii=False),
-           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), comm=json.dumps(COMM, ensure_ascii=False), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), drs=json.dumps(DRS),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'riohondo.js'); open(path, 'w').write(src)
