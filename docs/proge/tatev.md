@@ -34,8 +34,8 @@ Iz izvleska OSM (bbox 46.240, 39.383 – 46.270, 39.402), preračunano na točke
 | Kraj (HUD) | d | od ceste | Opomba |
 |---|---|---|---|
 | Ruševine Cakuta | ~2060 | 59–60 m, levo | opuščena vas Cakut, ruševine in bogoslužni prostor |
-| Reka Vorotan | ~2465 | ob cesti | dno soteske |
-| Hudičev most · 1.013 m | ~2548 | 9 m | naravni skalni most, reka teče pod cesto; parkirišče ob 2549 |
+| Hudičev most · 1.013 m | 2465 (OSM ~2549) | 9 m | naravni skalni most; v igri na najnižji točki profila (DEM GLO-90 jo zamakne ~80 m), test `tatev.test.js` to zahteva |
+| Reka Vorotan | 2548 | ob cesti | prečkanje reke in parkirišče ob 2549 |
 | (vhod v jamo pod mostom) | ~2235 | 53 m | za kulise |
 | (bazeni toplega izvira) | ~2230 | 67 m | tik izven 60 m; za kulise |
 | Topli izvir | 2674 | 22 m | izvir ob cesti |

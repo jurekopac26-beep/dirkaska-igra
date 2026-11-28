@@ -41,8 +41,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Ruševine Cakuta", "d": 2060.0, "say": ["Past the ruins of Tsakut up on the left, and the gorge opens below!", "The old village of Tsakut on the left, and down to the river we go!"]},
-      {"n": "Reka Vorotan", "d": 2465.0, "say": ["Down to the Vorotan, right at the water!", "The river beside you, the bottom of the gorge!"]},
-      {"n": "Hudičev most · 1.013 m", "d": 2548.0, "say": ["Over the natural rock bridge, the river runs right underneath!", "Across the rock bridge, the lowest point of the road, and the climb starts now!"]},
+      {"n": "Hudičev most · 1.013 m", "d": 2465.0, "say": ["Over the natural rock bridge, the river runs right underneath!", "Across the rock bridge, the lowest point of the road!"]},
+      {"n": "Reka Vorotan", "d": 2548.0, "say": ["Along the Vorotan, right at the water!", "The river beside you, and the climb starts now!"]},
       {"n": "Topli izvir", "d": 2674.0, "say": ["Past the warm spring by the road!", "The warm spring on the side, and into the hairpins!"]},
       {"n": "Serpentina 1 · 1.042 m", "d": 2828.0, "say": ["First of the hairpins up the gorge wall!", "Hairpin one, and the long climb to Tatev begins!"]},
       {"n": "Serpentina 5 · 1.135 m", "d": 3919.0, "say": ["Hairpin five, the gorge falling away below!", "Into hairpin five, a long way to go still!"]},
