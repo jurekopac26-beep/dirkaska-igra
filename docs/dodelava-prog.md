@@ -39,7 +39,7 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Quezaltepeque, Salvador (`quezaltepeque`) | Svet 162 vrstic, 11 zanimivosti brez vrstic, brez komentatorja. Ni ognjeniškega ozadja ne rastja in stavb po kraju, ni `alt`. | 5 | #1060, #1080, #1146 | |
 | Silkeborg, Danska (`silkeborg`) | Svet 134 vrstic, brez obcestja in komentatorja, 11 zanimivosti brez vrstic. Manjkata jezera in bukov gozd okoli steze. | 5 | #1087, #1155 | biketraveler |
 | Bathurst, Avstralija (`bathurst`) | Svet 125 vrstic za gorsko stezo. Ni terena gore ne razgleda nad mestom, brez komentatorja, 10 zanimivosti brez vrstic. | 5 | #1140 | biketraveler |
-| Koli, Finska (`koli`) | Lasten svet 17 vrstic, le 2 zanimivosti. Zima in jezero sta v skupnem; manjkata gozd tajge in razgled z vrha. | 4 | #1085, #1147 | |
+| Koli, Finska (`koli`) | Lasten svet 17 vrstic, le 2 zanimivosti. Zima in jezero sta v skupnem; manjkata gozd tajge in razgled z vrha. | 4 | #1085, #1147 | croatiadata |
 | Kanaba, Uganda (`kanaba`) | Svet 107 vrstic, 4 zanimivosti, brez obcestja. Manjkajo terase in jezera pod prelazom ter vasi ob cesti. | 4 | #1018, #1137 | |
 | Krásna Hôrka, Slovaška (`krasnahorka`) | Svet 134 vrstic, 3 zanimivosti. Grad na griču kot glavna točka ni dodelan, manjkata vas in polja. | 4 | #1150 | biketraveler |
 | Sepang, Malezija (`sepang`) | Svet 161 vrstic, brez obcestja in komentatorja, 18 zanimivosti brez vrstic. Manjkajo tropsko rastje, nasadi okoli in tribune po obrisih. | 4 | #1133 | biketraveler |
@@ -60,7 +60,7 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Sosnová, Češka (`sosnova`) | Svet 288 + obcestje 482 vrstic, brez komentatorja, 14 zanimivosti brez vrstic, brez `alt`. | 4 | #1081, #1013, #982, #1144 | biketraveler |
 | Lombok, Indonezija (`lombok`) | Svet 292 vrstic, brez komentatorja, 17 zanimivosti brez vrstic. Manjkajo obala in ognjenik v ozadju. | 4 | #1100, #1156 | croatiadata |
 | Tuzla, Turčija (`tuzla`) | Svet 299 vrstic, brez komentatorja, 16 zanimivosti brez vrstic. Manjkajo morje in mesto v ozadju. | 4 | #1099 | croatiadata |
-| Isuna, Butan (`isuna`) | Svet 67 + obcestje 540 vrstic, 4 zanimivosti. Manjkajo samostani, molilne zastavice in terase po kraju. | 3 | #1157 | |
+| Isuna, Butan (`isuna`) | Svet 67 + obcestje 540 vrstic, 4 zanimivosti. Manjkajo samostani, molilne zastavice in terase po kraju. | 3 | #1157 | croatiadata |
 | Cusco, Peru (`cusco`) | Svet 146 + obcestje 592 vrstic, 3 zanimivosti. Manjkata zidovi iz inkovskih časov in dolina pod mestom. | 3 | #1016, #1152 | biketraveler |
 | Biķernieki, Latvija (`bikernieki`) | Obcestje 764 vrstic, svet 166, brez komentatorja, 17 zanimivosti brez vrstic. Manjka borov gozd okoli steze. | 3 | #1085, #1140 | biketraveler |
 | Lusail, Katar (`lusail`) | Obcestje 614 vrstic, svet 230, brez komentatorja, 17 zanimivosti brez vrstic. Nočna svetloba ni po kraju. | 3 | #1013, #982, #1153 | biketraveler |
@@ -70,7 +70,7 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Katu-Jaryk, Rusija (`katu`) | Svet 944 vrstic, brez komentatorja. Macesni so povsod enako gosti (`realizem.md`). | 3 | #763 | biketraveler |
 | El Jem, Tunizija (`eljem`) | Svet 413 + obcestje 658 vrstic, brez DEM in rastja. Amfiteater je glavna točka, mesto okoli je skopo. | 3 | #1158 | biketraveler |
 | Isalo, Madagaskar (`isalo`) | Svet 346 vrstic, brez DEM in rastja, 4 zanimivosti. Manjkajo peščenjaški grebeni in savana. | 3 | — | biketraveler |
-| Luanda, Angola (`luanda`) | Svet 466 + obcestje 402 vrstic, brez DEM. Manjkata zaliv z obalo in višina terena. | 3 | — | |
+| Luanda, Angola (`luanda`) | Svet 466 + obcestje 402 vrstic, brez DEM. Manjkata zaliv z obalo in višina terena. | 3 | — | croatiadata |
 | Mombasa, Kenija (`mombasa`) | Svet 477 + obcestje 452 vrstic, brez DEM. Manjkajo staro mesto in obala z otokom. | 3 | #1174, #1145 | biketraveler |
 | Portobelo, Panama (`portobelo`) | Svet 476 vrstic, brez DEM in rastja. Manjkajo trdnjave ob zalivu in deževni gozd. | 3 | #1008 | biketraveler |
 | Seul, Južna Koreja (`seoul`) | Svet 557 vrstic, brez DEM. Manjkata gore za mestom in reka. | 3 | #1148 | biketraveler |
@@ -88,7 +88,7 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Hakone, Japonska (`hakone`) | Svet 872 vrstic, 21 zanimivosti (13 z vrsticami). Komentator ima le 1 vrstico, brez `alt`. | 2 | #1171, #1079 | |
 | Harju, Finska (`harju`) | Svet 1056 vrstic, brez komentatorja in DEM. #1098 progo prestavi v test. | 2 | #1098 | |
 | Llogara, Albanija (`llogara`) | Svet 262 vrstic, 13 zanimivosti (11 z vrsticami). Manjkata borov gozd in obala pod prelazom po meri. | 2 | #1085, #1018, #1156 | |
-| Medeu, Kazahstan (`medeu`) | Obcestje 872 vrstic, 9 zanimivosti z vrsticami. Manjkata drsališče in jez kot glavni točki. | 2 | — | |
+| Medeu, Kazahstan (`medeu`) | Obcestje 872 vrstic, 9 zanimivosti z vrsticami. Manjkata drsališče in jez kot glavni točki. | 2 | — | croatiadata |
 | Porto Moniz, Portugalska (`portomoniz`) | Svet in obcestje, 12 zanimivosti. Manjkajo naravni bazeni in pečine po meri. | 2 | #1018, #1013, #982, #840 | |
 | Sa Calobra, Španija (`sacalobra`) | Svet 313 vrstic, 17 zanimivosti z vrsticami. Manjka »vozel« ceste kot glavna točka. | 2 | #1151 | |
 | Los Caracoles, Čile (`caracoles`) | Svet 775 vrstic, 32 zanimivosti (14 z vrsticami). Hotel in koče so škatle (`realizem.md`). | 2 | #1052, #763 | |
