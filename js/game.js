@@ -2568,6 +2568,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     fuelTold = { low: false, out: false }; boxW = { lap: -1, due: false, key: '' }; $('h-box').className = ''; aip = { was: new Set(), q: null, last: -Infinity, log: [] }; psw = { n: 0, q: null, log: [] }; pfg = { hb: -1, out: -1, c: null, t0: 0, g: 0, lead: false, e: null, key: '', log: [] }; pout = { c: null, t0: 0, g: 0, e: null, seen: new Set(), log: [] }; pxs = { hb: -1, log: [] }; $('h-fight').className = ''; $('hud').classList.remove('fight'); fltKey = ''; $('h-flt').className = ''; $('h-flt').innerHTML = ''; teamRadioReset();
     Render.attachRace(race);
     Render.resetCam();
+    Render.precompile(true);   // (the cars' shaders and every picture on the GPU now, before the intro: not in the first frames after the green light, docs/zatikanje-start.md)
     adaptBreak();
     bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0; toastHeld = null;
     introLen = 1.3; endPodium();
@@ -6650,8 +6651,10 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (!paused && screen === 'none' || (!paused && (phase === 'finish' || phase === 'done'))) {
       if (phase !== 'done') updatePhase(dt, inp);
       // alone, a slow device plays in slow motion rather than in big jumps; online, the race keeps up with the clock the
-      // phones share (slow frames and hitches up to 0.5 s are caught up), so a slower phone does not lose time
-      const on = mp && mp.race, lim = on ? 64 : 10;
+      // phones share (slow frames and hitches up to 0.5 s are caught up), so a slower phone does not lose time. Alone at most 4 steps a
+      // frame (1/30 s): a slow frame does not pile up more steps and a slower next one (the start with a full field, docs/zatikanje-start.md);
+      // only the catching up is capped, each step the same STEP as ever
+      const on = mp && mp.race, lim = on ? 64 : 4;
       if (!restOn()) {   // (behind the results, every car home 3 s ago: no more steps, the cars stand as they were)
         if (on && on.late != null) { acc = on.late; on.late = null; } else acc += on ? dtNet : dt;   // (online: the lights went out this frame)
         let n = 0;
