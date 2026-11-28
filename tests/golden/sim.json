@@ -7461,26 +7461,40 @@
    "repairs": 0
   }
  },
- "trebevic/demo/cs": {
-  "digest": "59b255b32b0571dd7a1df343",
-  "lead": 1387.1,
+ "chamarel/race/cs": {
+  "digest": "8a87c898955076062353d6f0",
+  "lead": 1639.2,
   "car0": [
-   -426.09,
-   758.02
+   804.58,
+   -11.94
   ],
   "cover": {
-   "dmg": 0,
-   "loose": 3,
+   "dmg": 0.72,
+   "loose": 5,
    "rescues": 0,
    "repairs": 0
   }
  },
- "trebevic/upg/cs": {
-  "digest": "6b31d142afc036bba75c1d2e",
-  "lead": 1385.4,
+ "chamarel/demo/cs": {
+  "digest": "37da413030e47212f940d1f0",
+  "lead": 1758.5,
   "car0": [
-   -401.27,
-   715.51
+   1342.68,
+   -196.9
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "chamarel/upg/cs": {
+  "digest": "34a38aff552bacd023d8918d",
+  "lead": 1743,
+  "car0": [
+   1301.34,
+   -158
   ],
   "cover": {
    "dmg": 0,
@@ -7489,59 +7503,59 @@
    "repairs": 0
   }
  },
- "trebevic/crash/cs": {
-  "digest": "ebcb6f872040984f7ffe51e2",
-  "lead": 1320.1,
+ "chamarel/crash/cs": {
+  "digest": "53aa4df048a2805054664929",
+  "lead": 1656.2,
   "car0": [
-   -431.24,
-   691.15
+   1211.86,
+   -86.51
   ],
   "cover": {
-   "dmg": 0.78,
-   "loose": 5,
-   "rescues": 1,
+   "dmg": 0.59,
+   "loose": 3,
+   "rescues": 0,
    "repairs": 0
   }
  },
- "trebevic/formula/cs": {
-  "digest": "7a5913293ceb2fdc2721c2aa",
-  "lead": 1341.5,
+ "chamarel/formula/cs": {
+  "digest": "acd557826782a71d4af5b5a6",
+  "lead": 1767.8,
   "car0": [
-   -393.58,
-   696.61
-  ],
-  "cover": {
-   "dmg": 0.94,
-   "loose": 8,
-   "rescues": 1,
-   "repairs": 0
-  }
- },
- "trebevic/lm/cs": {
-  "digest": "e22cd97733eae60d69fefb0e",
-  "lead": 1331.9,
-  "car0": [
-   -408.24,
-   687.64
+   1199.76,
+   -86.5
   ],
   "cover": {
    "dmg": 1,
-   "loose": 5,
+   "loose": 7,
    "rescues": 1,
    "repairs": 0
   }
  },
- "trebevic/car/cs": {
-  "digest": "e762288dafd99c72a47b4bce",
-  "lead": 1319.7,
+ "chamarel/lm/cs": {
+  "digest": "1f9c3cea20f64d99825ed58e",
+  "lead": 1725.2,
   "car0": [
-   -433.3,
-   687.14
+   1225.53,
+   -109.28
   ],
   "cover": {
-   "dmg": 0.52,
-   "loose": 1,
-   "rescues": 1,
+   "dmg": 1,
+   "loose": 10,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "chamarel/car/cs": {
+  "digest": "9a5bf0279171a058ecb3002f",
+  "lead": 1638.2,
+  "car0": [
+   1159.16,
+   -143.65
+  ],
+  "cover": {
+   "dmg": 0.97,
+   "loose": 3,
+   "rescues": 0,
    "repairs": 0
   }
  },
@@ -7630,15 +7644,15 @@
   }
  },
  "tatev/car/cs": {
-  "digest": "aa294c59a41d153b4bc5088f",
-  "lead": 2207.4,
+  "digest": "9dd618353509c78e469cab7e",
+  "lead": 2205.7,
   "car0": [
-   -500.09,
-   126.52
+   -417.34,
+   276.36
   ],
   "cover": {
-   "dmg": 0.86,
-   "loose": 2,
+   "dmg": 0.98,
+   "loose": 15,
    "rescues": 0,
    "repairs": 0
   }
