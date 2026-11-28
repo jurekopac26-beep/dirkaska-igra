@@ -35,9 +35,9 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 // sign's height the road's own metres (def.alt: the finish to a tenth, so the climb between start and finish is not scaled: altAt); the grades
 {
   const nm = T.names.map(q => q.n), num = (q) => Number(q.n.replace(/^.* · /, '').replace(/ m$/, '').replace('.', ''));
-  const signs = T.names.every(q => !/ · \d/.test(q.n) || Math.abs(num(q) - altD(q.d)) < 1.5), want = ['Case Noyale', 'Gozd', 'Serpentine', 'Razgledišče', 'Chamarel', 'Proti Plaine Champagne'];
-  check('names: the HUD and the commentator know them (Case Noyale, the forest, the switchbacks, the viewpoint, Chamarel, toward Plaine Champagne), in order, each height the road\'s, no person\'s or firm\'s name',
-    nm.length === 6 && want.every((w, k) => nm[k] === w || nm[k].startsWith(w + ' · ')) && nm.filter(q => / · \d/.test(q)).length === 3 && T.names.every((q, k) => !k || q.d > T.names[k - 1].d) && T.names[T.names.length - 1].d <= T.raceLen && signs && T.names.every(q => q.say && q.say.length >= 2),
+  const signs = T.names.every(q => !/ · \d/.test(q.n) || Math.abs(num(q) - altD(q.d)) < 1.5), want = ['Case Noyale', 'Gozd', 'Grmovje', 'Serpentine', 'Druga serpentina', 'Tretja serpentina', 'Razgledišče', 'Pešpot', 'Chamarel', 'Cerkev', 'Postajališče', 'Proti Plaine Champagne', 'Gozd nad Rivière Noire'];
+  check('names: the HUD and the commentator know them (Case Noyale, the forest, the scrub, three hairpins, the viewpoint, the footpath, Chamarel, the church, the lay-by, toward Plaine Champagne, the forest of the gorges), in order, each height the road\'s, no person\'s or firm\'s name',
+    nm.length === 13 && want.every((w, k) => nm[k] === w || nm[k].startsWith(w + ' · ')) && nm.filter(q => / · \d/.test(q)).length === 3 && T.names.every((q, k) => !k || q.d > T.names[k - 1].d) && T.names[T.names.length - 1].d <= T.raceLen && signs && T.names.every(q => q.say && q.say.length >= 2),
     nm.join(' | '));
   // the grades: up to ~13 % in the hairpins, down to ~9 % into the village; ~339 m up from the start to the line
   let gmax = -1, gmin = 1; for (let i = T.startIdx; i < T.finishIdx; i++) { gmax = Math.max(gmax, T.grade[i]); gmin = Math.min(gmin, T.grade[i]); }
