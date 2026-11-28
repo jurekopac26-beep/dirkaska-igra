@@ -336,6 +336,55 @@
     if (units) { const q = P((H() < 0.5 ? -1 : 1) * (a - 1.6), he, (H() - 0.5) * (W - 3.5)); box(g, q[0], q[1], q[2], 0.95, 0.28, 0.95, rot, sc(TZ_UNIT[1], 0.92), TZ_UNIT[1], true); }
   }
 
+  // the dry hills' own low growth past the barriers, ~8-55 m off (the land cover's dry grass and maquis, as the trees': def.lc, ESA
+  // WorldCover; the lawns by the track watered and mown, the builder's tufts on them): on the dry grass straw tussocks, a tall dry stalk with
+  // its spent seed head here and there, a low dark bush now and then; in the maquis mostly the bushes. Generic, none of it a surveyed plant:
+  // the end of the summer's colours (the look: early September), as the ground's straw (colMod). Off the roads, the buildings, the lots and
+  // every leg of the track (nrNear: beyond any barrier); in the scenery's chunks (no draw of its own), hashed (rng 9041: the world's stream
+  // untouched); both faces of a blade, lit as the ground under it (its normals up)
+  const TZ_UP = [0, 1, 0];
+  function tzTussock(g, x, y, z, h, R) {   // 5 blades leaning out from a 0.12 m foot, darker straw at the foot, pale at the tips (30 vertices)
+    const k = 0.9 + 0.2 * R(), base = [0.5 * k, 0.43 * k, 0.26 * k], tip = [0.86 * k, 0.76 * k, 0.5 * k], a0 = R() * 6.283;
+    for (let b = 0; b < 5; b++) {
+      const a = a0 + b * 1.2566 + (R() - 0.5) * 0.5, ca = Math.cos(a), sa = Math.sin(a), w = 0.09 * h + 0.03, lean = (0.35 + 0.3 * R()) * h, hh = h * (0.75 + 0.35 * R());
+      const p = [x + ca * 0.12 - sa * w, y, z + sa * 0.12 + ca * w], q = [x + ca * 0.12 + sa * w, y, z + sa * 0.12 - ca * w], t = [x + ca * (0.12 + lean), y + hh, z + sa * (0.12 + lean)];
+      g.triN(p, q, t, TZ_UP, TZ_UP, TZ_UP, base, base, tip); g.triN(q, p, t, TZ_UP, TZ_UP, TZ_UP, base, base, tip);
+    }
+  }
+  function tzStalk(g, x, y, z, h, R) {   // a tall dry stalk, two thin crossed blades, its spent seed head a flat brown fan on top (39 vertices)
+    const st = [0.62, 0.53, 0.34], hd = [0.46, 0.36, 0.22], hd2 = [0.6, 0.49, 0.31], a0 = R() * 3.14, w = 0.025, tx = (R() - 0.5) * 0.2, tz = (R() - 0.5) * 0.2, top = [x + tx, y + h, z + tz];
+    for (const a of [a0, a0 + 1.571]) {
+      const c = Math.cos(a) * w, s = Math.sin(a) * w, p = [x - c, y, z - s], q = [x + c, y, z + s];
+      g.triN(p, q, top, TZ_UP, TZ_UP, TZ_UP, st); g.triN(q, p, top, TZ_UP, TZ_UP, TZ_UP, st);
+    }
+    const r = 0.14 + 0.1 * R(), c0 = [top[0], top[1] + 0.05, top[2]];
+    for (let k = 0; k < 9; k++) {
+      const a = k / 9 * 6.283, b = (k + 1) / 9 * 6.283;
+      g.triN(c0, [top[0] + Math.cos(b) * r, top[1], top[2] + Math.sin(b) * r], [top[0] + Math.cos(a) * r, top[1], top[2] + Math.sin(a) * r], TZ_UP, TZ_UP, TZ_UP, hd2, hd, hd);
+    }
+  }
+  function tzVeg({ scen, excluded }, st) {
+    const T = API.T, L = T.len, R = rng(9041), q = { i: -1 };
+    let n = [0, 0, 0];
+    for (let s = 0; s < L; s += 2.4) for (const side of [-1, 1]) for (let t = 0; t < 1; t++) {
+      const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], u = R(), d = bar + 8 + 48 * Math.pow(u, 1.4);
+      const x = T.px[i] + T.nx[i] * d * side + (R() - 0.5) * 2.4, z = T.pz[i] + T.nz[i] * d * side + (R() - 0.5) * 2.4, r1 = R(), r2 = R(), r3 = R();
+      const dry = nrLCf(x, z, 0), mq = nrLCf(x, z, 2);
+      if (r1 > (dry + mq) * (1 - 0.35 * u)) continue;
+      const nn = nrNear(x, z), dd = nn.i >= 0 ? nn.dd : 99; if (r1 > (dry + mq) * sstep(6, 20, dd)) continue;   // (off the watered lawn by every leg: on the straw, as colMod's)
+      if (excluded(x, z)) continue;
+      const y = nrGround(x, z) - 0.03, g = scen.get(x, z);
+      if (r2 < mq / (dry + mq + 1e-6) * 0.8 || r2 < 0.2) {   // a low bush of the maquis: one or two soft lumps, dark olive
+        const h = 0.7 + 0.8 * r3, c = [0.22 + 0.04 * r3, 0.28 + 0.03 * r3, 0.14];
+        nrLump(g, x, y + h * 0.35, z, h * 0.75, 0.75, c, R, 0.3);
+        if (r3 > 0.5) nrLump(g, x + 0.5 * h, y + h * 0.2, z - 0.3 * h, h * 0.5, 0.7, [c[0] * 1.08, c[1] * 1.05, c[2]], R, 0.3);
+        n[2]++;
+      } else if (r2 < 0.36) { tzStalk(g, x, y, z, 1.1 + 0.8 * r3, R); n[1]++; }
+      else { tzTussock(g, x, y, z, 0.85 + 0.6 * r3, R); n[0]++; }
+    }
+    st.tussocks = n[0]; st.stalks = n[1]; st.bushes = n[2];
+  }
+
   // LK.extra: the service roads, the link, the drift course, the buildings by the circuit and 60-200 m off (OSM outlines: white or cream
   // render, grey cladding on the big halls; their roofs grey and flat or of terracotta tiles: tzBld); before the crowds and the trees (the
   // buildings kept clear in tzKeep)
@@ -351,6 +400,7 @@
       tzBld(scen.get(x, z), x, y, z, L, W, rot, h, wc, ROOF[ri], h > 6 ? 2 : ri === 1 ? 1 : 0);
       st.buildings++;
     }
+    tzVeg(o, st);   // (after the buildings: they and the roads are kept clear already, tzKeep)
     return st;
   }
 
