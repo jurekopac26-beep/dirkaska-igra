@@ -1667,16 +1667,16 @@
   }
  },
  "koror": {
-  "meshes": 1854,
-  "verts": 1115296,
+  "meshes": 1864,
+  "verts": 1164538,
   "instances": 30400,
   "props": 70,
   "crowd": 182,
-  "world": "f11a0dbe",
+  "world": "3d1d57d8",
   "propsHash": "2235ca84",
   "floor": "de37c278/7308",
   "groups": {
-   "-:MeshLambertMaterial": "174ba7b6",
+   "-:MeshLambertMaterial": "ea6dea6b",
    "-:MeshPhongMaterial": "7e585a48",
    "-:MeshBasicMaterial": "4d180b1f",
    "rob:MeshLambertMaterial": "9f676483",
