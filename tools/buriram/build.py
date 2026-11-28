@@ -175,6 +175,19 @@ def dem_fixed():   # the ground model with the buildings' holes filled: the mode
         F[M] = ((np.roll(F, 1, 0) + np.roll(F, -1, 0) + np.roll(F, 1, 1) + np.roll(F, -1, 1)) / 4)[M]
     return g, np.round((F + 100) * 10)
 
+COMM = {
+    'intro': ['Welcome to {track}, out on the Khorat Plateau in the heart of Isan! {laps} laps, {cars} cars, and you start {grid}.',
+              'Good day from {track}! Rice fields all round the circuit, flat, hot and humid, and you line up {grid} for {laps} laps.',
+              "Here we are at {track}, in Thailand's north-east. {cars} cars, {laps} laps, twelve corners, and you start from {grid}."],
+    'introOne': ['Welcome to {track}, on the plateau of Isan! Just one lap today, and you start {grid}.',
+                 'Here we are at {track}. One lap past the paddies, twelve corners, and you line up {grid}.'],
+    'go': ['Lights out, and away we go into Turn One!', "And they're off! Turn One, then the long run down to the hairpin!",
+           'Green light! The pack charges across the plateau!', 'Go, go, go! The race is on in Isan!'],
+}
+
+OSM_WALLS = [[-77.0, -69.3, -56.0, -110.8, -43.7, -168.2], [-41.7, -172.8, -30.4, -244.5, -31.4, -277.8],
+         [-29.4, -290.6, -43.2, -322.4, -52.4, -339.3, -64.7, -352.6, -91.9, -373.1, -165.7, -411.0]]   # (OSM, the data's frame)
+
 def scenery():
     M = 560; c = 16
     x0 = math.floor((P[:, 0].min() - M) / c) * c; z0 = math.floor((P[:, 1].min() - M) / c) * c
@@ -224,7 +237,11 @@ def scenery():
         if r[3] == 2 or r[0] not in ('service', 'unclassified'): continue
         q = mv(r[-1]); svc += [len(q) // 2] + q
     wetl = [[round(v * 2) / 2 for v in mv(r)] for r in WET]
-    return D, LC, dict(bld=bld, svc=svc, lakes=LK, wet=wetl)
+    # the walls round the infield's grounds (OSM barrier=wall, ways 1327506912, 1327506913 and 1327506915, some 30-75 m right of the back
+    # straight and Turns 4 and 11-12; OSM gives no height: a plain plastered wall of 2.2 m, the builder's): [n, x0, z0, x1, z1, ...]
+    walls = []
+    for q in OSM_WALLS: q = mv(q); walls += [len(q) // 2] + q
+    return D, LC, dict(bld=bld, svc=svc, lakes=LK, wet=wetl, walls=walls)
 
 # ---- the horizon (def.far for Riverside's rsFar): the highest ground in rings round the circuit (the plateau's low swells, the woods and
 # the villages on it, the town of Buriram to the east) ----
@@ -305,6 +322,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
 %(names)s
     ],
+    // the commentator's own lines for the race (game.js ownLine): the plateau of Isan, its rice fields round the circuit, flat and hot
+    comm: %(comm)s,
     turns: %(turns)s,   // the apexes of Turns 1-12 (their number boards): the right at the end of the straight, the left kink, the hairpin, the left before the pond, the tight left, the long left by the pond, the right to the north, the right by the wetland, the long right, the left on the east side, the right kink, the tight right
     pit: %(pit)s,   // pit lane on the left of the main straight: [centre offset to the right (negative: the left), from, to, the player's box] (metres from the finish line)
     pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.buriram.pitBox)
@@ -323,7 +342,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   });
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), brh=brh, h0='%.1f' % H0, hmin='%.0f' % H.min(), hmax='%.0f' % H.max(), desc=json.dumps(DESC, ensure_ascii=False),
-           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), comm=json.dumps(COMM, ensure_ascii=False), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), drs=json.dumps(DRS),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'buriram.js'); open(path, 'w').write(src)

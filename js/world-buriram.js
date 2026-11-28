@@ -274,6 +274,14 @@
       box(scen.get(x, z), x, y - 0.4, z, L, h + 0.4, W, rot, WALL[Math.floor(R() * 2)], ROOF[Math.floor(R() * 2)], true);
       exclPush(x, z, Math.hypot(L, W) / 2 + 2); CR.avoid(x, z, Math.hypot(L, W) / 2 + 1); st.buildings++;
     }
+    // the walls round the infield's grounds (OSM barrier=wall, def.sk.walls): plastered, 2.2 m (OSM gives no height), a box a segment
+    const wl = sk.walls || [], WCOL = [0.9, 0.88, 0.82], WTOP = [0.78, 0.76, 0.72]; st.walls = 0;
+    for (let k = 0; k < wl.length; k += 1 + 2 * wl[k]) {
+      for (let j = 0; j + 1 < wl[k]; j++) {
+        const x0 = wl[k + 1 + 2 * j], z0 = wl[k + 2 + 2 * j], x1 = wl[k + 3 + 2 * j], z1 = wl[k + 4 + 2 * j], L = Math.hypot(x1 - x0, z1 - z0), x = (x0 + x1) / 2, z = (z0 + z1) / 2;
+        box(scen.get(x, z), x, Math.min(nrGround(x0, z0), nrGround(x1, z1)) - 0.3, z, L + 0.2, 2.5, 0.25, Math.atan2(z1 - z0, x1 - x0), WCOL, WTOP, true); st.walls++;
+      }
+    }
     if (API.T.def.far && API.rsFar) { out.dyn.far = API.rsFar(root, API.T.def.far, 'summer', 6, brFarCol); st.far = 1; }   // (World.update: no car, back where it was built)
     return st;
   }
