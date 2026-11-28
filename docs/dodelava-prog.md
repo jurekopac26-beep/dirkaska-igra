@@ -92,6 +92,15 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Porto Moniz, Portugalska (`portomoniz`) | Svet in obcestje, 12 zanimivosti. Manjkajo naravni bazeni in pečine po meri. | 2 | #1018, #1013, #982, #840 | |
 | Sa Calobra, Španija (`sacalobra`) | Svet 313 vrstic, 17 zanimivosti z vrsticami. Manjka »vozel« ceste kot glavna točka. | 2 | #1151 | biketraveler |
 | Los Caracoles, Čile (`caracoles`) | Svet 775 vrstic, 32 zanimivosti (14 z vrsticami). Hotel in koče so škatle (`realizem.md`). | 2 | #1052, #763 | |
+| El Castaño, Venezuela (`elcastano`) | Na `main` še ni. Svet 49 vrstic, 4 zanimivosti z vrsticami. Oblačni gozd narodnega parka in reka sta le v podatkih rastja, brez obcestja, preleta, lastnega zvoka in številk ovinkov. | 4 | #1241 | biketraveler |
+| Kudowa-Zdrój, Poljska (`kudowa`) | Na `main` še ni. Svet 35 vrstic, 5 zanimivosti z vrsticami. Za Cesto stotih ovinkov manjkajo številke ovinkov, smrekov in bukov gozd tik ob cesti ter potok; brez obcestja, preleta in zvoka. | 4 | #1241 | biketraveler |
+| Tatev, Armenija (`tatev`) | Skupni graditelj `world-kratke.js`, 9 zanimivosti z vrsticami, komentator. Manjkajo naravni kamniti most in samostan na skali kot glavni točki, žičnica čez sotesko, prelet, lasten zvok in številke 19 serpentin. Dodeluje druga seja (O-28-42). | 3 | veja `dodelava/tatev` | biketraveler |
+| Chamarel, Mavricij (`chamarel`) | Svet 99 vrstic, 6 zanimivosti z vrsticami, komentator. Manjkajo razgled na laguno in Le Morne, sladkorni trs in rdeča vulkanska prst ob vasi, obcestje, prelet in zvok. Dodeluje druga seja (O-28-42). | 3 | veja `dodelava/chamarel` | biketraveler |
+| Trebević, Bosna in Hercegovina (`trebevic`) | Na `main` še ni. Svet 128 vrstic, 6 zanimivosti z vrsticami. Stara bob steza z brvjo čez cesto, razgled nad Sarajevom in ruševine utrdbe še niso dodelani; brez preleta, zvoka in številk lasnic. | 3 | #1241 | biketraveler |
+| Meteora, Grčija (`meteora`) | Na `main` še ni. Svet 133 vrstic, 7 zanimivosti z vrsticami. Skalni stebri in samostani na vrhovih so glavna točka, a brez lastne oblike po DEM; manjka nizek kamnit zid ob prepadu, prelet, zvok in številke ovinkov. | 3 | #1241 | biketraveler |
+| Šipka, Bolgarija (`sipka`) | Na `main` še ni. Svet 93 vrstic, 6 zanimivosti z vrsticami. Kamnit stolp spomenika na vrhu ni dodelan, izvir in znamenje manjkata (ni točke v OSM); brez preleta, zvoka in številk serpentin. | 3 | #1095 | biketraveler |
+| Stavrovouni, Ciper (`stavrovouni`) | Na `main` še ni. Svet 126 vrstic, 6 zanimivosti z vrsticami. Samostan na vrhu je le zanimivost, manjkajo redki borovci in grmičevje po pasovih, nizek zid ob prepadu, prelet in zvok. | 3 | #1092 | biketraveler |
+| Giza, Egipt (`giza`) | Na `main` še ni. Svet 366 vrstic, 7 zanimivosti z vrsticami. Proga ima 9,9 km, več od meje 5 km za nove proge. Manjkajo prelet, lasten zvok (veter, pesek) in številke ovinkov. | 3 | #1212 | biketraveler |
 | Chapman's Peak, Južna Afrika (`chapman`) | Svet 727 vrstic. DEM s 30 m zgladi pečine nad morjem (`realizem.md`). | 2 | #1052, #763, #678 | biketraveler |
 | Ella, Šrilanka (`ella`) | Svet 830 vrstic, 6 zanimivosti z vrsticami. Manjkata čajni nasadi kot glavni pas rastja. | 2 | #1167 | biketraveler |
 | Rio do Rastro, Brazilija (`rastro`) | Svet 572 vrstic. Pri 3,9 km je trava, v resnici je več kot pol gozda (`realizem.md`). | 2 | #1060, #1052, #763, #678, #1166 | biketraveler |
@@ -103,15 +112,14 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 
 ## Čaka PR (nove proge, še niso na `main`)
 
+Tatev in Chamarel sta na `main` (#1097, #1091). Ocena ostalih je v tabeli zgoraj po stanju vej PR 28. 11. (O-28-43) in se ponovi, ko so na `main`.
+
 | Proga | Odprti PR | Račun |
 |---|---|---|
-| El Castaño, Venezuela (`elcastano`) | #1090, #1118 | |
-| Chamarel, Mavricij (`chamarel`) | #1091, #1118 | |
-| Stavrovouni, Ciper (`stavrovouni`) | #1092 | |
-| Kudowa-Zdrój, Poljska (`kudowa`) | #1093 | |
-| Meteora, Grčija (`meteora`) | #1094, #1118 | |
-| Šipka, Bolgarija (`sipka`) | #1095, #1118 | |
-| Trebević, Bosna in Hercegovina (`trebevic`) | #1096, #1118 | |
-| Tatev, Armenija (`tatev`) | #1097, #1118 | |
-
-Ocena se ponovi, ko so te proge na `main`.
+| El Castaño, Venezuela (`elcastano`) | #1090, #1118, #1241 | biketraveler |
+| Stavrovouni, Ciper (`stavrovouni`) | #1092 | biketraveler |
+| Kudowa-Zdrój, Poljska (`kudowa`) | #1093, #1241 | biketraveler |
+| Meteora, Grčija (`meteora`) | #1094, #1118, #1241 | biketraveler |
+| Šipka, Bolgarija (`sipka`) | #1095, #1118 | biketraveler |
+| Trebević, Bosna in Hercegovina (`trebevic`) | #1096, #1118, #1241 | biketraveler |
+| Giza, Egipt (`giza`) | #1212 | biketraveler |
