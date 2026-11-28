@@ -2,6 +2,49 @@
 
 Odločitev uporabnika 3. 11. 2026 (seja »Dnevna vprašanja za seje«): »Pripravi mi vsa vprašanja v prihodnje, dokler ne prekličem, vsak dan vsa za vse seje ob 10.30h, 14.30h in 23.00h, da samo kliknem na izbiro. Pri grafičnih vprašanjih dodaj sliko.« Velja do preklica (razdelek Preklic). Nadgradi pravilo z 31. 10. 2026 (vsa vprašanja na strani Odločitve, uporabnik samo klikne izbiro).
 
+## Skupine odločitev 28. 11.
+
+Odločitev O-27-22 (točka 4): odprte odločitve v 5 skupinah, ena izbira na skupino. Stran Odločitve: https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR (slike v karticah). Priporočilo = v vseh točkah skupine »ok«, razen kjer piše drugače.
+
+### S1 · Slike za »ok« (grafika)
+- **Kaj:** ikona igre `ikona-1` (#1183), iskre pod vogalom `trki-iskre-vogal`, zavetrje `predlog-zavetrje`, barve brez temnih `predlog-1033-barve`, še #1181 garaža, #1173 tovornjaki, #1087 nove slike, #1176/#1180 gneča.
+- **Od koga:** jure.kopac26, biketraveler, partyslo (kanali #1160–#1163).
+- **Priporočilo:** ikona 3 (Za avtom, najbolj berljiva pri 48 px); iskre kot na sliki; ostalo ok.
+- **Izbire:** (1) vse po priporočilu; (2) ikona 1 ali 2, ostalo ok; (3) manj isker; (4) kasneje.
+- **Slike:** kartice `ikona-1`, `trki-iskre-vogal`, `predlog-zavetrje` na strani Odločitve; PR #1183; `docs/kanali/slike/<račun>/` na vejah `claude/kanal-<račun>`.
+
+### S2 · Kariera: prvenstvo in Atlas
+- **Kaj:** `kariera-prvenstvo` (5 dirk s točkami v karieri) in odprta vprašanja Atlas q7.
+- **Od koga:** Matej (16), partyslo (`docs/kariera-1-0.md`).
+- **Priporočilo:** izbira 1 (pokali na stopnjah dobijo po 5 dirk; 44 dogodkov, 132★ ostanejo).
+- **Izbire:** (1) 5 dirk v pokalih; (2) pokali ostanejo, dodatno prvenstvo stopnje; (3) tedensko prvenstvo; (4) kasneje.
+- **Slike:** kartica `kariera-prvenstvo`; predstavitev https://claude.ai/artifact/4gTWLCfbh4KC5CAdD6yoDQ
+
+### S3 · Proge
+- **Kaj:** #1095 Šipka pot, `obcestje-2311-ostale`, `predlog-70-prog-tedensko` (nedeljski pregled 70 prog), `predlog-po-15-12` (po 15. 12. samo proge in popravki).
+- **Od koga:** biketraveler, croatiadata, Matej (21).
+- **Priporočilo:** vse ok.
+- **Izbire:** (1) vse ok; (2) samo pregled in pravilo po 15. 12.; (3) ne; (4) kasneje.
+- **Slike:** `docs/kanali/slike/biketraveler/` in `.../croatiadata/` (veji kanalov).
+
+### S4 · Trki in tehnika
+- **Kaj:** `predlog-1010-trki` (#1010 v Trke #608), `predlog-688-lestvica` (različica trkov v ključu rekorda), `predlog-trki-slike-29` (pregled slik 29. 11.), `predlog-preleti` (#754, #1058), #1100 trailerji, vnos gneče v `tests/golden/perf.json`.
+- **Od koga:** Matej (21), partyslo, Trki #608.
+- **Priporočilo:** vse ok.
+- **Izbire:** (1) vse ok; (2) brez #688; (3) preleti pred Trki; (4) kasneje.
+- **Slike:** kartica `trki-iskre-vogal` (prej, potem, primerjava).
+
+### S5 · Proces in združevanje
+- **Kaj:** `predlog-arhiv-sej`, `predlog-vrsta-osvezi`, `predlog-842-vrsta`, `predlog-partyslo-paket` (#605, #755, #770, #1048), `predlog-telefon-paket` (#963, #966–#975).
+- **Od koga:** Matej (21), Združevanje.
+- **Priporočilo:** vse ok.
+- **Izbire:** (1) vse ok; (2) brez arhiva sej; (3) pakete razdeli; (4) kasneje.
+- **Slike:** ni.
+
+### Zaprto / zastarelo
+- `chase-skupina-82`: skupina 82 je že na `main`, zaprto.
+- Vse že odgovorjene zahteve za »ok« na #1160–#1163 so zaprte; tu niso več.
+
 ## Na kratko
 
 - Seja zapiše vprašanje na stran Odločitve svojega računa takoj, ko ga ima, in dela naprej pri tem, kar od odgovora ni odvisno (ali konča korak). Uporabnika ne sprašuje v pogovoru in ga ne obvešča sproti (brez `PushNotification`).
