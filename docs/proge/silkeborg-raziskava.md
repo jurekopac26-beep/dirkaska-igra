@@ -12,7 +12,7 @@
 - Na terenu: pesek (OSM `natural=sand`, 9 ploskev ob stezi), resa (`natural=heath`, 2), grmovje (`natural=scrub`, 6), travniki (`landuse=grass`, 31). Igra: ploskve iz OSM in ESA WorldCover (že v `sk`, `lc`).
 
 ## Podnebje
-- Zmerno, oceansko: letno ~8–8,6 °C, 720–810 mm padavin, najbolj moker mesec avgust (climate-data.org, wfy24; neodvisna vira, različna obdobja). Uradne normale DMI za postajo Silkeborg niso bile dosegljive; ostaja odprto (tudi za zimo, PR #1087).
+- Zmerno, oceansko: letno ~8–8,6 °C, 720–810 mm padavin, najbolj moker mesec avgust. Uradne normale DMI za postajo Silkeborg niso bile dosegljive; ostaja odprto (tudi za zimo, PR #1087).
 - Igra: pozno poletje, jasna severna svetloba, rahla meglica (`look`, ne spreminjam).
 
 ## Rastje
@@ -37,4 +37,3 @@
 - Copernicus DEM GLO-30 (že v »Zasluge«); ESA WorldCover 2021 (CC BY 4.0).
 - GEUS Bulletin 35 (2016), »Miocene deposits at Silkeborg, Jylland, and their influence on hydrology«: https://geusbulletin.org/index.php/geusb/article/view/4399
 - Sminge Sø, fredninger.dk: https://www.fredninger.dk/wp-content/uploads/2016/11/Sminge_Soe.pdf
-- Podnebje: https://en.climate-data.org/europe/denmark/central-denmark-region/silkeborg-7501/ , https://www.wfy24.com/sk/climate/silkeborg-dk26559248
