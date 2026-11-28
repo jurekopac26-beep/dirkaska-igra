@@ -5,7 +5,7 @@
 ## Kraj
 - **Lega:** gozdni park Biķernieki na vzhodnem robu Rige (pokrajina Vidzeme), med četrtmi Mežciems (zahod in sever) in Purvciems (jug); start 56,9652° S, 24,2288° V (OSM vozlišče 1080542036).
 - **Višina:** start 6,2 m nad morjem, najnižje ob jezeru Linezers (~1,3 km), najvišje na sipinah severne zanke (~1,7 km, ~21 m nad jezerom, ~27 m nad morjem); najstrmejši spust s sipin 10,3 % (~2,97 km). Vir: Copernicus GLO-30 (že v `tools/bikernieki/`).
-- **Podnebje:** vlažno celinsko (Köppen Dfb), ob Riškem zalivu: januar okoli −3 do −5 °C, julij okoli 18 °C, 600–780 mm padavin na leto, največ poleti in jeseni; pozimi sneg (zima je v PR #1085). Viri: climate-data.org, weather-atlas.com (javni povzetki normal; številke se med viri razlikujejo).
+- **Podnebje:** vlažno celinsko (Köppen Dfb), ob Riškem zalivu: januar okoli −3 do −5 °C, julij okoli 18 °C, 600–780 mm padavin na leto, največ poleti in jeseni; pozimi sneg (zima je v PR #1085).
 - **Tla in kamnine:** stare celinske peščene sipine na morenski in ledeniško-jezerski podlagi, peščena tla s tanko plastjo iglic; v kotanjah med sipinami mokrotna tla, trstišča in močvirje (OSM `wetland=reedbed`, `wetland=swamp`). Kamnin na površju ni.
 - **Rastje:** svetel borov gozd (rdeči bor) z malo podrasti, smrekovi sestoji v vlažnejših delih, breze ob robovih in jasah (javni opis gozda: »borov gozd z malo podrasti«; OSM `landuse=forest`, ESA WorldCover 2021, višina krošenj Meta in WRI: 19–27 m). Ob progi pokošene trate s peščenimi zaplatami.
 - **Varstvo:** jezero Linezers in okolica sta območje Natura 2000 »Linezers« (LV0525200, ~126 ha; EEA EUNIS).
@@ -39,4 +39,3 @@ Nizka, hitra gozdna proga: dolga ciljna ravnina med tribunami, lasnica na jugu, 
 - © OpenStreetMap contributors, ODbL 1.0 (API OSM, `map.json`, 28. 11. 2026).
 - Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0), višina krošenj Meta in WRI 2024 (CC BY 4.0) — že v »Zasluge«.
 - EEA EUNIS, območje Natura 2000 LV0525200 (eunis.eea.europa.eu/sites/LV0525200), ponovna uporaba po pogojih EEA (CC BY 4.0).
-- Podnebje: povzetki normal na climate-data.org in weather-atlas.com (samo dejstva, besedilo ni prevzeto).
