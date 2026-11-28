@@ -830,15 +830,15 @@
  },
  "medeu": {
   "meshes": 2795,
-  "verts": 1463590,
+  "verts": 1471120,
   "instances": 63697,
   "props": 110,
   "crowd": 149,
-  "world": "c021994e",
+  "world": "d2d66cbd",
   "propsHash": "45703e67",
   "floor": "142ca7aa/10724",
   "groups": {
-   "-:MeshLambertMaterial": "87ec00b8",
+   "-:MeshLambertMaterial": "131df0dd",
    "-:MeshPhongMaterial": "4e06f863",
    "-:MeshBasicMaterial": "bc1f3532",
    "rob:MeshLambertMaterial": "a7066575",
