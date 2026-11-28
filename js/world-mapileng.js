@@ -897,7 +897,10 @@
       const tMt = pkGroundMat(); Object.assign(tMt, { polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });   // (the ground's own material: its grit, the walls' projected sideways)
       for (const g of terr.map.values()) { if (g.empty) continue; const geo = g.geometry(), N = geo.attributes.normal.array, st = new Float32Array(N.length / 3);
         for (let q = 0; q < st.length; q++) st[q] = sstep(0.78, 0.5, N[q * 3 + 1]);
-        geo.setAttribute('steep', new THREE.BufferAttribute(st, 1)); const m = new THREE.Mesh(geo, tMt); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
+        geo.setAttribute('steep', new THREE.BufferAttribute(st, 1)); const m = new THREE.Mesh(geo, tMt); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix();
+          m.name = 'terr'; m.userData.rob = m.userData.lj = true; root.add(m); }   // (ground: the animals' and the people's tests of a free place leave them out)
+      const tGround = (x, z) => { const y = caGround(x, z), tf = tfG(x, z); if (tf <= 0) return y; const yk = (Math.floor(y / dh) + 1) * dh; return y + (yk - y) * tf; };
+      out.groundH = out.camFloor = tGround;   // (the herds, the people and the camera on the terraces' floors, as the plants)
     }
 
     /* ---- the plants (instanced per 96 m chunk): the look's kinds (LK.kinds: krTreeGeo, KS) and their mix on each land cover (LK.mix[lc]: the

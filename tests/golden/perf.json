@@ -378,11 +378,11 @@
   "jsMs": 0.94
  },
  "mapileng": {
-  "calls": 141,
-  "maxCalls": 171,
-  "kverts": 242,
-  "maxKverts": 281,
-  "jsMs": 0.89
+  "calls": 149,
+  "maxCalls": 178,
+  "kverts": 494,
+  "maxKverts": 583,
+  "jsMs": 1.59
  },
  "batangas": {
   "calls": 244,
