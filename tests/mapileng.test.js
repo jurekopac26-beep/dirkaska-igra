@@ -3,7 +3,7 @@
 // road: the real line of the national road QL4C on the karst plateau of Đồng Văn (Hà Giang, Vietnam), at full scale and just under 1 km: up
 // from ~1184 m through three hairpins (def.curves) to the crest by the memorial to the road's builders (~1256 m, the road's own top) and a
 // little down to the finish (~1245 m); the viewpoint over the canyon a little past the line. Its data as tools/kratke/build.py wrote it and
-// the five roads' world (js/world-kratke.js) reads it: the terrain's rows, the land cover's run-length code (7 classes), the viewpoint, the
+// the road's own world (js/world-mapileng.js) reads it: the terrain's rows, the land cover's run-length code (7 classes), the viewpoint, the
 // information board, the memorial, the shrine, the museum and the café by the road, the far view's grid. The open road's traffic is its own
 // mix (def.traffic: the motorbikes of the mountain roads the most). A whole race (12 AI + the player on autopilot): every car finishes and
 // pulls up in its own slot past the line; a whole duel in the traffic on autopilot: both reach the finish and the traffic keeps moving. The

@@ -37,7 +37,7 @@ A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 # weight of OSM's residential land in the land cover (1.2: a village among trees stays trees where WorldCover sees them, less); lanes: the
 # village's lanes and drives that meet the road (def.lanes, from the data's other roads); hpDeg the least turn of a hairpin (135 deg)
 PAR = {
-    'mapileng': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.6),
+    'mapileng': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.6, farCell=150, farFill=False),   # (the far view on a 150 m grid, its valleys as they are: the canyon of the Nho Quế ~800 m below the road, not filled up by the ridges round it)
     'mujib': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.4, sea=False),   # (no sea: the canyon falls below the sea's level towards the Dead Sea)
     'sanssouci': dict(gmax=0.13, gtip=0.5, ncp=2, bare=0.8, resid=0.3, lanes=True),   # (the village's houses among the rainforest's trees: OSM's residential land a third of the corridor)
     'banaue': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
@@ -336,7 +336,7 @@ def far(X, Z, ox, oz):
             P = np.array(p).reshape(-1, 2)
             if len(P) >= 3 and (P[:, 0].max() - P[:, 0].min()) + (P[:, 1].max() - P[:, 1].min()) > 600: dr.polygon([((a - ox - x0) / cell, (b - oz - z0) / cell) for a, b in P], fill=1)
         wet |= np.array(im, bool)
-    for dx, dz in [(-90, 0), (90, 0), (0, -90), (0, 90)]: acc = np.maximum(acc, bilin(H, g, GX + dx + ox, GZ + dz + oz))
+    for dx, dz in ([(-90, 0), (90, 0), (0, -90), (0, 90)] if PAR.get('farFill', True) else []): acc = np.maximum(acc, bilin(H, g, GX + dx + ox, GZ + dz + oz))   # (PAR farFill False: no ridges kept, the canyons as deep as they are)
     h = np.where(wet, np.where(h > 0.05, h, 0), 0.5 * h + 0.5 * acc)
     lo = int(math.floor(h.min() / 10) * 10); v = np.clip(np.round((h - lo) * 2), 0, 65535).astype('>u2')
     w = wet.ravel(); runs = []; cur = False; k = 0
