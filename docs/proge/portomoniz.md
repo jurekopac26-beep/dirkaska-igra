@@ -27,4 +27,13 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Približki**: drevesa, rastline, zidovi teras, vinogradi in živali so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah. Hiše so generične (bele stene, opečna streha), razgledišči, kapelica in svetilnik prav tako. Oprema ob cesti: mere zeber so kot na drugih prehodih v igri (karta jih nima), četrti prehod 1,4 m od ciljne črte je izpuščen (pod črto); pločniki so poravnani z robom ceste v igri in široki 1,6 m (karta širine nima); koši, ki bi stali v prostoru ceste, so pomaknjeni za njegov rob; greda krožišča je samo zunaj prostora ceste (skozi ostalo gre cesta igre); terasa, parapet in klop tretjega razgledišča so generični, vrsta cvetlic tudi.
 - **Pravno**: samo zemljepisna imena (Porto Moniz, Santa, Madeira); nobenih imen hotelov, restavracij, kavarn ali trgovin, kip v krožišču je samo oblika; oprema ob cesti je brez napisov, znakov in imen.
 
+## Raziskava kraja (dodelava, PR »Dodelava proge: Porto Moniz, Portugalska«)
+
+- **Lega**: severozahodni rt Madeire (32,86° S, 17,17° Z), mestece na nizki lavini ploščadi ob Atlantiku, nad njim strmo severno pobočje do planote Paul da Serra (~1400 m).
+- **Podnebje**: blago subtropsko oceansko; severovzhodni pasat, oblaki na pobočju, poleti suho in toplo ob morju, valovi s severozahoda (privzetek: splošno poznavanje, brez meritev).
+- **Kamnina**: bazaltni lavini tokovi s plastmi rdečkastega tufa in žlindre; na obeh straneh mesta visoke morske pečine, mesto in kopališče na nizki temni lavi (OSM `natural=bare_rock`, `natural=coastline`).
+- **Rastje**: terase s pašniki in vinogradi v vetrobranih iz rese, više lovorov gozd in evkalipti (ESA WorldCover).
+- **Naravni bazeni**: kopališče med črno lavo na severni obali mesta (OSM `amenity=public_bath`, betonske poti in zidovi znotraj obrisa; posameznih bazenov karta nima), vzhodno od njega lavine ploščadi do otočka s svetilnikom, prodnati zalivi na obeh straneh.
+- **Pečine**: OSM nima `natural=cliff`; stene so iz obalne črte OSM in naklona Copernicus DEM (kjer pobočje ob obali v 40 m zraste za več kot ~25 m).
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py portomoniz --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
