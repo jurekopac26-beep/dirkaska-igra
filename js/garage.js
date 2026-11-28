@@ -589,7 +589,7 @@
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
       case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
-      case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); resize(); break;   // (the buttons at the top higher: the picture fitted again)
+      case 'demo-off': $('g-demo').classList.add('off'); resize(); break;   // (the buttons at the top higher: the picture fitted again; hidden only till the garage is opened again, not saved: Matej 27. 11. 2026)
     }
   }
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
@@ -808,7 +808,7 @@
   }
   function start() {
     S = load(); fromGame(); Lang.set(S.lang);
-    if (S.demo === false) $('g-demo').classList.add('off');
+    $('g-demo').classList.remove('off');   // (the MOCKUP row shown on each opening, a demo: false saved before ignored: Matej 27. 11. 2026)
     bind(); markMode();
     $('g-snd').classList.toggle('mute', !S.sound);
     G.init($('g-gl')); resize();
@@ -832,7 +832,7 @@
   function embOpen(p) {
     ppDrop();
     S = load(); GAME_CAR = null; fromGame(new URLSearchParams(p || {})); Lang.set(S.lang);
-    $('g-demo').classList.toggle('off', S.demo === false); markMode(); $('g-snd').classList.toggle('mute', !S.sound);
+    $('g-demo').classList.remove('off'); markMode(); $('g-snd').classList.toggle('mute', !S.sound);
     closeMenu(); G.show(spec(S.car)); setLang(); resize(); G.sound(S.sound);
     run = true; kick();
     if (!S.guide && !hold) setTimeout(() => guide(0), 400);   // (the guide not seen to its end: from its start, as on the page loaded)
