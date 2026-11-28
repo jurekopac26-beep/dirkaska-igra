@@ -1,6 +1,6 @@
 # Ngorongoro, Tanzanija (dirka, kronometer, promet)
 
-[← Vse proge](../../README.md#proge) · proga `ngorongoro` (`js/tracks/ngorongoro.js`)
+[← Vse proge](../../README.md#proge) · proga `ngorongoro` (`js/tracks/ngorongoro.js`) · raziskava kraja: [ngorongoro-raziskava.md](ngorongoro-raziskava.md)
 
 Enosmerna tlakovana cesta Seneto po zahodni steni kraterja Ngorongoro v Tanzaniji, edina cesta, po kateri se v krater samo spušča, v pravem merilu. Proga se začne na robu kraterja pri razgledišču Windy Gap (2.169 m, 3,1549° J, 35,4759° V), pelje mimo zapornice, kjer se začne enosmerna cesta, skozi edino serpentino (2.145 m) in nato po odprti travnati steni (12–17 %) čez polico na pol poti do dna kraterja (1.818 m, 3,1687° J, 35,4909° V): 2,97 km in 351 m spusta. Pred startom je 205 m zaleta po makadamski cesti ob robu kraterja (štartna mreža), za ciljem še ~260 m ceste po dnu kraterja (mesta za avtomobile). Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet**:
 
