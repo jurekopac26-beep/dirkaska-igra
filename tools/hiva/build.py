@@ -67,6 +67,19 @@ NAMES = [
 EN_NAMES = {'Zahodna vrata': 'West Gate', 'Ob obzidju': 'Along the Walls', 'Severna vrata': 'North Gate', 'Zunanje mesto': 'Outer Town',
             'Vzhodna vrata': 'East Gate', 'Pod minaretom': 'Under the Minaret', 'Južna vrata': 'South Gate', 'Ob južnem obzidju': 'Along the South Wall'}
 
+# ---- the commentator's own lines (def.comm, js/game.js ownLine): a lap race round the walls of the old town; places only, no people ----
+COMM = {
+    'intro': ['Welcome to {track}! {laps} laps round the walls of the old town, {cars} cars, and you start {grid}.',
+              'Good afternoon from {track}, an oasis between two deserts! {laps} laps round the mud-brick walls, and you line up {grid}.',
+              'Here we are at {track}, under the walls of the old town and its minarets. {cars} cars, {laps} laps, you start {grid}.'],
+    'introOne': ['Welcome to {track}! One lap round the walls of the old town, {cars} cars, and you start {grid}.'],
+    'go': ['Lights out, and away they go across the square before the west gate!', "And they're off, the walls on the right!",
+           'Green light! Into the dust of the square, and up to the walls!'],
+    'lap': ['Lap {lap} of {laps}, round the walls again.', 'Into lap {lap}. Past the west gate once more!', "That's lap {lap}. Mind the walls."],
+    'final': ['Final lap round the old town! Give it everything!', 'Last lap! One more time past the four gates!', 'One lap to go, the walls and the minarets one last time!'],
+    'win': ['Chequered flag under the walls of the old town! Victory!', 'And you win it! What a drive round the walls of the old town!'],
+}
+
 DESC = ('Mestna proga v Hivi v Uzbekistanu, krog okoli obzidja Ičan Kale, starega mesta za zidovi iz blatne opeke: čez trg pred zahodnimi vrati, '
         'tik ob obzidju mimo severnih vrat, po ulicah zunanjega mesta na vzhodu, nazaj mimo vzhodnih vrat in ob južnem obzidju na štart. '
         'Krog 3,05 km, minareti nad zidovi.')
@@ -105,6 +118,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xe2d8c4, sun: 0xfff0d2, sunI: 1.28, sky: 0xa9c4e0, gnd: 0x8a7656, hemiI: 0.6, tint: [1.04, 1.0, 0.94], sat: 1.04, sunOff: [70, 88, -40], split: [[0.97, 1.0, 1.05], [1.05, 1.0, 0.94]] },   // Khiva: a dry, dusty afternoon in the oasis, the sun high
     say: 'Khiva',
+    rainP: 0.06,   // (Khiva: a desert oasis, ~100 mm of rain a year, the most in spring)
+    comm: %(comm)s,
     zivali: { a: ['stork'], t: [], city: true },
     id: 'hiva', name: 'Hiva, Uzbekistan', theme: 'hiva', laps: 3, halfWidth: 4.6,
     desc: %(desc)s,
@@ -120,7 +135,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   });
 })();
 ''' % dict(km='%.2f' % (L / 1000), hvh=hvh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN), widths=json.dumps(widths()),
-           names='\n'.join(names), pts=pts)
+           names='\n'.join(names), pts=pts, comm=json.dumps(COMM))
     path = os.path.join(ROOT, 'js', 'tracks', 'hiva.js'); open(path, 'w').write(src)
     print('wrote', path, len(src) // 1024, 'KB;', NP, 'points; corners', [round(float(np.degrees(a)), 0) for a in sharp(P)][:6])
 
