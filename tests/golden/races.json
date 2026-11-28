@@ -3599,6 +3599,56 @@
   "nan": false,
   "digest": "e20e46921c7571f4c4c76817"
  },
+ "trebevic/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 156.33,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7a9a0e35bc9797afc4fca354"
+ },
+ "trebevic/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 188.29,
+  "spins": 2,
+  "walls": 12,
+  "rescues": 1,
+  "nan": false,
+  "digest": "2bc11c9b8d62b27d04de629f"
+ },
+ "trebevic/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 146.49,
+  "spins": 2,
+  "walls": 15,
+  "rescues": 1,
+  "nan": false,
+  "digest": "3c6bb72c9afd3dba5872a63f"
+ },
+ "trebevic/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 151.58,
+  "spins": 1,
+  "walls": 19,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2bddfafd8cecf3ab6bb809e4"
+ },
+ "trebevic/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 156.45,
+  "spins": 0,
+  "walls": 11,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4c62ecf29c29f03430fa5b47"
+ },
  "chamarel/cs": {
   "finished": 13,
   "cars": 13,
@@ -3642,12 +3692,12 @@
  "chamarel/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 171.52,
-  "spins": 0,
-  "walls": 8,
-  "rescues": 1,
+  "winner": 171.56,
+  "spins": 6,
+  "walls": 5,
+  "rescues": 0,
   "nan": false,
-  "digest": "e4fd14b1c73608ba97c0ddd1"
+  "digest": "2e17c769ec6594a675f75373"
  },
  "tatev/cs": {
   "finished": 13,
@@ -3692,12 +3742,12 @@
  "tatev/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 239.14,
-  "spins": 1,
-  "walls": 2,
+  "winner": 238.26,
+  "spins": 0,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "64db45861ac5eeeb938772bb"
+  "digest": "26b790fda7626b915436f131"
  },
  "envalira/cs": {
   "finished": 13,
