@@ -462,8 +462,8 @@ try {
       return { decided, paused, back: g.adapt };
     });
     const { decided: d, paused: p, back: b } = r;
-    T.check('slow device: resolution down first, then shadows off decided (not yet switched mid-race)', d.pending && d.dyn <= 0.6 && d.shadowsOn && /brez senc/.test(d.toast),
-      `after ${d.t} s: resolution x${d.dyn.toFixed(2)}, pending ${d.pending}, shadows still on ${d.shadowsOn}, message "${d.toast}"`);
+    T.check('slow device: fewer effects, resolution down, then shadows off decided (not yet switched mid-race)', d.pending && d.fx === 2 && d.dyn <= 0.6 && d.shadowsOn && /brez senc/.test(d.toast),
+      `after ${d.t} s: effects level ${d.fx}, resolution x${d.dyn.toFixed(2)}, pending ${d.pending}, shadows still on ${d.shadowsOn}, message "${d.toast}"`);
     T.check('at the pause: shadows off for this visit, materials rebuilt, saved setting kept, Nastavitve shows it', !p.shadowsOn && p.auto && !p.pending && p.rebuilt && p.saved === 1 && p.seg === '0* 1',
       `shadows on ${p.shadowsOn}, auto ${p.auto}, materials rebuilt ${p.rebuilt}, saved ${p.saved}, buttons "${p.seg}"`);
     T.check("the player's choice brings them back and they stay", b.shadowsOn && !b.auto && b.keep && !e2.length, `shadows on ${b.shadowsOn}, keep ${b.keep}${e2.length ? ', errors: ' + e2.join(' | ') : ''}`);

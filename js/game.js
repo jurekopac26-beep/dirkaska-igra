@@ -6473,7 +6473,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
      the browser (tdgp-ctrl: { keys: { act: [code, code] }, lbl: { code: the key's name }, pads: { device: binding }, dev }); Ponastavi:
      the defaults of the page shown. ---------------- */
   const CTL_KEY = 'tdgp-ctrl';
-  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['tyre', 'Gume za postanek'], ['replay', 'Posnetek do sem'], ['flag', 'Zastavica (napaka)'], ['dev', 'Prikaz za razvijalca']];
+  const CTL_KEYS = [['left', 'Levo'], ['right', 'Desno'], ['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['tyre', 'Gume za postanek'], ['replay', 'Posnetek do sem'], ['flag', 'Zastavica (napaka)'], ['dev', 'Prikaz za razvijalca'], ['fps', 'Števec sličic']];
   const CTL_PAD = [['gas', 'Plin'], ['brake', 'Zavora'], ['pause', 'Pavza'], ['rescue', 'Nazaj na progo']];
   let ctl = { keys: null, lbl: {}, pads: {}, dev: '' }, ctlTab = 'keys', ctlWait = null;
   const ctlInOk = (q) => isObj(q) && Number.isInteger(q.i) && q.i >= 0 && q.i < 64 && (q.t === 'b' || (q.t === 'a' && isFinite(q.lo) && isFinite(q.hi) && q.lo !== q.hi));
@@ -6576,14 +6576,14 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
 
   /* ---------------- main loop ---------------- */
-  // the frame counter (open the game with ?fps in the address): frames a second, the slowest frame of the last second, and where the time goes
+  // the frame counter (the key K, Input's 'fps', for anyone: PH.key; or open the game with ?fps in the address): frames a second, the slowest frame of the last second, and where the time goes
   // (PH.s: the race's steps, PH.r: Render.frame; the rest of the frame is the HUD, the sound and the browser itself). Orodje za napake's
   // Prikaz za razvijalca (the key O, its settings: PH.dev, js/napake.js) shows it too, with more lines (phMore): the draw calls and the
   // vertices a frame (renderer.info, every pass of the frame: not reset by each render while shown), the metres from the start and the lap,
   // the world's theme and its graphics tier, the physics' level of detail of a big field (Core LOD)
   const PH = (() => {
     let url = false; try { url = /[?&]fps\b/.test(location.search); } catch (_) { /* no location */ }
-    const o = { url, dev: false, get on() { return o.url || o.dev; }, s: 0, r: 0, n: 0, t0: 0, worst: 0, last: 0, el: null, calls: 0, tris: 0, info: null };
+    const o = { url, dev: false, key: false, get on() { return o.url || o.dev || o.key; }, s: 0, r: 0, n: 0, t0: 0, worst: 0, last: 0, el: null, calls: 0, tris: 0, info: null };
     o.tick = (now) => {
       if (!o.on) { if (o.el) { o.el.remove(); o.el = null; } if (o.info) { o.info.autoReset = true; o.info = null; } o.t0 = o.last = 0; return; }
       if (!o.el) { o.el = document.createElement('div'); o.el.id = 'ph-fps'; o.el.style.cssText = 'position:fixed;left:10px;top:66px;z-index:99999;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.65);color:#7CFF8A;font:600 12px/1.35 monospace;pointer-events:none;white-space:pre'; document.body.appendChild(o.el); }
@@ -6692,9 +6692,12 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (perf.sum < 2) return;
     const avg = perf.sum / perf.n * 1000; perf.sum = 0; perf.n = 0;
     if (perf.check && --perf.check === 0 && avg > perf.slowAvg * 0.85) perf.restore = true;   // (the 2nd window without shadows: first one may hold the stall)
-    const k = Render.getDynScale();
-    if (avg > 21 && k > 0.6) { Render.setDynScale(k - 0.1); perf.good = 0; perf.slow = 0; }
-    else if (avg < 15.5) { perf.slow = 0; if (++perf.good >= 3 && k < 1) { Render.setDynScale(k + 0.05); perf.good = 0; } }
+    const k = Render.getDynScale(), fl = Render.getFxLevel();
+    // (gneča, 25. 11. 2026) the cheapest lever first: under 50 frames/s fewer cars smoke and cast a shadow, shorter puffs (Render.setFxLevel);
+    // it comes back last, once the resolution is whole again
+    if (avg > 20 && fl < 2) { Render.setFxLevel(fl + 1); perf.good = 0; perf.slow = 0; }
+    else if (avg > 21 && k > 0.6) { Render.setDynScale(k - 0.1); perf.good = 0; perf.slow = 0; }
+    else if (avg < 15.5) { perf.slow = 0; if (++perf.good >= 3 && (k < 1 || fl > 0)) { if (k < 1) Render.setDynScale(k + 0.05); else Render.setFxLevel(fl - 1); perf.good = 0; } }
     else {
       perf.good = 0;
       if (avg > 24 && k <= 0.6 && shadowsOn() && !perf.keep && !perf.pending) {
@@ -7184,6 +7187,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       ctlLoad();   // (the keys and the pads' buttons as the player set them)
       Input.onTyre = () => { if (bg === 'race' && !replay) pitCmpNext(); };   // (T on the keyboard: the tyres for the next stop)
       Input.onFlag = () => { if (screen === 'none' && !replay) Napake.flag('key'); };   // (F: a flag in the race, Orodje za napake)
+      Input.onFps = () => { PH.key = !PH.key; toast(tr('Števec sličic') + ': ' + tr(PH.key ? 'Vklop' : 'Izklop').toLowerCase(), 1400); };   // (K: frames a second, the slowest frame, steps and draw ms)
       Input.onDev = () => Napake.dev();   // (O: Prikaz za razvijalca on or off, Orodje za napake)
       Input.onReplay = () => { if (Napake.on) return; if (replay) { if (replay.here && screen === 'none') rpRace(); } else if (screen === 'none' || screen === 'pause') rpHere(); };   // (I: Posnetek do sem; in it again: Nazaj v dirko; not while marking: Označi)
       Render.onThunder = (delay, vol) => Sfx.thunder(delay, vol);   // (a thunderstorm: the thunder after each lightning)
@@ -7212,7 +7216,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       window.__game = { get startCam() { return { v: scV, t: Render.startCam.t, lim: Render.startCamLim() }; }, startCamForce: (v) => { scForce = v | 0; }, comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, get pauseInfo() { return piInfo && JSON.parse(JSON.stringify(piInfo)); }, get stopsLog() { return tw && race ? race.cars.map(c => ({ name: c.name, me: c === race.player, n: tw.stops.get(c) || 0, sets: (tw.sets.get(c) || { h: [] }).h.slice() })) : null; }, get pitStop() { return { on: cst.on, ok: cst.ok, rows: cst.rows.slice(), sel: cst.sel && Object.assign({}, cst.sel), def: cst.def && Object.assign({}, cst.def), plan: cst.plan && Object.assign({}, cst.plan), tl: cst.tl, tl0: cst.tl0, h: cst.h, h0: cst.h0, he: cst.he }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn, demo: fr.demo }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, marksFriendOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(MK_F + mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
         get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, get recFlags() { return recd ? recd.flags.map(f => Object.assign({}, f)) : null; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
-        get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
+        get adapt() { return { dyn: Render.getDynScale(), fx: Render.getFxLevel(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
         get net() { if (!mp) return null; const R = mp.race, F = R && [...R.cars.values()][0];   // (theirs, left, got: the first of the others)
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             quick: !!mp.quick, locked: Net.locked, setup: mp.setup && { grid: mp.setup.grid.slice() },

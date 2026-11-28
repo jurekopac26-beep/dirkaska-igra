@@ -524,6 +524,43 @@
   "maxKverts": 632,
   "jsMs": 1.47
  },
+ "gneca-nring": {
+  "cars": 101,
+  "calls": 158,
+  "maxCalls": 172,
+  "kverts": 438,
+  "maxKverts": 471,
+  "fill": 0,
+  "maxFill": 0,
+  "jsMs": 1.51
+ },
+ "gneca-spa": {
+  "cars": 101,
+  "calls": 219,
+  "maxCalls": 243,
+  "kverts": 495,
+  "maxKverts": 578,
+  "fill": 0.7,
+  "maxFill": 2.7,
+  "jsMs": 1.6
+ },
+ "gneca-killar": {
+  "cars": 61,
+  "calls": 182,
+  "maxCalls": 201,
+  "kverts": 484,
+  "maxKverts": 554,
+  "fill": 2.9,
+  "maxFill": 4.3,
+  "jsMs": 1.41
+ },
+ "izjema-gneca-spa-visoka": {
+  "detail": "high",
+  "cars": 101,
+  "maxCalls": 293,
+  "maxKverts": 1078,
+  "razlog": "Odlocitev uporabnika 26. 11. 2026 (kartica gneca-spa-klici, moznost 1): Spa s 101 avtom pri visoki podrobnosti sme cez mejo 300 klicev in 900 tisoc oglisc (izmerjeno 219-293 klicev, prej 274-310; do 1078 tisoc oglisc). Samo na najvisji nastavitvi; samodejna kakovost pod 50 slicic/s jo zmanjsa. Test meri nizko podrobnost, ta vnos je zapis izjeme in se ne preverja."
+ },
  "tatev": {
   "calls": 169,
   "maxCalls": 205,

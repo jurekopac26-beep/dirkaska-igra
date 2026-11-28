@@ -2924,6 +2924,7 @@ const Render = (function () {
   class Particles {
     constructor(max, additive) {
       this.max = max; this.cur = 0; this.n = 0;   // (n: how many were ever emitted: the tests)
+      this.cap = Infinity;   // (the longest life emit() gives: emitFx sets it for a car's tyre smoke and dust)
       this.pos = new Float32Array(max * 3); this.col = new Float32Array(max * 4); this.size = new Float32Array(max);
       this.vel = new Float32Array(max * 3); this.life = new Float32Array(max); this.ml = new Float32Array(max);
       this.floor = new Float32Array(max);
@@ -2967,6 +2968,7 @@ const Render = (function () {
     }
     emit(x, y, z, vx, vy, vz, life, s0, s1, r, g, b, a, grav, drag, floor, keep) {
       if (this.mute) return;   // (a view's first frame: its old news not emitted again, the random numbers for it drawn all the same: updateCars)
+      if (life > this.cap) { s1 = s0 + (s1 - s0) * Math.sqrt(this.cap / life); life = this.cap; }   // (emitFx, FX_FADE: a puff gone by 15 m behind its car; as big at its end as the uncut one at that age)
       const i = this.cur; this.cur = (this.cur + 1) % this.max; this.n++; this.keep[i] = keep ? 1 : 0;
       if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
       this.pos[i * 3] = x; this.pos[i * 3 + 1] = y; this.pos[i * 3 + 2] = z;
@@ -3368,7 +3370,8 @@ const Render = (function () {
     renderer.shadowMap.type = THREE.PCFShadowMap;   // (SOFT_SHADOW: the spread of its samples)
     // what is drawn only into the shadow map (a kit car's hull on the lowest tier, the player's wheels' stand-ins: kitShadows): shown while it is drawn
     // (three.js draws it after it has picked what the camera draws, so the camera never draws them), hidden again after
-    { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { for (const v of views) if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on;
+    { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { const cut = (views.length > CROWD_N || fxLvl > 0) && !dbg.shAll; for (const v of views) { if (cut && v.fxD > fx2 && !v.car.isPlayer) { v.grp.visible = !on; if (v.tlG) v.tlG.visible = !on; }   // (gneča, 25. 11. 2026: in a big field only the FX_K cars nearest the camera cast a shadow, fxCut: the others out of the shadow map's pass, their soft contact shadow stays)
+          if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on; }
         if (world && world.shadowLo) { let fr = null; if (on) { sun.shadow.updateMatrices(sun); fr = sun.shadow.getFrustum(); }
           for (const [m, of] of world.shadowLo) m.visible = on && (of.visible || !!of.userData.ov) && (!of.userData.vb || boxesIn(of, fr)); } };   // (NIZKA: the plants' shadow copies, where their meshes are shown or only out of the view: where their plants are in the shadow box)
       sm.render = function (...a) { show(true); try { return r0.apply(this, a); } finally { show(false); } }; }
@@ -5303,6 +5306,23 @@ const Render = (function () {
     if (_crowd.length <= K) return;
     _crowd.sort((a, b) => a - b); crowd2 = Math.max(_crowd[K - 1], CROWD_R * CROWD_R / 0.81);
   }
+  // Gneča (the user's, 25. 11. 2026: a field of 100 stuttered): tyre smoke, dust, spray and sparks only from the FX_K cars nearest the camera
+  // (the player's always; a burning or badly damaged car's plume too, as carCull keeps it). fx2: the squared distance of the FX_K-th this
+  // frame, Infinity in a field no bigger. The others' effects are muted as a car's out of the view is (updateCars): their random numbers
+  // drawn, their skid marks laid, so a seeded race goes on as ever
+  const FX_K = 12, FX_KL = [12, 6, 3], FX_FL = [15, 10, 7], _fxD = [];
+  // fxLvl (game.js adaptive(), 25. 11. 2026: under 50 frames/s): 0 as above; 1, 2: only the 6, 3 nearest cars smoke and cast a shadow
+  // (in any field, not only a big one) and a puff is gone by 10, 7 m behind its car. Only what is drawn: the race draws the same numbers.
+  let fxLvl = 0;
+  function setFxLevel(n) { fxLvl = clamp(n | 0, 0, 2); }
+  function getFxLevel() { return fxLvl; }
+  let fx2 = Infinity;
+  function fxCut() {
+    fx2 = Infinity; const K = dbg.fxK != null ? dbg.fxK : FX_KL[fxLvl]; if (views.length <= K) return;   // (dbg.fxK: the tests, the rule measured off and on)
+    const cp = camera.position; _fxD.length = 0;
+    for (const v of views) { const c = v.car, dx = c.x - cp.x, dy = (c.y || 0) - cp.y, dz = c.z - cp.z; _fxD.push(v.fxD = dx * dx + dy * dy + dz * dz); }
+    _fxD.sort((a, b) => a - b); fx2 = _fxD[K - 1];
+  }
   function farStep(v, x, y, z) {
     const F = v.far, c = v.car;
     if (F.ok && ((c.dmg || 0) >= FAR_DMG || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver - v.kit.dk !== F.pv) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;   // (a kit car: its pieces changed, not only knocked: pv)
@@ -7109,6 +7129,7 @@ const Render = (function () {
     const sk = (atmos.tod === 'night' ? 0 : atmos.tod === 'dusk' ? 0.8 : 1) * (1 - Math.min(1, Math.max(0, wet) * 1.6)) * Math.min(1, sun.intensity);   // sk: the sun's glint on the paint
     glows.begin(); streaks.begin(); fireScan(now); xShardsRun(now); particles.mute = sparkP.mute = glows.mute = false;
     crowdCut();   // (a big field: which rivals are drawn in full, farStep)
+    fxCut();   // (and whose smoke, dust and sparks are drawn)
     for (const v of views) {
       const c = v.car, M = c.m, u = lodU(c, alpha);
       const x = lerp(c.px, c.x, u), z = lerp(c.pz, c.z, u), h = c.ph + wrapPi(c.h - c.ph) * u;
@@ -7178,7 +7199,9 @@ const Render = (function () {
           if (v.dirtW && da > 0) v.dirtW.value += (wt - v.dirtW.value) * da / (v.dirtU.value + da);   // (the colour: the dirt's mean by where it came from)
           v.dirtU.value += Math.max(0, da); }
       }
-      if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
+      const hot = (v.fire && !v.fire.done) || c.dmg > 0.45, fxm = v.fxD > fx2 && !c.isPlayer && !hot;   // (fxm: past the FX_K nearest, fxCut: no smoke, dust, sparks of its own)
+      if (fxm) particles.mute = sparkP.mute = true;
+      if (!vis && !hot) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
       if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
@@ -7190,7 +7213,7 @@ const Render = (function () {
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
-        try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
+        try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis || fxm; } }
       if (!v.xOn && !v.rep && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
         xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
@@ -7198,7 +7221,7 @@ const Render = (function () {
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
-      if (!vis) particles.mute = sparkP.mute = glows.mute = false;
+      if (!vis || fxm) particles.mute = sparkP.mute = glows.mute = false;
     }
     if (pitL) pitGlow(wk);   // (the pits' lamps at dusk and at night)
     glows.end();
@@ -9743,6 +9766,10 @@ const Render = (function () {
     const T = curTrack, q = c.wq && c.wq[wi]; if (!T || !q || q.k >= 0 || !(q.a >= 0)) return false;
     return Math.abs(q.d) > (T.wa ? T.wa[q.a] : T.w) + 0.3;
   }
+  // the user's, 25. 11. 2026 (popravek-dim-15m): tyre smoke and dust are gone by 15 m behind the car that raised them (a field of 100: far fewer
+  // see-through puffs over each other, the game runs as in a time trial). The puff's life is cut to 15 m at the car's speed; no random number
+  // more or less is drawn
+  const FX_FADE = 15;
   function emitFx(v, c, dt, x, z, h) {
     const M = c.m, spd = c.speed;
     const tw = M.wid * 0.43, yb = c.y || 0;
@@ -9807,6 +9834,7 @@ const Render = (function () {
       if (front || k > 3) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
         if (spd > 7 && near) {
+          particles.cap = FX_FL[fxLvl] / Math.max(1, spd * 0.58);   // (gneča, 26. 11. 2026: the mist fades as far behind the car as the smoke; it takes 0.35–0.5 of the car's speed with it)
           const fast = clamp((spd - 18) / 25, 0, 1);   // (at speed: a long, thicker tail of mist hanging behind the car, and the tyres throw water up)
           v.acc[k] += (clamp(spd / 36, 0, 1.4) + intens * 0.7) * 26 * (1 + 0.7 * fast) * wetW * dt;
           while (v.acc[k] >= 1) {
@@ -9833,6 +9861,7 @@ const Render = (function () {
           if (Math.random() < 0.4) particles.emit(px, 0.3 + yb, pz, vxs * 0.6, 0.5 + Math.random() * 0.5, vzs * 0.6, 0.5 + Math.random() * 0.3, 0.8, 2.4, 0.62, 0.62, 0.58, 0.2, -0.05, 1.8, yb);
         }
       } else if (onHard && intens > 0.22 && spd > Math.max(lv, 0.8 + 2.2 * (1 - ls))) {
+        particles.cap = FX_FL[fxLvl] / Math.max(1, spd * 0.88);   // (the puff takes 0.12 of the car's speed with it)
         const hz = c.latR < 1.5 && spd < 18 ? 0.4 : 1;   // (wheelspin getting away, the car straight: a light haze, not the drift's cloud; a late start: a thick cloud)
         v.acc[k] += Math.min(1.3, intens) * 42 * dt * (ls > 0.05 ? Math.max(hz, 0.3 + ls) : hz);
         while (v.acc[k] >= 1) {
@@ -9844,6 +9873,7 @@ const Render = (function () {
         }
       } else if (!onHard && spd > 4) {
         const amt = (surf === 3 || surf === 5 ? 1.0 : 0.45) * clamp(spd / 20, 0.2, 1.4) + intens * 0.5, D = dust || DUST0;
+        particles.cap = FX_FL[fxLvl] / Math.max(1, spd * 0.75);
         v.acc[k] += amt * 26 * dt * (surf === 3 || surf === 5 ? D.rate : 1);
         while (v.acc[k] >= 1) {
           v.acc[k] -= 1;
@@ -9863,6 +9893,7 @@ const Render = (function () {
           }
         }
       } else v.acc[k] = 0;
+      particles.cap = Infinity;
     }
     // sparks
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
@@ -11083,7 +11114,12 @@ const Render = (function () {
   function info() { return renderer ? renderer.info : null; }
   const dbg = { noSmoke: false, allCars: false };
   function setDebug(o) { Object.assign(dbg, o); }
-  function fxStats() { let n = 0, sp = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; for (let i = 0; i < sparkP.max; i++) if (sparkP.life[i] > 0) sp++; return { alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
+  function fxStats() { let n = 0, sp = 0; for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) n++; for (let i = 0; i < sparkP.max; i++) if (sparkP.life[i] > 0) sp++; // fill: how much of the screen the live puffs cover, in screens (1 = every pixel once; the see-through sprites over each other are what a
+    // phone's graphics chip pays for in a big field: tests/browser/perf.test.mjs, gneča)
+    let fill = 0; const e = camera.matrixWorldInverse.elements, us = particles.mat.uniforms.uScale.value, P = particles.pos;
+    for (let i = 0; i < particles.max; i++) if (particles.life[i] > 0) { const d = -(e[2] * P[i * 3] + e[6] * P[i * 3 + 1] + e[10] * P[i * 3 + 2] + e[14]); if (d > 1.5) { const px = Math.min(2048, particles.size[i] * us / d); fill += px * px * 0.785; } }
+    const cv = renderer.domElement;
+    return { cars: views.length, quiet: views.filter(v => v.fxD > fx2 && !v.car.isPlayer).length, alive: n, emitted: particles.cur, sparks: sp, total: particles.n, sparksN: sparkP.n, fill: +(fill / Math.max(1, cv.width * cv.height)).toFixed(2) }; }   // (sparks: alive now; total / sparksN: how many particles / sparks were ever emitted)
   function winCount() { let n = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) n++; }); return n; }   // (tests: the materials with the lit windows)
   function lookInfo() {   // (tests) the look of the moment: the night's lights, the post pass's glow, the stars, the crowd's excitement
     let win = 0; if (world && world.root) world.root.traverse(o => { const m = o.material; if (m && !Array.isArray(m) && m.userData && m.userData.win) win++; });
@@ -11103,6 +11139,6 @@ const Render = (function () {
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
   // the dirt on a race car's body now (0..1; null: none drawn), for the career's garage (game.js careerAfter)
   const dirtOf = (c) => { const v = views && views.find(w => w.car === c); return v && v.dirtU ? v.dirtU.value : null; };
-  return { ext: EXT, dirtOf, garageCar, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { ext: EXT, dirtOf, garageCar, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, setFxLevel, getFxLevel, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
