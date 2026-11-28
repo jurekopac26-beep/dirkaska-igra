@@ -1,0 +1,5 @@
+drevesi: 6ee8653 (koda 0c36dfd, pred) in 130ceaf (po); IZPIS=<datoteka> [TRKI_SNAP=<drevo pred>] N=12000 SEED=3 node kolo2.js, nato node primerjaj.js pred.txt po.txt
+ne zapira    {"zadetkov":59,"enako":0,"drugace":59,"dvAvtoMax":3.613,"dwAvtoMax":0,"dvKoloMax":7.433}
+met manjsi   {"zadetkov":779,"enako":0,"drugace":779,"dvAvtoMax":3.034,"dwAvtoMax":3.692,"dvKoloMax":7.388}
+poln met     {"zadetkov":7544,"enako":7544,"drugace":0,"dvAvtoMax":0,"dwAvtoMax":0,"dvKoloMax":0}
+skupaj       {"pred":8382,"po":8382,"samoPred":0,"samoPo":0,"varovalo":0}

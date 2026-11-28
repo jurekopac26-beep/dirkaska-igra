@@ -1,0 +1,8 @@
+kotor/race/cs              5e344ae52901b86916efb05f lead  1561.9 m OK
+kotor/demo/cs              f11ad8c0ce7ae5ad2c741319 lead  1699.4 m OK
+kotor/upg/cs               6bf3296c2d64e2a2c19e6cbf lead  1665.9 m OK
+kotor/crash/cs             103924c9fba92c4f1c65ba1a lead  1556.6 m damage 0.81 loose 2 rescues 0 repairs 0 OK
+kotor/formula/cs           821f3b48b86e4801bccacfea lead  1764.7 m damage 1 loose 6 rescues 0 repairs 0 OK
+kotor/lm/cs                c73da8cc86d9438b7287eb0a lead  1711.7 m damage 1 loose 4 rescues 0 repairs 0 OK
+kotor/car/cs               1fa89aa3689054bdcb70c51a lead  1555.7 m damage 0.88 loose 6 rescues 0 repairs 0 OK
+OK: all 7 scenarios identical (8 s)

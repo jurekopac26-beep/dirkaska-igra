@@ -1,0 +1,24 @@
+== odstop sam (zdrav avto, brez dotika) cv6, korak 1200, STOP=0
+cv veja 6 cv main privzeta postavitev race NAI 0 opts {} drive false | 6 s
+spa/rally seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+spa/formula seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+spa/truck seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+kotor/rally seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+kotor/formula seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+kotor/truck seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+koli/rally seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+koli/formula seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+koli/truck seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=1554 wallCollide:truck | dotikov {"wallCollide":3268} prvi {"wallCollide":1554} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+seoul/rally seme 9 avtov 1 RAZLIKA k=1324 (11.03 s) rally#0 vx -14.17911133665933 / -14.35154646735607 | prvi dotik veje k=1324 wallCollide:rally | dotikov {"wallCollide":1} prvi {"wallCollide":1324} | poskodovanih 1, v cilju 0
+seoul/formula seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+seoul/truck seme 9 avtov 1 ENAKO 45.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+== odstop sam cv6 dez, korak 2400, STOP=0
+cv veja 6 cv main privzeta postavitev race NAI 0 opts {"rain":1} drive false | 4 s
+spa/rally seme 9 avtov 1 RAZLIKA k=2639 (21.99 s) rally#0 vx 21.898036905753173 / 25.915157945031353 | prvi dotik veje k=2639 wallCollide:rally | dotikov {"wallCollide":1} prvi {"wallCollide":2639} | poskodovanih 1, v cilju 0
+spa/truck seme 9 avtov 1 RAZLIKA k=2650 (22.08 s) truck#0 vx 24.079613263266744 / 24.530513802055633 | prvi dotik veje k=2650 wallCollide:truck | dotikov {"wallCollide":1} prvi {"wallCollide":2650} | poskodovanih 1, v cilju 0
+kotor/rally seme 9 avtov 1 RAZLIKA k=2854 (23.78 s) rally#0 vx 1.8979365959868422 / 1.8943315002541037 | prvi dotik veje k=2854 wallCollide:rally | dotikov {"wallCollide":1} prvi {"wallCollide":2854} | poskodovanih 1, v cilju 0
+kotor/truck seme 9 avtov 1 ENAKO 55.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+koli/rally seme 9 avtov 1 RAZLIKA k=2634 (21.95 s) rally#0 vx 17.05509233586293 / 18.047315352673493 | prvi dotik veje k=2634 wallCollide:rally | dotikov {"wallCollide":1} prvi {"wallCollide":2634} | poskodovanih 0, v cilju 0
+koli/truck seme 9 avtov 1 ENAKO 55.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+seoul/rally seme 9 avtov 1 ENAKO 55.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+seoul/truck seme 9 avtov 1 ENAKO 55.0 s | prvi dotik veje k=-1  | dotikov {} prvi {} | poskodovanih 0, v cilju 0, vrstni red cilja enak

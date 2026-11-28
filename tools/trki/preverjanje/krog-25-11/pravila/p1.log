@@ -1,0 +1,64 @@
+SNAP kagerod len 2058 seme 9 retire | t konec 200.0 state racing | v cilju 0 dnf 5 od 13
+  retire v fazi lane: avto 0 t 10.2 d 8.3 dnf true nL 0
+  retire v fazi stop: avto 1 t 71.5 d 14.0 dnf true nL 0
+  retire v fazi repair: avto 2 t 79.3 d 21.4 dnf true nL 0
+  retire v fazi done: avto 4 t 81.0 d 21.4 dnf true nL 0
+  dnf ob koncu: 0 nL 0 dmg 0.00 inPit false d 7.7 | 1 nL 0 dmg 0.00 inPit true d 14.1 | 2 nL 0 dmg 0.00 inPit true d 9.3 | 4 nL 0 dmg 0.00 inPit true d 9.3 | 12P nL 2 dmg 0.82 inPit false d 8.0 over true why undefined
+  avto 0 faza lane => dnf true stop true inPit false pitState null v 0.00 premik 33.9 m pot 34 m d 7.7 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  avto 1 faza stop => dnf true stop true inPit true pitState stop v 0.00 premik 18.8 m pot 19 m d 14.1 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  avto 2 faza repair => dnf true stop true inPit true pitState done v 0.00 premik 23.8 m pot 20 m d 9.3 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  avto 4 faza done => dnf true stop true inPit true pitState done v 0.00 premik 17.1 m pot 1 m d 9.3 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  popravila: 2:nL 0>0 dmg 0.07>0.00 dnf | 4:nL 0>0 dmg 0.00>0.00 dnf | 3:nL 0>0 dmg 0.24>0.00 | 6:nL 0>0 dmg 0.00>0.00 | 8:nL 0>0 dmg 0.00>0.00 | 7:nL 0>0 dmg 0.48>0.00 | 5:nL 0>0 dmg 0.11>0.00 | 9:nL 0>0 dmg 0.27>0.00 | 10:nL 0>0 dmg 0.35>0.00 | 11:nL 0>0 dmg 0.00>0.00
+  stanje v boksih (ne popravilo) > 15 s: nič | NaN/izjeme 0
+MAIN kagerod len 2058 seme 9 retire | t konec 200.0 state racing | v cilju 1 dnf 4 od 13
+  retire v fazi lane: avto 0 t 10.2 d 8.3 dnf true nL 0
+  retire v fazi stop: avto 1 t 70.4 d 14.0 dnf true nL 0
+  retire v fazi repair: avto 3 t 78.1 d 21.4 dnf true nL 0
+  retire v fazi done: avto 2 t 79.7 d 21.3 dnf true nL 0
+  dnf ob koncu: 0 nL 0 dmg 0.00 inPit false d 7.7 | 1 nL 0 dmg 0.00 inPit true d 14.1 | 2 nL 0 dmg 0.00 inPit true d 9.3 | 3 nL 0 dmg 0.00 inPit true d 21.4
+  avto 0 faza lane => dnf true stop true inPit false pitState null v 0.00 premik 33.9 m pot 34 m d 7.7 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  avto 1 faza stop => dnf true stop true inPit true pitState stop v 0.00 premik 18.7 m pot 19 m d 14.1 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  avto 3 faza repair => dnf true stop true inPit true pitState done v 0.00 premik 0.0 m pot 0 m d 21.4 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  avto 2 faza done => dnf true stop true inPit true pitState done v 0.00 premik 20.3 m pot 17 m d 9.3 korakov na asfaltu zunaj boksov 0 krogi po 0 finished false nL 0
+  popravila: 3:nL 0>0 dmg 0.06>0.00 dnf | 2:nL 0>0 dmg 0.06>0.00 dnf | 4:nL 0>0 dmg 0.00>0.00 | 5:nL 0>0 dmg 0.00>0.00 | 6:nL 0>0 dmg 0.17>0.00 | 8:nL 0>0 dmg 0.55>0.00 | 7:nL 0>0 dmg 0.00>0.00 | 9:nL 0>0 dmg 0.00>0.00 | 11:nL 0>0 dmg 0.03>0.00 | 10:nL 0>0 dmg 0.45>0.00
+  stanje v boksih (ne popravilo) > 15 s: nič | NaN/izjeme 0
+$S/pravila/p1.js:17
+  if (r.state === 'racing' && mode === 'wheel1' && !w1 && t >= 8) { w1 = true; for (const c of AI.slice(0, 4)) { C.detachPart(c, 'wheelFL'); ev.push('kolo ' + idx(c) + ' ' + c.m.id + ' nL ' + c.wreck.nL); } for (const c of AI.slice(4, 6)) { C.detachPart(c, 'wheelFL'); C.detachPart(c, 'wheelFR'); ev.push('dve kolesi ' + idx(c) + ' nL ' + c.wreck.nL); } }
+                                                                                                                                                                                                        ^
+
+TypeError: Cannot read properties of undefined (reading 'nL')
+    at Object.<anonymous> ($S/pravila/p1.js:17:201)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object..js (node:internal/modules/cjs/loader:1913:10)
+    at Module.load (node:internal/modules/cjs/loader:1505:32)
+    at Function._load (node:internal/modules/cjs/loader:1309:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49
+
+Node.js v22.23.5
+SNAP kagerod len 2058 seme 9 wheel1 | t konec 196.5 state racing | v cilju 13 dnf 0 od 13
+  kolo 0 vortex nL BREZ wreck
+  kolo 1 kaze nL BREZ wreck
+  kolo 2 strega nL BREZ wreck
+  kolo 3 pico nL BREZ wreck
+  dve kolesi 4 vortex nL BREZ wreck
+  dve kolesi 5 kaze nL BREZ wreck
+  dnf ob koncu: 
+  popravila: nič
+  stanje v boksih (ne popravilo) > 15 s: nič | NaN/izjeme 0
+$S/pravila/p1.js:40
+if (mode === 'wheel1') for (const c of AI.slice(0, 6)) console.log(' ', (hist.get(c) || []).join(' '), '\n','  avto', idx(c), c.m.id, 'nL', c.wreck.nL, 'dnf', !!c.wreck.dnf, 'finished', !!c.finished, 'pos', c.finishPos, 'lap', c.lap, 'repairN', c.repairN, 'inPit', !!c.inPit, 'v', c.speed.toFixed(1), 'lost', Object.keys(c.lost).filter(n => c.lost[n]).join(','));
+                                                                                                                                                    ^
+
+TypeError: Cannot read properties of undefined (reading 'nL')
+    at Object.<anonymous> ($S/pravila/p1.js:40:149)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object..js (node:internal/modules/cjs/loader:1913:10)
+    at Module.load (node:internal/modules/cjs/loader:1505:32)
+    at Function._load (node:internal/modules/cjs/loader:1309:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49
+
+Node.js v22.23.5

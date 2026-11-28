@@ -1,0 +1,54 @@
+VEJA cv 6 kagerod seme 9 | izlocen avto 2 strega v fazi repair t 79.8 pitT -2.4 pitDur 2.6 d 21.3 dmg 0.37
+  => premik 20.4 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.49 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 20.4 m, d 9.3, inPit true]
+VEJA cv 6 kagerod seme 9 | izlocen avto 2 strega v fazi done t 82.3 pitT 2.6 pitDur 2.6 d 21.3 dmg 0.00
+  => premik 23.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 0.66 m (brez prestavitve) | v 0.00
+  [stop ob 11.2 s, premik 23.7 m, d 9.3, inPit true]
+VEJA cv 6 kagerod seme 9 | izlocen avto 3 pico v fazi repair t 81.2 pitT -2.8 pitDur 2.2 d 21.3 dmg 0.31
+  => premik 0.0 m | faza done | stop true | d 21.3 | najvecji skok v koraku 0.00 m (brez prestavitve) | v 0.00
+  [stop ob 0.0 s, premik 0.0 m, d 21.3, inPit true]
+VEJA cv 6 kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 72.7 pitT -0.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 21.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.48 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 21.7 m, d 9.3, inPit true]
+VEJA cv 6 kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 72.7 pitT -4.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 21.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.42 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 21.7 m, d 9.3, inPit true]
+VEJA cv 6 kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 72.7 pitT -10.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 12.3 m | faza done | stop true | d 9.3 | najvecji skok v koraku 12.28 m (prestavljen ob 8.0 s) | v 0.00
+  [stop ob 8.0 s, premik 12.3 m, d 9.3, inPit true]
+VEJA cv 1 kagerod seme 9 | izlocen avto 2 strega v fazi repair t 76.5 pitT -3.6 pitDur 1.4 d 21.3 dmg 0.06
+  => premik 20.4 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.49 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 20.4 m, d 9.3, inPit true]
+VEJA cv 1 kagerod seme 9 | izlocen avto 2 strega v fazi done t 77.9 pitT 1.4 pitDur 1.4 d 21.3 dmg 0.00
+  => premik 23.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 0.58 m (brez prestavitve) | v 0.00
+  [stop ob 11.2 s, premik 23.7 m, d 9.3, inPit true]
+VEJA cv 1 kagerod seme 9 | izlocen avto 3 pico v fazi repair t 77.9 pitT -3.6 pitDur 1.4 d 21.3 dmg 0.06
+  => premik 0.0 m | faza done | stop true | d 21.3 | najvecji skok v koraku 0.00 m (brez prestavitve) | v 0.00
+  [stop ob 0.0 s, premik 0.0 m, d 21.3, inPit true]
+VEJA cv 1 kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 71.4 pitT -0.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 21.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.49 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 21.7 m, d 9.3, inPit true]
+VEJA cv 1 kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 71.4 pitT -4.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 21.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.40 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 21.7 m, d 9.3, inPit true]
+VEJA cv 1 kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 71.4 pitT -10.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 12.3 m | faza done | stop true | d 9.3 | najvecji skok v koraku 12.28 m (prestavljen ob 8.0 s) | v 0.00
+  [stop ob 8.0 s, premik 12.3 m, d 9.3, inPit true]
+MAIN kagerod seme 9 | izlocen avto 2 strega v fazi repair t 77.3 pitT -3.6 pitDur 1.4 d 21.3 dmg 0.06
+  => premik 20.4 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.50 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 20.4 m, d 9.3, inPit true]
+MAIN kagerod seme 9 | izlocen avto 2 strega v fazi done t 78.7 pitT 1.4 pitDur 1.4 d 21.3 dmg 0.00
+  => premik 23.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 0.76 m (brez prestavitve) | v 0.00
+  [stop ob 11.2 s, premik 23.7 m, d 9.3, inPit true]
+MAIN kagerod seme 9 | izlocen avto 3 pico v fazi repair t 78.8 pitT -3.6 pitDur 1.4 d 21.4 dmg 0.06
+  => premik 0.0 m | faza done | stop true | d 21.4 | najvecji skok v koraku 0.00 m (brez prestavitve) | v 0.00
+  [stop ob 0.0 s, premik 0.0 m, d 21.4, inPit true]
+MAIN kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 72.1 pitT -0.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 21.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.49 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 21.7 m, d 9.3, inPit true]
+MAIN kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 72.1 pitT -4.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 21.7 m | faza done | stop true | d 9.3 | najvecji skok v koraku 1.41 m (prestavljen ob 10.7 s) | v 0.00
+  [stop ob 10.7 s, premik 21.7 m, d 9.3, inPit true]
+MAIN kagerod seme 9 | izlocen avto 0 vortex v fazi repair t 72.1 pitT -10.8 pitDur 1.2 d 21.4 dmg 0.00
+  => premik 12.3 m | faza done | stop true | d 9.3 | najvecji skok v koraku 12.28 m (prestavljen ob 8.0 s) | v 0.00
+  [stop ob 8.0 s, premik 12.3 m, d 9.3, inPit true]

@@ -13,7 +13,8 @@
 //    xtRoof), never through the seats, the driver or the posts' tops (the field's limits, xRoofInfo); variant D (the user's): three light
 //    blows on the right flank draw the roof's right side in towards the middle (1 cm and more), more than its left
 // and with the default settings (no Razbijanje): the scrapes and the roof the same, no table; the MEDVED (a table car, not the Kolibri) with glass on:
-// a light blow breaks no pane, no scrapes (the Kolibri's only)
+// a light blow breaks no pane (the Kolibri's only); its side scrapes as every closed body's (Trki #608: the band its own frame's, render.js
+// scrFrame), no dent from a graze (the Kolibri's only)
 //   node tests/browser/kolibri.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -39,7 +40,7 @@ try {
         for (let i = 0; i < a.length; i += 3) { const m = Math.hypot(a[i] - b0[i], a[i + 1] - b0[i + 1], a[i + 2] - b0[i + 2]); o[b0[i + 2] < 0 ? 0 : 1] += m; } return o.map(q => +q.toFixed(3)); };
       const most = () => { const a = v().body.geometry.attributes.position.array; let mx = 0; if (b0 && a.length === b0.length) for (let i = 0; i < a.length; i += 3) mx = Math.max(mx, Math.hypot(a[i] - b0[i], a[i + 1] - b0[i + 1], a[i + 2] - b0[i + 2])); return +mx.toFixed(4); };   // (the farthest any point moved)
       const knock = (amt, u, w) => Core.applyDamage(P, amt, u * P.m.len / 2, w * P.m.wid / 2);
-      const out = { key: v().body.material.customProgramCacheKey(), xt: !!me().xt };
+      const out = { key: v().body.material.customProgramCacheKey(), xt: !!me().xt, frame: v().scrS ? [v().scrS.value.z, v().scrL.value, v().scrS.value.w].map(q => +q.toFixed(3)) : null };   // (the scrapes' band: half width, sill, belt)
       hold(0.5); fresh();
       out.nose = []; for (let k = 0; k < 8; k++) { knock(0.01, 1, 0.1); hold(0.6); out.nose.push(panes()); }
       fresh(); knock(0.01, 0.1, -1); hold(0.1); knock(0.01, 0.1, -1); hold(0.6); out.one = panes();
@@ -131,9 +132,10 @@ try {
   T.check('default settings: every graze dents that flank in a little more, the other side not; never caved in (under 13 cm)', dentIn(d), JSON.stringify({ car: d.carD, nose: d.nose2D, rail: d.railD, stale: d.stale, many: d.many }));
 
   const m = await run('medved', { xBody: 1, xGlass: 1 });
-  console.log('medved:', JSON.stringify({ key: m.key, nose: m.nose.map(st), car: m.car }));
-  T.check('the Kolibri\'s only: the MEDVED (a table car too) with glass on: a light blow breaks no pane, no scrapes, its body\'s program as before (dirtyCarCgX)',
-    m.key === 'dirtyCarCgX' && m.nose.every(p => st(p) === 'none') && m.car.every(q => q[0] === 0 && q[1] === 0) && !m.errors.length, m.key + ' ' + m.errors.slice(0, 3).join(' | '));
+  console.log('medved:', JSON.stringify({ key: m.key, nose: m.nose.map(st), car: m.car, carD: m.carD, frame: m.frame }));
+  T.check('the Kolibri\'s only: the MEDVED (a table car too) with glass on: a light blow breaks no pane; every closed body\'s: its side scrapes (dirtyCarCgXS), each graze more scratched on its side, the band its own frame\'s (higher than the Kolibri\'s); a graze dents no flank but the Kolibri\'s',
+    m.key === 'dirtyCarCgXS' && m.nose.every(p => st(p) === 'none') && inc(m.car.map(q => q[0])) && m.car.every(q => q[1] === 0) && m.carD.every(q => q[0] === m.carD[0][0] && q[1] === m.carD[0][1])
+    && m.frame && m.frame[1] > 0.4 && m.frame[2] > 1.1 && m.frame[2] < 1.3 && Math.abs(m.frame[0] - 0.93) < 0.01 && d.frame[0] === 0.735 && d.frame[1] === 0.22 && d.frame[2] === 0.865 && !m.errors.length, m.key + ' ' + m.errors.slice(0, 3).join(' | '));
 } finally {
   await browser.close(); await srv.close();
 }

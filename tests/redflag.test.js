@@ -81,9 +81,15 @@ function run(tid, o) {
         const y = tr > 6 && F.yel.length ? r._yelAt(c.q.s) : null;
         if (y) { let d = y.s - c.q.s; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d < 100) { S.vZone = Math.max(S.vZone, c.speed); S.nZone++; } }
       }
-      const ord = r.order.filter(c => S.Q.includes(c)).map(c => c.name).join();
-      if (prev && ord !== prev) S.passes++;
-      prev = ord;
+      // (overtaking = two cars both on the road, or both in the lane, that swap their order. A car funnelling from the road into the
+      // pit-lane queue drops back on arc length while the road cars still at racing speed reach it before they too slow into the lane:
+      // that road-to-lane transition is not a pass, so the road order and the lane order are each compared with the step before, over the
+      // cars common to the two steps)
+      const road = r.order.filter(c => S.Q.includes(c) && !lane(c)).map(c => c.name);
+      const lne = r.order.filter(c => S.Q.includes(c) && lane(c)).map(c => c.name);
+      if (prev) { const keep = (a, b) => { const s = new Set(b); return a.filter(n => s.has(n)).join(); };
+        if (keep(prev.road, road) !== keep(road, prev.road) || keep(prev.lne, lne) !== keep(lne, prev.lne)) S.passes++; }
+      prev = { road, lne };
     } else prev = null;
     if (o.stopAfterGreen != null && S.green && t > S.green + o.stopAfterGreen) break;
   }
@@ -97,7 +103,10 @@ const finished = (S) => S.r.cars.filter(c => !S.out.includes(c)).every(c => c.fi
 // again a second pile-up (two more cars): no red flag again, the safety car
 const RESTART = ['red', 'redHold', 'redGo', 'scIn', 'scGone', 'green'];
 {
-  const S = run('bathurst', { at: 60, hook: (r) => pileUp(r, 2, 2), lapped: true, again: true });
+  // (at 75 s: the two wrecks stop within RED.near of each other and block the road, as at 80, 85 and 90 s. Since the parts a car sheds stop
+  // as sheet metal does (docs/trki-realizem.md »Odpadli deli«) a wreck is no longer held back by its own parts: at 50, 60 and 70 s the two
+  // roll on 100 to 330 m apart (measured: 102, 324 and 206 m) and only the safety car comes. The user's, 10. 11. 2026: »Redkejša zastava je ok«)
+  const S = run('bathurst', { at: 75, hook: (r) => pileUp(r, 2, 2), lapped: true, again: true });
   const R0 = S.red || {}, H = S.hold || {}, G = S.go || {}, i = S.ks.indexOf('red');
   // (the safety car may come out a moment before it, for the first car stopped: it goes in at once, and the race's safety car is still to come)
   check('Bathurst: two cars wrecked together bring out the red flag within 15 s (a safety car out a moment before it goes in, the race\'s still to come)', !!S.red && S.red.t - S.hooked < 15 && S.ks.slice(0, i).every(k => k === 'sc') && R0.scUsed === false && R0.sc !== 'out',

@@ -1,0 +1,66 @@
+cv 6 phys cs NAI 12
+pikes avtov 1 ENAKO 20 s | prvi dotik veje k=-1 
+nring avtov 21 RAZLIKA k=368 (3.07 s) rally#12 polje 0 65.06889415807908 / 65.0688943436321 | prvi dotik veje k=303 avto:strega/pico
+spa avtov 13 RAZLIKA k=1272 (10.60 s) kaze#5 polje 5 0.4318732209672308 / 0.4329832245560214 | prvi dotik veje k=281 avto:pico/vortex
+rbring avtov 13 RAZLIKA k=289 (2.41 s) rally#12 polje 5 1.2443073461479965 / 0.38861578202577174 | prvi dotik veje k=288 avto:strega/rally
+pikesg avtov 1 ENAKO 20 s | prvi dotik veje k=-1 
+caracoles avtov 13 ENAKO 20 s | prvi dotik veje k=288 avto:pico/vortex
+katu avtov 1 ENAKO 20 s | prvi dotik veje k=-1 
+harju avtov 1 ENAKO 20 s | prvi dotik veje k=-1 
+bathurst avtov 13 RAZLIKA k=349 (2.91 s) kaze#5 polje 0 33.23780579092403 / 33.23780027958596 | prvi dotik veje k=283 avto:pico/vortex
+chapman avtov 13 RAZLIKA k=916 (7.63 s) kaze#5 polje 5 1.0491268814064159 / 1.0725965243568365 | prvi dotik veje k=313 avto:strega/pico
+tianmen avtov 13 RAZLIKA k=286 (2.38 s) pico#3 polje 0 174.06519909743088 / 174.06513111613955 | prvi dotik veje k=284 avto:pico/vortex
+rastro avtov 13 RAZLIKA k=397 (3.31 s) kaze#5 polje 0 -147.5710758988575 / -147.57111142213694 | prvi dotik veje k=396 avto:kaze/strega
+montreal avtov 13 RAZLIKA k=267 (2.23 s) pico#3 polje 0 -6.073639328197819 / -6.073664831492799 | prvi dotik veje k=265 avto:pico/vortex
+livorno avtov 21 RAZLIKA k=759 (6.33 s) kaze#18 polje 0 34.96589692234183 / 34.96589664958229 | prvi dotik veje k=290 avto:pico/rally
+balea avtov 13 RAZLIKA k=295 (2.46 s) strega#2 polje 0 40.88767381105095 / 40.88764461239062 | prvi dotik veje k=294 avto:strega/pico
+silkeborg avtov 13 RAZLIKA k=531 (4.42 s) strega#6 polje 0 5.944266673537161 / 5.944266678387957 | prvi dotik veje k=530 avto:strega/vortex
+kagerod avtov 13 RAZLIKA k=274 (2.28 s) strega#10 polje 0 66.94349570160237 / 66.94417786862914 | prvi dotik veje k=271 avto:strega/rally
+sosnova avtov 13 RAZLIKA k=291 (2.42 s) strega#10 polje 0 113.22794788706682 / 113.22820300096883 | prvi dotik veje k=287 avto:strega/rally
+izoard avtov 13 RAZLIKA k=992 (8.27 s) strega#10 polje 5 -0.13966335594898746 / -0.14171581171887757 | prvi dotik veje k=297 avto:pico/vortex
+pembrey avtov 13 RAZLIKA k=320 (2.67 s) strega#10 polje 0 -36.8809225941535 / -36.88096405087614 | prvi dotik veje k=291 avto:pico/vortex
+kildare avtov 13 RAZLIKA k=366 (3.05 s) rally#12 polje 0 -28.85384216909828 / -28.853842126355826 | prvi dotik veje k=277 avto:pico/vortex
+sacalobra avtov 13 RAZLIKA k=312 (2.60 s) kaze#5 polje 5 -0.8740955563114462 / -0.9335188012813463 | prvi dotik veje k=243 avto:pico/vortex
+kotor avtov 13 RAZLIKA k=308 (2.57 s) strega#2 polje 0 3.0272589506762015 / 3.0272990320131594 | prvi dotik veje k=307 avto:strega/pico
+bikernieki avtov 13 RAZLIKA k=320 (2.67 s) strega#2 polje 5 -0.341535854752384 / -0.5443009932527302 | prvi dotik veje k=274 avto:pico/vortex
+zandvoort avtov 13 RAZLIKA k=292 (2.43 s) strega#2 polje 0 -5.73251126700339 / -5.732550420783021 | prvi dotik veje k=288 avto:pico/vortex
+furka avtov 13 RAZLIKA k=334 (2.78 s) kaze#5 polje 0 -37.578175376357045 / -37.5781678410365 | prvi dotik veje k=286 avto:pico/vortex
+santoantao avtov 13 RAZLIKA k=270 (2.25 s) strega#2 polje 0 5.077383570316656 / 5.076878048870796 | prvi dotik veje k=267 avto:strega/pico
+gudauri avtov 13 RAZLIKA k=301 (2.51 s) strega#10 polje 0 63.442966066614794 / 63.4431614069031 | prvi dotik veje k=299 avto:strega/rally
+ngorongoro avtov 13 RAZLIKA k=358 (2.98 s) strega#10 polje 0 -72.94273241895723 / -72.94271226330414 | prvi dotik veje k=357 avto:strega/rally
+medeu avtov 13 RAZLIKA k=292 (2.43 s) pico#3 polje 5 0.310165082454624 / 0.13109878654218626 | prvi dotik veje k=290 avto:pico/vortex
+ella avtov 13 RAZLIKA k=266 (2.22 s) rally#12 polje 5 -0.19125494483353306 / -0.2183566030405817 | prvi dotik veje k=264 avto:strega/rally
+llogara avtov 13 RAZLIKA k=721 (6.01 s) kaze#9 polje 5 0.37985846278363433 / 0.3840805431080143 | prvi dotik veje k=274 avto:pico/vortex
+portomoniz avtov 13 RAZLIKA k=468 (3.90 s) strega#6 polje 0 -10.585664154985768 / -10.585664056844212 | prvi dotik veje k=246 avto:pico/vortex
+seoul avtov 13 RAZLIKA k=310 (2.58 s) strega#10 polje 0 -125.49598858524857 / -125.49565736648262 | prvi dotik veje k=309 avto:strega/rally
+tuzla avtov 13 RAZLIKA k=494 (4.12 s) strega#6 polje 5 -0.34002108296671785 / -0.5683352546020507 | prvi dotik veje k=282 avto:pico/vortex
+sepang avtov 13 RAZLIKA k=342 (2.85 s) kaze#5 polje 0 34.028886859077026 / 34.02886834337165 | prvi dotik veje k=281 avto:pico/vortex
+lombok avtov 13 RAZLIKA k=268 (2.23 s) pico#3 polje 0 -21.77266489313421 / -21.77268053521852 | prvi dotik veje k=264 avto:pico/vortex
+buriram avtov 13 RAZLIKA k=278 (2.32 s) strega#10 polje 0 72.36899812424976 / 72.36929073567325 | prvi dotik veje k=274 avto:strega/rally
+sakhir avtov 13 RAZLIKA k=351 (2.92 s) strega#10 polje 0 -1.6636901737329002 / -1.663690173731731 | prvi dotik veje k=295 avto:pico/vortex
+lusail avtov 13 RAZLIKA k=340 (2.83 s) rally#12 polje 0 37.00993971640653 / 37.00993933527648 | prvi dotik veje k=276 avto:pico/vortex
+riohondo avtov 13 RAZLIKA k=270 (2.25 s) pico#3 polje 0 21.85670120716876 / 21.856699388044383 | prvi dotik veje k=267 avto:pico/vortex
+hakone avtov 21 RAZLIKA k=1367 (11.39 s) kaze#18 polje 5 0.19196432918317463 / 0.37278944657979796 | prvi dotik veje k=1315 avto:kaze/pico
+killar avtov 13 RAZLIKA k=311 (2.59 s) strega#10 polje 0 77.3738046669731 / 77.37397782417908 | prvi dotik veje k=305 avto:strega/rally
+luanda avtov 13 RAZLIKA k=332 (2.77 s) strega#10 polje 5 0.3917893079657899 / 0.24035949536704138 | prvi dotik veje k=331 avto:strega/pico
+ujarras avtov 13 RAZLIKA k=490 (4.08 s) strega#6 polje 0 22.00953787258175 / 22.00953751477036 | prvi dotik veje k=488 avto:strega/vortex
+ghoufi avtov 13 RAZLIKA k=415 (3.46 s) rally#12 polje 2 0.4289184778548659 / 0.42891848776648295 | prvi dotik veje k=414 avto:strega/rally
+cusco avtov 13 RAZLIKA k=957 (7.97 s) strega#6 polje 5 0.28546294958372476 / 0.2855396552054136 | prvi dotik veje k=338 avto:strega/pico
+mombasa avtov 13 RAZLIKA k=284 (2.37 s) strega#2 polje 0 102.3324328974109 / 102.33245095440532 | prvi dotik veje k=274 avto:pico/vortex
+isalo avtov 13 RAZLIKA k=350 (2.92 s) strega#10 polje 0 -38.61813282847615 / -38.61813282854447 | prvi dotik veje k=270 avto:pico/vortex
+portobelo avtov 13 RAZLIKA k=286 (2.38 s) strega#10 polje 0 10.365529270926853 / 10.36625328956355 | prvi dotik veje k=277 avto:pico/vortex
+eljem avtov 13 RAZLIKA k=322 (2.68 s) kaze#5 polje 0 196.1808010063652 / 196.18085241479756 | prvi dotik veje k=320 avto:kaze/strega
+isuna avtov 13 RAZLIKA k=312 (2.60 s) strega#10 polje 0 68.76017475285906 / 68.76017443519906 | prvi dotik veje k=265 avto:pico/vortex
+hiva avtov 13 RAZLIKA k=296 (2.47 s) strega#10 polje 0 -25.191575395107662 / -25.19110436571106 | prvi dotik veje k=261 avto:pico/vortex
+mapileng avtov 13 RAZLIKA k=306 (2.55 s) strega#10 polje 0 -22.976127717193766 / -22.97612772567649 | prvi dotik veje k=305 avto:strega/rally
+batangas avtov 13 RAZLIKA k=298 (2.48 s) strega#2 polje 0 15.085812693766172 / 15.085804237028334 | prvi dotik veje k=297 avto:strega/pico
+quezaltepeque avtov 13 RAZLIKA k=277 (2.31 s) strega#10 polje 0 -71.0044481014206 / -71.00449467635966 | prvi dotik veje k=274 avto:strega/rally
+aguascalientes avtov 13 RAZLIKA k=1212 (10.10 s) kaze#5 polje 5 -0.23913128059554778 / -0.2461906712332495 | prvi dotik veje k=771 avto:strega/pico
+koli avtov 13 RAZLIKA k=411 (3.42 s) vortex#4 polje 0 -0.05765538808088206 / -0.057655379506623895 | prvi dotik veje k=344 avto:kaze/strega
+kanaba avtov 13 RAZLIKA k=793 (6.61 s) strega#10 polje 5 0.27721538059247897 / 0.3210849747575173 | prvi dotik veje k=456 avto:kaze/strega
+tapini avtov 1 ENAKO 20 s | prvi dotik veje k=-1 
+canaries avtov 13 RAZLIKA k=372 (3.10 s) kaze#5 polje 0 -30.41170159170406 / -30.411703387457475 | prvi dotik veje k=371 avto:kaze/strega
+savusavu avtov 13 RAZLIKA k=308 (2.57 s) strega#2 polje 0 11.15495254070081 / 11.154885506099385 | prvi dotik veje k=261 avto:pico/vortex
+koror avtov 13 RAZLIKA k=304 (2.53 s) kaze#5 polje 0 35.757085384600074 / 35.75715375132624 | prvi dotik veje k=265 avto:pico/vortex
+vaoala avtov 13 RAZLIKA k=1497 (12.47 s) rally#12 polje 5 -0.8285248933699463 / -0.8298749733662245 | prvi dotik veje k=393 avto:kaze/strega
+krasnahorka avtov 13 RAZLIKA k=332 (2.77 s) rally#12 polje 0 64.25693640769978 / 64.25693635912656 | prvi dotik veje k=257 avto:pico/vortex

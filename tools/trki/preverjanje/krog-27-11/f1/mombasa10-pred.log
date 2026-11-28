@@ -1,0 +1,46 @@
+  k 1327 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.056 vnVogal -4.628 vnSredisce -5.846 w 0.457
+      wallR tockaSunka lokalno [-1.43,-0.539] vnTockaSunka -6.481 sunek
+k 1327 formula hit 4.628 skoda 0.005 -> 0.065 w 0.457 -> -2.721
+  k 1328 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.109 vnVogal -9.526 vnSredisce -2.431 w -2.683
+      wallR tockaSunka lokalno [-0.481,-0.539] vnTockaSunka -1.211 sunek
+k 1328 formula hit 9.526 skoda 0.065 -> 0.262 w -2.683 -> -3.171
+  k 1329 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.106 vnVogal -9.283 vnSredisce -1.084 w -3.128
+      wallR tockaSunka lokalno [-0.193,-0.539] vnTockaSunka -0.519 sunek
+k 1329 formula hit 9.283 skoda 0.262 -> 0.451 w -3.128 -> -3.239
+  k 1330 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.001 vnVogal -2.315 vnSredisce -2.989 w 0.247
+      wallR tockaSunka lokalno [-1.43,-0.539] vnTockaSunka -3.312 sunek
+k 1330 formula hit 2.315 skoda 0.005 -> 0.005 w 0.247 -> -1.503
+  k 1330 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.101 vnVogal -8.791 vnSredisce -0.493 w -3.195
+      wallR tockaSunka lokalno [0.025,-0.539] vnTockaSunka -0.568 sunek
+k 1330 formula hit 8.791 skoda 0.451 -> 0.628 w -3.195 -> -3.251
+  k 1331 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.089 vnVogal -5.023 vnSredisce -0.994 w -1.478
+      wallR tockaSunka lokalno [-1.43,-0.539] vnTockaSunka 0.956 BREZ SUNKA
+k 1331 formula hit 5.023 skoda 0.005 -> 0.076 w -1.478 -> -1.478 BREZ SUNKA
+  k 1331 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.096 vnVogal -8.225 vnSredisce 0.016 w -3.207
+      wallR tockaSunka lokalno [0.264,-0.539] vnTockaSunka -0.779 sunek
+k 1331 formula hit 8.225 skoda 0.628 -> 0.788 w -3.207 -> -3.179
+  k 1332 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.088 vnVogal -4.814 vnSredisce -0.863 w -1.452
+      wallR tockaSunka lokalno [-1.43,-0.539] vnTockaSunka 1.064 BREZ SUNKA
+k 1332 formula hit 4.814 skoda 0.076 -> 0.141 w -1.452 -> -1.452 BREZ SUNKA
+  k 1332 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.087 vnVogal -7.186 vnSredisce 0.783 w -3.135
+      wallR tockaSunka lokalno [0.714,-0.539] vnTockaSunka -1.36 sunek
+k 1332 formula hit 7.186 skoda 0.788 -> 0.919 w -3.135 -> -2.78
+  k 1333 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.086 vnVogal -4.604 vnSredisce -0.732 w -1.426
+      wallR tockaSunka lokalno [-1.43,-0.539] vnTockaSunka 1.17 BREZ SUNKA
+k 1333 formula hit 4.604 skoda 0.141 -> 0.2 w -1.426 -> -1.426 BREZ SUNKA
+  k 1333 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.068 vnVogal -4.93 vnSredisce 1.963 w -2.74
+      wallR tockaSunka lokalno [1.43,-0.539] vnTockaSunka -1.828 sunek
+k 1333 formula hit 4.93 skoda 0.919 -> 0.987 w -2.74 -> -2.059
+  k 1334 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.085 vnVogal -4.393 vnSredisce -0.6 w -1.399
+      wallR tockaSunka lokalno [-1.43,-0.539] vnTockaSunka 1.276 BREZ SUNKA
+k 1334 formula hit 4.393 skoda 0.2 -> 0.253 w -1.399 -> -1.399 BREZ SUNKA
+  k 1334 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.045 vnVogal -2.163 vnSredisce 2.891 w -2.025
+      wallR tockaSunka lokalno [1.43,-0.539] vnTockaSunka 0.112 BREZ SUNKA
+k 1334 formula hit 2.163 skoda 0.987 -> 0.987 w -2.025 -> -2.025 BREZ SUNKA
+{"drevo":"pred","NOA":0,"NOB":0,"A":0,"B":0,"BFROM":0,"pravilo":false,"dirk":1,"korakovSSkodo":23,"skodaOgraja":2.227,"epizod":5,"porazdelitevKorakov":{"1":2,"2":1,"5+":2},"delezSkodeNadNajvecjimKorakom":0.526,"brezSunkaKorakov":12,"brezSunkaDelezSkode":0.199,"igralcuOdpadeKolo":0,"odTegaVKorakuBrezSunka":0,"konecIgre":0,"B_klicev":0,"B_uporabljen":0}
+najvec skode {"run":"mombasa/formula","id":"formula","igralec":false,"k0":1327,"korakov":7,"skoda":0.982,"najvecjiKorak":0.197,"hitMax":9.526}
+najdaljsa {"run":"mombasa/formula","id":"formula","igralec":false,"k0":1331,"korakov":12,"skoda":0.444,"najvecjiKorak":0.071,"hitMax":5.023}
+
+real	0m1.645s
+user	0m1.595s
+sys	0m0.169s

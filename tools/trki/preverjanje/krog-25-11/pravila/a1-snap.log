@@ -1,0 +1,15 @@
+SNAP jezero cv 6 osnova: kFin 5935 rule true len 1768 open false pos 1
+dmg korakov pred ciljem 2 v 52.2 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 3 state racing
+dmg korakov pred ciljem 10 v 52.0 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 12 state racing
+dmg korakov pred ciljem 30 v 51.5 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 55 state racing
+dmg korakov pred ciljem 60 v 50.7 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 226 state racing
+dmg korakov pred ciljem 120 v 49.0 m/s, nL ob udarcu 1 => finished false pos 0 dnf true rule.over true kFin-kHit - state racing
+dmg korakov pred ciljem 240 v 44.9 m/s, nL ob udarcu 1 => finished false pos 0 dnf true rule.over true kFin-kHit - state racing
+dmg korakov pred ciljem 480 v 33.3 m/s, nL ob udarcu 1 => finished false pos 0 dnf true rule.over true kFin-kHit - state racing
+det korakov pred ciljem 2 v 52.2 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 3 state racing
+det korakov pred ciljem 10 v 52.0 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 12 state racing
+det korakov pred ciljem 30 v 51.5 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 55 state racing
+det korakov pred ciljem 60 v 50.7 m/s, nL ob udarcu 1 => finished true pos 1 dnf false rule.over false kFin-kHit 223 state racing
+det korakov pred ciljem 120 v 49.0 m/s, nL ob udarcu 1 => finished false pos 0 dnf true rule.over true kFin-kHit - state racing
+det korakov pred ciljem 240 v 44.9 m/s, nL ob udarcu 1 => finished false pos 0 dnf true rule.over true kFin-kHit - state racing
+det korakov pred ciljem 480 v 33.3 m/s, nL ob udarcu 1 => finished false pos 0 dnf true rule.over true kFin-kHit - state racing

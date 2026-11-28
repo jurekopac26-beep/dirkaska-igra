@@ -402,6 +402,7 @@
           } else if (!nd[i] && !onBr[i] && i % 25 === 0 && i > 2 && i < iE - 2) mkPosts.push([i, side]);
         }
       }
+      out.barKind = (i, side) => (onBr[i] ? 1 : need[side > 0 ? 1 : 0][i] ? 0 : -1);   // (Render: what stands on the barrier line at sample i: 1 the bridge's concrete parapet, 0 the W-beam, -1 nothing)
       const kp = rrProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;
       for (const sp of mkPosts) { if (kp.has(sp)) continue;
         const [i, side] = sp, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]);

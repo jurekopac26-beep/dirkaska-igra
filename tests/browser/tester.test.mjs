@@ -61,7 +61,9 @@ try {
   T.check('left for the title: the race sent (jezero, its mode and weather, seconds, zapustil, the car, the place at leaving or none, the seconds on the track), none open', d && d.k === 'T2' && d.s === s0.s && d.proga === 'jezero' && d.nacin === a.s.dirka.nacin
     && d.vreme === a.s.dirka.vreme && d.trajanje > 0.5 && d.izid === 'zapustil' && (d.mesto === null || (Number.isInteger(d.mesto) && d.mesto >= 1))
     && typeof d.avto === 'string' && d.avto.length > 0 && d.avto === a.s.dirka.avto && d.cp >= 1 && d.cm >= 0 && d.cg === 0 && !(await st()).s.dirka, JSON.stringify(d));
-  await startTrack(page, 'jezero'); await driveToResults(page);
+  // (the race to the line starts with Odpadlo kolo: Dirka teče naprej (S.wheelOver 0, the race's own rule; the setting back at once), as in
+  // lang.test.mjs: under the wheel rule a race on the autopilot can end with a wheel off or the engine dead, KONEC IGRE, and the results never come)
+  await page.evaluate(() => { window.__game.S.wheelOver = 0; }); await startTrack(page, 'jezero'); await page.evaluate(() => { window.__game.S.wheelOver = 1; }); await driveToResults(page);
   const c = got.filter((e) => e.t === 'dirka')[1];
   T.check('a race driven to the line: sent at the results (jezero, cilj, the place 1..n, the car)', c && c.proga === 'jezero' && c.izid === 'cilj' && Number.isInteger(c.mesto) && c.mesto >= 1 && c.trajanje > 0 && c.avto, JSON.stringify(c));
   T.check('only the known fields sent (no names, no address, no time of the device)', got.every((e) => Object.keys(e).every((k) => ['k', 's', 't', 'zig', 'naprava', 'os', 'brskalnik', 'proga', 'nacin', 'vreme', 'trajanje', 'izid', 'mesto', 'avto', 'cp', 'cm', 'cg'].includes(k))), JSON.stringify(got));

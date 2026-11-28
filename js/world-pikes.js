@@ -3362,14 +3362,15 @@
 
     /* ---- 1. safety: foam block walls (blue and white) along the rail on the outside of the hairpins and of the fast bends, just in front of it ---- */
     const foamC = [[0.12, 0.3, 0.76], [0.92, 0.92, 0.9]], foamT = [[0.2, 0.42, 0.88], [0.98, 0.98, 0.96]];
-    const foam = (s0, s1, side) => { const pts = [];   // (no shadow: in the terrain tiles; only the faces that show: the front, the top, the row's two ends; 12-18 vertices a block)
-      for (let s = s0; s <= s1; s += 0.25) { const q = crAt(s); if (!q) continue; const o = side * ((side > 0 ? q.br : q.bl) + 0.05); pts.push([q.px + q.nx * o, q.hy, q.pz + q.nz * o, q.nx * side * 0.23, q.nz * side * 0.23]); }
+    const foam = (s0, s1, side) => { const pts = [], fm = out.barKind && out.barKind.foam ? out.barKind.foam[side > 0 ? 1 : 0] : null;   // (no shadow: in the terrain tiles; only the faces that show: the front, the top, the row's two ends; 12-18 vertices a block)
+      for (let s = s0; s <= s1; s += 0.25) { const q = crAt(s); if (!q) continue; const o = side * ((side > 0 ? q.br : q.bl) + 0.05); pts.push([q.px + q.nx * o, q.hy, q.pz + q.nz * o, q.nx * side * 0.23, q.nz * side * 0.23, q.i]); }
       const F = (p, e, y) => [p[0] - p[3] * e, y, p[2] - p[4] * e];   // e: +1 the front (towards the road), -1 the back
       let a = 0, k = 0;
       for (let b = 1; b < pts.length; b++) { const A = pts[a], B = pts[b], L = Math.hypot(B[0] - A[0], B[2] - A[2]); if (L < 1.5 && b < pts.length - 1) continue; if (L < 0.8) break;
         const y0 = Math.min(A[1], B[1]) - 0.38, y1 = y0 + 1.26, g = K.noShadow(A[0], A[2]), inn = [(A[0] + B[0]) / 2, y0 + 0.6, (A[2] + B[2]) / 2], c = foamC[k % 2];
         g.quadO(F(A, 1, y0), F(B, 1, y0), F(B, 1, y1), F(A, 1, y1), c, inn); g.quadO(F(A, 1, y1), F(B, 1, y1), F(B, -1, y1), F(A, -1, y1), foamT[k % 2], inn);
         if (a === 0) g.quadO(F(A, 1, y0), F(A, -1, y0), F(A, -1, y1), F(A, 1, y1), c, inn); if (b === pts.length - 1) g.quadO(F(B, 1, y0), F(B, -1, y0), F(B, -1, y1), F(B, 1, y1), c, inn);
+        if (fm) for (let j = Math.min(A[5], B[5]); j <= Math.max(A[5], B[5]); j++) fm[j] = 1;   // (out.barKind: foam on the barrier line there, not the rail)
         k++; a = b; }
       info.foam += k; };
     const hp = T.corners.filter(c => { const sm = (c.i0 + c.i1) / 2 * T.ds; return sm > sStart + 80 && sm < sFin - 60; });
@@ -4353,6 +4354,7 @@
         }
       }
       out.pkRail = need;   // (per side and sample: a rail; pkJunctions keeps its junction mouths off them)
+      out.barKind = Object.assign((i, side) => { const si = side > 0 ? 1 : 0, nd = need[si]; return out.barKind.foam[si][i] ? -1 : nd[i] && (nd[i + 1] || nd[i - 1]) ? 0 : -1; }, { foam: [new Uint8Array(N), new Uint8Array(N)] });   // (Render: what stands on the barrier line at sample i: 0 the steel rail, -1 nothing, and where pkModern's foam blocks stand in front of the rail: soft)
       const kp = pikesProps(out, mkPosts).spots;   // knockable where they fit on the verge; the rest stay fixed beside the barrier line:
       for (const sp of mkPosts) { if (kp.has(sp)) continue;
         const [i, side] = sp, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]), tall = T.hy[i] > 330 ? 1.9 : 1;

@@ -1,0 +1,37 @@
+== do cilja cv1 skoda 0, cusco, 16 semen (vrstni red cilja, finishPos, finishTime)
+cv veja 1 cv main privzeta postavitev race NAI -1 opts {"damage":0} drive false | 19 s
+cusco seme 1 avtov 13 ENAKO 33.2 s | prvi dotik veje k=320 carCollide:kaze/strega | dotikov {"carCollide":1532} prvi {"carCollide":320} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 2 avtov 13 ENAKO 33.5 s | prvi dotik veje k=363 carCollide:kaze/rally | dotikov {"carCollide":2087} prvi {"carCollide":363} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 3 avtov 13 RAZLIKA k=3868 (32.23 s) vortex#8 finishPos 10 / 9 | prvi dotik veje k=367 carCollide:kaze/strega | dotikov {"carCollide":1168} prvi {"carCollide":367} | poskodovanih 0, v cilju 10
+cusco seme 4 avtov 13 ENAKO 33.3 s | prvi dotik veje k=327 carCollide:kaze/strega | dotikov {"carCollide":1622} prvi {"carCollide":327} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 5 avtov 13 ENAKO 33.4 s | prvi dotik veje k=388 carCollide:kaze/rally | dotikov {"carCollide":1183} prvi {"carCollide":388} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 6 avtov 13 ENAKO 34.5 s | prvi dotik veje k=286 carCollide:kaze/strega | dotikov {"carCollide":1491} prvi {"carCollide":286} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 7 avtov 13 ENAKO 33.1 s | prvi dotik veje k=401 carCollide:kaze/rally | dotikov {"carCollide":1173} prvi {"carCollide":401} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 8 avtov 13 ENAKO 33.3 s | prvi dotik veje k=301 carCollide:kaze/strega | dotikov {"carCollide":2687} prvi {"carCollide":301} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 10 avtov 13 ENAKO 33.0 s | prvi dotik veje k=339 carCollide:kaze/rally | dotikov {"carCollide":1063,"wallCollide":5} prvi {"carCollide":339,"wallCollide":3591} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 11 avtov 13 ENAKO 33.2 s | prvi dotik veje k=292 carCollide:kaze/strega | dotikov {"carCollide":1357} prvi {"carCollide":292} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 12 avtov 13 ENAKO 33.0 s | prvi dotik veje k=321 carCollide:kaze/strega | dotikov {"carCollide":1798} prvi {"carCollide":321} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 13 avtov 13 ENAKO 33.1 s | prvi dotik veje k=298 carCollide:kaze/strega | dotikov {"carCollide":1256} prvi {"carCollide":298} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 14 avtov 13 ENAKO 34.1 s | prvi dotik veje k=629 carCollide:kaze/strega | dotikov {"carCollide":1043,"wallCollide":13} prvi {"carCollide":629,"wallCollide":3144} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 15 avtov 13 ENAKO 33.1 s | prvi dotik veje k=416 carCollide:kaze/rally | dotikov {"carCollide":1640} prvi {"carCollide":416} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 16 avtov 13 ENAKO 32.9 s | prvi dotik veje k=325 carCollide:kaze/rally | dotikov {"carCollide":1566} prvi {"carCollide":325} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+cusco seme 17 avtov 13 ENAKO 32.9 s | prvi dotik veje k=382 carCollide:kaze/rally | dotikov {"carCollide":1167} prvi {"carCollide":382} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+== do cilja cv1 skoda 0, vaoala, 8 semen
+cv veja 1 cv main privzeta postavitev race NAI -1 opts {"damage":0} drive false | 16 s
+vaoala seme 1 avtov 13 ENAKO 66.2 s | prvi dotik veje k=332 carCollide:kaze/strega | dotikov {"carCollide":393,"wallCollide":3} prvi {"carCollide":332,"wallCollide":2977} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+vaoala seme 2 avtov 13 ENAKO 66.7 s | prvi dotik veje k=401 carCollide:kaze/rally | dotikov {"carCollide":1456} prvi {"carCollide":401} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+vaoala seme 3 avtov 13 ENAKO 68.2 s | prvi dotik veje k=391 carCollide:kaze/strega | dotikov {"carCollide":656} prvi {"carCollide":391} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+vaoala seme 4 avtov 13 ENAKO 66.2 s | prvi dotik veje k=344 carCollide:kaze/strega | dotikov {"carCollide":548,"wallCollide":1} prvi {"carCollide":344,"wallCollide":2880} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+vaoala seme 5 avtov 13 ENAKO 68.8 s | prvi dotik veje k=394 carCollide:kaze/rally | dotikov {"carCollide":514,"wallCollide":399} prvi {"carCollide":394,"wallCollide":3591} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+vaoala seme 6 avtov 13 ENAKO 66.1 s | prvi dotik veje k=311 carCollide:kaze/strega | dotikov {"carCollide":737} prvi {"carCollide":311} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+vaoala seme 7 avtov 13 ENAKO 66.4 s | prvi dotik veje k=419 carCollide:kaze/strega | dotikov {"carCollide":413} prvi {"carCollide":419} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+vaoala seme 8 avtov 13 ENAKO 66.6 s | prvi dotik veje k=319 carCollide:kaze/strega | dotikov {"carCollide":1071} prvi {"carCollide":319} | poskodovanih 0, v cilju 13, vrstni red cilja enak
+== do cilja cv1 skoda 0, cusco 20 tekmecev, 6 semen
+cv veja 1 cv main privzeta postavitev race NAI 20 opts {"damage":0} drive false | 13 s
+cusco seme 1 avtov 21 ENAKO 34.6 s | prvi dotik veje k=327 carCollide:kaze/strega | dotikov {"carCollide":2971} prvi {"carCollide":327} | poskodovanih 0, v cilju 21, vrstni red cilja enak
+cusco seme 2 avtov 21 ENAKO 35.2 s | prvi dotik veje k=534 carCollide:kaze/pico | dotikov {"carCollide":3745} prvi {"carCollide":534} | poskodovanih 0, v cilju 21, vrstni red cilja enak
+cusco seme 3 avtov 21 ENAKO 34.5 s | prvi dotik veje k=302 carCollide:kaze/strega | dotikov {"carCollide":2286} prvi {"carCollide":302} | poskodovanih 0, v cilju 21, vrstni red cilja enak
+cusco seme 4 avtov 21 ENAKO 34.7 s | prvi dotik veje k=307 carCollide:kaze/strega | dotikov {"carCollide":1985} prvi {"carCollide":307} | poskodovanih 0, v cilju 21, vrstni red cilja enak
+cusco seme 5 avtov 21 ENAKO 34.6 s | prvi dotik veje k=328 carCollide:strega/pico | dotikov {"carCollide":2730,"wallCollide":42} prvi {"carCollide":328,"wallCollide":3080} | poskodovanih 0, v cilju 21, vrstni red cilja enak
+cusco seme 6 avtov 21 ENAKO 34.8 s | prvi dotik veje k=326 carCollide:kaze/strega | dotikov {"carCollide":3355,"wallCollide":16} prvi {"carCollide":326,"wallCollide":3491} | poskodovanih 0, v cilju 21, vrstni red cilja enak
+KONEC

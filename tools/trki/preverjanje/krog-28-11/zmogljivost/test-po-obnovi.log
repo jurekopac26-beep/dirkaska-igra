@@ -1,0 +1,6 @@
+== phone budget (844x390, normal quality, NIZKA detail, shadows)
+OK   livorno: within the phone budget — calls/frame 162 (max 193), vertices/frame 413k (max 553k), JS 3.3 ms/frame
+FAIL lusail: within the phone budget — calls/frame 186 (max 260), vertices/frame 596k (max 909k), JS 1.25 ms/frame — over the budget of CLAUDE.md at the busiest place (300 draw calls, 900k vertices)
+OK   mombasa: within the phone budget — calls/frame 150 (max 216), vertices/frame 356k (max 450k), JS 1.11 ms/frame
+OK   no page errors
+FAIL: 1 of 4 checks

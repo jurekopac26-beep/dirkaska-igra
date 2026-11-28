@@ -1,0 +1,6 @@
+canaries/cs               fin 13/13 winner   173.7 s spins 0 walls 2 rescues 0 ccfcd3c626e2216ad2b77c48 OK
+canaries/cs/rain          fin 13/13 winner  208.26 s spins 0 walls 2 rescues 0 c3dc7bd394982e766e063b06 OK
+canaries/cs/formula       fin 13/13 winner  158.36 s spins 0 walls 0 rescues 0 730b19f9be032d3c6d916e6e OK
+canaries/cs/lm            fin 13/13 winner  160.17 s spins 0 walls 0 rescues 0 90fc9a8aa8bcd980935b9bfb OK
+canaries/cs/car           fin 13/13 winner  171.45 s spins 0 walls 0 rescues 0 91024aeb9d00dc011f18ac7d OK
+OK: all races fine (17 s)

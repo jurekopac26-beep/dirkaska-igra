@@ -1,0 +1,6 @@
+prog 60 z oviro pred prvim dotikom 5 nabor race
+rastro: ovira od k=147 (1.23 s), avto-korakov 105, avtov 2, zavira namesto main 0, prva razlika k=147, prvi dotik k=352, najvecji odmik od main do dotika 1.22e+0 m; pico#12 za strega v=0.87 stuckT=0.82 dmg=0.00 far=false
+izoard: ovira od k=147 (1.23 s), avto-korakov 60, avtov 2, zavira namesto main 0, prva razlika k=148, prvi dotik k=297, najvecji odmik od main do dotika 2.20e-1 m; pico#12 za strega v=1.05 stuckT=0.82 dmg=0.00 far=false
+kotor: ovira od k=147 (1.23 s), avto-korakov 60, avtov 2, zavira namesto main 0, prva razlika k=150, prvi dotik k=307, najvecji odmik od main do dotika 1.20e-1 m; pico#12 za strega v=1.03 stuckT=0.82 dmg=0.00 far=false
+ujarras: ovira od k=147 (1.23 s), avto-korakov 60, avtov 2, zavira namesto main 0, prva razlika k=147, prvi dotik k=402, najvecji odmik od main do dotika 2.00e-1 m; pico#12 za strega v=1.05 stuckT=0.82 dmg=0.00 far=false
+vaoala: ovira od k=147 (1.23 s), avto-korakov 90, avtov 2, zavira namesto main 0, prva razlika k=147, prvi dotik k=393, najvecji odmik od main do dotika 3.37e-1 m; pico#12 za strega v=0.95 stuckT=0.82 dmg=0.00 far=false

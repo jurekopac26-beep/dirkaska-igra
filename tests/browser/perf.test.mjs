@@ -21,11 +21,16 @@ const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
 // the camera's shake on (Nastavitve · Tresenje kamere, off by default since 2. 11. 2026), as when the references were recorded: its jitter
 // draws from Math.random, which the seeded run shares with the race, so with it off the race goes otherwise and the six samples fall
 // elsewhere on the lap (the jitter itself adds no draw call); tools/obremenitev.mjs the same. And the knocks between cars as when the
-// references were recorded (Trki med avti: Stara, crV 4; the default since 2. 11. 2026 is Simulacija): the knock moves the cars otherwise,
+// references were recorded (Trki med avti: Stara, crV 4; the game's default is Realistična since 12. 11. 2026): the knock moves the cars otherwise,
 // so where the six samples fall and how many rivals are in view there goes with it (the cost of a car is the same in every version; on the
 // Nordschleife the busiest sample took 361k vertices against 354k, the fleet's heaviest one-make fields 430k against 402k: where the cars
-// were, not what they cost). tests/browser/fleet.test.mjs, which measures its fields against these references, the same
-const SHAKE = { camShake: 1, camLand: 1, camKerb: 1, camMis: 1, crV: 4 };
+// were, not what they cost). tests/browser/fleet.test.mjs, which measures its fields against these references, the same. And the steering's
+// pull after a knock only for the player's car, as when the references were recorded (Vleka krmila po trku: Samo moj avto, pullAll 0; the
+// default is Vsi avti since 17. 11. 2026, in every version of the knocks): a rival with a crushed front corner steers otherwise, so the six
+// samples fall elsewhere (Zandvoort's busiest 910k vertices against 885k and Sakhir's 902k against 860k: the scenery in view there, the
+// same objects cost the same; with the pull as recorded Sakhir's six samples are the recorded ones). The broken glass on the road (paket P5,
+// 5 % of the grip on its patch, no switch) stays: after the first knock that breaks a pane the samples may still fall a little elsewhere
+const SHAKE = { camShake: 1, camLand: 1, camKerb: 1, camMis: 1, crV: 4, pullAll: 0 };
 // the new map (NEW VERSION · TEST 1, the title's button in the new menu): built and merged, the game stood still, the car put at each
 // place, the camera behind it; the busiest frame is checked as a track's is
 async function newMap() {
@@ -127,5 +132,7 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
+// (the keys that are not a track's, _wreck: the fleet test's allowance for a wreck with its doors open, are kept as they are)
+if (update) { const keep = {}; for (const k in golden) if (k[0] === '_') keep[k] = golden[k];
+  fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : Object.assign(keep, out), null, 1) + '\n'); console.log('written ' + FILE); }
 else T.done();

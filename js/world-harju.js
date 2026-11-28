@@ -772,28 +772,31 @@
       g.quadO(P(-hl, 0, -hd), P(hl, 0, -hd), P(hl, H, -hd), P(-hl, H, -hd), col, inn, S(0.02, 0.47)); g.quadO(P(-hl, 0, hd), P(hl, 0, hd), P(hl, H, hd), P(-hl, H, hd), col, inn, S(0.02, 0.47));
       g.quadO(P(-hl, H, -hd), P(hl, H, -hd), P(hl, H, hd), P(-hl, H, hd), [col[0] * 1.06, col[1] * 1.06, col[2] * 1.04], inn, S(0.03, 0.4));
       for (const a of [-hl, hl]) g.quadO(P(a, 0, -hd), P(a, 0, hd), P(a, H, hd), P(a, H, -hd), end, inn, [[0.4, 0.05], [0.62, 0.05], [0.62, 0.3], [0.4, 0.3]]); };
+    const BK = [new Int8Array(N).fill(-1), new Int8Array(N).fill(-1)], BKK = [-1, -1, 0, -1, 1];   // (out.barKind: what was drawn at each sample, per side: 3 bales, 0 the steel crowd barriers, 1 concrete blocks; the mesh fence none)
     for (const side of [-1, 1]) {
-      let prev = null, pk = 0;
+      let prev = null, pk = 0, pvI = -1, bS = -9; const bk = BK[side > 0 ? 1 : 0];
       for (let s = Math.max(2, sStart - 30); s < T.len - 6; s += 2.5) {
         const i = T.idx(s), bt = barType(i, side), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + (bt === 1 || bt === 4 ? 0.3 : 0.15)), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
         const nn = hjNear(x, z), other = nn.i >= 0 && Math.abs(nn.i - i) * ds > 20 && nn.dd < 0.3;   // (not across another part of the road; the barrier the two carriageways share: once)
         if ((other && bt !== 4 && bt !== 1) || onBld(x, z) || (bt !== 1 && bt !== 4 && mouth[side > 0 ? 1 : 0][i] && pk !== 1)) { prev = null; pk = bt; continue; }
         const y = hjGround(x, z);
-        if (bt === 1 || bt === 4) { if (blkNear(x, z)) { prev = null; pk = bt; continue; } const g = scen.get(x, z), k = Math.floor(x) + ',' + Math.floor(z); let L = blk.get(k); if (!L) blk.set(k, L = []); L.push(x, z);
+        if (bt === 1 || bt === 4) { { const kk = bt === 1 ? 3 : 1; if (s - bS < 2.6 && pvI >= 0 && pvI < i && bk[pvI] === kk) bk.fill(kk, pvI, i); bk[i] = kk; pvI = i; bS = s; }
+          if (blkNear(x, z)) { prev = null; pk = bt; continue; } const g = scen.get(x, z), k = Math.floor(x) + ',' + Math.floor(z); let L = blk.get(k); if (!L) blk.set(k, L = []); L.push(x, z);
           if (bt === 1) { const gb = fGB.get(x, z), h = T.hd[i], w = crH(x, z, 43), col = [lerp(0.88, 0.72, w), lerp(0.74, 0.66, w), lerp(0.44, 0.52, w)];   // (golden to weathered grey)
             bale(gb, x - Math.cos(h) * 0.58, y, z - Math.sin(h) * 0.58, h + (crH(x, z, 44) - 0.5) * 0.08, col); bale(gb, x + Math.cos(h) * 0.58, y, z + Math.sin(h) * 0.58, h + (crH(x, z, 45) - 0.5) * 0.08, col);
             bale(gb, x, y + 0.44, z, h + (crH(x, z, 46) - 0.5) * 0.2, [col[0] * 1.04, col[1] * 1.04, col[2] * 1.02]); }
           else { box(g, x, y - 0.05, z, 2.3, 0.35, 0.6, T.hd[i], CONC, CONCT, true); box(g, x, y + 0.3, z, 2.3, 0.5, 0.32, T.hd[i], CONC, CONCT, true); }   // (a concrete block: a wide foot, a narrower top)
           bales.push([x, z]); exclPush(x, z, 1); prev = null; pk = bt; continue; }
         const P0 = [x, y, z];
-        if (prev && pk === bt && Math.hypot(x - prev[0], z - prev[2]) < 3.6) { const g = fGB.get(x, z), hgt = bt === 2 ? 1.12 : 1.2, u0 = bt === 2 ? 0 : 0.5, u1 = u0 + 0.5;
+        if (prev && pk === bt && Math.hypot(x - prev[0], z - prev[2]) < 3.6) { const g = fGB.get(x, z), hgt = bt === 2 ? 1.12 : 1.2, u0 = bt === 2 ? 0 : 0.5, u1 = u0 + 0.5; if (pvI >= 0 && pvI <= i) bk.fill(BKK[bt], pvI, i + 1);
           g.quadO([prev[0], prev[1] - 0.05, prev[2]], [x, y - 0.05, z], [x, y + hgt, z], [prev[0], prev[1] + hgt, prev[2]], W1, [(x + prev[0]) / 2 - T.nx[i] * side, y + 0.5, (z + prev[2]) / 2 - T.nz[i] * side], [[u0, 0.51], [u1, 0.51], [u1, 0.99], [u0, 0.99]]);
           const hs = crH(x, z, 41); if (hs < 0.34 && s > sStart - 20 && s < sFin + 20) {   // a sponsor's banner tied to the barrier (the game's own brands), readable from the road
             const k = Math.floor(crH(x, z, 42) * 8), bu = (k % 2) * 0.5, bv = 1 - Math.floor(k / 2) * 0.25, L = Math.hypot(x - prev[0], z - prev[2]);
             bannerQ((x + prev[0]) / 2, Math.min(y, prev[1]) + (bt === 2 ? 0.22 : 0.3), (z + prev[2]) / 2, T.nx[i], T.nz[i], L - 0.15, bt === 2 ? 0.62 : 0.7, bv - 0.25, bv, bu, bu + 0.5, spG.get(x, z)); } }
-        prev = P0; pk = bt;
+        prev = P0; pk = bt; pvI = i;
       }
     }
+    out.barKind = (i, side) => { const k = BK[side > 0 ? 1 : 0][i]; return k === undefined ? -1 : k; };   // (Render: what stands on the barrier line at sample i; grit only off the concrete blocks)
     const closedAt = [];   // (the closed side streets' boards: a marshal stands by each, placed with the crowds)
     { // the closed side streets: a board across, a marshal in orange
       for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0; let run0 = -1;

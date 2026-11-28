@@ -1,0 +1,104 @@
+  postanek 1: t 147.3 s, avto 0 vortex, krog 3, 1. postanek avta, kot 2.89°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 10.8 kg
+  postanek 2: t 150.7 s, avto 1 kaze, krog 3, 1. postanek avta, kot 2.63°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.297, sprednja vogala 0.00/0.06, gorivo 10.2 kg
+  postanek 3: t 152.8 s, avto 2 strega, krog 3, 1. postanek avta, kot 2.80°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.195, sprednja vogala 0.00/0.02, gorivo 11.1 kg
+  postanek 4: t 154.5 s, avto 3 pico, krog 3, 1. postanek avta, kot 3.13°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.050, sprednja vogala 0.00/0.00, gorivo 9.7 kg
+  postanek 5: t 156.3 s, avto 4 vortex, krog 3, 1. postanek avta, kot 3.07°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.097, sprednja vogala 0.00/0.05, gorivo 9.7 kg
+  postanek 6: t 158.6 s, avto 5 kaze, krog 4, 1. postanek avta, kot 2.86°, na ploščadi 3.84 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.102, sprednja vogala 0.14/0.00, gorivo 9.0 kg
+  postanek 7: t 158.8 s, avto 6 strega, krog 4, 1. postanek avta, kot 2.76°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.238, sprednja vogala 0.00/0.05, gorivo 10.7 kg
+  postanek 8: t 161.3 s, avto 7 pico, krog 4, 1. postanek avta, kot 3.14°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.1 kg
+  postanek 9: t 162.2 s, avto 8 vortex, krog 4, 1. postanek avta, kot 3.07°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.402, sprednja vogala 0.01/0.05, gorivo 9.8 kg
+  postanek 10: t 165.1 s, avto 10 strega, krog 4, 1. postanek avta, kot 2.83°, na ploščadi 3.86 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.091, sprednja vogala 0.00/0.00, gorivo 10.6 kg
+  postanek 11: t 165.1 s, avto 9 kaze, krog 4, 1. postanek avta, kot 2.66°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.184, sprednja vogala 0.00/0.02, gorivo 8.7 kg
+  postanek 12: t 166.5 s, avto 11 pico, krog 4, 1. postanek avta, kot 3.31°, na ploščadi 3.85 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.059, sprednja vogala 0.07/0.00, gorivo 9.4 kg
+  postanek 13: t 278.0 s, avto 0 vortex, krog 5, 2. postanek avta, kot 3.65°, na ploščadi 3.73 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.685, sprednja vogala 0.68/0.00, gorivo 22.1 kg
+  postanek 14: t 280.4 s, avto 1 kaze, krog 5, 2. postanek avta, kot 2.48°, na ploščadi 3.92 m (meja 2.00), vzdolž boksa -0.29 m, škoda 1.000, sprednja vogala 0.31/0.48, gorivo 21.6 kg
+seme 3: OK   postanki 14 (v boksu 14, največ 3.7°), dotiki 0, škoda 0.000, na cilju 13/13 v 389 s; duhovi drug v drugem 2.2 s, največ 0.4 s
+  postanek 1: t 147.3 s, avto 0 vortex, krog 3, 1. postanek avta, kot 2.88°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 10.8 kg
+  postanek 2: t 150.9 s, avto 1 kaze, krog 3, 1. postanek avta, kot 2.65°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.201, sprednja vogala 0.00/0.03, gorivo 10.1 kg
+  postanek 3: t 153.3 s, avto 2 strega, krog 3, 1. postanek avta, kot 2.81°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.160, sprednja vogala 0.00/0.03, gorivo 10.8 kg
+  postanek 4: t 154.9 s, avto 3 pico, krog 3, 1. postanek avta, kot 3.14°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.8 kg
+  postanek 5: t 156.7 s, avto 4 vortex, krog 3, 1. postanek avta, kot 3.11°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.081, sprednja vogala 0.00/0.00, gorivo 9.5 kg
+  postanek 6: t 159.4 s, avto 5 kaze, krog 4, 1. postanek avta, kot 2.62°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.320, sprednja vogala 0.00/0.06, gorivo 8.8 kg
+  postanek 7: t 159.6 s, avto 6 strega, krog 4, 1. postanek avta, kot 2.78°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.213, sprednja vogala 0.00/0.04, gorivo 10.6 kg
+  postanek 8: t 159.7 s, avto 7 pico, krog 4, 1. postanek avta, kot 3.13°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.013, sprednja vogala 0.00/0.00, gorivo 9.6 kg
+  postanek 9: t 163.4 s, avto 8 vortex, krog 4, 1. postanek avta, kot 3.27°, na ploščadi 3.84 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.110, sprednja vogala 0.16/0.00, gorivo 9.5 kg
+  postanek 10: t 164.2 s, avto 10 strega, krog 4, 1. postanek avta, kot 2.68°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.113, sprednja vogala 0.00/0.13, gorivo 10.5 kg
+  postanek 11: t 165.1 s, avto 9 kaze, krog 4, 1. postanek avta, kot 2.71°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.050, sprednja vogala 0.00/0.00, gorivo 9.0 kg
+  postanek 12: t 167.3 s, avto 11 pico, krog 4, 1. postanek avta, kot 3.13°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.2 kg
+  postanek 13: t 255.2 s, avto 8 vortex, krog 5, 2. postanek avta, kot 4.06°, na ploščadi 3.67 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.630, sprednja vogala 0.95/0.06, gorivo 33.8 kg  <-- NI v boksu
+seme 4: FAIL postanki 13 (v boksu 12, največ 4.1°), dotiki 0, škoda 0.000, na cilju 13/13 v 396 s; duhovi drug v drugem 3.2 s, največ 1.5 s  [1. preverjanje pade]
+  postanek 1: t 147.1 s, avto 0 vortex, krog 3, 1. postanek avta, kot 2.89°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 10.8 kg
+  postanek 2: t 150.2 s, avto 1 kaze, krog 3, 1. postanek avta, kot 2.66°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.252, sprednja vogala 0.00/0.00, gorivo 10.1 kg
+  postanek 3: t 152.5 s, avto 2 strega, krog 3, 1. postanek avta, kot 2.79°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.179, sprednja vogala 0.00/0.03, gorivo 11.0 kg
+  postanek 4: t 154.3 s, avto 3 pico, krog 3, 1. postanek avta, kot 3.09°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.193, sprednja vogala 0.00/0.03, gorivo 9.4 kg
+  postanek 5: t 156.0 s, avto 4 vortex, krog 3, 1. postanek avta, kot 3.10°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.8 kg
+  postanek 6: t 158.5 s, avto 6 strega, krog 4, 1. postanek avta, kot 2.76°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.188, sprednja vogala 0.00/0.05, gorivo 10.8 kg
+  postanek 7: t 158.8 s, avto 5 kaze, krog 4, 1. postanek avta, kot 2.56°, na ploščadi 3.91 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.154, sprednja vogala 0.00/0.12, gorivo 9.1 kg
+  postanek 8: t 161.1 s, avto 7 pico, krog 4, 1. postanek avta, kot 3.32°, na ploščadi 3.83 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.148, sprednja vogala 0.20/0.05, gorivo 9.3 kg
+  postanek 9: t 161.5 s, avto 8 vortex, krog 4, 1. postanek avta, kot 3.12°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.5 kg
+  postanek 10: t 164.6 s, avto 9 kaze, krog 4, 1. postanek avta, kot 2.70°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.208, sprednja vogala 0.00/0.00, gorivo 9.0 kg
+  postanek 11: t 164.8 s, avto 10 strega, krog 4, 1. postanek avta, kot 2.83°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.034, sprednja vogala 0.00/0.00, gorivo 10.4 kg
+  postanek 12: t 166.9 s, avto 11 pico, krog 4, 1. postanek avta, kot 3.14°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 8.8 kg
+  postanek 13: t 258.7 s, avto 11 pico, krog 5, 2. postanek avta, kot 2.69°, na ploščadi 3.98 m (meja 2.00), vzdolž boksa -0.26 m, škoda 1.000, sprednja vogala 0.31/0.71, gorivo 33.0 kg
+  postanek 14: t 259.1 s, avto 10 strega, krog 5, 2. postanek avta, kot 3.52°, na ploščadi 3.74 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.764, sprednja vogala 0.63/0.14, gorivo 33.8 kg
+  postanek 15: t 274.9 s, avto 0 vortex, krog 5, 2. postanek avta, kot 2.02°, na ploščadi 4.10 m (meja 2.00), vzdolž boksa -0.22 m, škoda 1.000, sprednja vogala 0.15/0.98, gorivo 22.0 kg
+seme 5: OK   postanki 15 (v boksu 15, največ 3.5°), dotiki 0, škoda 0.000, na cilju 13/13 v 375 s; duhovi drug v drugem 1.9 s, največ 0.3 s
+  postanek 1: t 146.8 s, avto 0 vortex, krog 3, 1. postanek avta, kot 2.89°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 10.7 kg
+  postanek 2: t 150.7 s, avto 1 kaze, krog 3, 1. postanek avta, kot 2.61°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.447, sprednja vogala 0.00/0.07, gorivo 10.0 kg
+  postanek 3: t 152.9 s, avto 2 strega, krog 3, 1. postanek avta, kot 2.75°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.348, sprednja vogala 0.00/0.07, gorivo 10.7 kg
+  postanek 4: t 153.6 s, avto 4 vortex, krog 3, 1. postanek avta, kot 2.94°, na ploščadi 3.92 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.107, sprednja vogala 0.00/0.16, gorivo 10.5 kg
+  postanek 5: t 154.5 s, avto 3 pico, krog 3, 1. postanek avta, kot 3.15°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.077, sprednja vogala 0.00/0.00, gorivo 9.2 kg
+  postanek 6: t 157.5 s, avto 5 kaze, krog 4, 1. postanek avta, kot 2.61°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.295, sprednja vogala 0.00/0.06, gorivo 9.3 kg
+  postanek 7: t 159.1 s, avto 8 vortex, krog 4, 1. postanek avta, kot 3.11°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.9 kg
+  postanek 8: t 159.3 s, avto 6 strega, krog 4, 1. postanek avta, kot 2.76°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.253, sprednja vogala 0.00/0.04, gorivo 10.4 kg
+  postanek 9: t 160.8 s, avto 7 pico, krog 4, 1. postanek avta, kot 3.16°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 8.9 kg
+  postanek 10: t 164.6 s, avto 10 strega, krog 4, 1. postanek avta, kot 2.78°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.163, sprednja vogala 0.00/0.03, gorivo 10.6 kg
+  postanek 11: t 164.7 s, avto 9 kaze, krog 4, 1. postanek avta, kot 2.69°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.089, sprednja vogala 0.00/0.00, gorivo 8.7 kg
+  postanek 12: t 166.1 s, avto 11 pico, krog 4, 1. postanek avta, kot 3.23°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.009, sprednja vogala 0.00/0.00, gorivo 9.3 kg
+  postanek 13: t 257.3 s, avto 9 kaze, krog 5, 2. postanek avta, kot 2.68°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.457, sprednja vogala 0.37/0.36, gorivo 33.7 kg
+  postanek 14: t 283.9 s, avto 4 vortex, krog 5, 2. postanek avta, kot 4.03°, na ploščadi 3.67 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.536, sprednja vogala 0.83/0.00, gorivo 22.7 kg  <-- NI v boksu
+seme 7: FAIL postanki 14 (v boksu 13, največ 4.0°), dotiki 0, škoda 0.000, na cilju 13/13 v 389 s; duhovi drug v drugem 3.4 s, največ 1.5 s  [1. preverjanje pade]
+  postanek 1: t 146.5 s, avto 0 vortex, krog 3, 1. postanek avta, kot 2.89°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 10.8 kg
+  postanek 2: t 149.6 s, avto 1 kaze, krog 3, 1. postanek avta, kot 2.61°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.376, sprednja vogala 0.00/0.08, gorivo 10.1 kg
+  postanek 3: t 151.9 s, avto 2 strega, krog 3, 1. postanek avta, kot 2.78°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.387, sprednja vogala 0.00/0.05, gorivo 10.9 kg
+  postanek 4: t 154.3 s, avto 3 pico, krog 3, 1. postanek avta, kot 3.16°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.036, sprednja vogala 0.02/0.00, gorivo 9.1 kg
+  postanek 5: t 154.4 s, avto 4 vortex, krog 3, 1. postanek avta, kot 3.04°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.136, sprednja vogala 0.00/0.06, gorivo 10.1 kg
+  postanek 6: t 157.5 s, avto 5 kaze, krog 4, 1. postanek avta, kot 2.64°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.253, sprednja vogala 0.00/0.05, gorivo 9.1 kg
+  postanek 7: t 157.5 s, avto 6 strega, krog 4, 1. postanek avta, kot 2.83°, na ploščadi 3.86 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.052, sprednja vogala 0.00/0.00, gorivo 10.9 kg
+  postanek 8: t 159.9 s, avto 7 pico, krog 4, 1. postanek avta, kot 3.13°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.058, sprednja vogala 0.00/0.00, gorivo 9.1 kg
+  postanek 9: t 163.6 s, avto 8 vortex, krog 4, 1. postanek avta, kot 3.11°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.035, sprednja vogala 0.00/0.00, gorivo 9.1 kg
+  postanek 10: t 163.7 s, avto 10 strega, krog 4, 1. postanek avta, kot 2.78°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.203, sprednja vogala 0.00/0.03, gorivo 10.4 kg
+  postanek 11: t 163.8 s, avto 9 kaze, krog 4, 1. postanek avta, kot 2.59°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.379, sprednja vogala 0.00/0.08, gorivo 8.7 kg
+  postanek 12: t 165.1 s, avto 11 pico, krog 4, 1. postanek avta, kot 3.20°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.014, sprednja vogala 0.00/0.00, gorivo 9.4 kg
+  postanek 13: t 285.7 s, avto 7 pico, krog 6, 2. postanek avta, kot 2.63°, na ploščadi 3.99 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.506, sprednja vogala 0.20/0.65, gorivo 21.7 kg
+seme 10: OK   postanki 13 (v boksu 13, največ 3.2°), dotiki 0, škoda 0.000, na cilju 13/13 v 393 s; duhovi drug v drugem 1.4 s, največ 0.3 s
+  postanek 1: t 147.1 s, avto 0 vortex, krog 3, 1. postanek avta, kot 2.88°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 10.7 kg
+  postanek 2: t 150.1 s, avto 1 kaze, krog 3, 1. postanek avta, kot 2.61°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.272, sprednja vogala 0.00/0.05, gorivo 10.1 kg
+  postanek 3: t 152.2 s, avto 2 strega, krog 3, 1. postanek avta, kot 2.83°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.054, sprednja vogala 0.00/0.00, gorivo 11.2 kg
+  postanek 4: t 154.6 s, avto 4 vortex, krog 3, 1. postanek avta, kot 3.12°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.004, sprednja vogala 0.00/0.00, gorivo 10.4 kg
+  postanek 5: t 155.5 s, avto 3 pico, krog 3, 1. postanek avta, kot 3.11°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.010, sprednja vogala 0.00/0.02, gorivo 9.2 kg
+  postanek 6: t 157.2 s, avto 6 strega, krog 4, 1. postanek avta, kot 2.80°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.173, sprednja vogala 0.00/0.03, gorivo 10.9 kg
+  postanek 7: t 159.0 s, avto 5 kaze, krog 4, 1. postanek avta, kot 2.64°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.401, sprednja vogala 0.00/0.07, gorivo 8.6 kg
+  postanek 8: t 159.3 s, avto 7 pico, krog 4, 1. postanek avta, kot 3.08°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.201, sprednja vogala 0.00/0.04, gorivo 9.5 kg
+  postanek 9: t 161.7 s, avto 8 vortex, krog 4, 1. postanek avta, kot 3.11°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.034, sprednja vogala 0.00/0.00, gorivo 9.5 kg
+  postanek 10: t 164.5 s, avto 9 kaze, krog 4, 1. postanek avta, kot 2.67°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.164, sprednja vogala 0.00/0.02, gorivo 8.7 kg
+  postanek 11: t 164.6 s, avto 10 strega, krog 4, 1. postanek avta, kot 2.76°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.224, sprednja vogala 0.00/0.05, gorivo 10.3 kg
+  postanek 12: t 164.8 s, avto 11 pico, krog 4, 1. postanek avta, kot 3.14°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.7 kg
+  postanek 13: t 242.7 s, avto 4 vortex, krog 4, 2. postanek avta, kot 3.99°, na ploščadi 3.68 m (meja 2.00), vzdolž boksa -0.21 m, škoda 0.473, sprednja vogala 0.78/0.00, gorivo 34.2 kg
+  postanek 14: t 245.6 s, avto 5 kaze, krog 5, 2. postanek avta, kot 2.27°, na ploščadi 3.97 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.735, sprednja vogala 0.00/0.36, gorivo 33.2 kg
+  postanek 15: t 259.5 s, avto 11 pico, krog 5, 2. postanek avta, kot 2.37°, na ploščadi 4.05 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.559, sprednja vogala 0.12/0.81, gorivo 33.0 kg
+seme 30: OK   postanki 15 (v boksu 15, največ 4.0°), dotiki 0, škoda 0.000, na cilju 13/13 v 373 s; duhovi drug v drugem 3.0 s, največ 1.2 s
+  postanek 1: t 147.2 s, avto 0 vortex, krog 3, 1. postanek avta, kot 2.90°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.031, sprednja vogala 0.00/0.00, gorivo 10.9 kg
+  postanek 2: t 150.2 s, avto 1 kaze, krog 3, 1. postanek avta, kot 2.63°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.275, sprednja vogala 0.00/0.05, gorivo 10.1 kg
+  postanek 3: t 152.5 s, avto 2 strega, krog 3, 1. postanek avta, kot 2.80°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.208, sprednja vogala 0.00/0.04, gorivo 11.1 kg
+  postanek 4: t 154.9 s, avto 3 pico, krog 3, 1. postanek avta, kot 3.13°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.118, sprednja vogala 0.01/0.01, gorivo 9.1 kg
+  postanek 5: t 154.9 s, avto 4 vortex, krog 3, 1. postanek avta, kot 3.11°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.007, sprednja vogala 0.00/0.00, gorivo 10.2 kg
+  postanek 6: t 157.6 s, avto 5 kaze, krog 4, 1. postanek avta, kot 2.60°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.374, sprednja vogala 0.00/0.08, gorivo 9.2 kg
+  postanek 7: t 159.3 s, avto 6 strega, krog 4, 1. postanek avta, kot 3.02°, na ploščadi 3.82 m (meja 2.00), vzdolž boksa -0.29 m, škoda 0.270, sprednja vogala 0.17/0.00, gorivo 10.4 kg
+  postanek 8: t 161.4 s, avto 7 pico, krog 4, 1. postanek avta, kot 3.01°, na ploščadi 3.90 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.632, sprednja vogala 0.06/0.17, gorivo 8.7 kg
+  postanek 9: t 162.3 s, avto 8 vortex, krog 4, 1. postanek avta, kot 3.05°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.22 m, škoda 0.130, sprednja vogala 0.04/0.10, gorivo 9.3 kg
+  postanek 10: t 164.5 s, avto 9 kaze, krog 4, 1. postanek avta, kot 2.63°, na ploščadi 3.89 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.362, sprednja vogala 0.00/0.05, gorivo 9.0 kg
+  postanek 11: t 166.1 s, avto 10 strega, krog 4, 1. postanek avta, kot 2.76°, na ploščadi 3.88 m (meja 2.00), vzdolž boksa -0.28 m, škoda 0.281, sprednja vogala 0.00/0.06, gorivo 10.6 kg
+  postanek 12: t 167.6 s, avto 11 pico, krog 4, 1. postanek avta, kot 3.23°, na ploščadi 3.87 m (meja 2.00), vzdolž boksa -0.27 m, škoda 0.000, sprednja vogala 0.00/0.00, gorivo 9.4 kg
+  postanek 13: t 280.0 s, avto 3 pico, krog 5, 2. postanek avta, kot 2.76°, na ploščadi 3.96 m (meja 2.00), vzdolž boksa -0.26 m, škoda 0.756, sprednja vogala 0.25/0.58, gorivo 22.4 kg
+seme 32: FAIL postanki 13 (v boksu 13, največ 3.2°), dotiki 0, škoda 0.000, na cilju 13/13 v 399 s; duhovi drug v drugem 5.3 s, največ 1.5 s  [2. preverjanje pade]

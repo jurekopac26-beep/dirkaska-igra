@@ -639,6 +639,7 @@
           if (SN && i % 16 === (side > 0 ? 0 : 8) && i > 4 && i < iE - 4 && !nearPad(i) && !mv && vrLCf(T.px[i], T.pz[i], 3) > 0.5) lampSpots.push([i, side]);   // (the village's street lamps)
         }
       }
+      out.barKind = (i, side) => { const nd = need[side > 0 ? 1 : 0]; return nd[i] && (nd[i + 1] || nd[i - 1]) ? 0 : -1; };   // (Render: what stands on the barrier line at sample i: -1 nothing (snow banks, nets, open ground), 0 the steel rail as drawn above; the grit of a wall strike only off 1)
       out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => vp[side > 0 ? 1 : 0][i]);
       const sA = sStart + 30, sB = sFin - 30;
       out.propStats = roadsideProps(out.props, { spots: postSpots, postEdge: [1.0, 1.4], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,

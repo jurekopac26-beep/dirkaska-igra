@@ -1,0 +1,24 @@
+=== izoard/crash pred
+k 838 s 202.101 v 39.851 -> 28.775 skoda 0.027 -> 0.493 koles 0 hitWall 19.117 hitCar 5.211 hitObs 0 d -6.432 konec false
+k 1084 s 247.744 v 19.762 -> 18.748 skoda 0.493 -> 0.572 koles 0 hitWall 19.117 hitCar 5.211 hitObs 0 d -7.367 konec false
+k 2262 s 463.213 v 19.198 -> 19.49 skoda 0.572 -> 0.629 koles 0 hitWall 19.117 hitCar 7.1 hitObs 0 d -1.425 konec false
+k 4465 s 856.393 v 22.738 -> 21.508 skoda 0.649 -> 0.789 koles 0 hitWall 19.117 hitCar 12.268 hitObs 0 d 0.389 konec false
+k 4467 s 856.746 v 21.586 -> 21.491 skoda 0.789 -> 0.8 koles 1 hitWall 19.117 hitCar 12.268 hitObs 0 d 0.473 konec false
+k 4550 s 863.12 v 2.207 -> 12.016 skoda 0.8 -> 1 koles 2 hitWall 19.117 hitCar 16.056 hitObs 0 d 1.268 konec false
+=== izoard/crash po
+k 611 s 135.134 v 30.479 -> 29.753 skoda 0 -> 0.027 koles 0 hitWall 0 hitCar 5.211 hitObs 0 d 2.81 konec false
+k 838 s 202.101 v 39.851 -> 28.775 skoda 0.027 -> 0.493 koles 0 hitWall 19.117 hitCar 5.211 hitObs 0 d -6.432 konec false
+k 1084 s 247.744 v 19.762 -> 18.897 skoda 0.493 -> 0.572 koles 0 hitWall 19.117 hitCar 5.211 hitObs 0 d -7.367 konec false
+k 6456 s 1137.85 v 23.644 -> 22.715 skoda 0.58 -> 0.665 koles 0 hitWall 19.117 hitCar 8.809 hitObs 0 d 2.575 konec false
+=== luanda/crash pred
+k 855 s 188.59 v 44.125 -> 36.526 skoda 0 -> 0.377 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -6.996 konec false
+k 878 s 195.306 v 36.64 -> 34.666 skoda 0.377 -> 0.57 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -7.867 konec false
+k 1006 s 233.482 v 38.093 -> 36.86 skoda 0.57 -> 0.653 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -7.464 konec false
+k 1070 s 252.632 v 37.865 -> 36.681 skoda 0.653 -> 0.704 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -8.303 konec false
+k 3673 s 1330.757 v 58.718 -> 57.674 skoda 0.704 -> 0.837 koles 2 hitWall 15.978 hitCar 11.827 hitObs 0 d -2.477 konec false
+k 3674 s 1331.247 v 57.674 -> 55.869 skoda 0.837 -> 0.881 koles 2 hitWall 15.978 hitCar 11.827 hitObs 0 d -2.512 konec false
+=== luanda/crash po
+k 855 s 188.59 v 44.125 -> 36.526 skoda 0 -> 0.377 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -6.996 konec false
+k 878 s 195.306 v 36.64 -> 34.666 skoda 0.377 -> 0.57 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -7.867 konec false
+k 1006 s 233.482 v 38.093 -> 36.86 skoda 0.57 -> 0.653 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -7.464 konec false
+k 1070 s 252.632 v 37.865 -> 37.056 skoda 0.653 -> 0.704 koles 0 hitWall 15.978 hitCar 2.602 hitObs 0 d -8.303 konec false

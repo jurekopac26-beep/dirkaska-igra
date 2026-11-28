@@ -5,6 +5,8 @@
 // results, first under the arch in the race). On Chapman's Peak (a real open road with a field):
 //   1. two cars at the line, the player 0.25 m ahead on the road but 3.5 m behind by the distance run: the player first, the time of its crossing;
 //   2. whole races (21 AI + the player on autopilot, 2 seeds): every car's finish time is its crossing of the line on the road, the order theirs.
+// Two cars across the line in the same step (24. 11. 2026: the order was the loop's, so the one 0.0001 s behind could be placed ahead):
+//   1b. the one that crossed first is ahead whichever the loop took first, and each pulls up in a slot of its own past the line.
 // The driving is not touched (only the times and the order are read).
 //   node tests/cilj-odprte-ceste.test.js
 'use strict';
@@ -39,6 +41,23 @@ const opts = (o) => Object.assign({ numAI: 21, playerGrid: 12, laps: 1, playerMo
   const res = r.estimateResults();
   check('the results (as the results screen sorts them): the player on top, the rival second', res[0].car === P && res[1].car === R,
     res.slice(0, 2).map(x => `${x.car === P ? 'player' : 'rival'} ${x.time.toFixed(4)} s`).join(', '));
+}
+
+// 1b. two cars across the line in one step, the loop's second one the first on the road
+{
+  Math.random = seeded(5);
+  const r = new C.Race(T, opts({ numAI: 2, seed: 5 })), P = r.player, [A, B] = r.cars.filter(c => c !== P); r.start();
+  r.state = 'racing'; r.time = 100;
+  for (const c of [A, B]) { c.lap = 1; c.cp = T.cpS.length; c.splits = T.cpS.map(() => 90); }
+  const ds = 0.4, F = T.finishS, L = T.raceLen;
+  // the same step: A 0.1 m past the line (across it late in the step), then B 0.3 m past it (across it earlier)
+  A.dist = L + 0.1; r._progressOpen(A, { s: F + 0.1 }, ds, DT);
+  B.dist = L + 0.3; r._progressOpen(B, { s: F + 0.3 }, ds, DT);
+  check('the line: two cars across it in one step, the one that crossed first ahead (the loop took it second)',
+    A.finished && B.finished && B.finishTime < A.finishTime && B.finishPos === 1 && A.finishPos === 2 && r.finishOrder[0] === B && r.finishOrder[1] === A,
+    `B ${B.finishTime.toFixed(5)} s #${B.finishPos}, A ${A.finishTime.toFixed(5)} s #${A.finishPos}`);
+  check('the line: the two each in a slot of its own past it', A.parkS != null && B.parkS != null && Math.abs(A.parkS - B.parkS) > 1,
+    `A ${A.parkS && A.parkS.toFixed(1)} m, B ${B.parkS && B.parkS.toFixed(1)} m`);
 }
 
 // 2. whole races: every car's finish time is its crossing of the line on the road, the finish order the order of the crossings

@@ -1,0 +1,5 @@
+klicev 40000 zadetkov 24467 nan 0
+zadaj    {"zapira":1096,"wPovp":2.188,"wMax":4.499,"EsPovpJ":87.892,"EsMaxJ":273.22,"parBrez":0,"parBrezMaxJ":0,"parZ":469,"parZMaxJ":271.042,"neplacano":469,"poSunku":0,"najPar":{"id":"medved","v0":55.594,"w0":0.252,"vn":3.069,"k":2.205,"kolo0":[5.874,0],"wKolo":-4.481,"EsJ":271.042,"dBrezJ":0,"dZJ":271.042}}
+spredaj  {"zapira":4072,"wPovp":2.266,"wMax":4.5,"EsPovpJ":92.084,"EsMaxJ":273.355,"parBrez":0,"parBrezMaxJ":0,"parZ":1211,"parZMaxJ":270.821,"neplacano":1211,"poSunku":0,"najPar":{"id":"strega","v0":12.269,"w0":6.808,"vn":10.748,"k":2.059,"kolo0":[3.32,0],"wKolo":-4.479,"EsJ":270.821,"dBrezJ":0,"dZJ":270.821}}
+bok      {"zapira":7126,"wPovp":2.256,"wMax":4.5,"EsPovpJ":91.678,"EsMaxJ":273.355,"parBrez":0,"parBrezMaxJ":0,"parZ":3057,"parZMaxJ":273.355,"neplacano":3057,"poSunku":0,"najPar":{"id":"skorpijon","v0":3.458,"w0":0,"vn":0.319,"k":0.2,"kolo0":[3.099,0],"wKolo":4.5,"EsJ":273.355,"dBrezJ":0,"dZJ":273.355}}
+neZapira {"n":12173,"zVrtenjem":12173,"wMax":4.5,"EsMaxJ":273.355}

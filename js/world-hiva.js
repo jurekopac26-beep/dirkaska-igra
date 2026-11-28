@@ -173,6 +173,7 @@
       }
       addM(gr, rMat, true);
     }
+    out.barKind = () => 1;   // (Render: what stands on the barrier line: a concrete wall all the way along on both sides, kindAt's 0 the low barrier and 1 the white wall)
     const scen = new Chunks(128);
     {   // the catch fence along the white walls by the start
       const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), gf = new RB(true);

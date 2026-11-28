@@ -161,6 +161,7 @@
     const bridgeAt = new Uint8Array(N); for (const [a, b] of BR) for (let s = a - 4; s <= b + 4; s += ds / 2) bridgeAt[T.idx(s)] = 1;
     const startArea = (i) => { const d = dS(i * ds); return d > L - 320 || d < 140; };
     const kindAt = (i) => (bridgeAt[i] ? 2 : startArea(i) ? 1 : 0);   // 0 stone wall, 1 white wall and fence, 2 parapet
+    out.barKind = () => 1;   // (Render: masonry or concrete all the way on both sides, each of the three kinds: a wall strike breaks grit off)
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const stone = [0.8, 0.72, 0.6], stoneD = [0.62, 0.55, 0.46], stoneT = [0.86, 0.8, 0.7], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72], par = [0.82, 0.8, 0.76];
     const wallRow = (gr, i, side, k) => {

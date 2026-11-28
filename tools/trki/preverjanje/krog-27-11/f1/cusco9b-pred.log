@@ -1,0 +1,10 @@
+  k 1275 touch vogal 1 lokalno [1.975,0.9] pen 0.063 n [-0.581, 0.814] kotKaroserijeDoOgraje -4.298 deg vnVogal -12.63 vnSredisce -13.53 w -0.473
+      wallR tockaSunka lokalno [0.457,0.495] vnTockaSunka -13.332 sunek
+k 1275 rally hit 12.63 skoda 0.247 -> 0.531 dolzina 3.95 sirina 1.8 plin 1 volan -1 v 29.658
+  k 1281 touch vogal 3 lokalno [-1.975,0.9] pen 0.018 n [-0.578, 0.816] kotKaroserijeDoOgraje 3.178 deg vnVogal -5.936 vnSredisce -1.006 w -2.565
+      wallR tockaSunka lokalno [-0.482,0.495] vnTockaSunka -2.171 sunek
+k 1281 rally hit 5.936 skoda 0.531 -> 0.627 dolzina 3.95 sirina 1.8 plin 0.8 volan -0.333 v 29.146
+  k 1282 touch vogal 3 lokalno [-1.975,0.9] pen 0.013 n [-0.579, 0.816] kotKaroserijeDoOgraje 3.88 deg vnVogal -1.538 vnSredisce 1.221 w -1.445
+      wallR tockaSunka lokalno [-1.086,0.495] vnTockaSunka -0.296 sunek
+k 1282 rally hit 1.538 skoda 0.627 -> 0.627 dolzina 3.95 sirina 1.8 plin 1 volan -0.2 v 29.144
+k 1283 rally hit 0.942 skoda 0.627 -> 0.627 dolzina 3.95 sirina 1.8 plin 0.8 volan -0.067 v 29.079

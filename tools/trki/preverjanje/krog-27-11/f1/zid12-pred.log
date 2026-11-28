@@ -1,0 +1,7 @@
+{"drevo":"pred","NOA":0,"NOB":0,"A":0,"B":0,"BFROM":0,"pravilo":false,"dirk":1,"korakovSSkodo":42,"skodaOgraja":4.482,"epizod":13,"porazdelitevKorakov":{"1":8,"2":1,"4":1,"5+":3},"delezSkodeNadNajvecjimKorakom":0.476,"brezSunkaKorakov":12,"brezSunkaDelezSkode":0.099,"igralcuOdpadeKolo":0,"odTegaVKorakuBrezSunka":0,"konecIgre":0,"B_klicev":0,"B_uporabljen":0}
+najvec skode {"run":"mombasa/formula","id":"formula","igralec":false,"k0":1327,"korakov":7,"skoda":0.982,"najvecjiKorak":0.197,"hitMax":9.526,"konecSkoda":1,"odstop":false,"koles":0,"cilj":false,"s":2189.979,"v":53.442,"mesto":3}
+najdaljsa {"run":"mombasa/formula","id":"formula","igralec":false,"k0":1331,"korakov":12,"skoda":0.444,"najvecjiKorak":0.071,"hitMax":5.023,"konecSkoda":0.674,"odstop":false,"koles":0,"cilj":false,"s":2244.263,"v":48.002,"mesto":2}
+
+real	0m3.223s
+user	0m4.735s
+sys	0m0.417s

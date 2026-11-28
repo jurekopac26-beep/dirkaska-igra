@@ -190,6 +190,7 @@
        fence and the crowd behind it; a barrier across the road at both its ends ---- */
     const startArea = (i) => { const d = dS(i * ds); return d < 140 || d > dFin - 100; };
     const kindAt = (i) => (startArea(i) ? 1 : 0);   // 0 concrete, 1 white wall and fence
+    out.barKind = () => 1;   // (Render: what stands on the barrier line: a concrete wall all the way along on both sides, kindAt's 0 the low barrier and 1 the white wall)
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const conc = [0.84, 0.82, 0.78], concD = [0.64, 0.62, 0.58], concT = [0.9, 0.88, 0.84], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72];
     const wallRow = (gr, i, side, k) => {

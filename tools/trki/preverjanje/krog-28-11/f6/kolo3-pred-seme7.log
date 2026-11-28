@@ -1,0 +1,5 @@
+klicev 40000 zadetkov 24540 nan 0
+zadaj    {"zapira":1157,"wPovp":2.215,"wMax":4.499,"EsPovpJ":89.169,"EsMaxJ":273.291,"parBrez":0,"parBrezMaxJ":0,"parZ":519,"parZMaxJ":273.291,"neplacano":519,"poSunku":0,"najPar":{"id":"lev","v0":11.197,"w0":0,"vn":5.062,"k":1.755,"kolo0":[1.464,0],"wKolo":4.499,"EsJ":273.291,"dBrezJ":0,"dZJ":273.291}}
+spredaj  {"zapira":4001,"wPovp":2.282,"wMax":4.499,"EsPovpJ":93.46,"EsMaxJ":273.291,"parBrez":0,"parBrezMaxJ":0,"parZ":1286,"parZMaxJ":273.215,"neplacano":1286,"poSunku":0,"najPar":{"id":"pico","v0":59.929,"w0":0.124,"vn":1.926,"k":2.13,"kolo0":[1.932,0],"wKolo":-4.499,"EsJ":273.215,"dBrezJ":0,"dZJ":273.215}}
+bok      {"zapira":7137,"wPovp":2.23,"wMax":4.5,"EsPovpJ":89.898,"EsMaxJ":273.315,"parBrez":0,"parBrezMaxJ":0,"parZ":3081,"parZMaxJ":273.315,"neplacano":3081,"poSunku":0,"najPar":{"id":"p206","v0":7.953,"w0":4.12,"vn":5.925,"k":1.757,"kolo0":[7.63,0],"wKolo":4.5,"EsJ":273.315,"dBrezJ":0,"dZJ":273.315}}
+neZapira {"n":12245,"zVrtenjem":12245,"wMax":4.5,"EsMaxJ":273.355}

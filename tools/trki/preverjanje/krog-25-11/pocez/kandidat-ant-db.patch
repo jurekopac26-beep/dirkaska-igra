@@ -1,0 +1,16 @@
+diff --git a/js/core.js b/js/core.js
+index 37880a6..9513335 100644
+--- a/js/core.js
++++ b/js/core.js
+@@ -5331,8 +5331,9 @@ const Core = (function () {
+     if ((c.ty || c.fuel != null) && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && !gT && Math.abs(o.q.d - q.d) < (M.aiFol ? M.aiFol + 0.3 : 2.4)) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
+     if (KR && c.aiHz) { const H = c.aiHz, Lw = T.open ? 0 : T.len; let g = H.o.dist - c.dist; if (Lw && (g > Lw / 2 || g < -Lw / 2)) g -= Lw * Math.round(g / Lw);   // (Realistična: the car in the road ahead, aiHazard: down to the speed past it by H.gs m before it,
+       if (g > 2 - H.gs) { const vq = Math.abs(q.d - H.o.q.d) >= H.need + HZ.lc ? H.vp : Math.min(H.vp, HZ.vc); vT = Math.min(vT, Math.sqrt(vq * vq + 2 * H.a * Math.max(0, g - H.gs))); }
+-      if (H.fq) { const o = H.fq; let g2 = o.dist - c.dist; if (Lw && (g2 > Lw / 2 || g2 < -Lw / 2)) g2 -= Lw * Math.round(g2 / Lw); const u = Math.max(0, o.vl);
+-        if (g2 > 0) vT = Math.min(vT, Math.sqrt(u * u + 2 * H.a * Math.max(0, g2 - (o.m.len + M.len) * 0.5 - 2))); } }   // to a crawl while not yet clear of it across; none once past it, before the next look)
++      if (H.fq) { const o = H.fq; let g2 = o.dist - c.dist; if (Lw && (g2 > Lw / 2 || g2 < -Lw / 2)) g2 -= Lw * Math.round(g2 / Lw); let u = Math.max(0, o.vl); const e = g2 - (o.m.len + M.len) * 0.5 - 2, go = g - g2 - (H.gs + (o.m.len - M.len) * 0.5);
++        if (go > 2 - H.gs) { const vqo = Math.abs(o.q.d - H.o.q.d) >= H.need + (o.m.wid - M.wid) * 0.5 + HZ.lc ? H.vp : Math.min(H.vp, HZ.vc); u = Math.min(u, Math.sqrt(vqo * vqo + 2 * H.a * Math.max(0, go))); }   // (the car ahead will itself slow for the same car in the road: its speed on its own envelope, not only the speed it has now)
++        if (g2 > 0) vT = Math.min(vT, e > 0 ? Math.sqrt(u * u + 2 * H.a * e) : Math.max(0, u + e * 0.8)); } }   // (nearer than a car's gap: drop back to it, as behind any car)   // to a crawl while not yet clear of it across; none once past it, before the next look)
+     let thr = 0, brk = 0;
+     if (v < vT - 0.8) thr = 1;
+     else if (v < vT + 0.6) thr = 0.45;

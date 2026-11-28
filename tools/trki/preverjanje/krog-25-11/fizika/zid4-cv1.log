@@ -1,0 +1,3 @@
+{"cv":1,"dirk":32,"korakovSSkodo":117,"skodaOgraja":24.393,"epizod":112,"korakovNaEpizodo":1.045,"porazdelitevKorakov":{"1":107,"2":5},"skodaNaEpizodo":0.218,"razmerjeEpizodaProtiNajvecjemuKoraku":1.01,"delezSkodeNadNajvecjimKorakom":0.009,"brezSunkaKorakov":0,"brezSunkaDelezSkode":0}
+najvecje razmerje {"run":"spa/formula","id":"formula","igralec":false,"k0":895,"korakov":2,"skoda":0.17,"najvecjiKorak":0.093,"hitMax":5.815}
+najvec skode {"run":"hiva/crash","id":"rally","igralec":true,"k0":857,"korakov":1,"skoda":0.892,"najvecjiKorak":0.892,"hitMax":34.352}

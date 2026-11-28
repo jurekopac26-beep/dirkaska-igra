@@ -1,0 +1,47 @@
+diff --git a/js/core.js b/js/core.js
+index 37880a6..3f72b0d 100644
+--- a/js/core.js
++++ b/js/core.js
+@@ -5100,13 +5100,17 @@ const Core = (function () {
+     const wq = T.wa ? T.wa[h.q.i] : T.w, lm = wq - (M.aiEdge || 1.25), need = he + M.wid * 0.5, od = h.q.d, RL = c.uRl || T.rl;
+     if (Math.abs(clamp(RL[h.q.i] + c.laneBias, -lm, lm) - od) >= need + HZ.mg) return null;   // (its own line passes clear of it)
+     const cR = lm - (od + need), cL = (od - need) + lm, side = cR > cL ? 1 : -1, cl = Math.max(cR, cL);
+-    let fq = null, fg = hg;   // (the nearest car before it in c's way and slower: the queue behind it, followed down to its speed with a car's gap)
++    let fq = null, fg = hg, hold = null;   // (the nearest car before it in c's way and slower: the queue behind it, followed down to its speed with a car's gap)
++    const pq = c.aiHz ? c.aiHz.fq : null, ZIP = globalThis.HZZIP, GIVE = globalThis.HZGIVE;
+     for (const o of race.cars) {
+-      if (o === c || o === h || !o.m || o.inPit || o.pitG || !(o.vl < v) || Math.abs(o.q.d - c.q.d) >= (o.m.wid + M.wid) * 0.5 + 0.5) continue;
++      if (o === c || o === h || !o.m || o.inPit || o.pitG) continue;
+       let gap = o.dist - c.dist; if (Lw && (gap > Lw / 2 || gap < -Lw / 2)) gap -= Lw * Math.round(gap / Lw);
+-      if (gap > 0 && gap < fg) { fq = o; fg = gap; }
++      const u = Math.max(0, o.vl), lat = o.q.d - c.q.d, ws = (o.m.wid + M.wid) * 0.5, ls = (o.m.len + M.len) * 0.5;
++      if (gap > 0 && gap < fg && o.vl < v && (Math.abs(lat) < ws + 0.5 || (ZIP && Math.abs(o.q.d - od) < he + o.m.wid * 0.5 + HZ.lc && (o === pq || gap >= ls + 2 + (v * v - u * u) / (2 * a))))) { fq = o; fg = gap; }
++      if (GIVE && lat * side >= ws + 0.5 && u > v && gap < ls + 1 && -gap < ls + 2 + (u * u - v * v) / (2 * a)) { const e = o.q.d - side * (ws + 0.6); if (hold == null || (e - hold) * side < 0) hold = e; }
+     }
+-    return { o: h, fq, off: clamp(od + side * (need + clamp(cl, 0, HZ.mg)), -lm, lm) - RL[h.q.i], gs: M.len * 0.5 + hl + 2, need, vp: cl >= HZ.cl ? clamp(HZ.v0 + HZ.vk * cl, HZ.v0, HZ.v1) : HZ.vc, a, far: hg > Math.max(30, v * HZ.sT) };
++    const off = clamp(od + side * (need + clamp(cl, 0, HZ.mg)), -lm, lm) - RL[h.q.i], ho = hold == null ? off : hold - RL[c.q.i];
++    return { o: h, fq, off, to: side > 0 ? Math.min(off, ho) : Math.max(off, ho), gs: M.len * 0.5 + hl + 2, need, vp: cl >= HZ.cl ? clamp(HZ.v0 + HZ.vk * cl, HZ.v0, HZ.v1) : HZ.vc, a, far: hg > Math.max(30, v * HZ.sT) };
+   }
+   // a ghost off the lane onto the apron (its offset past the lane's edge, pz.lout) and on its way into a box that is not c's: the car behind it in the lane
+   // is not held by it (gT in aiControl)
+@@ -5180,7 +5184,7 @@ const Core = (function () {
+       if (c.chr && !c.passing) { const d = aiDefend(c, race, v); if (d != null) target = d; }   // (a car close behind before a braking zone: an aggressive one covers the inside)
+       if (KR) {   // (Realistična: a car standing in the road or sliding across it further ahead, aiHazard: round it in time, HZ.sT s before it, and braked for it below)
+         const H = krOn(c) && race.state === 'racing' && !(c.pitWant && (c.inPit || c.pitG || (T.def.pit && (T.pitAt(q.s) || T.pitAt(q.s + 60))))) && !c.sc && !c.police && !c.pol && !race.pol && !race.tf && c.parkS == null && !(XR.ai && !c.isPlayer) ? aiHazard(c, race, v, Lw) : null;
+-        if (H) { c.aiHz = H; if (!H.far) { target = H.off; c.passing = 0; } } else if (c.aiHz) c.aiHz = null;
++        if (H) { c.aiHz = H; if (!H.far) { target = H.to; c.passing = 0; } } else if (c.aiHz) c.aiHz = null;
+       }
+       c.aiOffT = target;
+     }
+@@ -5331,8 +5335,9 @@ const Core = (function () {
+     if ((c.ty || c.fuel != null) && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && !gT && Math.abs(o.q.d - q.d) < (M.aiFol ? M.aiFol + 0.3 : 2.4)) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
+     if (KR && c.aiHz) { const H = c.aiHz, Lw = T.open ? 0 : T.len; let g = H.o.dist - c.dist; if (Lw && (g > Lw / 2 || g < -Lw / 2)) g -= Lw * Math.round(g / Lw);   // (Realistična: the car in the road ahead, aiHazard: down to the speed past it by H.gs m before it,
+       if (g > 2 - H.gs) { const vq = Math.abs(q.d - H.o.q.d) >= H.need + HZ.lc ? H.vp : Math.min(H.vp, HZ.vc); vT = Math.min(vT, Math.sqrt(vq * vq + 2 * H.a * Math.max(0, g - H.gs))); }
+-      if (H.fq) { const o = H.fq; let g2 = o.dist - c.dist; if (Lw && (g2 > Lw / 2 || g2 < -Lw / 2)) g2 -= Lw * Math.round(g2 / Lw); const u = Math.max(0, o.vl);
+-        if (g2 > 0) vT = Math.min(vT, Math.sqrt(u * u + 2 * H.a * Math.max(0, g2 - (o.m.len + M.len) * 0.5 - 2))); } }   // to a crawl while not yet clear of it across; none once past it, before the next look)
++      if (H.fq) { const o = H.fq; let g2 = o.dist - c.dist; if (Lw && (g2 > Lw / 2 || g2 < -Lw / 2)) g2 -= Lw * Math.round(g2 / Lw); let u = Math.max(0, o.vl); const e = g2 - (o.m.len + M.len) * 0.5 - 2, go = g - g2 - (H.gs + (o.m.len - M.len) * 0.5);
++        if (globalThis.HZANT && go > 2 - H.gs) { const vqo = Math.abs(o.q.d - H.o.q.d) >= H.need + (o.m.wid - M.wid) * 0.5 + HZ.lc ? H.vp : Math.min(H.vp, HZ.vc); u = Math.min(u, Math.sqrt(vqo * vqo + 2 * H.a * Math.max(0, go))); }
++        if (g2 > 0) vT = Math.min(vT, e > 0 || !globalThis.HZDB ? Math.sqrt(u * u + 2 * H.a * Math.max(0, e)) : Math.max(0, u + e * 0.8)); } }   // to a crawl while not yet clear of it across; none once past it, before the next look)
+     let thr = 0, brk = 0;
+     if (v < vT - 0.8) thr = 1;
+     else if (v < vT + 0.6) thr = 0.45;

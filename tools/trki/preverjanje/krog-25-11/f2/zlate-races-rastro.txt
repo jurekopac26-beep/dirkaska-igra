@@ -1,0 +1,6 @@
+rastro/cs                 fin 13/13 winner  157.29 s spins 0 walls 0 rescues 0 5c71f9ef65dc8314a6efe0e5 OK
+rastro/cs/rain            fin 13/13 winner   187.1 s spins 0 walls 0 rescues 0 89dee247247f9bb1da4d7d6b OK
+rastro/cs/formula         fin 13/13 winner  144.44 s spins 0 walls 0 rescues 0 3a99a6c4dd6b31301157e6d9 OK
+rastro/cs/lm              fin 13/13 winner  146.32 s spins 0 walls 0 rescues 0 ade80596421730029e111bf2 OK
+rastro/cs/car             fin 13/13 winner  157.67 s spins 0 walls 0 rescues 0 812457384d5191c31daaff1d OK
+OK: all races fine (16 s)

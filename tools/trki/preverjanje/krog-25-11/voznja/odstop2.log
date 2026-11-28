@@ -1,0 +1,24 @@
+== odstop v polju cv1, igralec (zadnji v vrsti) korak 240, STOP=0
+cv veja 1 cv main privzeta postavitev race NAI -1 opts {} drive false | 5 s
+spa seme 9 avtov 13 RAZLIKA k=1603 (13.36 s) kaze#9 x -119.36776226515416 / -119.36776224989042 | prvi dotik veje k=281 carCollide:pico/vortex | dotikov {"carCollide":549} prvi {"carCollide":281} | poskodovanih 2, v cilju 0
+kotor seme 9 avtov 13 RAZLIKA k=265 (2.21 s) rally#11 x 7.013607097685901 / 7.013631638148992 | prvi dotik veje k=-1  | dotikov {"retireBlocked":1} prvi {"retireBlocked":265} | poskodovanih 0, v cilju 0  <<< RAZLIKA PRED DOTIKOM BREZ NEVARNOSTI
+seoul seme 9 avtov 13 RAZLIKA k=361 (3.01 s) strega#10 x -127.84997532557169 / -127.84997520840642 | prvi dotik veje k=329 carCollide:strega/rally | dotikov {"carCollide":33} prvi {"carCollide":329} | poskodovanih 2, v cilju 0
+koli seme 9 avtov 13 RAZLIKA k=240 (2.00 s) rally#11 x -59.186335565101245 / -59.18620808832253 | prvi dotik veje k=-1  | dotikov {"retireBlocked":1} prvi {"retireBlocked":240} | poskodovanih 0, v cilju 0  <<< RAZLIKA PRED DOTIKOM BREZ NEVARNOSTI
+montreal seme 9 avtov 13 RAZLIKA k=267 (2.23 s) pico#3 x -6.0736648315366475 / -6.073664831492799 | prvi dotik veje k=265 carCollide:pico/vortex | dotikov {"carCollide":3} prvi {"carCollide":265} | poskodovanih 2, v cilju 0
+killar seme 9 avtov 13 RAZLIKA k=389 (3.24 s) strega#2 x 10.625056306383009 / 10.625056308019014 | prvi dotik veje k=352 carCollide:strega/pico | dotikov {"carCollide":45} prvi {"carCollide":352} | poskodovanih 2, v cilju 0
+== odstop v polju cv1, avto 6 korak 240
+cv veja 1 cv main privzeta postavitev race NAI -1 opts {} drive false | 7 s
+spa seme 9 avtov 13 ENAKO 25.0 s | prvi dotik veje k=281 carCollide:pico/vortex | dotikov {"carCollide":785} prvi {"carCollide":281} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+kotor seme 9 avtov 13 RAZLIKA k=308 (2.57 s) strega#2 x 3.027299032013159 / 3.0272990320131594 | prvi dotik veje k=307 carCollide:strega/pico | dotikov {"carCollide":2} prvi {"carCollide":307} | poskodovanih 2, v cilju 0
+seoul seme 9 avtov 13 ENAKO 25.0 s | prvi dotik veje k=356 carCollide:kaze/rally | dotikov {"carCollide":133} prvi {"carCollide":356} | poskodovanih 2, v cilju 0, vrstni red cilja enak
+koli seme 9 avtov 13 RAZLIKA k=411 (3.42 s) vortex#4 x -0.05765538808088206 / -0.057655379506623895 | prvi dotik veje k=321 carCollide:kaze/rally | dotikov {"carCollide":31} prvi {"carCollide":321} | poskodovanih 2, v cilju 0
+montreal seme 9 avtov 13 RAZLIKA k=267 (2.23 s) pico#3 x -6.0736648315366475 / -6.073664831492799 | prvi dotik veje k=265 carCollide:pico/vortex | dotikov {"carCollide":3} prvi {"carCollide":265} | poskodovanih 2, v cilju 0
+killar seme 9 avtov 13 RAZLIKA k=389 (3.24 s) strega#2 x 10.625056306383009 / 10.625056308019014 | prvi dotik veje k=388 carCollide:strega/vortex | dotikov {"carCollide":2} prvi {"carCollide":388} | poskodovanih 2, v cilju 0
+== odstop v polju cv1, avto 0 korak 200
+cv veja 1 cv main privzeta postavitev race NAI -1 opts {} drive false | 9 s
+spa seme 9 avtov 13 ENAKO 25.0 s | prvi dotik veje k=281 carCollide:pico/vortex | dotikov {"carCollide":1109} prvi {"carCollide":281} | poskodovanih 0, v cilju 0, vrstni red cilja enak
+kotor seme 9 avtov 13 RAZLIKA k=306 (2.55 s) strega#2 vx -4.752452900294875 / -4.752452992009151 | prvi dotik veje k=305 carCollide:strega/pico | dotikov {"carCollide":2} prvi {"carCollide":305} | poskodovanih 2, v cilju 0
+seoul seme 9 avtov 13 RAZLIKA k=2997 (24.98 s) vortex#8 x -394.8207394747264 / -394.8207394738766 | prvi dotik veje k=356 carCollide:kaze/rally | dotikov {"carCollide":364,"wallCollide":206} prvi {"carCollide":356,"wallCollide":386} | poskodovanih 2, v cilju 0
+koli seme 9 avtov 13 RAZLIKA k=409 (3.41 s) vortex#4 x -0.39192394851187684 / -0.39192386904426585 | prvi dotik veje k=321 carCollide:kaze/rally | dotikov {"carCollide":97} prvi {"carCollide":321} | poskodovanih 2, v cilju 0
+montreal seme 9 avtov 13 RAZLIKA k=267 (2.23 s) pico#3 x -6.0736648315366475 / -6.073664831492799 | prvi dotik veje k=265 carCollide:pico/vortex | dotikov {"carCollide":3} prvi {"carCollide":265} | poskodovanih 2, v cilju 0
+killar seme 9 avtov 13 RAZLIKA k=389 (3.24 s) strega#2 x 10.619604983707315 / 10.619604985292526 | prvi dotik veje k=352 carCollide:strega/pico | dotikov {"carCollide":40} prvi {"carCollide":352} | poskodovanih 2, v cilju 0

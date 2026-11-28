@@ -1,0 +1,26 @@
+ograja (KV.real.wall): e0 0.36, e1 0.05, eV 4.5, eT 0.5; cv 6, 90 st, brez vnosa, 20 s
+avto tla kmh | odboj km/h (ob odhodu) | nazaj m | obstane po s
+rally asfalt 30 | 2.96 | 3.94 | 11.63
+rally asfalt 50 | 3.21 | 4.40 | 12.17
+rally asfalt 60 | 3.46 | 4.89 | 12.70
+rally asfalt 100 | 5.06 | 7.81 | 11.58
+mravlja asfalt 30 | 2.96 | 3.91 | 11.57
+mravlja asfalt 50 | 3.21 | 4.36 | 12.11
+mravlja asfalt 60 | 3.45 | 4.84 | 12.63
+mravlja asfalt 100 | 5.05 | 2.59 | 5.37
+titan asfalt 30 | 2.96 | 3.93 | 11.61
+titan asfalt 50 | 3.21 | 4.38 | 12.14
+titan asfalt 60 | 3.45 | 4.87 | 12.67
+titan asfalt 100 | 5.06 | 6.65 | 9.40
+rally trava 30 | 2.96 | 0.94 | 3.26
+rally trava 50 | 3.20 | 1.07 | 3.61
+rally trava 60 | 3.45 | 1.21 | 3.89
+rally trava 100 | 5.04 | 2.16 | 5.10
+mravlja trava 30 | 2.96 | 0.88 | 2.75
+mravlja trava 50 | 3.20 | 0.96 | 2.85
+mravlja trava 60 | 3.44 | 1.05 | 2.94
+mravlja trava 100 | 5.04 | 1.13 | 2.42
+titan trava 30 | 2.96 | 1.43 | 4.43
+titan trava 50 | 3.20 | 1.58 | 4.61
+titan trava 60 | 3.45 | 1.72 | 4.77
+titan trava 100 | 5.05 | 2.74 | 5.88

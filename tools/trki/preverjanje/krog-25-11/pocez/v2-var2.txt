@@ -1,0 +1,28 @@
+== {"HZANT":1}
+cusco    71  Σ   49.9  P/drugi/ograja 2 / 48 / 0  počez 2.4  udarci 21 max 4.9  izp 0  mimo 12/12  prvi 23.3 zadnji 33.0 Σmimo 335  stoji max 4.0 Σ 15.1 n 4
+   mimo ob: 23.3 31.9 32.3 24.6 25.3 32.7 25.7 26 33 26.3 26.7 27
+cusco    72  Σ  208.0  P/drugi/ograja 17 / 78 / 113  počez 14.3  udarci 46 max 7.5  izp 0  mimo 12/12  prvi 23.6 zadnji 43.7 Σmimo 402  stoji max 8.8 Σ 38.9 n 8
+   mimo ob: 23.6 31.5 34.6 24.9 39.6 25.6 41.6 43.7 26.4 38.5 37.7 34.8
+hiva     71  Σ   77.5  P/drugi/ograja 2 / 47 / 28  počez 2.1  udarci 34 max 4.2  izp 0  mimo 12/12  prvi 24.2 zadnji 40.1 Σmimo 366  stoji max 4.2 Σ 15.9 n 5
+   mimo ob: 24.2 25.5 26.2 40.1 26.6 27.1 32.7 34.2 36.4 28.5 29.2 35.6
+hiva     72  Σ   71.2  P/drugi/ograja 25 / 47 / 0  počez 23.2  udarci 21 max 14.0  izp 0  mimo 12/12  prvi 24.0 zadnji 44.1 Σmimo 381  stoji max 6.1 Σ 21.2 n 5
+   mimo ob: 24 26.1 31.9 27.3 26.7 35.9 39 28 28.3 44.1 37.5 32.1
+tianmen  71  Σ    2.9  P/drugi/ograja 0 / 3 / 0  počez 0.0  udarci 4 max 3.4  izp 0  mimo 12/12  prvi 30.2 zadnji 44.6 Σmimo 446  stoji max 3.7 Σ 6.8 n 2
+   mimo ob: 30.2 36.4 36.1 33.6 32.9 36.7 37 44.4 37.3 38.8 38.5 44.6
+tianmen  72  Σ    0.0  P/drugi/ograja 0 / 0 / 0  počez 0.0  udarci 27 max 3.2  izp 0  mimo 12/12  prvi 30.2 zadnji 45.8 Σmimo 443  stoji max 3.8 Σ 7.6 n 2
+   mimo ob: 30.2 34.3 35.1 31.8 33.7 41.2 37.5 38.1 37.8 38.8 39 45.8
+SKUPAJ tekmeci 409.5 %, z avtom počez 451.5 %
+== {"HZDB":1}
+cusco    71  Σ  125.8  P/drugi/ograja 18 / 108 / 0  počez 6.3  udarci 163 max 6.1  izp 0  mimo 12/12  prvi 23.3 zadnji 40.0 Σmimo 379  stoji max 8.0 Σ 33.9 n 8
+   mimo ob: 23.3 32.3 40 24.5 34.3 35.3 25.5 27.1 39.3 30.1 32.9 34.8
+cusco    72  Σ  199.8  P/drugi/ograja 7 / 79 / 113  počez 6.7  udarci 41 max 4.9  izp 0  mimo 12/12  prvi 23.6 zadnji 42.3 Σmimo 374  stoji max 7.6 Σ 27.4 n 5
+   mimo ob: 23.6 31.3 31.6 24.9 35.6 25.7 33.1 42.3 26.3 31.9 39.4 28.4
+hiva     71  Σ   67.5  P/drugi/ograja 11 / 28 / 28  počez 10.8  udarci 11 max 8.0  izp 0  mimo 12/12  prvi 24.2 zadnji 37.8 Σmimo 361  stoji max 5.7 Σ 15.1 n 4
+   mimo ob: 24.2 25.5 26.1 35 26.5 27.3 32.2 32.6 37.8 29.2 29.5 34.7
+hiva     72  Σ   68.4  P/drugi/ograja 18 / 51 / 0  počez 17.5  udarci 17 max 11.9  izp 0  mimo 12/12  prvi 24.0 zadnji 42.2 Σmimo 372  stoji max 6.6 Σ 20.8 n 4
+   mimo ob: 24 26.1 31.4 27.1 26.5 36 39.3 27.8 28.2 30.8 42.2 32
+tianmen  71  Σ   22.0  P/drugi/ograja 0 / 2 / 20  počez 0.0  udarci 7 max 1.1  izp 0  mimo 12/12  prvi 30.2 zadnji 43.2 Σmimo 443  stoji max 1.1 Σ 2.2 n 2
+   mimo ob: 30.2 36.5 36.1 33.6 32.9 36.8 37.1 42.9 37.5 38.4 37.9 43.2
+tianmen  72  Σ   32.5  P/drugi/ograja 1 / 31 / 0  počez 1.5  udarci 26 max 4.4  izp 0  mimo 12/12  prvi 30.2 zadnji 48.1 Σmimo 465  stoji max 3.8 Σ 9.8 n 4
+   mimo ob: 30.2 34.3 35.1 31.8 33.7 40.6 41 41.6 41.3 45.2 42.2 48.1
+SKUPAJ tekmeci 516.1 %, z avtom počez 558.9 %

@@ -1,0 +1,12 @@
+{
+ "_": "Slika zdaj/potem za fizika-1 (krog 27. 11.): ograja, ki se bliža cesti; avto drsi z nosom stran od ograje in je že načet. Zagon: node tools/trki/slike.mjs ograja --scenariji tools/trki/preverjanje/krog-27-11/f1/slika-ograja.json --a-root <mapa z drevesom f36d382> --a-cv 6 --b-cv 6 --a-opis \"kot je v igri\" --b-opis \"s popravkom\" --out <mapa>. Slike se ne shranjujejo v repozitorij.",
+ "privzeto": { "proga": "krasnahorka", "casi": [0, 0.1, 0.3, 0.8, 1.6], "cakaj": 3 },
+ "scenariji": {
+  "ograja": {
+   "naslov": "Ograja, ki se oži: zdrs pri 107 km/h",
+   "opis": "Krásna Hôrka: desna ograja se bliža cesti. Avto drsi z nosom stran od ograje in je že načet (škoda 0,56).",
+   "m": 121, "avto": "rally", "skoda": 2,
+   "igralec": { "desno": 12.5, "kot": -8, "smer": 9, "kmh": 107, "nacet": 0.56 }
+  }
+ }
+}

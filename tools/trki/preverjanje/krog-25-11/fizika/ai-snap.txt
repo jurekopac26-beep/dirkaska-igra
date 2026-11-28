@@ -1,0 +1,102 @@
+  function aiHazard(c, race, v, Lw) {
+    const T = race.track, M = c.m, gk = race.wst ? clamp(race.wst.profW, 0.3, 1) : 1, a = HZ.a * gk, R = Math.min(HZ.r1, HZ.r0 + v * v / (2 * a));
+    let h = null, hg = R, he = 0, hl = 0;
+    for (const o of race.cars) {
+      if (o === c || !o.m || o.inPit || o.pitG || o.parked || o.parkS != null || o.sc || o.police || o.ck || !(o.speed < HZ.vy)) continue;
+      let gap = o.dist - c.dist; if (Lw && (gap > Lw / 2 || gap < -Lw / 2)) gap -= Lw * Math.round(gap / Lw);
+      if (!(gap > 2 && gap < hg)) continue;
+      const yaw = Math.abs(wrapPi(o.h - T.hd[o.q.i]));
+      if (yaw > HZ.yaw && yaw < Math.PI - HZ.yaw ? !(o.speed < HZ.vs || (yaw > HZ.yw && yaw < Math.PI - HZ.yw && o.speed < HZ.vw) || Math.abs(wrapPi(Math.atan2(o.vz, o.vx) - o.h)) > HZ.sl)
+        : !(o.speed < HZ.vs && (dnf(o) || o.stuckT > HZ.st || yaw >= Math.PI - HZ.yaw))) continue;   // (across the road: standing, square to it or sliding; or standing lengthways: retired, stuck, facing back)
+      const sy = Math.abs(Math.sin(yaw)), cy = Math.abs(Math.cos(yaw)), e = (o.m.len * sy + o.m.wid * cy) * 0.5, wq = T.wa ? T.wa[o.q.i] : T.w;
+      if (Math.abs(o.q.d) - e > wq) continue;   // (all of it off the road)
+      h = o; hg = gap; he = e; hl = (o.m.len * cy + o.m.wid * sy) * 0.5;
+    }
+    if (!h) return null;
+    const wq = T.wa ? T.wa[h.q.i] : T.w, lm = wq - (M.aiEdge || 1.25), need = he + M.wid * 0.5, od = h.q.d, RL = c.uRl || T.rl;
+    if (Math.abs(clamp(RL[h.q.i] + c.laneBias, -lm, lm) - od) >= need + HZ.mg) return null;   // (its own line passes clear of it)
+    const cR = lm - (od + need), cL = (od - need) + lm, side = cR > cL ? 1 : -1, cl = Math.max(cR, cL);
+    let fq = null, fg = hg;   // (the nearest car before it in c's way and slower: the queue behind it, followed down to its speed with a car's gap)
+    for (const o of race.cars) {
+      if (o === c || o === h || !o.m || o.inPit || o.pitG || !(o.vl < v) || Math.abs(o.q.d - c.q.d) >= (o.m.wid + M.wid) * 0.5 + 0.5) continue;
+      let gap = o.dist - c.dist; if (Lw && (gap > Lw / 2 || gap < -Lw / 2)) gap -= Lw * Math.round(gap / Lw);
+      if (gap > 0 && gap < fg) { fq = o; fg = gap; }
+    }
+    return { o: h, fq, off: clamp(od + side * (need + clamp(cl, 0, HZ.mg)), -lm, lm) - RL[h.q.i], gs: M.len * 0.5 + hl + 2, need, vp: cl >= HZ.cl ? clamp(HZ.v0 + HZ.vk * cl, HZ.v0, HZ.v1) : HZ.vc, a, far: hg > Math.max(30, v * HZ.sT) };
+  }
+  // a ghost off the lane onto the apron (its offset past the lane's edge, pz.lout) and on its way into a box that is not c's: the car behind it in the lane
+  // is not held by it (gT in aiControl)
+  function apronBound(o, c, race, T) {
+    const pa = T.pitAt(o.q.s); if (!pa || !(o.q.d * pa.sd > pa.lout) || o.pitDone) return false;
+    const bo = race._boxD(o); return bo != null && bo !== race._boxD(c);
+  }
+  function aiControl(c, race, dt) { _aiS.add(c); const R0 = RAND; RAND = race.rnd || MR; try { aiDrive(c, race, dt); } finally { RAND = R0; } }   // (the AI's reactions and mistakes: the race's numbers, rand)
+  function aiDrive(c, race, dt) {
+    const T = race.track, M = c.m, A = c.assist, RL = c.uRl || T.rl;   // (the racing line, or the player's: Race._voznja)
+    const q = c.q;
+    const v = Math.max(0, c.vl);
+    const N = T.N;
+    // --- avoidance / overtaking ---
+    c.aiT -= dt;
+    if (c.aiT <= 0) {
+      c.aiT = 0.12 + rand() * 0.08;
+      let target = c.laneBias;
+      let threat = null, tgap = 1e9, aU = null, aD = null;
+      const X = race._tlX || 0;   // (semi-trailers in the race: a gap to a car as to its trailer's tail, tlGap)
+      const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null, L0 = BD ? distFrom(BD, c.dist - 8.5 - X) : 0;   // (a big field: only the cars alongside and just ahead, from the list sorted by dist)
+      const ix = (o) => BD ? race.cars.indexOf(o) : 0;   // (level on the side: the first of race.cars, as the loop over all of them)
+      // a circuit: a car laps apart (one lapping c, or lapped by it) where it is on the track, its gap less the whole laps between them: a slow,
+      // stopped or damaged car a lap down in the way too (J14 in docs/pregled-jedra.md; before, only the dist of the race counted and the AI drove into it)
+      const Lw = T.open ? 0 : T.len;
+      const see = (o, gap) => {
+        if (X) gap = tlGap(c, o, gap);
+        if (gap < -8 || gap > 22) return;
+        const lat = (X && gap > 0 ? tlD(o, q.d) : o.q.d) - q.d;   // (a rig ahead: its tractor or its trailer, tlD)
+        const closing = v - Math.max(0, o.vl);
+        if (gap > 0 && Math.abs(lat) < (M.aiLat || 3.2) && (closing > -1 || gap < 7) && gap < tgap) { threat = o; tgap = gap; }   // (M.aiLat: a wide vehicle sees a car further to its side as in its way)
+        if (Math.abs(gap) < (M.len + o.m.len) * 0.5 + 1 && Math.abs(lat) > 1.2 && !o.pitG && !o.inPit && !c.pol) { if (lat > 0) { if (!aU || o.q.d < aU.q.d || (BD && o.q.d === aU.q.d && ix(o) < ix(aU))) aU = o; } else if (!aD || o.q.d > aD.q.d || (BD && o.q.d === aD.q.d && ix(o) < ix(aD))) aD = o; }   // (a car alongside, on either side: the nearest; the steering below keeps clear of it; a patrol car goes for the player as ever)
+      };
+      for (let k = L0, nk = BD ? BD.length : race.cars.length; k < nk; k++) {
+        const o = BD ? BD[k] : race.cars[k];
+        if (BD && o.dist - c.dist > 22.5 + X) break;
+        if (o === c) continue;
+        let gap = o.dist - c.dist;
+        if (c.pitG && o.pitG && !T.open) { const L = T.len; gap = ((gap % L) + L) % L; if (gap > L / 2) gap -= L; }   // (two on the pit road: where they are, whatever lap each is on; a lapped car in the lane is in the way too)
+        else if (Lw && !BD && (gap > Lw / 2 || gap < -Lw / 2)) gap -= Lw * Math.round(gap / Lw);   // (a car laps apart, see Lw)
+        see(o, gap);
+      }
+      if (Lw && BD && Number.isFinite(BD[0].dist + BD[BD.length - 1].dist + c.dist)) {   // (a big field: the cars laps apart from the list sorted by dist, a window a lap ahead and behind at a time, as far as the field reaches)
+        const lo = BD[0].dist, hi = BD[BD.length - 1].dist;
+        for (let j = 1; c.dist + j * Lw - 8.5 - X <= hi; j++) { const b = c.dist + j * Lw; for (let k = distFrom(BD, b - 8.5 - X); k < BD.length && BD[k].dist - b <= 22.5 + X; k++) if (BD[k] !== c) see(BD[k], BD[k].dist - b); }
+        for (let j = 1; c.dist - j * Lw + 22.5 + X >= lo; j++) { const b = c.dist - j * Lw; for (let k = distFrom(BD, b - 8.5 - X); k < BD.length && BD[k].dist - b <= 22.5 + X; k++) if (BD[k] !== c) see(BD[k], BD[k].dist - b); }
+      }
+      c.aiThreat = threat; c.aiGap = tgap; c.alU = aU; c.alD = aD;
+      if (T.def.barrier && !c.police && T.roPv) {   // (def.roSurf: where the paved road at the car ahead has no room for two side by side with 0.65 m to spare either side (a village street, the castle road between grass and forest floor): no pass, behind it a car's length back; not behind a patrol car)
+        let hold = null; if (threat && threat.m && !threat.police) { const pv = T.roPv, ia = threat.q.a, wq = T.wAt(ia), lm = wq - (M.aiEdge || 1.25), eL = Math.max(lm, Math.min(wq + 2.2, T.bl[ia] - 1.6, pv[0][ia] - 1.2)), eR = Math.max(lm, Math.min(wq + 2.2, T.br[ia] - 1.6, pv[1][ia] - 1.2));
+          if (eL + eR < (M.wid + threat.m.wid) / 2 + 1.3) hold = threat; }
+        c.aiHold = hold; }
+      if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
+      if (threat && race.fl && !(threat.fl && threat.fl.stopT > 0) && (c.sc || race._noPass(c))) { target = c.laneBias; c.passing = 0; }   // (a yellow flag or the safety car: no overtaking, stay in line; a stopped car is passed)
+      else if (threat && threat.vl > 3 && !dnf(threat) && c.flyA !== undefined && race.flyOn) { target = c.laneBias; c.passing = 0; }   // (the flying start's column: no overtaking while it holds; a stopped car is passed)
+      else if (threat && c.aiHold === threat) { target = c.laneBias; c.passing = 0; }   // (no room to pass on the paved road: in line behind it)
+      else if (threat && !(c.chr && aiWaits(c, threat, race, v))) {
+        const rlHere = RL[q.i];
+        const oPos = X ? tlD(threat, q.d) : threat.q.d;
+        if (race.slip && c.tow > 0.3 && tgap > 10 + 1.6 * Math.max(0, v - threat.vl) && (c.vprof || race.vprof)[T.idx(q.s + 40 + v * 3.2)] > v - 1) { target = clamp(oPos - rlHere, -2 * T.w, 2 * T.w); c.passing = 0; }   // the slipstream: in the wake first, gaining on it; out of it in time
+        else {
+          // choose side with more room
+          const wq = T.wa ? T.wa[q.i] : T.w, roomL = oPos - (-wq + 1.2), roomR = (wq - 1.2) - oPos;   // (a road of several widths: its width here)
+          const pw = (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * Math.min(1, aiAgg(c) + (threat.isPlayer && c.chr.zbMad > 0.3 ? 0.3 : 0)) : 1), room = (s) => s > 0 ? roomR : roomL, dl = q.d - oPos;   // (aiPass: the formula passes wider; an aggressive driver a little closer)
+          let side = Math.abs(dl) > 0.8 && room(Math.sign(dl)) > pw - 1 && !c.pol ? Math.sign(dl) : roomR > roomL ? 1 : -1;   // (already out on one side of it, with room there: that side, not across behind it)
+          if (aiLaneBusy(c, race, threat, oPos + side * pw, tgap)) side = room(-side) > pw - 1 && !aiLaneBusy(c, race, threat, oPos - side * pw, tgap) ? -side : 0;   // (a car in that lane, alongside or beside the car ahead: the other side, or behind it in its wake)
+          target = clamp(oPos + side * pw - rlHere, -2 * wq, 2 * wq);
+          c.passing = side ? 1 : 0;
+        }
+      } else c.passing = 0;
+      if (c.chr && !c.passing) { const d = aiDefend(c, race, v); if (d != null) target = d; }   // (a car close behind before a braking zone: an aggressive one covers the inside)
+      if (KR) {   // (Realistična: a car standing in the road or sliding across it further ahead, aiHazard: round it in time, HZ.sT s before it, and braked for it below)
+        const H = krOn(c) && race.state === 'racing' && !(c.pitWant && (c.inPit || c.pitG || (T.def.pit && (T.pitAt(q.s) || T.pitAt(q.s + 60))))) && !c.sc && !c.police && !c.pol && !race.pol && !race.tf && c.parkS == null && !(XR.ai && !c.isPlayer) ? aiHazard(c, race, v, Lw) : null;
+        if (H) { c.aiHz = H; if (!H.far) { target = H.off; c.passing = 0; } } else if (c.aiHz) c.aiHz = null;
+      }
+      c.aiOffT = target;
+    }

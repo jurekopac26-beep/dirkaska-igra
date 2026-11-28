@@ -1,0 +1,10 @@
+proga chapman seme 5 odmik -2.5
+cv 0 tf null {"h":498360068,"loose":0,"nan":0,"dmg":0.119,"dmgT":16.4,"t":70,"fin":false,"tf":true,"nveh":41,"pen":0,"nL":0}
+cv 0 tf 1 {"h":498360068,"loose":0,"nan":0,"dmg":0.119,"dmgT":16.4,"t":70,"fin":false,"tf":true,"nveh":41,"pen":0,"nL":0}
+cv 0 tf 2 {"h":498360068,"loose":0,"nan":0,"dmg":0.119,"dmgT":16.4,"t":70,"fin":false,"tf":true,"nveh":41,"pen":0,"nL":0}
+cv 5 tf null {"h":1965269498,"loose":1,"nan":0,"dmg":0.431,"dmgT":32.7,"t":70,"fin":false,"tf":true,"nveh":41,"pen":5,"nL":0}
+cv 5 tf 1 {"h":1965269498,"loose":1,"nan":0,"dmg":0.431,"dmgT":32.7,"t":70,"fin":false,"tf":true,"nveh":41,"pen":5,"nL":0}
+cv 5 tf 2 {"h":1965269498,"loose":1,"nan":0,"dmg":0.431,"dmgT":32.7,"t":70,"fin":false,"tf":true,"nveh":41,"pen":5,"nL":0}
+cv 6 tf null {"h":917320432,"loose":0,"nan":0,"dmg":0.363,"dmgT":16.4,"t":70,"fin":false,"tf":true,"nveh":41,"pen":0,"nL":0}
+cv 6 tf 1 {"h":917320432,"loose":0,"nan":0,"dmg":0.363,"dmgT":16.4,"t":70,"fin":false,"tf":true,"nveh":41,"pen":0,"nL":0}
+cv 6 tf 2 {"h":520967905,"loose":1,"nan":0,"dmg":0.049,"dmgT":16.4,"t":70,"fin":false,"tf":true,"nveh":41,"pen":0,"nL":0}

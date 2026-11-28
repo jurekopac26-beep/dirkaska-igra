@@ -1,0 +1,37 @@
+=== kotor/crash pred
+k 890 s 142.898 v 15.217 -> 3.949 skoda 0.005 -> 0.304 koles 0 hitWall 13.176 hitCar 3.803 hitObs 0 d -7.423 konec false
+k 1427 s 139.186 v 13.794 -> 9.931 skoda 0.304 -> 0.499 koles 0 hitWall 13.176 hitCar 3.803 hitObs 0 d 6.528 konec false
+=== kotor/crash po
+k 890 s 142.898 v 15.217 -> 5.911 skoda 0.005 -> 0.304 koles 0 hitWall 13.176 hitCar 3.803 hitObs 0 d -7.423 konec false
+k 1616 s 193.02 v 19.282 -> 16.639 skoda 0.304 -> 0.448 koles 0 hitWall 13.176 hitCar 3.803 hitObs 0 d 6.199 konec false
+k 1633 s 195.716 v 17.396 -> 16.927 skoda 0.448 -> 0.525 koles 0 hitWall 13.176 hitCar 3.803 hitObs 0 d 6.305 konec false
+k 1726 s 209.078 v 18.102 -> 17.011 skoda 0.525 -> 0.618 koles 0 hitWall 13.176 hitCar 3.803 hitObs 0 d 6.532 konec false
+k 2531 s 365.004 v 10.054 -> 9.797 skoda 0.618 -> 0.643 koles 0 hitWall 13.176 hitCar 5.104 hitObs 0 d -1.722 konec false
+k 4755 s 938.838 v 35.56 -> 35.293 skoda 0.643 -> 0.669 koles 0 hitWall 13.176 hitCar 5.132 hitObs 0 d -3.315 konec false
+=== cusco/crash pred
+k 822 s 237.536 v 39.783 -> 36.592 skoda 0 -> 0.19 koles 0 hitWall 9.284 hitCar 1.079 hitObs 0 d -5.597 konec false
+k 1071 s 310.987 v 32.515 -> 31.615 skoda 0.19 -> 0.247 koles 0 hitWall 9.284 hitCar 1.079 hitObs 0 d -6.208 konec false
+k 1275 s 367.093 v 36.623 -> 29.658 skoda 0.247 -> 0.531 koles 0 hitWall 12.63 hitCar 1.079 hitObs 0 d 6.152 konec false
+k 1281 s 368.634 v 29.862 -> 29.146 skoda 0.531 -> 0.627 koles 0 hitWall 12.63 hitCar 1.079 hitObs 0 d 6.191 konec false
+=== cusco/crash po
+k 822 s 237.536 v 39.783 -> 36.592 skoda 0 -> 0.19 koles 0 hitWall 9.284 hitCar 1.079 hitObs 0 d -5.597 konec false
+k 1071 s 310.987 v 32.515 -> 31.666 skoda 0.19 -> 0.247 koles 0 hitWall 9.284 hitCar 1.079 hitObs 0 d -6.208 konec false
+k 1289 s 371.179 v 36.689 -> 30.343 skoda 0.247 -> 0.526 koles 0 hitWall 12.476 hitCar 1.079 hitObs 0 d 6.123 konec false
+k 1294 s 372.5 v 30.491 -> 29.052 skoda 0.526 -> 0.729 koles 0 hitWall 12.476 hitCar 1.079 hitObs 0 d 6.167 konec false
+=== bathurst/formula pred
+k 772 s 95.757 v 62.488 -> 62.39 skoda 0 -> 0.038 koles 0 hitWall 0 hitCar 5.891 hitObs 0 d -1.354 konec false
+k 864 s 140.014 v 53.554 -> 52.778 skoda 0.069 -> 0.155 koles 0 hitWall 0 hitCar 8.866 hitObs 0 d -5.839 konec false
+k 865 s 140.453 v 52.778 -> 52.077 skoda 0.155 -> 0.217 koles 0 hitWall 0 hitCar 8.866 hitObs 0 d -5.878 konec false
+k 866 s 140.888 v 52.077 -> 51.503 skoda 0.217 -> 0.266 koles 0 hitWall 0 hitCar 8.866 hitObs 0 d -5.879 konec false
+k 873 s 143.899 v 50.119 -> 49.688 skoda 0.285 -> 0.326 koles 0 hitWall 0 hitCar 8.866 hitObs 0 d -5.981 konec false
+k 874 s 144.321 v 49.688 -> 49.496 skoda 0.326 -> 0.528 koles 0 hitWall 0 hitCar 16.143 hitObs 0 d -5.93 konec false
+k 917 s 161.75 v 46.432 -> 44.052 skoda 0.528 -> 0.622 koles 0 hitWall 5.855 hitCar 16.143 hitObs 0 d -6.853 konec false
+k 6495 s 2527.921 v 58.778 -> 56.237 skoda 0.622 -> 0.644 koles 0 hitWall 5.855 hitCar 16.143 hitObs 0 d -1.316 konec false
+=== bathurst/formula po
+k 772 s 95.757 v 62.488 -> 62.39 skoda 0 -> 0.038 koles 0 hitWall 0 hitCar 5.891 hitObs 0 d -1.354 konec false
+k 864 s 140.014 v 53.554 -> 52.767 skoda 0.069 -> 0.157 koles 0 hitWall 0 hitCar 8.988 hitObs 0 d -5.839 konec false
+k 865 s 140.452 v 52.767 -> 52.059 skoda 0.157 -> 0.22 koles 0 hitWall 0 hitCar 8.988 hitObs 0 d -5.877 konec false
+k 866 s 140.888 v 52.059 -> 51.483 skoda 0.22 -> 0.269 koles 0 hitWall 0 hitCar 8.988 hitObs 0 d -5.879 konec false
+k 874 s 144.319 v 49.942 -> 49.566 skoda 0.289 -> 0.536 koles 0 hitWall 0 hitCar 18.958 hitObs 0 d -5.946 konec false
+k 876 s 145.186 v 49.524 -> 49.479 skoda 0.536 -> 0.6 koles 0 hitWall 0 hitCar 18.958 hitObs 0 d -5.952 konec false
+k 912 s 159.883 v 47.788 -> 45.315 skoda 0.6 -> 0.717 koles 0 hitWall 6.669 hitCar 18.958 hitObs 0 d -6.952 konec false

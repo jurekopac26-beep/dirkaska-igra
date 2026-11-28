@@ -1,0 +1,6 @@
+seoul/cs                  fin 13/13 winner    78.6 s spins 0 walls 0 rescues 0 28cd893b67132294ea4a5eed OK
+seoul/cs/rain             fin 13/13 winner   94.57 s spins 0 walls 0 rescues 0 83b5f1b7939f3fa10ffe4027 OK
+seoul/cs/formula          fin 13/13 winner   70.42 s spins 0 walls 0 rescues 0 3b6a20c17462bf32adb183fe OK
+seoul/cs/lm               fin 13/13 winner   71.55 s spins 0 walls 0 rescues 0 4734efed5a2c309a3857e1ee OK
+seoul/cs/car              fin 13/13 winner   79.19 s spins 0 walls 0 rescues 0 bfa75f68eb82b239e4378225 OK
+OK: all races fine (7 s)

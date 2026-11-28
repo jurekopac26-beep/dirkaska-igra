@@ -1,0 +1,44 @@
+{"cv":6,"mode":"fast","n":80000,"hit":28880,"nan":0,"dEpos":0,"dEmax_J":0,"dPmax":1.250904494807688e-10,"wGrowMax":9,"mirrMax":2.029310053330846e-11,"swapMax":5.684341886080802e-14}
+razredi dE>0: {} relMax undefined
+
+{"cv":6,"mode":"air","n":80000,"hit":29203,"nan":0,"dEpos":0,"dEmax_J":0,"dPmax":5.390322559605313e-11,"wGrowMax":9,"mirrMax":2.4916513297057463e-11,"swapMax":2.4868995751603507e-14}
+razredi dE>0: {} relMax undefined
+
+{"cv":6,"mode":"nova","n":80000,"hit":28909,"nan":0,"dEpos":0,"dEmax_J":0,"dPmax":5.25567746275966e-11,"wGrowMax":63.905,"mirrMax":6.977529665164184e-12,"swapMax":1.4210854715202004e-14}
+razredi dE>0: {} relMax undefined
+
+{"cv":6,"mode":"mixphys","n":80000,"hit":29147,"nan":0,"dEpos":0,"dEmax_J":0,"dPmax":4.9743910987008214e-11,"wGrowMax":61.244,"mirrMax":1.574473884602412e-11,"swapMax":3.108624468950438e-14}
+razredi dE>0: {} relMax undefined
+
+{"tf":1,"mode":"mix","n":40000,"hit":10219,"nan":0}
+p0 st0>0     n 615   dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 1.2e-11 obrez 3 
+p0 st0>1     n 479   dE>0 0    dEmax 0.0        dPpar 1.7e-11 dPpas 0.0e+0 obrez 0 
+p0 st1>1     n 559   dE>0 0    dEmax 0.0        dPpar 2.2e-11 dPpas 0.0e+0 obrez 0 
+p0 st2>1     n 447   dE>0 0    dEmax 0.0        dPpar 2.0e-11 dPpas 0.0e+0 obrez 0 
+p0 st2>2     n 121   dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 0.0e+0 obrez 0 
+p1 st0>0     n 716   dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 8.4e-12 obrez 3 
+p1 st0>1     n 351   dE>0 0    dEmax 0.0        dPpar 2.3e-11 dPpas 0.0e+0 obrez 0 
+p1 st1>1     n 473   dE>0 0    dEmax 0.0        dPpar 2.0e-11 dPpas 0.0e+0 obrez 0 
+p1 st2>1     n 407   dE>0 0    dEmax 0.0        dPpar 3.1e-11 dPpas 0.0e+0 obrez 0 
+p1 st2>2     n 116   dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 0.0e+0 obrez 0 
+p2 st0>0     n 708   dE>0 1    dEmax 5.8        dPpar 0.0e+0 dPpas 2.5e-11 obrez 2 {"id":"orel","imp":1.47,"dE":5.8,"E0":1162751,"c0":{"vx":16.652,"vz":1.469,"w":0},"c1":{"vx":16.43,"vz":0.798,"w":1.593},"v0":{"st":0,"vx":12.547,"vz":0,"w":0,"v":12.547,"d":3.12,"s":330.005},"v1":{"vx":12.57,"vz":0,"w":0,"v":12.57},"ma":1280,"pl":true}
+p2 st0>1     n 100   dE>0 0    dEmax 0.0        dPpar 3.6e-11 dPpas 0.0e+0 obrez 0 
+p2 st1>1     n 396   dE>0 0    dEmax 0.0        dPpar 2.8e-11 dPpas 0.0e+0 obrez 0 
+p2 st2>1     n 226   dE>0 0    dEmax 0.0        dPpar 2.9e-11 dPpas 0.0e+0 obrez 0 
+p2 st2>2     n 155   dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 0.0e+0 obrez 0 
+p3 st0>0     n 317   dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 9.0e-12 obrez 1 
+p3 st0>1     n 726   dE>0 0    dEmax 0.0        dPpar 1.9e-11 dPpas 0.0e+0 obrez 0 
+p3 st1>1     n 526   dE>0 0    dEmax 0.0        dPpar 2.0e-11 dPpas 0.
+{"tf":2,"mode":"mix","n":40000,"hit":9159,"nan":0}
+p0 st0>0     n 525   dE>0 150  dEmax 6794.2     dPpar 0.0e+0 dPpas 1.1e+2 obrez 2 {"id":"truck","imp":1.97,"dE":6794.2,"E0":1329346,"c0":{"vx":30.908,"vz":-4.434,"w":4.363},"c1":{"vx":31.605,"vz":-4.15,"w":4.363},"v0":{"st":0,"vx":24.738,"vz":0,"w":0,"v":24.738,"d":2.76,"s":330.005},"v1":{"vx":23.746,"vz":0,"w":0,"v":23.746},"ma":1850,"pl":true}
+p0 st0>1     n 422   dE>0 87   dEmax 46182.0    dPpar 1.5e+3 dPpas 0.0e+0 obrez 0 {"id":"predsednik","imp":9.59,"dE":46182,"E0":524703,"c0":{"vx":13.87,"vz":-0.12,"w":5.645},"c1":{"vx":16.686,"vz":-0.966,"w":5.645},"v0":{"st":0,"vx":13.507,"vz":0,"w":0,"v":13.507,"d":2.76,"s":330.005},"v1":{"vx":7.225,"vz":1.887,"w":-1.303,"v":13.507},"ma":2909.631,"pl":true}
+p0 st1>1     n 489   dE>0 86   dEmax 31851.4    dPpar 9.9e+2 dPpas 0.0e+0 obrez 0 {"id":"titan","imp":13.52,"dE":31851.4,"E0":431197,"c0":{"vx":-4.231,"vz":7.78,"w":5.37},"c1":{"vx":-2.47,"vz":7.114,"w":5.37},"v0":{"st":1,"vx":0.276,"vz":6.529,"w":0,"v":0,"d":2.76,"s":330.005},"v1":{"vx":-6.903,"vz":9.245,"w":-5.102,"v":0},"ma":5300,"pl":true}
+p0 st2>2     n 487   dE>0 87   dEmax 13036.3    dPpar 0.0e+0 dPpas 0.0e+0 obrez 0 {"id":"titan","imp":3.29,"dE":13036.3,"E0":350267,"c0":{"vx":-4.857,"vz":7.805,"w":-4.265},"c1":{"vx":-5.554,"vz":7.652,"w":-4.265},"v0":{"st":2,"vx":0,"vz":0,"w":0,"v":0,"d":2.76,"s":330.005},"v1":{"vx":0,"vz":0,"w":0,"v":2.84},"ma":5344.131,"pl":true}
+p1 st0>0     n 604   dE>0 183  dEmax 14277.1    dPpar 0.0e+0 dPpas 1.1e+2 obrez 1 {"id":"kamen","imp":2.2,"dE":14277.1,"E0":1279736,"c0":{"vx":8.732,"vz":12.131,"w":-4.364},"c1":{"vx":9.07,"vz":12.468,"w":-4.364},"v0":{"st":0,"vx":15.645,"vz":0,"w":0,"v":15.645,"d":2.88,"s":330.005},"v1":{"vx":14.659,"vz":0,"w":0,"v":14.659},"ma":7000,"pl":true}
+p1 st0>1 
+{"tf":null,"mode":"truck","n":40000,"hit":6789,"nan":0}
+p5 st0>0     n 3320  dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 6.2e-11 obrez 1 
+p5 st0>1     n 55    dE>0 0    dEmax 0.0        dPpar 5.8e-11 dPpas 0.0e+0 obrez 0 
+p5 st1>1     n 1648  dE>0 0    dEmax 0.0        dPpar 7.1e-11 dPpas 0.0e+0 obrez 0 
+p5 st2>1     n 543   dE>0 0    dEmax 0.0        dPpar 1.5e-11 dPpas 0.0e+0 obrez 0 
+p5 st2>2     n 1223  dE>0 0    dEmax 0.0        dPpar 0.0e+0 dPpas 0.0e+0 obrez 0 

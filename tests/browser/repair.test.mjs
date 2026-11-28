@@ -20,7 +20,10 @@ try {
   const ru = await page.evaluate(() => [Core.repairU({ pitState: 'stop', pitT: 1, pitDur: 2 }), Core.repairU({ pitState: 'repair', pitT: 1, pitDur: 2 }), Core.repairU({ pitState: 'repair', pitT: 3, pitDur: 2 }), Core.repairU({ pitState: 'done', pitT: 2, pitDur: 2 })]);
   T.check('Core.repairU: 0 outside a repair, pitT / pitDur (at most 1) in it', ru[0] === 0 && ru[1] === 0.5 && ru[2] === 1 && ru[3] === 0, JSON.stringify(ru));
   for (const id of ['raketa', 'kaze']) {
-    const S0 = await page.evaluate((id) => { const g = window.__game, s = g.S.car; g.S.car = Core.MODELS.findIndex(m => m.id === id); return s; }, id);
+    // (the KAZE RS with »Odpadlo kolo: Dirka teče naprej«, S.wheelOver 0: since 13. 11. 2026 (paket-p K) the 11 older models are under the
+    // wheel rule in a race at Vklop too, where a car at 80 % loses a wheel and the game is over (wheels.test.js 12); their wreck that burns
+    // and is repaired in the pits is one of a race without the rule. The RAKETA keeps the rule: Core.wreckCar takes its wheels, its fire the rule's)
+    const S0 = await page.evaluate((id) => { const g = window.__game, s = g.S.car; g.S.car = Core.MODELS.findIndex(m => m.id === id); g.S.wheelOver = id === 'kaze' ? 0 : 1; return s; }, id);
     await startTrack(page, 'gozd');
     const r = await page.evaluate((US) => {
       const g = window.__game, P = g.race.player; g.pause();
@@ -47,7 +50,7 @@ try {
       g.resume();
       return { kit, wreck, steps: steps.map(q => JSON.parse(q)), after };
     }, US);
-    await page.evaluate((s) => { window.__game.S.car = s; }, S0);
+    await page.evaluate((s) => { const g = window.__game; g.S.car = s; g.S.wheelOver = 1; }, S0);
     const S = r.steps, at = (u) => S.find(q => q.u === u), name = id === 'raketa' ? 'RAKETA' : 'KAZE RS';
     console.log(`${name}: wreck ${JSON.stringify(r.wreck)}`);
     for (const q of S) console.log(`  u ${q.u}: ${JSON.stringify(q)}`);

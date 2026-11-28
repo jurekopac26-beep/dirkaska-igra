@@ -1,0 +1,8 @@
+{"drevo":"pred","NOA":0,"NOB":0,"A":0,"B":0,"BFROM":0,"pravilo":true,"dirk":1,"korakovSSkodo":16,"skodaOgraja":1.151,"epizod":6,"porazdelitevKorakov":{"1":5,"5+":1},"delezSkodeNadNajvecjimKorakom":0.258,"brezSunkaKorakov":11,"brezSunkaDelezSkode":0.308,"igralcuOdpadeKolo":1,"odTegaVKorakuBrezSunka":1,"konecIgre":1,"B_klicev":0,"B_uporabljen":0}
+najvec skode {"run":"krasnahorka/crash","id":"rally","igralec":true,"k0":1055,"korakov":11,"skoda":0.355,"najvecjiKorak":0.058,"hitMax":4.574}
+najdaljsa {"run":"krasnahorka/crash","id":"rally","igralec":true,"k0":1055,"korakov":11,"skoda":0.355,"najvecjiKorak":0.058,"hitMax":4.574}
+{"run":"krasnahorka/crash","koloK":1058,"koloBrezSunka":true,"brezSunka":11,"brezSunkaSkoda":0.355,"hit":4.131,"konecIgre":true,"odstop":true,"koles":1,"skoda":0.917,"s":304.012}
+
+real	0m2.625s
+user	0m3.712s
+sys	0m0.276s

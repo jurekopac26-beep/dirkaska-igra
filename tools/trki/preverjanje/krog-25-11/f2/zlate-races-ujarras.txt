@@ -1,0 +1,6 @@
+ujarras/cs                fin 13/13 winner   23.99 s spins 0 walls 0 rescues 0 4bbbf4e3134f5593f525ad2a OK
+ujarras/cs/rain           fin 13/13 winner   29.52 s spins 0 walls 0 rescues 0 74d64bee923299c8d748d0b1 OK
+ujarras/cs/formula        fin 13/13 winner   21.21 s spins 0 walls 0 rescues 0 0cb880c6739e1e3cf783e61c OK
+ujarras/cs/lm             fin 13/13 winner   21.58 s spins 0 walls 0 rescues 0 08d8f53b939e09007482e918 OK
+ujarras/cs/car            fin 13/13 winner   23.95 s spins 0 walls 2 rescues 0 2f761bfb9f76d634e76da990 OK
+OK: all races fine (5 s)

@@ -1,0 +1,120 @@
+SNAP jezero seme 9 udarec 0.06 | t konec 106.0 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 vortex   wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 2 povp. v po izgubi 36.4 m/s
+  avto 1 kaze     wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 3 povp. v po izgubi 36.2 m/s
+  avto 2 strega   wreck false dmgMode 2 udarcev 15 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 4 povp. v po izgubi 36.3 m/s
+  avto 3 pico     wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 6 povp. v po izgubi 36.1 m/s
+  avto 4 vortex   wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 5 povp. v po izgubi 36.0 m/s
+  avto 5 kaze     wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 13 povp. v po izgubi 34.8 m/s
+  avto 6 strega   wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 8 povp. v po izgubi 36.0 m/s
+  avto 7 pico     wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 10 povp. v po izgubi 35.3 m/s
+  nepoškodovani v cilju 5 povp. v 35.7
+SNAP kagerod seme 9 udarec 0.06 | t konec 135.1 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 vortex   wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 1 povp. v po izgubi 32.9 m/s
+  avto 1 kaze     wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 3 povp. v po izgubi 32.4 m/s
+  avto 2 strega   wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 6 povp. v po izgubi 32.2 m/s
+  avto 3 pico     wreck false dmgMode 2 udarcev 15 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 5 povp. v po izgubi 32.5 m/s
+  avto 4 vortex   wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 4 povp. v po izgubi 32.3 m/s
+  avto 5 kaze     wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 11 povp. v po izgubi 31.7 m/s
+  avto 6 strega   wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 8 povp. v po izgubi 32.0 m/s
+  avto 7 pico     wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0 finished true mesto 9 povp. v po izgubi 32.0 m/s
+  nepoškodovani v cilju 5 povp. v 32.1
+SNAP kagerod seme 9 udarec 0.06 | t konec 153.5 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 4 povp. v po izgubi 28.6 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 8 povp. v po izgubi 27.9 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 9 povp. v po izgubi 27.7 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 5 povp. v po izgubi 28.4 m/s
+  avto 4 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 10 povp. v po izgubi 27.7 m/s
+  avto 5 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 11 povp. v po izgubi 27.7 m/s
+  avto 6 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 12 povp. v po izgubi 27.7 m/s
+  avto 7 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 13 povp. v po izgubi 27.5 m/s
+  nepoškodovani v cilju 5 povp. v 30.8
+MAIN kagerod seme 9 udarec 0.06 | t konec 154.2 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 4 povp. v po izgubi 28.6 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 7 povp. v po izgubi 28.3 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 9 povp. v po izgubi 28.0 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 6 povp. v po izgubi 28.4 m/s
+  avto 4 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 10 povp. v po izgubi 27.8 m/s
+  avto 5 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 12 povp. v po izgubi 27.5 m/s
+  avto 6 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 11 povp. v po izgubi 27.8 m/s
+  avto 7 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0 finished true mesto 13 povp. v po izgubi 27.4 m/s
+  nepoškodovani v cilju 5 povp. v 31.1
+SNAP kagerod seme 9 udarec 0.06 krogov 4 tyres true t udarca 8 | t konec 300.0 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 81, nL po popravilu 0) krog ob udarcu 1 finished true mesto 10 povp. v po izgubi 28.3 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 83, nL po popravilu 0) krog ob udarcu 1 finished true mesto 12 povp. v po izgubi 27.8 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 12 dmg 0.76 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 85, nL po popravilu 0) krog ob udarcu 1 finished true mesto 11 povp. v po izgubi 27.9 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 12 dmg 0.76 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 156, nL po popravilu 0) krog ob udarcu 1 finished true mesto 13 povp. v po izgubi 27.7 m/s
+  nepoškodovani v cilju 9 povp. v 33.2
+SNAP kagerod seme 9 udarec 0.06 krogov 4 tyres false t udarca 8 | t konec 291.1 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 10 povp. v po izgubi 28.9 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 13 povp. v po izgubi 28.5 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 12 povp. v po izgubi 28.7 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 11 povp. v po izgubi 28.8 m/s
+  nepoškodovani v cilju 9 povp. v 32.1
+MAIN kagerod seme 9 udarec 0.06 krogov 4 tyres false t udarca 8 | t konec 292.6 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 10 povp. v po izgubi 28.7 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 12 povp. v po izgubi 28.5 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 11 povp. v po izgubi 28.6 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 13 povp. v po izgubi 28.4 m/s
+  nepoškodovani v cilju 9 povp. v 32.6
+MAIN jezero seme 9 udarec 0.06 krogov 2 tyres false t udarca 8 | t konec 105.5 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 vortex   wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 2 povp. v po izgubi 36.4 m/s
+  avto 1 kaze     wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 3 povp. v po izgubi 36.2 m/s
+  avto 2 strega   wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 5 povp. v po izgubi 35.9 m/s
+  avto 3 pico     wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 9 povp. v po izgubi 35.2 m/s
+  avto 4 vortex   wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 4 povp. v po izgubi 36.1 m/s
+  avto 5 kaze     wreck false dmgMode 2 udarcev 17 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 7 povp. v po izgubi 35.6 m/s
+  avto 6 strega   wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 6 povp. v po izgubi 36.1 m/s
+  avto 7 pico     wreck false dmgMode 2 udarcev 16 dmg 1.00 odtrgano takoj - nL null => konec: odtrgano - nL brez dnf false redarji 0 boksi 0  krog ob udarcu 1 finished true mesto 10 povp. v po izgubi 35.3 m/s
+  nepoškodovani v cilju 5 povp. v 35.2
+SNAP kagerod seme 9 udarec 0.06 krogov 2 tyres true t udarca 8 | t konec 168.4 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 80, nL po popravilu 0) krog ob udarcu 1 finished true mesto 10 povp. v po izgubi 24.9 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 83, nL po popravilu 0) krog ob udarcu 1 finished true mesto 13 povp. v po izgubi 24.7 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 83, nL po popravilu 0) krog ob udarcu 1 finished true mesto 9 povp. v po izgubi 25.3 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 155, nL po popravilu 0) krog ob udarcu 1 finished true mesto 12 povp. v po izgubi 24.8 m/s
+  avto 4 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 157, nL po popravilu 0) krog ob udarcu 1 finished true mesto 11 povp. v po izgubi 24.9 m/s
+  avto 5 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 159, nL po popravilu 0) krog ob udarcu 1 finished true mesto 8 povp. v po izgubi 26.5 m/s
+  nepoškodovani v cilju 7 povp. v 34.8
+SNAP kagerod seme 9 udarec 0.06 krogov 2 tyres true t udarca 80 | t konec 161.4 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 144, nL po popravilu 0) krog ob udarcu 2 finished true mesto 12 povp. v po izgubi 20.5 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 148, nL po popravilu 0) krog ob udarcu 2 finished true mesto 13 povp. v po izgubi 20.6 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 147, nL po popravilu 0) krog ob udarcu 2 finished true mesto 11 povp. v po izgubi 21.7 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 7 povp. v po izgubi 26.5 m/s
+  avto 4 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 9 povp. v po izgubi 26.6 m/s
+  avto 5 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 10 povp. v po izgubi 25.9 m/s
+  nepoškodovani v cilju 7 povp. v 33.1
+MAIN kagerod seme 9 udarec 0.06 krogov 2 tyres true t udarca 80 | t konec 165.4 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 144, nL po popravilu 0) krog ob udarcu 2 finished true mesto 12 povp. v po izgubi 20.2 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 149, nL po popravilu 0) krog ob udarcu 2 finished true mesto 11 povp. v po izgubi 20.9 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 147, nL po popravilu 0) krog ob udarcu 2 finished true mesto 10 povp. v po izgubi 21.6 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 5 povp. v po izgubi 26.8 m/s
+  avto 4 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 7 povp. v po izgubi 26.7 m/s
+  avto 5 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 9 povp. v po izgubi 26.6 m/s
+  nepoškodovani v cilju 7 povp. v 32.6
+SNAP jezero seme 9 udarec 0.06 krogov 2 tyres false t udarca 8 | t konec 126.0 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 6 povp. v po izgubi 31.3 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 7 povp. v po izgubi 31.3 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 12 povp. v po izgubi 28.9 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 8 povp. v po izgubi 31.1 m/s
+  avto 4 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 13 povp. v po izgubi 28.7 m/s
+  avto 5 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 11 povp. v po izgubi 30.1 m/s
+  avto 6 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 9 povp. v po izgubi 30.7 m/s
+  avto 7 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 10 povp. v po izgubi 30.5 m/s
+  nepoškodovani v cilju 5 povp. v 35.5
+MAIN jezero seme 9 udarec 0.06 krogov 2 tyres false t udarca 8 | t konec 121.6 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 6 povp. v po izgubi 31.2 m/s
+  avto 1 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 7 povp. v po izgubi 31.2 m/s
+  avto 2 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 8 povp. v po izgubi 31.1 m/s
+  avto 3 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 10 povp. v po izgubi 30.5 m/s
+  avto 4 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 9 povp. v po izgubi 30.9 m/s
+  avto 5 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 11 povp. v po izgubi 30.4 m/s
+  avto 6 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 13 povp. v po izgubi 30.1 m/s
+  avto 7 lisica   wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 1 boksi 0  krog ob udarcu 1 finished true mesto 12 povp. v po izgubi 30.3 m/s
+  nepoškodovani v cilju 5 povp. v 34.9
+SNAP kagerod seme 5 udarec 0.06 krogov 2 tyres true t udarca 80 | t konec 153.6 | v cilju 13 dnf 0 od 13 | NaN 0
+  avto 0 jelen    wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 134, nL po popravilu 0) krog ob udarcu 2 finished true mesto 13 povp. v po izgubi 19.5 m/s
+  avto 1 jelen    wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 136, nL po popravilu 0) krog ob udarcu 2 finished true mesto 12 povp. v po izgubi 20.3 m/s
+  avto 2 jelen    wreck true dmgMode 2 udarcev 12 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano - nL 0 dnf false redarji 0 boksi 1 (t 140, nL po popravilu 0) krog ob udarcu 2 finished true mesto 11 povp. v po izgubi 21.5 m/s
+  avto 3 jelen    wreck true dmgMode 2 udarcev 6 dmg 0.76 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 8 povp. v po izgubi 29.3 m/s
+  avto 4 jelen    wreck true dmgMode 2 udarcev 13 dmg 0.78 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 3 povp. v po izgubi 29.2 m/s
+  avto 5 jelen    wreck true dmgMode 2 udarcev 13 dmg 0.79 odtrgano takoj wheelFL nL 1 => konec: odtrgano wheelFL nL 1 dnf false redarji 0 boksi 0  krog ob udarcu 2 finished true mesto 6 povp. v po izgubi 29.1 m/s
+  nepoškodovani v cilju 7 povp. v 35.8

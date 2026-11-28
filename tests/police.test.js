@@ -13,6 +13,8 @@ const { loadCore } = require('./lib/core.js');
 const { DT, seeded } = require('./lib/sim.js');
 
 const C = loadCore();
+C.setTest({ pull: 0 });   // (»Samo moj avto«: the player here is the autopilot standing in for a driver who steers against a bent car; with the steering pull on it
+// too (the default since 17. 11. 2026) it is caught sooner: 2 of 3 whole runs busted, heat 2.8 in the first. The pull itself: poskodbe.test.js)
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const def = C.TRACKS.find(d => d.id === 'vrsic'), T = new C.Track(def);

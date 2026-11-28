@@ -21,7 +21,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'v8', hz: 0.8, loud: 1.1 },
     expect: { t100: [3.18, 3.73], vmax: [184, 195], latG: [1.99, 2.09], d100: [25.8, 28.5] },
     partNames: { tailgate: 'tailgate', spare: 'spare wheel', roofRack: 'roof rack', bullBar: 'bull bar', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
-      plate: 'number plate', wiperFront: 'windscreen wipers', wiperRear: 'rear wiper' },
+      plate: 'number plate', wiperFront: 'windscreen wipers', wiperRear: 'rear wiper', door2L: 'rear left door', door2R: 'rear right door' },
     parts: { set: 'car', ht: 1.95, y0: 0.32, drop: ['trunk'],
       extra: {
         tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.11, lx: -0.94, lz: 0, y: 1.11 },   // (with the ladder on it, its spare wheel a part of its own on it)
@@ -37,12 +37,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.25, h: 0.05, lx: -0.9, lz: 0.81, y: 0.9, on: 'quarterR' },
         plate: { z: 1, th: 0.4, m: 1, r: 0.17, h: 0.02, lx: -0.94, lz: 0, y: 0.47, on: 'bumperR' },
         wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.4, h: 0.03, lx: 0.45, lz: -0.07, y: 1.23 },
+        door2L: { z: 2, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: -0.18, lz: -1, y: 1.1 }, door2R: { z: 3, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: -0.18, lz: 1, y: 1.1 },
         wiperRear: { z: 1, th: 0.45, m: 0.5, r: 0.2, h: 0.03, lx: -0.9, lz: 0.18, y: 1.53, on: 'tailgate' },
       },
       // (where the look has them: the mirrors on the doors' front corners, the bonnet's middle, the bumpers' and the tailgate's faces; a
-      // lost one flies off from there. The fenders lie as thick as their pods over the lamps)
+      // lost one flies off from there. The fenders lie as thick as their pods over the lamps. The front doors: from the front arch to the
+      // B-pillar's line, the rear doors, extra's door2L / door2R, behind it)
       over: { mirrorL: { lx: 0.395, y: 1.31 }, mirrorR: { lx: 0.395, y: 1.31 }, hood: { lx: 0.655, y: 1.17 }, bumperF: { lx: 0.94 }, bumperR: { lx: -0.89 },
-        fenderL: { h: 0.17 }, fenderR: { h: 0.17 } },
+        fenderL: { h: 0.17 }, fenderR: { h: 0.17 }, doorL: { lx: 0.22, y: 1.1 }, doorR: { lx: 0.22, y: 1.1 } },
     },
     // where the garage's parts go (js/deli.js, look units): the head lamps in the place of the round lamps in the fenders' pods (every option
     // in their outline, ROUND; the dark socket with the lamp), in the lamps' parts; the rims. No wing: the roof rack covers the roof to its
@@ -78,7 +80,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // from the B-pillar to the A-pillar's foot (the quarter-light under the windscreen's edge: the band's decals off its long triangles), its handle (the rear door's stays), the rubbing strip on its own height (the stock one
       // goes with the garage's doors)
       ogledala: { x: 0.95, y: 1.33, z: 0.97, w: 0.08, h: 0.17, d: 0.12, z0: 0.925 },
-      vrata: { x: [-0.86, 1.05], y: [0.5, 1.2], handle: [0.16, 1.06, 0.937, 0.17, 0.035], win: [[0.05, 0.01], [0.79, 0.01], [0.79, 0.99], [0.05, 0.99]], frame: [0.01, 0.05, 0.95, 1.0], rub: 0.835, crease: [0.7, 0.98], rubSide: true },
+      vrata: { x: [-0.86, 1.05], y: [0.5, 1.2], handle: [0.16, 1.06, 0.937, 0.17, 0.035], win: [[0.05, 0.01], [0.79, 0.01], [0.79, 0.99], [0.05, 0.99]], frame: [0.01, 0.05, 0.95, 1.0], rub: 0.835, crease: [0.7, 0.98], rubSide: true, split: 0.01, parts: ['doorL', 'doorR', 'door2L', 'door2R'] },
       zavore: { s: 1 },
       matice: { k: 6, r: 0.2 },
       // (sklop 3 · barve, js/deli/barve.js) the stripes over the bonnet between its bulge and the vents (the roof in the stripe colour, under
@@ -88,7 +90,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // windscreen's header; the fuel cap where the stock flap is; the calipers
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.28, 0.42], x: [[1.08, 2.24]], sx: [-0.8, 0.95] },
-      nalepke: { side: [[0.07, 0.78], [1.33, 2.1], [-1.66, -0.92]], y: [0.94, 1.17], hood: { x: [1.1, 2.15], z: [0.63, 0.86] } },
+      nalepke: { side: [[0.07, 0.78], [1.33, 2.1], [-1.66, -0.92]], y: [0.94, 1.17], hood: { x: [1.1, 2.15], z: [0.63, 0.86] }, band: [-1.54, 2.05] },
       soncni_pas: { x: [0.84, 0.885], w: 0.78 }, zamasek: { x: -1.76, y: 1.02, z: 0.93, r: 0.055 },
       celjusti: { r: [0.11, 0.19], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) the V8's bay under the bonnet, on its floor: the filter behind the block's left, the turbo
@@ -99,7 +101,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the box: slab sides, flat glass leaning in a little, a flat roof (the
     // stripe colour: a two-tone roof), an upright windscreen, a flat bonnet; its end caps the grille's panel (front) and the tailgate (rear,
-    // over the bumper). Each side: the fender, both doors (one part, their glass with them; the sill under them stays), the quarter under
+    // over the bumper). Each side: the fender, the front and the rear door (a part each, its glass with it; the sill under them stays), the quarter under
     // the belt (its long window and the pillars stay with the roof). The bumpers, the bull bar in front of the grille, the tailgate with the
     // spare and the ladder on it, the roof rack with the light bar and the load, the black flares over the tyres (with the fenders and the
     // quarters), the snorkel (with the right fender) in their parts. What the two cameras see first (from above, from behind) gets the
@@ -116,12 +118,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: 0.25, y: 1.6, near: 0.25, tilt: 0.06, style: 'closed' },   // (sitting high, close behind the upright windscreen)
         crush: { x0: -2.08, x1: 1.0, z: 0.86 } },
       wheels: { style: 'knob', w: 0.27, rimK: 0.58, rim: [0.66, 0.67, 0.7], cap: [0.28, 0.28, 0.3], gap: 0.06 },
-      // the parts' regions (look units): the doors from behind the front arch to the rear door's edge (side, window: their glass), the
-      // fenders forward of them, the quarters behind them under the belt (the long window, the C- and D-pillars stay with the roof), the
-      // bonnet over the fenders' tops. (The doors' front edge at the cowl's section: no sliver of a segment between them)
+      // the parts' regions (look units): the front doors from behind the front arch to the shut line at the B-pillar, the rear doors
+      // (door2L / door2R, parts.extra) from there to their rear edge (side, window: each door's own glass), the fenders forward of them, the
+      // quarters behind them under the belt (the long window, the C- and D-pillars stay with the roof), the bonnet over the fenders' tops.
+      // (The front doors' front edge at the cowl's section: no sliver of a segment between them)
       regions: [
-        { part: 'doorL', x: [-0.86, 1.06], bands: ['side', 'window'], side: 'L', y: [0.5, 1.85] },
-        { part: 'doorR', x: [-0.86, 1.06], bands: ['side', 'window'], side: 'R', y: [0.5, 1.85] },
+        { part: 'doorL', x: [0.01, 1.06], bands: ['side', 'window'], side: 'L', y: [0.5, 1.85] },
+        { part: 'doorR', x: [0.01, 1.06], bands: ['side', 'window'], side: 'R', y: [0.5, 1.85] },
+        { part: 'door2L', x: [-0.86, 0.01], bands: ['side', 'window'], side: 'L', y: [0.5, 1.85] },
+        { part: 'door2R', x: [-0.86, 0.01], bands: ['side', 'window'], side: 'R', y: [0.5, 1.85] },
         { part: 'fenderL', x: [1.06, 2.3], bands: ['tuck', 'side', 'window'], side: 'L', y: [-1, 1.3] },
         { part: 'fenderR', x: [1.06, 2.3], bands: ['tuck', 'side', 'window'], side: 'R', y: [-1, 1.3] },
         { part: 'quarterL', x: [-2.3, -0.86], bands: ['tuck', 'side'], side: 'L', y: [-1, 1.25] },
@@ -256,6 +261,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         K.hinge('hood', [1.08, 1.19, -0.8], [1.08, 1.19, 0.8]);
         K.hinge('doorL', [1.05, 0.6, -0.93], [1.05, 1.2, -0.93]); K.hinge('doorR', [1.05, 0.6, 0.93], [1.05, 1.2, 0.93]);
+        K.hinge('door2L', [0.01, 0.6, -0.93], [0.01, 1.2, -0.93]); K.hinge('door2R', [0.01, 0.6, 0.93], [0.01, 1.2, 0.93]);   // (the rear doors: on the B-pillar)
         // ---- inside (seen once a part is off): the seats, the rear bench, the dashboard and the wheel, the B-pillars' feet; the V8 ----
         for (const sd of [-1, 1]) K.seat(0.25, 0.95, sd * 0.42, { w: 0.52, back: 0.7 });
         K.seat(-0.62, 0.95, 0, { w: 1.5, back: 0.66 });

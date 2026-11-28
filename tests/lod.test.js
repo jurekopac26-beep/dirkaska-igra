@@ -197,12 +197,15 @@ for (const [name, tx, lim, seed] of [['the default knock (Simulacija)', {}, 0.1,
 // ---- 7. Spa, 100 cars from the grid (the lights), the player last: no pile-up in the first corners ----
 for (const seed of [9, 7]) {   // (the longest a rival stood: 0.7 and 0.6 s; 0.0-1.5 s over four seeds, before LOD.nr 5.7-9.1 s)
   const r = race('spa', 100, { flying: 0, playerGrid: 999, laps: 3, seed }), P = r.player, st = new Float64Array(r.cars.length);
+  C.setTest({ pull: 0 });   // (»Samo moj avto«: this is about LOD at the start; with the steering pull on the rivals too (the default since 17. 11. 2026, Poškodbe: Vklop)
+  // a knocked rival pulls to one side: seed 7 then has one standing 3.5 s and one rescued)
   let worst = 0, resc = 0; const orig = r.rescue; r.rescue = function (c) { if (c !== P) resc++; return orig.call(this, c); };
   r.start();
   drive(r, Math.round(40 / DT), (k) => {
     if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
     if (k * DT >= 4) r.cars.forEach((c, i) => { if (c !== P) { st[i] = Math.hypot(c.vx, c.vz) < 3 ? st[i] + DT : 0; worst = Math.max(worst, st[i]); } });   // (stood: under 3 m/s on end, from 4 s on)
   });
+  C.setTest({});
   check(`Spa, 100 cars from the grid (the lights), seed ${seed}, 40 s: no pile-up in the first corners (no rival standing 3 s on end, none rescued, the player over the line)`,
     r.cars.length === 101 && worst < 3 && resc === 0 && P.dist > 0, `the longest a rival stood ${worst.toFixed(1)} s, ${resc} rivals rescued, the player at ${P.dist.toFixed(0)} m`);
 }

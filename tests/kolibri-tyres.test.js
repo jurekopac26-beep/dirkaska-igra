@@ -64,8 +64,8 @@ function until(r, fn, s, slide) {   // steps until fn() or s seconds; the player
   check('the car\'s damage at 80 % (where it caught fire before): the most knocked tyre burns, that knock takes no wheel', K.hot === 0 && !P.wreck.wl, `dmg ${P.dmg.toFixed(3)}, hot ${K.hot}`);
   const a = setUp(); a.P.dmg = 0.7; C.applyDamage(a.P, 0.01, -L, Wd); const soft = a.K.hot; C.applyDamage(a.P, 0.021, -L, Wd);
   check('from 70 %: an average knock sets none on fire, a hard one (2 %) at once, at its corner', soft === -1 && a.K.hot === 3, `${soft} -> ${a.K.hot}`);
-  const g = C.ktGrip(P);
-  check('a burning tyre: much less side grip, the drive, the speed and the brakes as before', g[4] < 0.75 && g[0] === 1, `side ${g[4]}, wheel ${g[0]}`);
+  const m0 = P.dmgMode, gv = C.ktGrip(P).slice(); P.dmgMode = 2; const g = C.ktGrip(P); P.dmgMode = m0;
+  check('a burning tyre: at Samo videz only to be seen (the grip as new), at Vklop much less side grip, the drive, the speed and the brakes as before', m0 === 1 && gv.every(v => v === 1) && g[4] < 0.75 && g[0] === 1, `mode ${m0}: side ${gv[4]}; Vklop: side ${g[4]}, wheel ${g[0]}`);
   const n = setUp({ wheelRule: undefined }); n.P.dmg = 0.79; C.applyDamage(n.P, 0.02, FL[0], FL[1]);
   check('without the wheel rule (a time trial, qualifying): no tyre on fire at 80 %', n.K.hot === -1);
   const z = setUp({ damage: 0 }); for (let i = 0; i < 8; i++) C.applyDamage(z.P, 0.03, FL[0], FL[1]);

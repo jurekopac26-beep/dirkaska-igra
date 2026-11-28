@@ -1,0 +1,5 @@
+klicev 40000 zadetkov 24320 nan 0
+zadaj    {"zapira":2362,"wPovp":2.282,"wMax":4.5,"EsPovpJ":92.835,"EsMaxJ":273.315,"parBrez":0,"parBrezMaxJ":0,"parZ":1438,"parZMaxJ":273.215,"neplacano":1438,"poSunku":0,"najPar":{"id":"jelen","v0":10.077,"w0":1.069,"vn":1.582,"k":1.047,"kolo0":[0,0],"wKolo":-4.499,"EsJ":273.215,"dBrezJ":0,"dZJ":273.215}}
+spredaj  {"zapira":2289,"wPovp":2.235,"wMax":4.5,"EsPovpJ":90.038,"EsMaxJ":273.315,"parBrez":0,"parBrezMaxJ":0,"parZ":1352,"parZMaxJ":273.267,"neplacano":1352,"poSunku":0,"najPar":{"id":"vidra","v0":3.506,"w0":-1.722,"vn":3.731,"k":1.445,"kolo0":[0,0],"wKolo":-4.499,"EsJ":273.267,"dBrezJ":0,"dZJ":273.267}}
+bok      {"zapira":6803,"wPovp":2.271,"wMax":4.5,"EsPovpJ":92.74,"EsMaxJ":273.355,"parBrez":0,"parBrezMaxJ":0,"parZ":3223,"parZMaxJ":273.355,"neplacano":3223,"poSunku":0,"najPar":{"id":"jastreb","v0":8.324,"w0":-0.748,"vn":0.718,"k":0.911,"kolo0":[0,0],"wKolo":4.5,"EsJ":273.355,"dBrezJ":0,"dZJ":273.355}}
+neZapira {"n":12866,"zVrtenjem":12866,"wMax":4.5,"EsMaxJ":273.355}

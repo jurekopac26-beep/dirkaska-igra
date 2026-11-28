@@ -1,0 +1,9 @@
+drevo: 0c36dfd, po spremembi
+giblje, avto se vrti {"zadetkov":5119,"avtoGor":1152,"avtoGorMaxJ":13015.2,"avtoGorZasukHitreje":260,"parGor":36,"parGorMaxJ":2527.9,"ustavilaOmejitev":31,"vrste":{"tyre":1,"bboard":6,"bin":3,"signalm":2,"gpost":2,"bench":2,"sign":2,"cone":1,"bale":2,"hydrant":1,"flagp":2,"tbollard":3,"iboard":1,"post":1,"rschev":1,"shelter":1,"warn":1,"crate":1,"cflag":1,"dpost":1,"bollard":1}}
+giblje, w=0 {"zadetkov":2775,"avtoGor":597,"avtoGorMaxJ":6292.9,"avtoGorZasukHitreje":255,"parGor":7,"parGorMaxJ":4077,"ustavilaOmejitev":4,"vrste":{"bboard":2,"dpost":1,"msign":2,"gpost":1,"pylon":1}}
+stoji, w=0, cel {"zadetkov":15064,"avtoGor":0,"avtoGorMaxJ":0,"avtoGorZasukHitreje":0,"parGor":0,"parGorMaxJ":0,"vrste":{}}
+stoji, w=0, kup {"zadetkov":1820,"avtoGor":0,"avtoGorMaxJ":0,"avtoGorZasukHitreje":0,"parGor":135,"parGorMaxJ":1290.1,"parBrezRazletaGor":0,"parBrezRazletaMaxJ":0,"razletMaxJ":6890,"vrste":{"isign":128,"bstack":3,"rbstack":3,"tstack":1}}
+stoji, |w|<=3, cel {"zadetkov":18974,"avtoGor":0,"avtoGorMaxJ":0,"avtoGorZasukHitreje":0,"parGor":0,"parGorMaxJ":0,"vrste":{}}
+stoji, |w|<=3, kup {"zadetkov":2417,"avtoGor":0,"avtoGorMaxJ":0,"avtoGorZasukHitreje":0,"parGor":254,"parGorMaxJ":1462.6,"parBrezRazletaGor":0,"parBrezRazletaMaxJ":0,"razletMaxJ":6875.4,"vrste":{"bstack":30,"isign":171,"tstack":26,"rbstack":27}}
+stoji, |w|>3, cel {"zadetkov":8639,"avtoGor":0,"avtoGorMaxJ":0,"avtoGorZasukHitreje":0,"parGor":0,"parGorMaxJ":0,"vrste":{}}
+stoji, |w|>3, kup {"zadetkov":1086,"avtoGor":0,"avtoGorMaxJ":0,"avtoGorZasukHitreje":0,"parGor":186,"parGorMaxJ":2133.1,"parBrezRazletaGor":0,"parBrezRazletaMaxJ":0,"razletMaxJ":9677.5,"vrste":{"tstack":30,"rbstack":45,"bstack":29,"isign":82}}

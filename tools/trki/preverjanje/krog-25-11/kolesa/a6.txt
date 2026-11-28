@@ -1,0 +1,34 @@
+== cv 6 (real)
+
+-- sacalobra (boksi: ne), igralec BREZ pravila kolesa (vožnja na čas, kvalifikacije, »Dirka teče naprej«), škoda Vklop
+igralec, kolo odpade po 19 udarcih v sprednji desni vogal: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":22}
+tekmec jelen, po 19 udarcih: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":30.7}
+tekmec +1,0 s: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":25}
+tekmec +2,0 s: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":0,"nL":0,"fix":1,"hold":5.51,"dnf":false,"lostW":"","v":0}
+igralec po gumbu (rescue): {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":0,"nL":0,"fix":1,"hold":6,"dnf":false,"lostW":"","v":0} xd {"ph":6.097206616556864}
++5 s: igralec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":0,"nL":0,"fix":1,"hold":1,"dnf":false,"lostW":"","v":0} tekmec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":0,"nL":0,"fix":1,"hold":0.51,"dnf":false,"lostW":"","v":0}
++11 s: igralec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":0,"nL":0,"fix":1,"hold":0,"dnf":false,"lostW":"","v":34.6} tekmec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":0,"nL":0,"fix":1,"hold":0,"dnf":false,"lostW":"","v":35.7}
+po polnem popravilu (repairCar): {"dmg":0,"cd":[0,0,0,0],"narisano":[0,0,0,0],"wl":0,"nL":0,"fix":1,"hold":0,"dnf":false,"lostW":"","v":34.6}
+
+-- spa (boksi: da), igralec BREZ pravila kolesa (vožnja na čas, kvalifikacije, »Dirka teče naprej«), škoda Vklop
+igralec, kolo odpade po 19 udarcih v sprednji desni vogal: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":23.4}
+tekmec jelen, po 19 udarcih: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":18}
+tekmec +1,0 s: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":9.5}
+tekmec +2,0 s: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":7.3}
+igralec po gumbu (rescue): {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":8} xd {"ph":0.5001123427654361}
++5 s: igralec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":37.7} tekmec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":42.7}
++11 s: igralec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":56.5} tekmec {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":2,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFR","v":57.6}
+
+-- sacalobra, igralec S pravilom kolesa (dirka, privzeto »Konec dirke«)
+pravilo: {"over":false,"fn":0,"burn":0,"kt":false}
+kolo odpade po 19 udarcih: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":1,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFL","v":22} rule {"over":false,"fn":1,"burn":2,"kt":false}
+po rescue: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":1,"nL":1,"fix":0,"hold":0,"dnf":false,"lostW":"wheelFL","v":0}
++6 s: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":1,"nL":1,"fix":0,"hold":0,"dnf":true,"lostW":"wheelFL","v":0} rule {"over":true,"fn":1,"burn":2,"kt":false} isOut true state racing
+rescue še enkrat, +8 s: {"dmg":0.76,"cd":[0,1,0,0],"narisano":[0,1,0,0],"wl":1,"nL":1,"fix":0,"hold":0,"dnf":true,"lostW":"wheelFL","v":0} rule {"over":true,"fn":1,"burn":2,"kt":false}
+
+-- ravnina (tests/lib/handling.js), jelen, škoda Vklop: zdrav / zvit sprednji desni vogal s kolesom (stanje po redarjih) / isti vogal brez kolesa (po pestu)
+zdrav                                                zavoj v 2 s 0.00°, tresenje 0.000°/s, hitrost 80.0 km/h | krog levo -29.3°/s (80 km/h), desno 29.3°/s (80 km/h) | zaviranje 100-0: 23.0 m, 1.63 s, odmik 0.00 m | 20 s polni plin: 251 km/h
+po redarjih (cd 0.00/1.00/0.00/0.00, kolo nameščeno) zavoj v 2 s 5.94°, tresenje 0.298°/s, hitrost 80.0 km/h | krog levo -26.3°/s (80 km/h), desno 32.2°/s (80 km/h) | zaviranje 100-0: 23.0 m, 1.63 s, odmik 0.51 m | 20 s polni plin: 235 km/h
+brez kolesa (isti cd)                                zavoj v 2 s 5.71°, tresenje 0.295°/s, hitrost 80.0 km/h | krog levo -23.3°/s (80 km/h), desno 28.5°/s (80 km/h) | zaviranje 100-0: 23.2 m, 1.65 s, odmik 0.48 m | 20 s polni plin: 219 km/h
+po redarjih, Samo videz                              zavoj v 2 s 0.00°, tresenje 0.000°/s, hitrost 80.0 km/h | krog levo -29.3°/s (80 km/h), desno 29.3°/s (80 km/h) | zaviranje 100-0: 23.0 m, 1.63 s, odmik 0.00 m | 20 s polni plin: 251 km/h
+zadnje desno zvito (cd 0/0/0/0.8)                    zavoj v 2 s 0.00°, tresenje 0.000°/s, hitrost 80.0 km/h | krog levo -29.3°/s (80 km/h), desno 29.3°/s (80 km/h) | zaviranje 100-0: 23.0 m, 1.63 s, odmik 0.00 m | 20 s polni plin: 241 km/h

@@ -41,10 +41,12 @@ check('track: the lap 4.361 km within 0.3 % (the centre line from OSM, placed on
   const orig = Math.random; Math.random = seeded(3);   // (every car off the line at once, as before the start's reaction (Core LAUNCH): with it this player is wrecked in the first
   // corner, and the autopilot pins a wrecked car against the wall at the way in instead of the lane; this is about the lane)
   const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, damage: 2, launch: false });
+  C.setTest({ pull: 0 });   // (»Samo moj avto«: with the steering pull on the autopilot too (the default since 17. 11. 2026) this player is wrecked on lap 1 and stops a lap
+  // later, at 229-262 s; the pull is checked in poskodbe.test.js, this is about the lane)
   r.start(); const P = r.player; P.dmg = 0.5; let t = 0, k = 0; const ev = []; let minD = 0, maxD = 0;
   while (t < 260) { Math.random = seeded(5000 + (++k)); P.pitWant = P.dist > 1500 && !ev.includes('exit') && (!P.pitDone || P.inPit); C.aiControl(P, r, DT); r.step(DT); t += DT;
     if (P.pitEv) { ev.push(P.pitEv); P.pitEv = null; } if (P.inPit) { minD = Math.min(minD, P.q.d); maxD = Math.max(maxD, P.q.d); } if (P.pitDone && !P.inPit) break; }
-  Math.random = orig;
+  Math.random = orig; C.setTest({});
   check('pits: a stop on the autopilot: into the lane on the left, stopped at the box, repaired, back out onto the straight',
     ev.join() === 'enter,box,repair,done,exit' && minD < -13 && maxD < 1 && P.dmg < 0.05 && !P.inPit, `${ev.join(' > ')}; in the lane ${minD.toFixed(1)} .. ${maxD.toFixed(1)} m, damage ${P.dmg.toFixed(2)}`);
 }

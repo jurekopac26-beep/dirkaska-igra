@@ -18,7 +18,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 55000, pk: 'ppo', field: ['kozorog'],
     snd: { kind: 'i4', hz: 1.2, turbo: 0.8, loud: 1.1 },
     expect: { t100: [2.61, 3.06], vmax: [225, 239], latG: [2.45, 2.55], d100: [20.9, 23.1] },
-    partNames: { splitter: 'front splitter', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp', wiperFront: 'windscreen wiper' },
+    partNames: { door2L: 'rear left door', door2R: 'rear right door', splitter: 'front splitter', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp', wiperFront: 'windscreen wiper' },
     parts: { set: 'race', ht: 1.38, y0: 0.12,
       over: {
         bumperF: { df: 0 },
@@ -26,6 +26,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         wing: { h: 0.11 },              // (the wing with its stands and endplates lies 0.31 m tall on the road)
       },
       extra: {
+        // (the rear doors: their own parts between the B-pillar's foot and the rear flare, as the front doors on their side's zone; each
+        // opens and falls whole, on its own hinge at its front edge)
+        door2L: { z: 2, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: -0.26, lz: -1, y: 0.8 },
+        door2R: { z: 3, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: -0.26, lz: 1, y: 0.8 },
         splitter: { z: 0, th: 0.45, m: 3, rW: 0.4, h: 0.04, lx: 1, lz: 0, f: 0.02, df: 0.3 },
         // (as KOLIBRI's: each slim head lamp with its black face a part of its own, a hit on its corner knocks it out; the tail lamps with
         // their black surrounds likewise (the rain light on the fin is the right one's half of the tail mesh: it goes dark with it); the wiper)
@@ -84,8 +88,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // pushed out over the wheels (the doors keep the road car's width: steps in the loft, a black vent behind each front wheel, black
     // lips round the arches), black skirts between them; the deep splitter under the bumper's mouth, the wing on two stands on the boot
     // lid, the fin on the roof's back with the rain light at its foot; slick wheels with centre-lock nuts. The standard regions cut the
-    // loft: the bonnet and the boot lid (their tops), the front wings (with the vents), the quarters (the rear door, its glass and the
-    // flare), the front doors with their glass, the bumpers, the mirrors
+    // loft: the bonnet and the boot lid (their tops), the front wings (with the vents), the quarters (the flare and the
+    // C-pillar), the front doors and the rear doors with their glass (four parts, cut at the drawn shut lines), the bumpers, the mirrors
     look: {
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, the driver, the tyres in 64)
       body: { len: 4.4, wid: 1.95,
@@ -105,9 +109,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         door: [0.78, -0.25], bumpF: 0.32, bumpR: 0.2, bumpY: [0.5, 0.58],
         decalX: -0.3, decalY: 1.349, decalRz: 0.0148, decalS: 0.6 },    // (the start number on the roof's front half, 5 mm over it: the fin is behind it)
       wheels: { style: 'slick', w: 0.25, gap: 0.04, rim: [0.92, 0.92, 0.9], seg: 32, segHi: 64 },   // (white dishes, grey spokes, the red centre-lock nut: not the GT racer's dark ones)
-      // the lids take their tops only (the nose's and the tail's sloping corners stay with the body); the sill under the rear door stays too
+      // the lids take their tops only (the nose's and the tail's sloping corners stay with the body); the sill under the rear door stays too.
+      // The rear doors: their own parts from the B-pillar's foot (the front door's rear edge) to the drawn shut line at the flare, with
+      // their glass; the quarter behind them keeps the flare and the C-pillar
       regions: (std) => [{ part: 'body', x: [-0.98, -0.25], bands: ['tuck'], y: [-1, 0.2] }]
-        .concat(std.map(r => r.part === 'hood' || r.part === 'trunk' ? Object.assign({}, r, { bands: ['edge', 'crown'] }) : r)),
+        .concat(std.flatMap(r => r.part === 'hood' || r.part === 'trunk' ? [Object.assign({}, r, { bands: ['edge', 'crown'] })]
+          : /^quarter/.test(r.part) ? [{ part: 'door2' + r.part.slice(-1), x: [-0.88, -0.25], bands: ['side', 'window'], y: std.find(q => q.part === 'door' + r.part.slice(-1)).y, side: r.part.slice(-1) },
+            Object.assign({}, r, { x: [r.x[0], -0.88] })] : [r])),
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, D = [0.06, 0.06, 0.065], CF = [0.045, 0.045, 0.05], RD = [0.86, 0.12, 0.08], SH = K.shade(P, 0.45);
         const dirZ = (sd) => sd < 0 ? '-z' : 'z', LR = (n, sd) => n + (sd < 0 ? 'L' : 'R'), XC = -0.88, XB = -0.25, XA = 0.78;
@@ -136,7 +144,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // pillar keeps its width down to the cowl)
         DL.band([[XC, 0], [XA, 0], [XA, 0.07], [XC, 0.07]], B, null, 0.006);
         DL.band([[XC, 0.9], [0, 0.9], [0, 1], [XC, 1]], B, null, 0.006);
-        DL.band([[-0.31, 0], [-0.2, 0], [-0.2, 1], [-0.31, 1]], B, null, 0.008);
+        DL.band([[-0.31, 0], [-0.2, 0], [-0.2, 1], [-0.31, 1]], B, null, 0.008, { part: 'body' });   // (the B-pillar: the body's, it stays when the doors go)
         for (const q of [[0, 0.831, 0.3, 0.74], [0.3, 0.74, 0.5, 0.59], [0.5, 0.59, 0.64, 0.32], [0.64, 0.32, XA, 0]]) DL.band([[q[0], q[1]], [q[2], q[3]], [q[2], 1], [q[0], 1]], P, null, 0.008);
         // the shut lines: the doors' (the B-pillar's foot, the rear door's back)
         for (const x of [XB, XC + 0.012]) DL.side([[x - 0.006, 0.2], [x + 0.006, 0.2], [x + 0.006, 0.95], [x - 0.006, 0.95]], SH, null, 0.008);
@@ -150,7 +158,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const band = (x0, x1, z0, z1, a0, a1, b0, b1, part) => face([[x0, a0, sd * z0], [x1, a1, sd * z1], [x1, b1, sd * z1], [x0, b0, sd * z0]], S, [0, 0, sd], { part });
           band(1.85, 0.9, 0.981, 0.981, 0.765, 0.775, 0.79, 0.805, LR('fender', sd));
           band(XA, XB, 0.911, 0.911, 0.775, 0.782, 0.805, 0.822, LR('door', sd));
-          band(XB, XC, 0.911, 0.911, 0.782, 0.786, 0.822, 0.845, LR('quarter', sd));
+          band(XB, XC, 0.911, 0.911, 0.782, 0.786, 0.822, 0.845, LR('door2', sd));
           band(-0.98, -1.97, 0.981, 0.981, 0.787, 0.795, 0.85, 0.91, LR('quarter', sd));
           band(-1.97, -2.165, 0.981, 0.906, 0.795, 0.797, 0.91, 0.835, 'body');
           K.number(0.27, 0.52, sd * 0.912, 0.3, { dir: dirZ(sd), host: LR('door', sd) });
@@ -232,7 +240,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- hinges: the bonnet at the cowl, the boot lid at the rear glass, the doors at their front edges ----
         K.hinge('hood', [0.8, 0.905, -0.6], [0.8, 0.905, 0.6]);
         K.hinge('trunk', [-1.52, 1.0, -0.6], [-1.52, 1.0, 0.6]);
-        for (const sd of [-1, 1]) K.hinge(LR('door', sd), [0.77, 0.3, sd * 0.9], [0.77, 0.86, sd * 0.9]);
+        for (const sd of [-1, 1]) { K.hinge(LR('door', sd), [0.77, 0.3, sd * 0.9], [0.77, 0.86, sd * 0.9]); K.hinge(LR('door2', sd), [-0.26, 0.3, sd * 0.9], [-0.26, 0.86, sd * 0.9]); }   // (the rear doors: on the B-pillar)
         // ---- the underbody: a black floor pan under the whole car, narrowed between the wheels over the axles (no seeing the road
         //      through the car from a low angle or through an open door) ----
         { const A = K.arches, xs = [-2.0, A[1].x - A[1].half, A[1].x + A[1].half, A[0].x - A[0].half, A[0].x + A[0].half, 2.0], wn = K.hw - 0.17;
@@ -257,7 +265,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //      grips out of their recesses; the bonnet's and the boot lid's shut lines; the fuel filler on the right rear quarter; the
         //      window net in the driver's window; an aerial on the roof's back; the driver at the wheel ----
         if (K.hi) {
-          for (const sd of [-1, 1]) for (const x of [-0.12, -0.74]) K.box(x, 0.822, sd * 0.922, 0.11, 0.016, 0.012, 0, [0.12, 0.12, 0.13], null, false, { host: x > -0.25 ? LR('door', sd) : LR('quarter', sd) });
+          for (const sd of [-1, 1]) for (const x of [-0.12, -0.74]) K.box(x, 0.822, sd * 0.922, 0.11, 0.016, 0.012, 0, [0.12, 0.12, 0.13], null, false, { host: x > -0.25 ? LR('door', sd) : LR('door2', sd) });
           const shut = (xa, xb) => { for (const sd of [-1, 1]) DL.top([xa, xb, xb, xa].map((x, i) => [x, sd * (L.prop(x, 'wt') - (i < 2 ? 0.012 : 0.02))]), D, 0.004); };
           shut(0.92, 2.03); shut(-1.96, -1.52);   // (the bonnet's and the boot lid's: along their edges)
           K.deli('zamasek', () => face([0, 1, 2, 3, 4, 5, 6, 7].map(i => [-1.55 + Math.cos(i * Math.PI / 4) * 0.055, 0.83 + Math.sin(i * Math.PI / 4) * 0.055, 0.987]), K.shade(P, 0.7), [0, 0, 1], { part: LR('quarter', 1) }));   // (the garage's cap in its place: mounts.zamasek)

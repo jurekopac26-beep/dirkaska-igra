@@ -1,0 +1,13 @@
+cv 6 phys cs NAI 0
+spa avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+hiva avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+koli avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+cusco avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+seoul avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+bathurst avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+furka avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+montreal avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+killar avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+pikes avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+kotor avtov 1 ENAKO 60 s | prvi dotik veje k=-1 
+sakhir avtov 1 ENAKO 60 s | prvi dotik veje k=-1 

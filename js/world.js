@@ -1782,6 +1782,7 @@ const World = (function () {
       for (const side of [-1, 1]) {
         const bar = side > 0 ? T.br : T.bl, grav = side > 0 ? T.gravR : T.gravL;
         const type = new Uint8Array(N); // 0 armco, 1 concrete, 2 tires
+        (out.barKind || (out.barKind = Object.assign((i, sd) => { const t = out.barKind.t[sd > 0 ? 1 : 0]; return !t || (SKIPBAR && SKIPBAR(sd, i)) ? -1 : t[i]; }, { t: [null, null] }))).t[side > 0 ? 1 : 0] = type;   // (Render: what a car that knocks the barrier at sample i on that side breaks grit off, a concrete wall only; P4)
         for (let i = 0; i < N; i++) {
           const ds = dStart(i);
           if (ds > -200 && ds < 215) type[i] = 1;

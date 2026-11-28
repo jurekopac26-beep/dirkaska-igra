@@ -458,6 +458,7 @@
           } else if (!nd[i] && !onBr[i] && i % 25 === 0 && i > 2 && i < iE - 2) mkPosts.push([i, side]);
         }
       }
+      out.barKind = (i, side) => { const si = side > 0 ? 1 : 0; return onBr[i] ? 1 : need[si][i] ? (blk[si][i] ? 1 : 0) : -1; };   // (Render: what stands on the barrier line at sample i: 1 the bridge's parapet, the hairpins' concrete blocks and the low walls under the bridge, 0 the W-beam, -1 nothing)
       const kp = caProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;
       for (const sp2 of mkPosts) { if (kp.has(sp2)) continue;
         const [i, side] = sp2, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]);

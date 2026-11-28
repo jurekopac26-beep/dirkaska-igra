@@ -1,0 +1,3 @@
+{"drevo":"po","NOA":1,"NOB":0,"A":0,"B":0,"BFROM":0,"pravilo":true,"dirk":32,"korakovSSkodo":162,"skodaOgraja":32.037,"epizod":144,"porazdelitevKorakov":{"1":133,"2":7,"3":2,"4":1,"5+":1},"delezSkodeNadNajvecjimKorakom":0.022,"brezSunkaKorakov":3,"brezSunkaDelezSkode":0.003,"igralcuOdpadeKolo":15,"odTegaVKorakuBrezSunka":0,"konecIgre":15,"B_klicev":0,"B_uporabljen":0}
+najvec skode {"run":"hiva/crash","id":"rally","igralec":true,"k0":857,"korakov":1,"skoda":0.892,"najvecjiKorak":0.892,"hitMax":34.352}
+najdaljsa {"run":"ghoufi/formula","id":"formula","igralec":false,"k0":1719,"korakov":5,"skoda":0.345,"najvecjiKorak":0.186,"hitMax":9.128}

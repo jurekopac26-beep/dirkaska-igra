@@ -1,0 +1,13 @@
+  k 1327 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.056 vnVogal -4.628 vnSredisce -5.846 w 0.457
+      wallR tockaSunka lokalno [1.43,-0.539] vnTockaSunka -5.176 sunek
+k 1327 formula hit 4.628 skoda 0.005 -> 0.065 w 0.457 -> 2.428
+  k 1330 formula dotik vogal 0 lokalno [2.6,-0.98] pen 0.001 vnVogal -2.315 vnSredisce -2.989 w 0.247
+      wallR tockaSunka lokalno [1.43,-0.539] vnTockaSunka -2.618 sunek
+k 1330 formula hit 2.315 skoda 0.005 -> 0.005 w 0.247 -> 1.316
+{"drevo":"po","NOA":0,"NOB":0,"A":0,"B":0,"BFROM":0,"pravilo":false,"dirk":1,"korakovSSkodo":8,"skodaOgraja":1.094,"epizod":7,"porazdelitevKorakov":{"1":6,"2":1},"delezSkodeNadNajvecjimKorakom":0.008,"brezSunkaKorakov":0,"brezSunkaDelezSkode":0,"igralcuOdpadeKolo":0,"odTegaVKorakuBrezSunka":0,"konecIgre":0,"B_klicev":0,"B_uporabljen":0}
+najvec skode {"run":"mombasa/formula","id":"formula","igralec":false,"k0":868,"korakov":2,"skoda":0.379,"najvecjiKorak":0.37,"hitMax":15.728}
+najdaljsa {"run":"mombasa/formula","id":"formula","igralec":false,"k0":868,"korakov":2,"skoda":0.379,"najvecjiKorak":0.37,"hitMax":15.728}
+
+real	0m1.453s
+user	0m1.472s
+sys	0m0.241s

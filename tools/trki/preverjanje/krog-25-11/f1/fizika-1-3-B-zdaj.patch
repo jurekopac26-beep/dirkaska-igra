@@ -1,0 +1,58 @@
+diff --git a/js/core.js b/js/core.js
+index 37880a6..7cbe52a 100644
+--- a/js/core.js
++++ b/js/core.js
+@@ -4454,25 +4454,38 @@ const Core = (function () {
+   // car leaning on it, eT), the rub along it (mu of the push, at the same place). The grip by kGripR, as a knock (the new physics and a car in the
+   // air or rolling over: the push only, no grip to take). The yaw rate after it at most wMax, whichever car.
+   // k < 0: a contact that is not a corner (a round thing met along the car's side): it bears where it touches, (wx, wz), at arm of the lever
+-  function wallR(c, wx, wz, nx, nz, k) {
++  // How far behind the other corners are: on the road's side barrier by the barrier's own line at each corner (wallRoom: one that narrows or
++  // bends is not the straight line through corner k, and a corner that line puts in it may stand a car's length clear of it), elsewhere along
++  // the normal at corner k. → 1 the push given, 0 none (wallCollide: no push, no blow, so no dent of it either)
++  function wallRoom(c, trk, k, tol) {   // → each corner's room to the side barrier corner k stands on (under 0: in it; k's own 0), null: k is not on it
++    if (!trk || trk.free || trk.unf || !c.q) return null;
++    const ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners, q = {}, D = [];
++    const at = (j) => { const x = c.x + P[j][0] * ch - P[j][1] * sh, z = c.z + P[j][0] * sh + P[j][1] * ch; return trk.def.barrier ? trk.queryRoute(x, z, c.q.i, q) : trk.query(x, z, c.q.i, q); };
++    at(k); if (q.k >= 0) return null;
++    const rt = q.br - q.d < q.bl + q.d; if (Math.abs(rt ? q.br - q.d : q.bl + q.d) > tol) return null;   // (k is on the right or the left barrier's line, within the smallest crush: cr0)
++    for (let j = 0; j < P.length; j++) { if (j === k) { D[j] = 0; continue; } at(j); D[j] = q.k >= 0 ? Infinity : rt ? q.br - q.d : q.bl + q.d; }   // (a corner in a side road's mouth: the barrier is not there)
++    return D;
++  }
++  function wallR(c, wx, wz, nx, nz, k, trk) {
+     const W = KC.wall; let ax = wx, az = wz;
+-    if (k >= 0) { const vn0 = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz, cr = clamp(-W.face * vn0, W.cr0, W.cr1), ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners; let sw = 0, dm = 0;
+-      for (let j = 0; j < P.length; j++) { const d = (P[j][0] * ch - P[j][1] * sh - wx) * nx + (P[j][0] * sh + P[j][1] * ch - wz) * nz; if (j !== k && d < dm) dm = d; }   // (dm: the deepest corner, from this one)
++    if (k >= 0) { const vn0 = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz, cr = clamp(-W.face * vn0, W.cr0, W.cr1), ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners, D = wallRoom(c, trk, k, W.cr0); let sw = 0, dm = 0;
++      for (let j = 0; j < P.length; j++) { const d = D ? D[j] : (P[j][0] * ch - P[j][1] * sh - wx) * nx + (P[j][0] * sh + P[j][1] * ch - wz) * nz; if (j !== k && d < dm) dm = d; }   // (dm: the deepest corner, from this one)
+       ax = 0; az = 0;
+-      for (let j = 0; j < P.length; j++) { const ox = j === k ? wx : P[j][0] * ch - P[j][1] * sh, oz = j === k ? wz : P[j][0] * sh + P[j][1] * ch, t = clamp(1 - ((j === k ? 0 : (ox - wx) * nx + (oz - wz) * nz) - dm) / cr, 0, 1);
++      for (let j = 0; j < P.length; j++) { const ox = j === k ? wx : P[j][0] * ch - P[j][1] * sh, oz = j === k ? wz : P[j][0] * sh + P[j][1] * ch, t = clamp(1 - ((j === k ? 0 : D ? D[j] : (ox - wx) * nx + (oz - wz) * nz) - dm) / cr, 0, 1);
+         if (t > 0) { ax += ox * t; az += oz * t; sw += t; } }
+       ax /= sw; az /= sw; }
+     ax *= W.arm; az *= W.arm;
+-    const vn = (c.vx - c.w * az) * nx + (c.vz + c.w * ax) * nz; if (vn >= 0) return;   // (there it no longer closes: nothing)
++    const vn = (c.vx - c.w * az) * nx + (c.vz + c.w * ax) * nz; if (vn >= 0) return 0;   // (there it no longer closes: nothing)
+     const I = c.I, im = 1 / c.m.mass, rn = ax * nz - az * nx, J = -(1 + (W.e1 + (W.e0 - W.e1) * Math.exp(vn / W.eV)) * sstep(W.eT, 2 * W.eT, -vn)) * vn / (im + rn * rn / I);
+     const tx = -nz, tz = nx, rt = ax * tz - az * tx, vx1 = c.vx + J * nx * im, vz1 = c.vz + J * nz * im, w1 = c.w + rn * J / I;
+     const vt = (vx1 - w1 * az) * tx + (vz1 + w1 * ax) * tz, Jt = clamp(-vt / (im + rt * rt / I), -W.mu * J, W.mu * J);
+     const Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz, dvx = Px * im, dvz = Pz * im, dw = (ax * Pz - az * Px) / I, V0 = Math.hypot(c.vx, c.vz);
+     c.vx += dvx; c.vz += dvz; c.w = clamp(c.w + dw, -KC.wMax, KC.wMax);   // (at most wMax, whichever car: as a knock's turn of one that spins on)
+-    if (c.phys === 'nova' || c.air || c.rl) return;   // (no grip to take: the push only)
++    if (c.phys === 'nova' || c.air || c.rl) return 1;   // (no grip to take: the push only)
+     const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
+     const G2 = kGripR(c, lt, dw, V0, Math.hypot(c.vx, c.vz), KC, c.isPlayer ? KC.glP : KC.glA), g = G2[0];
+     if (g > 0.02 && g >= (c.xgl || 0)) { c.xgl = g; c.xglT = KC.glT * (1 + KC.glX * clamp((G2[1] - 0.3) / 0.6, 0, 1)); }
++    return 1;
+   }
+   // over the edge of a drop (wallCollide, Race._offRoad): (nx, nz) the way back to the road, vo the car's speed the other way, out (at 4.5 m/s
+   // at least, clear of the cliff); then it falls (Race._fall), spinning as it went over
+@@ -4503,7 +4516,7 @@ const Core = (function () {
+       // corner velocity
+       const vcx = c.vx - c.w * wz, vcz = c.vz + c.w * wx;
+       const vn = vcx * nx + vcz * nz;
+-      if (krOn(c) && vn < -KC.wall.v0) { wallR(c, wx, wz, nx, nz, rnd ? -1 : k); if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; } }   // (Realistična: a knock, wallR; leaning on it, in the run from the police, a semi-trailer and in the pit lane as before)
++      if (krOn(c) && vn < -KC.wall.v0) { if (wallR(c, wx, wz, nx, nz, rnd ? -1 : k, trk) && -vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; } }   // (Realistična: a knock, wallR; no push given: no blow either; leaning on it, in the run from the police, a semi-trailer and in the pit lane as before)
+       else if (vn < 0) {
+         const rn = wx * nz - wz * nx, vx0 = c.vx, vz0 = c.vz, w0 = c.w;
+         // (the push with wallYaw of the turn, as ever. Realistična, krOn: where that would leave the car with more energy than it came with (a corner

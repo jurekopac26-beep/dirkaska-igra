@@ -1,4 +1,10 @@
 {
+ "_wreck": {
+  "ev": {
+   "openDoors": 3
+  },
+  "why": "ev: an older model's doors are made when a knock opens them (js/render.js oldAjar: a painted panel, its shadow and the dark doorway, 3 draw calls a door), so its wreck with both open draws 38 calls where the plain rule gives 37 (the car whole 21 + 2 a piece x 6 + 4 crack decals). Allowed 3 more where its doors stand open, this model only (the user's answer of 24. 11. 2026, trki-ev-klici: +3 for the open doors); read by tests/browser/fleet.test.mjs."
+ },
  "jezero": {
   "calls": 174,
   "maxCalls": 217,
@@ -98,11 +104,11 @@
   "jsMs": 1.22
  },
  "livorno": {
-  "calls": 155,
-  "maxCalls": 185,
-  "kverts": 370,
-  "maxKverts": 461,
-  "jsMs": 2.88
+  "calls": 162,
+  "maxCalls": 193,
+  "kverts": 413,
+  "maxKverts": 553,
+  "jsMs": 3.06
  },
  "balea": {
   "calls": 166,
@@ -336,11 +342,11 @@
   "jsMs": 0.68
  },
  "mombasa": {
-  "calls": 135,
-  "maxCalls": 215,
-  "kverts": 337,
-  "maxKverts": 385,
-  "jsMs": 0.78
+  "calls": 150,
+  "maxCalls": 216,
+  "kverts": 356,
+  "maxKverts": 450,
+  "jsMs": 0.87
  },
  "isalo": {
   "calls": 126,
@@ -539,11 +545,11 @@
   "jsMs": 1.17
  },
  "trebevic": {
-  "calls": 161,
-  "maxCalls": 190,
-  "kverts": 364,
-  "maxKverts": 433,
-  "jsMs": 1.47
+  "calls": 166,
+  "maxCalls": 219,
+  "kverts": 402,
+  "maxKverts": 523,
+  "jsMs": 1.66
  },
  "envalira": {
   "calls": 140,

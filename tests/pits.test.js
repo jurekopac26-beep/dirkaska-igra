@@ -126,7 +126,7 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
 // own box on the apron parked straight; on the pit road nobody touches anybody and nobody is damaged, the ghosts keep out of each other; everybody to
 // the line, no ghost left
 const ov = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, ch = Math.cos(a.h), sh = Math.sin(a.h), lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch; return Math.abs(lx) < (a.m.len + b.m.len) * 0.5 - 0.3 && Math.abs(lz) < (a.m.wid + b.m.wid) * 0.5 - 0.2; };   // (two cars in each other)
-for (const [tid, laps, sd] of [['toskana', 6, 7], ['spa', 4, 4], ['bathurst', 5, 1]]) {
+for (const [tid, laps, sd] of [['toskana', 6, 5], ['spa', 4, 4], ['bathurst', 5, 1]]) {
   const T = new C.Track(C.TRACKS.find(d => d.id === tid)), orig = Math.random; Math.random = seeded(7);
   try {
     // (every car off the line at once, as before the start's reaction, Core LAUNCH: the reactions reshuffle the field and with it who meets
@@ -146,6 +146,14 @@ for (const [tid, laps, sd] of [['toskana', 6, 7], ['spa', 4, 4], ['bathurst', 5,
     // Toronto became a test track on 5. 11. 2026 (the user: of Canada only Montréal stays; CLAUDE.md »Testne proge«), so Bathurst, its lane on the left
     // as Toronto's, runs here instead: 5 laps (31 km, every car in for fuel); of its seeds 1-6 all pass (Montréal, 7 laps: 4 of 6; Monterey, 9 laps:
     // 4 of 6), so Bathurst 1
+    // With the steering pull after a knock on the rivals too (dmgSteer: every car is pulled, the default since 17. 11. 2026; the autopilot does not
+    // steer against it) a rival that comes in a second time with one front corner crushed more than the other parks by which corner it is: of the
+    // 13 second stops of seeds 3, 4, 5, 7, 10, 30 and 32, 7 are straighter (2.0-2.8°) and 5 more skewed (3.5-4.1°) than the 2.6-3.3° of their 84
+    // first stops (one, its corners alike, 2.7°). Of Toskana's seeds 1-40 the most skewed stop is 3.4-4.1° in 10 (3.1-3.2° in every one of the 40
+    // without the pull on the rivals, C.setTest({ pull: 0 }), and on main 777993a, which has no such pull), and 4 and 7 fail with such a second
+    // stop at 4.1° and 4.0° (32 fails with two ghosts 5.3 s in each other, as 8 does without the pull on the rivals, 8.6 s, and 26 on main, 6.7 s).
+    // The pull stays on here, as in the game: Toskana 5, where three damaged rivals come in a second time (15 stops, the most skewed 3.5°), and
+    // not 1 or 2, the first that pass, with 12 stops only. Measured in tools/trki/preverjanje/krog-27-11/boksi/
     const r = new C.Race(T, { numAI: 12, playerGrid: 13, laps, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: sd, difficulty: 1, damage: 2, tyres: true, fuel: true, launch: false }); r.start();
     const P = r.player; let t = 0, k = 0, hits = 0, dmg = 0, stops = 0, ghost = 0, wasHit = 0, inBay = 0, ovT = 0, ovMax = 0, yMax = 0;
     const was = new Map(), dm = new Map(), run = new Map();

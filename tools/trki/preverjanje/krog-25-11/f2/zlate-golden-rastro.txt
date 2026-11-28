@@ -1,0 +1,8 @@
+rastro/race/cs             9f3001b112698aada6584490 lead  1429.7 m OK
+rastro/demo/cs             57f321936be208d173b7b5f0 lead  1563.5 m OK
+rastro/upg/cs              77aac5644c9f2342ed0e6169 lead  1549.4 m OK
+rastro/crash/cs            7d76e1d7362271d1e4f848ba lead  1408.6 m damage 0.66 loose 2 rescues 1 repairs 0 OK
+rastro/formula/cs          f30104964a3b79ca50802615 lead  1563.5 m damage 1 loose 3 rescues 0 repairs 0 OK
+rastro/lm/cs               b8429d0d82822434e6f7887d lead  1549.7 m damage 1 loose 2 rescues 0 repairs 0 OK
+rastro/car/cs              506087d93e6f540fba54df0e lead  1408.7 m damage 0.62 loose 4 rescues 1 repairs 0 OK
+OK: all 7 scenarios identical (10 s)

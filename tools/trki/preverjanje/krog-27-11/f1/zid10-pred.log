@@ -1,0 +1,39 @@
+{"drevo":"pred","NOA":0,"NOB":0,"A":0,"B":0,"BFROM":0,"pravilo":true,"dirk":32,"korakovSSkodo":199,"skodaOgraja":32.195,"epizod":131,"porazdelitevKorakov":{"1":113,"2":7,"3":2,"5+":9},"delezSkodeNadNajvecjimKorakom":0.082,"brezSunkaKorakov":46,"brezSunkaDelezSkode":0.043,"igralcuOdpadeKolo":16,"odTegaVKorakuBrezSunka":2,"konecIgre":16,"B_klicev":0,"B_uporabljen":0}
+najvec skode {"run":"mombasa/formula","id":"formula","igralec":false,"k0":1327,"korakov":7,"skoda":0.982,"najvecjiKorak":0.197,"hitMax":9.526}
+najdaljsa {"run":"mombasa/formula","id":"formula","igralec":false,"k0":1331,"korakov":12,"skoda":0.444,"najvecjiKorak":0.071,"hitMax":5.023}
+{"run":"tianmen/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.427,"s":1799.54}
+{"run":"tianmen/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":4,"brezSunkaSkoda":0.216,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.71,"s":1805.357}
+{"run":"ghoufi/crash","koloK":1331,"koloBrezSunka":true,"brezSunka":2,"brezSunkaSkoda":0.064,"hit":3.686,"konecIgre":true,"odstop":true,"koles":1,"skoda":0.843,"s":348.306}
+{"run":"ghoufi/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.668,"s":884.851}
+{"run":"mombasa/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":true,"odstop":true,"koles":2,"skoda":0.877,"s":496.016}
+{"run":"mombasa/formula","koloK":993,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":10.964,"konecIgre":true,"odstop":true,"koles":2,"skoda":1,"s":335.98}
+{"run":"hiva/crash","koloK":857,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":34.352,"konecIgre":true,"odstop":true,"koles":2,"skoda":0.892,"s":67.996}
+{"run":"hiva/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":3,"brezSunkaSkoda":0.023,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.494,"s":2008.048}
+{"run":"aguascalientes/crash","koloK":1204,"koloBrezSunka":false,"brezSunka":2,"brezSunkaSkoda":0.08,"hit":10.735,"konecIgre":true,"odstop":true,"koles":2,"skoda":1,"s":185.9}
+{"run":"aguascalientes/formula","koloK":858,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":22.27,"konecIgre":true,"odstop":true,"koles":2,"skoda":1,"s":189.898}
+{"run":"kanaba/crash","koloK":1111,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":3.929,"konecIgre":true,"odstop":true,"koles":1,"skoda":0.742,"s":238.045}
+{"run":"kanaba/formula","koloK":849,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":31.258,"konecIgre":true,"odstop":true,"koles":2,"skoda":0.807,"s":254.017}
+{"run":"savusavu/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.67,"s":1907.293}
+{"run":"savusavu/formula","koloK":1284,"koloBrezSunka":false,"brezSunka":6,"brezSunkaSkoda":0.05,"hit":14.772,"konecIgre":true,"odstop":true,"koles":2,"skoda":1,"s":379.988}
+{"run":"krasnahorka/crash","koloK":1058,"koloBrezSunka":true,"brezSunka":11,"brezSunkaSkoda":0.355,"hit":4.131,"konecIgre":true,"odstop":true,"koles":1,"skoda":0.917,"s":304.012}
+{"run":"krasnahorka/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":true,"odstop":true,"koles":2,"skoda":1,"s":1516.061}
+{"run":"spa/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.656,"s":2367.288}
+{"run":"spa/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":true,"odstop":true,"koles":1,"skoda":0.754,"s":158.016}
+{"run":"cusco/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.627,"s":1248.725}
+{"run":"cusco/formula","koloK":965,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":13.983,"konecIgre":true,"odstop":true,"koles":2,"skoda":0.955,"s":372.278}
+{"run":"kotor/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.529,"s":1366.309}
+{"run":"kotor/formula","koloK":857,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":17.953,"konecIgre":true,"odstop":true,"koles":2,"skoda":1,"s":259.997}
+{"run":"koli/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.592,"s":2123.668}
+{"run":"koli/formula","koloK":806,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":20.277,"konecIgre":true,"odstop":true,"koles":2,"skoda":0.944,"s":316.025}
+{"run":"seoul/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.556,"s":1973.17}
+{"run":"seoul/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.309,"s":2156.998}
+{"run":"bathurst/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.627,"s":2061.174}
+{"run":"bathurst/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.644,"s":2856.311}
+{"run":"furka/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.455,"s":2053.866}
+{"run":"furka/formula","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.513,"s":2178.025}
+{"run":"montreal/crash","koloK":-1,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"konecIgre":false,"odstop":false,"koles":0,"skoda":0.476,"s":2002.899}
+{"run":"montreal/formula","koloK":965,"koloBrezSunka":false,"brezSunka":0,"brezSunkaSkoda":0,"hit":13.677,"konecIgre":true,"odstop":true,"koles":2,"skoda":0.824,"s":130.025}
+
+real	0m55.805s
+user	1m0.658s
+sys	0m1.009s
