@@ -331,6 +331,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | aguascalientes | Aguascalientes, Mehika | aguascalientes | `js/world-rbring.js` (`buildRbring`) in `js/world-aguascalientes.js` (videz v `RB_LOOK` prek `API.rbLook`: napisi krajev, zastavica `mx`, suha trava `colMod`; obzorje `def.far` prek `API.rsFar` iz `js/world-riverside.js` v ovoju `World.ext.aguascalientes`) |
 | balea | Bâlea, Romunija | balea | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.balea`: portal predora, žičnica, jezero, ovce) |
 | hafit | Džebel Hafit, Združeni arabski emirati | hafit | `js/world-hafit.js` (`PL_LOOK.hafit` za `buildPrelaz`: cestne svetilke ob ločilnem pasu, hiše z ravnimi strehami, akacije, razgledišče; rumena leva robna črta `edgeL` v `js/world-prelaz.js`) |
+| chamarel | Chamarel, Mavricij | chamarel | `js/world-chamarel.js` (`PL_LOOK.chamarel` za `buildPrelaz`: tropski gozd `L.trop`, rdeče-rjave brežine, razgledišče z zidcem iz bazalta `L.pre`, sladkorni trs `L.extra`; levi promet `def.leftHand`) |
 | gudauri | Gudauri, Gruzija | gudauri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.gudauri`: hoteli in apartmajski bloki (`hotels`), sedežnice s sedeži (`chairs`), daljnovod, plazovna galerija (`portal: 2`), ovce) |
 | kanaba | Kanaba, Uganda | kanaba | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kanaba`: zelena polja na rdeči prsti, pločevinaste strehe, drobnica; vožnja po levi) |
 | canaries | Canaries, Sveta Lucija | canaries | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.canaries`: tropski gozd `trop`, morje, hiše; `CESTE.canaries` v `js/world-cesta.js`) |
@@ -353,6 +354,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | cusco | Cusco, Peru | cusco | `js/world-cusco.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | haivan | Hải Vân, Vietnam | haivan | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.haivan`: tropski gozd, `L.trop`, brez snega in ovc) |
 | mapileng | Mã Pí Lèng, Vietnam | mapileng | `js/world-kratke.js` (`buildKratke`, slog `KR.mapileng`: kraški apnenec, skalni stolpiči, koruza, spomenik s svetiščem, muzej, kavarna, razgledišče) |
+| tatev | Tatev, Armenija | tatev | `js/world-kratke.js` (`buildKratke`, slog `KR.tatev`: soteska Vorotana, suha trava, sipari in skalne stene, kamniti parapeti, ruševine nad sotesko, kavarna, tabla) |
 | longyearbyen | Longyearbyen, Norveška | longyearbyen | `js/world-longyearbyen.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | savusavu | Savusavu, Fidži | savusavu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.savusavu`: tropski gozd, `L.trop`, bela sredinska črta, brez snega in ovc) in `js/world-savusavu-obcestje.js` (stranske ulice in dovozi iz OSM prek `L.pre`, `L.gravel`, `L.railGap` in `L.extra`: makadam v mreži bankine, samo grafika) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |

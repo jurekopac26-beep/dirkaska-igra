@@ -523,5 +523,19 @@
   "kverts": 426,
   "maxKverts": 632,
   "jsMs": 1.47
+ },
+ "tatev": {
+  "calls": 169,
+  "maxCalls": 205,
+  "kverts": 364,
+  "maxKverts": 455,
+  "jsMs": 1.5
+ },
+ "chamarel": {
+  "calls": 171,
+  "maxCalls": 206,
+  "kverts": 542,
+  "maxKverts": 804,
+  "jsMs": 1.17
  }
 }
