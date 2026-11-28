@@ -1,4 +1,12 @@
 [
+["aguascalientes", "top", "top-aguascalientes", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["batangas", "top", "top-batangas", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["bikernieki", "top", "top-bikernieki", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["buriram", "top", "top-buriram", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["canaries", "top", "top-canaries", {"W": 824, "H": 620, "wet": true}],
+["cusco", "top", "top-cusco", {"W": 824, "H": 620, "wet": true}],
+["eljem", "top", "top-eljem", {"W": 824, "H": 620, "wet": true}],
+["ella", "top", "top-ella", {"W": 824, "H": 620, "wet": true}],
  [
   "vrsic",
   "top",
@@ -117,6 +125,10 @@
    "pad": 1.0
   }
  ],
+["izoard", "top", "top-izoard", {"W": 824, "H": 620, "wet": true}],
+["kanaba", "top", "top-kanaba", {"W": 824, "H": 620, "wet": true}],
+["koli", "top", "top-koli", {"W": 824, "H": 620, "wet": true}],
+["isuna", "top", "top-isuna", {"W": 824, "H": 620, "wet": true}],
  [
   "medvode",
   "top",
@@ -233,6 +245,13 @@
    "skirt": false
   }
  ],
+["koror", "top", "top-koror", {"W": 824, "H": 620, "wet": true}],
+["kotor", "top", "top-kotor", {"W": 824, "H": 620, "wet": true}],
+["llogara", "top", "top-llogara", {"W": 824, "H": 620, "wet": true}],
+["lombok", "top", "top-lombok", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["luanda", "top", "top-luanda", {"W": 824, "H": 620, "wet": true}],
+["lusail", "top", "top-lusail", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["mapileng", "top", "top-mapileng", {"W": 824, "H": 620, "wet": true}],
  [
   "sani",
   "top",
@@ -363,6 +382,13 @@
    "wet": true
   }
  ],
+["medeu", "top", "top-medeu", {"W": 824, "H": 620, "wet": true}],
+["mombasa", "top", "top-mombasa", {"W": 824, "H": 620, "wet": true}],
+["ngorongoro", "top", "top-ngorongoro", {"W": 824, "H": 620, "wet": true}],
+["pembrey", "top", "top-pembrey", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
+["portobelo", "top", "top-portobelo", {"W": 824, "H": 620, "wet": true}],
+["portomoniz", "top", "top-portomoniz", {"W": 824, "H": 620, "wet": true}],
+["quezaltepeque", "top", "top-quezaltepeque", {"W": 1100, "H": 830, "wet": true, "pad": 1.0}],
  [
   "iroha",
   "top",
@@ -464,6 +490,46 @@
    "H": 830,
    "wet": true,
    "pad": 1.0
+  }
+ ],
+ [
+  "furka",
+  "top",
+  "top-furka",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "gudauri",
+  "top",
+  "top-gudauri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "ghoufi",
+  "top",
+  "top-ghoufi",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "hakone",
+  "top",
+  "top-hakone",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
   }
  ]
 ]

@@ -262,14 +262,16 @@
   const altOf = (R, M, h) => M.alt ? M.alt[0] + (h - R.prof[0]) * (M.alt[1] - M.alt[0]) / ((R.prof[R.prof.length - 1] - R.prof[0]) || 1) : M.base != null ? M.base + h - R.prof[0] : null;
   const flagSvg = (fin) => fin ? '<g class="fl fin"><path d="M0 0V-26" /><rect x="0" y="-26" width="16" height="11"/><path class="ck" d="M0-26h4v3.7h-4zM8-26h4v3.7h-4zM4-22.3h4v3.6h-4zM12-22.3h4v3.6h-4zM0-18.7h4v3.7h-4zM8-18.7h4v3.7h-4z"/></g>'
     : '<g class="fl"><path d="M0 0V-26"/><path class="fg" d="M0-26h16l-4 5.5 4 5.5H0z"/></g>';
-  function mark(x, y, name, sub, fin, cls) {   // a flag on the map and its name (with a dark edge round the letters: readable on any land)
-    return '<g class="mk ' + (cls || '') + '" transform="translate(' + x + ' ' + y + ')"><circle r="6"/>' + flagSvg(fin) + '<text x="' + (fin ? -6 : 6) + '" y="-32" text-anchor="' + (fin ? 'end' : 'start') + '">' + esc(name) + (sub ? '<tspan class="sub" x="' + (fin ? -6 : 6) + '" dy="-20">' + esc(sub) + '</tspan>' : '') + '</text></g>';
+  // the map's flag (Matej's choice 27. 11. 2026, option 1): black and white squares, 1.5 times the flyover's, at the start and at the finish alike
+  const MAPFLAG = '<g class="fl fin big"><path d="M0 0V-39"/><rect x="0" y="-39" width="24" height="16.5"/><path class="ck" d="M0-39h6v5.5h-6zM12-39h6v5.5h-6zM6-33.5h6v5.5h-6zM18-33.5h6v5.5h-6zM0-28h6v5.5h-6zM12-28h6v5.5h-6z"/></g>';
+  function mark(x, y, name, sub, fin, cls) {   // a flag on the map and its name (with a dark edge round the letters: readable on any land; no name: the flag alone)
+    return '<g class="mk ' + (cls || '') + '" transform="translate(' + x + ' ' + y + ')"><circle r="6"/>' + MAPFLAG + (name ? '<text x="' + (fin ? -6 : 6) + '" y="-46" text-anchor="' + (fin ? 'end' : 'start') + '">' + esc(name) + (sub ? '<tspan class="sub" x="' + (fin ? -6 : 6) + '" dy="-20">' + esc(sub) + '</tspan>' : '') + '</text>' : '') + '</g>';
   }
-  function marks(R, M, pts, rally) {   // the start and the finish (a closed track: one flag)
+  function marks(R, M, pts, rally) {   // the start and the finish (a closed track: one flag, no name)
     const a = pts[0], b = pts[pts.length - 1], A = M.alt;
-    return R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
+    return R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], '', '', false, 's');
   }
-  function routeLines(id, pts, rally) {   // the route drawn on, its trail (mapTrail), then a glowing point running along it (mapDots moves it; its glow a gradient: cheap to move)
+  function routeLines(id, pts, rally) {   // the route (whole from the start), its trail (mapTrail), then a glowing point running along it (mapDots moves it; its glow a gradient: cheap to move)
     const d = pathD(pts), c = rally ? ['#fff0dc', '#ffffff'] : ['#ffe07a', '#ffd23a'];
     return '<defs><radialGradient id="rg-' + id + '"><stop offset="0" stop-color="#fff8d0"/><stop offset=".35" stop-color="' + c[0] + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c[1] + '" stop-opacity="0"/></radialGradient></defs>' +
       '<path class="rt-o" d="' + d + '"/><path class="rt" d="' + d + '" pathLength="1"/><g class="rt-tr"></g>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
@@ -445,7 +447,7 @@
   // where it would run out of the frame. Made from the flags' own names (mark), placed where the flags stand on the screen
   function mapLabels(box, svg) {
     const lab = $('.mlab', box); if (!lab) return;
-    const mks = [...svg.querySelectorAll('.mk')];
+    const mks = [...svg.querySelectorAll('.mk')].filter(g => $('text', g));   // (a closed track's one flag: no name)
     if (lab.children.length !== mks.length) lab.innerHTML = mks.map(g => { const t = $('text', g), sub = $('tspan', t), name = t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild.textContent : t.textContent;
       return '<div class="fl-s ' + (g.classList.contains('f') ? 'finish' : 'start') + '"><b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub.textContent) + '</small>' : '') + '</div>'; }).join('');
     const fb = box.getBoundingClientRect(), W = fb.width;
@@ -514,8 +516,8 @@
   const RUN = { v: 326 };
   const runGo = (L) => L / RUN.v;   // (the seconds from the start to the finish of a run L m long, at that speed)
   const runDur = (id) => { const F = RT[id].fly; return F ? F.frames.length / F.fps : runGo(RT[id].len); };
-  // a new run: on the flyover held at its start until the video plays; on the map the route draws itself first (1.6 s), then the point sets off
-  function runFresh(id, fly) { run.id = id; if (fly) runSet(0, false); else runSet(-1.6, true); }
+  // a new run: on the flyover held at its start until the video plays; on the map the route is there whole and the point sets off at once
+  function runFresh(id, fly) { run.id = id; runSet(0, !fly); }
   // where the point is at the run's time s, as a part of the run (0 the start, 1 the finish)
   function runAt(id, s) {
     const R = RT[id]; if (!R.fly) return paceAt(R.len, s);
@@ -558,12 +560,7 @@
     if (entering || run.id !== t.id || !prev.length) { runFresh(t.id, kind(box) === 2); return; }
     const pend = prev.find(b => b.classList.contains('pend')), cur = prev.filter(b => b !== pend).pop();
     if (pend && key(pend) === key(box)) { box.replaceWith(pend); if (cur) { cur.classList.add('away'); pend.before(cur); } return; }   // (asked for again while still on its way)
-    if (cur && key(cur) === key(box)) {   // the same view: kept as it is (the route still drawing itself: on from where it was)
-      box.replaceWith(cur); cur.classList.remove('away');
-      const p = !cur.__drawn && $('path.rt', cur); if (p) p.style.animationDelay = (-Math.max(0, 1.6 + runNow())).toFixed(2) + 's';
-      return;
-    }
-    if (kind(box) === 1) { box.classList.add('drawn'); box.__drawn = 1; }   // (the map comes in with its route drawn, its point where the run is)
+    if (cur && key(cur) === key(box)) { box.replaceWith(cur); cur.classList.remove('away'); return; }   // the same view: kept as it is
     if (!cur) return;
     box.classList.add('pend'); cur.classList.add('away'); box.before(cur);
     if (kind(box) === 1) mapLoaded(box, () => reveal(box));   // (a flyover: flyLabels plays it from the run's moment, then reveals it)
@@ -580,11 +577,10 @@
       for (const box of boxes) {
         const id = box.dataset.map, dot = box.__dot || (box.__dot = $('.rt-dot', box));
         if (id !== run.id || !dot) continue;
-        if (s < 0) { dot.setAttribute('opacity', '0'); continue; }   // (the route still drawing itself)
+        if (s < 0) { dot.setAttribute('opacity', '0'); continue; }
         const f = runAt(id, s), p = routePt(RT[id].top, f);
         dot.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ')'); dot.setAttribute('opacity', '1');
         mapTrail(box, id, f, p);
-        if (!box.__drawn) { box.__drawn = 1; box.classList.add('drawn'); }
       }
       mapRaf = requestAnimationFrame(step);
     };
@@ -730,9 +726,9 @@
     let last = -1;
     const frame = () => {
       if (!box.isConnected) { graphRaf = 0; return; }
-      // how far along the run: the run's place (the flyover's frame, the map's running point; nothing yet while the map draws its route),
-      // the model of the land and the corner's camera the same pace from when the graph came (1.6 s later, as a map's point sets off)
-      const s = run.id === t.id ? runNow() : (performance.now() - box.__g.t0) / 1000 - 1.6;
+      // how far along the run: the run's place (the flyover's frame, the map's running point),
+      // the model of the land and the corner's camera the same pace from when the graph came (at once, as a map's point sets off)
+      const s = run.id === t.id ? runNow() : (performance.now() - box.__g.t0) / 1000;
       let f = s < 0 ? 0 : run.id === t.id ? runAt(t.id, s) : paceAt(box.__g.L, s);
       f = Math.min(1, Math.max(0, f));
       if (Math.abs(f - last) > 0.0005) { last = f; const p = box.__g.at(f); clip.setAttribute('width', p[0].toFixed(1)); pt.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ')'); }

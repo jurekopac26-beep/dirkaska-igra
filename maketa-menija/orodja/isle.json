@@ -1,4 +1,12 @@
 [
+["aguascalientes", "top", "isle-aguascalientes", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["batangas", "top", "isle-batangas", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["bikernieki", "top", "isle-bikernieki", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["buriram", "top", "isle-buriram", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["canaries", "top", "isle-canaries", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["cusco", "top", "isle-cusco", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["eljem", "top", "isle-eljem", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["ella", "top", "isle-ella", {"W": 824, "H": 620, "wet": true, "skirt": false}],
  [
   "vrsic",
   "top",
@@ -104,6 +112,10 @@
    "skirt": false
   }
  ],
+["izoard", "top", "isle-izoard", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["kanaba", "top", "isle-kanaba", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["koli", "top", "isle-koli", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["isuna", "top", "isle-isuna", {"W": 824, "H": 620, "wet": true, "skirt": false}],
  [
   "medvode",
   "top",
@@ -229,6 +241,13 @@
    "skirt": false
   }
  ],
+["koror", "top", "isle-koror", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["kotor", "top", "isle-kotor", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["llogara", "top", "isle-llogara", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["lombok", "top", "isle-lombok", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["luanda", "top", "isle-luanda", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["lusail", "top", "isle-lusail", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["mapileng", "top", "isle-mapileng", {"W": 824, "H": 620, "wet": true, "skirt": false}],
  [
   "sani",
   "top",
@@ -371,6 +390,13 @@
    "skirt": false
   }
  ],
+["medeu", "top", "isle-medeu", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["mombasa", "top", "isle-mombasa", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["ngorongoro", "top", "isle-ngorongoro", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["pembrey", "top", "isle-pembrey", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
+["portobelo", "top", "isle-portobelo", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["portomoniz", "top", "isle-portomoniz", {"W": 824, "H": 620, "wet": true, "skirt": false}],
+["quezaltepeque", "top", "isle-quezaltepeque", {"W": 1100, "H": 830, "wet": true, "pad": 1.0, "skirt": false}],
  [
   "iroha",
   "top",
@@ -481,6 +507,50 @@
    "H": 830,
    "wet": true,
    "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "furka",
+  "top",
+  "isle-furka",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "gudauri",
+  "top",
+  "isle-gudauri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "ghoufi",
+  "top",
+  "isle-ghoufi",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "hakone",
+  "top",
+  "isle-hakone",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
    "skirt": false
   }
  ]

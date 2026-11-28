@@ -37,7 +37,26 @@ GUESS = {
     'balea': (45.6107785, 24.6144425, 150),
     'bathurst': (-33.43930, 149.55846, 150),
     'livorno': (43.51202, 10.3188882, 150),
+    'furka': (46.5704, 8.3962, 300),        # the start above Gletsch by the Muttbach (docs/proge/furka.md)
+    'gudauri': (42.4594, 44.4849, 300),     # the start at the lower edge of Gudauri (docs/proge/gudauri.md)
+    'koror': (7.3629003, 134.5061099, 300),   # the Babeldaob end of the Koror-Babeldaob Bridge (tools/koror/koror.json)
+    'kotor': (42.40309, 18.77908, 400),      # the lower serpentines above the bay (tools/kotor/config.json)
+    'llogara': (40.20679, 19.585, 400),      # the northern hairpins below the pass (tools/llogara/config.json)
+    'lombok': (-8.8957935, 116.3032175, 300),   # the start / finish (tools/lombok/lombok.json)
+    'luanda': (-8.8199022, 13.2168586, 300),    # the shore road of the western bay (tools/luanda/luanda.json)
+    'lusail': (25.4890496, 51.4497373, 300),    # the start / finish (tools/lusail/lusail.json)
+    'mapileng': (23.252294, 105.3888758, 300),  # the QL4C up from Đồng Văn (tools/mapileng/mapileng.json)
+    'ghoufi': (35.0544, 6.1652, 300),       # the start on the canyon's rim road (tools/predogled/proge.json, sec); its place held by HOLD
+    'izoard': (44.8395148, 6.7234205, 300),   # group 3 of the menu's maps, 27. 11.: the start of tools/proga/proge.json
+    'kanaba': (-1.2561077, 29.8021448, 300),
+    'koli': (63.101285, 29.784938, 300),       # the origin in js/tracks/<id>.js (tools/proga-uvoz.mjs)
+    'isuna': (27.331833, 89.518573, 300),
+    'hakone': (35.2336134, 139.1046511, 30),   # the start line, the origin of the game's frame (docs/proga-hakone.md, »Okvir igre«); held by HOLD
 }
+# a place held after the fit: on Ghoufi's short, almost flat road the heights alone put the start and the finish 35 m west of OSM's line
+# (tools/predogled/proge.json, sec), the same at both ends; the turn and the height offset stay the fit's
+HOLD = {'ghoufi': {'lat0': 35.054441, 'lon0': 6.165218},
+        'hakone': {'lat0': 35.2336134, 'lon0': 139.1046511, 'rot': 0.0}}   # Hakone's frame known exactly: x east, z south from the start line
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
 def fit(T, g0, R, z=13, coarse=30, rots=np.arange(-3, 3.01, 0.5)):
@@ -80,6 +99,6 @@ out = json.load(open(out_p)) if os.path.exists(out_p) else {}
 ids = sys.argv[1].split(',') if len(sys.argv) > 1 else list(GUESS)
 for tid in ids:
     T = track(tid); g = GUESS[tid]
-    r = fit(T, g[:2], g[2])
+    r = fit(T, g[:2], g[2]); r.update(HOLD.get(tid, {}))
     out[tid] = r; print(tid, json.dumps(r), flush=True)
     json.dump(out, open(out_p, 'w'), indent=1)
