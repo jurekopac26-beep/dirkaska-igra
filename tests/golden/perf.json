@@ -524,11 +524,25 @@
   "maxKverts": 632,
   "jsMs": 1.47
  },
- "kudowa": {
-  "calls": 165,
-  "maxCalls": 192,
-  "kverts": 416,
-  "maxKverts": 456,
-  "jsMs": 1.48
+ "tatev": {
+  "calls": 169,
+  "maxCalls": 205,
+  "kverts": 364,
+  "maxKverts": 455,
+  "jsMs": 1.5
+ },
+ "chamarel": {
+  "calls": 171,
+  "maxCalls": 206,
+  "kverts": 542,
+  "maxKverts": 804,
+  "jsMs": 1.17
+ },
+ "trebevic": {
+  "calls": 161,
+  "maxCalls": 190,
+  "kverts": 364,
+  "maxKverts": 433,
+  "jsMs": 1.47
  }
 }
