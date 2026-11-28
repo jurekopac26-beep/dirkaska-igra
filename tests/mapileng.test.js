@@ -82,9 +82,10 @@ check('track: the run-up for the grid behind the start (~220 m) and the room for
     kinds === 'cafe,monument,museum,shrine' && byMem && M.every(m => Math.abs(m.d) < 60 && m.s > 0 && m.s < T.raceLen) && (def.bld || []).length === 0,
     M.map(m => `${m.k} ${Math.round(m.s)} m/${m.d.toFixed(1)}`).join(', '));
   const F = def.farDem, nf = F.nx * F.nz;
-  check('data: the far view (~24 km round on a 300 m grid, heights 2 bytes a node; no lakes: the Nho Quế is a narrow river in its canyon)',
-    Buffer.from(F.b64, 'base64').length === 2 * nf && F.lake.reduce((a, b) => a + b, 0) === nf && F.cell === 300 && F.nx * F.cell > 23000,
-    `far ${F.nx}x${F.nz} from ${F.lo} m`);
+  let wet = 0; F.lake.forEach((r, k) => { if (k % 2) wet += r; });
+  check('data: the far view (~24 km round on a 150 m grid, heights 2 bytes a node; the wet nodes: the Nho Quế in its canyon and the reservoir, OSM)',
+    Buffer.from(F.b64, 'base64').length === 2 * nf && F.lake.reduce((a, b) => a + b, 0) === nf && F.cell === 150 && F.nx * F.cell > 23000 && wet > 60 && wet < 400,
+    `far ${F.nx}x${F.nz} from ${F.lo} m, ${wet} wet nodes`);
 }
 
 // 4. the open road's traffic: the motorbikes the most of the motor traffic (the mountain roads of Hà Giang), the minibuses, cars; both ways
@@ -165,8 +166,9 @@ check('track: the run-up for the grid behind the start (~220 m) and the room for
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'lang.js'), 'utf8'), ctx);
   ctx.Lang.set('en');
   const en = T.names.map(q => ctx.Lang.place(q.n));
-  check('names: the HUD\'s places in English (Hairpin 1 · 1,210 m .. Hairpin 3 · 1,243 m, Monument: the word Spomenik as Llogara has it), the escape\'s goal', en[0] === 'Hairpin 1 · 1,210 m' && en[2] === 'Hairpin 3 · 1,243 m' &&
-    en[en.length - 1] === 'Monument' && ctx.Lang.place(def.escTo) === 'To the Mã Pí Lèng pass', en.join(' | '));
+  check('names: the HUD\'s places in English (Hairpin 1 · 1,210 m .. Hairpin 3 · 1,243 m, Monument: the word Spomenik as Llogara has it; the plateau, the terraces, the canyon, the cliff path), the escape\'s goal',
+    en.join(' | ') === 'Đồng Văn Plateau · 1,184 m | Stone Terraces | Hairpin 1 · 1,210 m | Hairpin 2 · 1,216 m | Nho Quế Canyon | Hairpin 3 · 1,243 m | Monument | Cliff Path · 1,256 m' &&
+    T.names.every(q => q.say && q.say.length) && ctx.Lang.place(def.escTo) === 'To the Mã Pí Lèng pass', en.join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

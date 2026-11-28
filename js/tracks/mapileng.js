@@ -44,10 +44,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'CẢNH SÁT', band: '#1c3f8c', text: '#f6f2e4' }, escTo: 'Do prelaza Mã Pí Lèng',   // (and the results of an escape: 'Do prelaza Mã Pí Lèng v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
+      {"n": "Planota Đồng Văn · 1.184 m", "d": 40.0, "say": ["Up from Đồng Văn, the grey karst all round!", "The Đồng Văn plateau, limestone and maize as far as you can see!"]},
+      {"n": "Kamnite terase", "d": 230.0, "say": ["Past the stone terraces, maize on every ledge!", "The terraces on the right, dry-stone walls up the slope!"]},   // (assumption: OSM maps no fields here; the plateau's maize ledges on the land cover's fields and grassy slopes, docs/proge/mapileng.md)
       {"n": "Serpentina 1 · 1.210 m", "d": 357.0, "say": ["Hairpin one, and the climb bites!", "Into the first hairpin, the limestone right beside you!"]},
       {"n": "Serpentina 2 · 1.216 m", "d": 438.0, "say": ["Hairpin two, straight after the first one!", "Hairpin two! Right back the other way!"]},
+      {"n": "Kanjon Nho Quế", "d": 580.0, "say": ["The Nho Quế canyon opens up ahead to the left, eight hundred metres down!", "Look left if you dare, the river is a green thread at the bottom of the canyon!"]},
       {"n": "Serpentina 3 · 1.243 m", "d": 716.0, "say": ["Hairpin three, the last of them!", "The third hairpin, and the top of the climb is close!"]},
       {"n": "Spomenik", "d": 855.0, "say": ["Past the memorial to the road's builders, the top of the climb!", "The memorial on the right, and the finish just over the crest!"]},
+      {"n": "Steza nad prepadom · 1.256 m", "d": 893.0, "say": ["The highest point, the cliff path runs off along the edge!", "Over the top at twelve hundred and fifty-six metres, the finish is right there!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
