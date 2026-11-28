@@ -56,6 +56,18 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
     d = np.hypot(P[:, 0] - x, P[:, 1] - z); i = int(d.argmin()); j = (i + 1) % NP; tx, tz = P[j] - P[i]; tl = math.hypot(tx, tz)
     return float(CUM[i]), float(((x - P[i, 0]) * -tz + (z - P[i, 1]) * tx) / tl)
 
+# ---- the commentator's own lines for a race here (def.comm; Game: ownLine for 'intro', 'introOne' and 'go', the generic ones elsewhere): the
+# place by its geography only (the hills above Tuzla, the Asian side of Istanbul, the Sea of Marmara below), the lap anticlockwise, Turn 8's
+# four apexes ----
+COMM = {
+    'intro': ['Welcome to {track}, on the hills above the Sea of Marmara! {laps} laps, {cars} cars, and you line up {grid} on the grid.',
+              'Good day from the Asian side of Istanbul! {laps} laps anticlockwise round {track}, and you start {grid}.',
+              'Here we are at {track}. Fourteen turns, the hills and the long left of Turn 8. {laps} laps, and you start {grid}.'],
+    'introOne': ['Welcome to {track}, on the hills above the Sea of Marmara! One lap, {cars} cars, and you start {grid}.',
+                 'One lap of {track}, anticlockwise over the hills. You line up {grid} on the grid.'],
+    'go': ['Lights out, and away they go, down the hill into Turn 1!', "And they're off! The field plunges towards the first left!",
+           'Green light! The race on the hills above the Marmara is on!'],
+}
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races or the circuit
 # (CLAUDE.md, Pravna varnost); the turns by their numbers in the lines, as the circuit numbers them ----
 NAMES = [
@@ -238,6 +250,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'tuzla', name: 'Tuzla, Turčija', theme: 'tuzla', laps: 2, halfWidth: 6.5,
     desc: %(desc)s,
     en: { name: 'Tuzla, Turkey', desc: %(desc_en)s },
+    // the commentator's own lines for a race here (Comm, Game's ownLine): the place by its geography only
+    comm: %(comm)s,
     start: [0, 0], runoff: 1.1, inner: 4.2, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s, runoffTarmac: true,
     elev: TZ_H.map((h, i) => [i / TZ_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
@@ -260,7 +274,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     points: [%(pts)s]
   });
 })();
-''' % dict(km='%.2f' % (LEN / 1000), tzh=tzh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+''' % dict(km='%.2f' % (LEN / 1000), tzh=tzh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), comm=json.dumps(COMM, ensure_ascii=False), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), drs=json.dumps(DRS),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'tuzla.js'); open(path, 'w').write(src)
