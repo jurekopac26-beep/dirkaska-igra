@@ -4860,7 +4860,33 @@ const Render = (function () {
   // the battery saver (game.js: 30 frames a second): the picture drawn at 0.7 of the resolution
   function setSaver(on) { const k = on ? 0.7 : 1; if (k !== saverK) { saverK = k; resize(); } }
   // the new world's shaders compiled at once, while the loading screen is up (else in its first frames, or mid-race as each comes in view)
-  function precompile() { try { renderer.compile(scene, camera); } catch (_) { } }
+  // (tex: also each material's pictures sent to the GPU now, game.js newRace with the cars attached: not in the first frames after the green light)
+  // (pcDum: stand-ins for the meshes a race builds only once they show, the marbles and the rubbered-in line (mbLn, rbLn, ~7 s after
+  // the green light): their programs compiled now, the stand-ins in the scene only for the compile; their materials kept, not disposed,
+  // so the programs stay in the cache)
+  let pcDum = null;
+  function precompile(tex) {
+    if (tex && scene) {
+      if (!pcDum) {
+        if (!mbTex) mbTex = Tex.marbles();
+        if (!rbTex) rbTex = Tex.rubber();
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute([0, -1e4, 0, 1, -1e4, 0, 0, -1e4, 1], 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+        g.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0], 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1], 2));
+        pcDum = [new THREE.MeshLambertMaterial({ map: mbTex, vertexColors: true, transparent: true, depthWrite: false }),
+          new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000 })]
+          .map(m => { const o = new THREE.Mesh(g, m); o.receiveShadow = true; o.matrixAutoUpdate = false; o.name = 'precompile'; return o; });
+      }
+      for (const o of pcDum) scene.add(o);
+    }
+    try { renderer.compile(scene, camera); } catch (_) { }
+    if (pcDum) for (const o of pcDum) scene.remove(o);
+    if (!tex || !renderer.initTexture) return;
+    const seen = new Set(), up = (t) => { if (t && t.isTexture && !t.isCubeTexture && !t.isDataTexture3D && !t.isDataTexture2DArray && t.image && !seen.has(t)) { seen.add(t); try { renderer.initTexture(t); } catch (_) { } } };
+    up(mbTex); up(rbTex);
+    scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : null; if (!ms) return;
+      for (const m of ms) { for (const k in m) up(m[k]); if (m.uniforms) for (const k in m.uniforms) up(m.uniforms[k] && m.uniforms[k].value); } });
+  }
 
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
