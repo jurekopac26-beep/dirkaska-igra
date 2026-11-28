@@ -420,11 +420,11 @@
   "jsMs": 1.29
  },
  "tapini": {
-  "calls": 84,
-  "maxCalls": 91,
-  "kverts": 246,
-  "maxKverts": 271,
-  "jsMs": 0.09
+  "calls": 91,
+  "maxCalls": 100,
+  "kverts": 380,
+  "maxKverts": 423,
+  "jsMs": 0.51
  },
  "canaries": {
   "calls": 210,
