@@ -1,10 +1,10 @@
 // The physics level of detail of a very big field (Core LOD, Race._lodPlan; more than LOD.min cars with the player, offline: Nürburg's
-// hundred). An AI car away from the player is worked out every LOD.k-th step (30 Hz) or, further away, every LOD.k2-th (15 Hz), over the
-// time since its last step; within LOD.a m ahead of the player, LOD.b m behind it along the race or LOD.r m of it in the world, at the full
+// hundred). An AI car away from the player is worked out every LOD.k-th step (30 Hz) or, over LOD.r2 m away, every LOD.k2-th (30 Hz too:
+// see 8; 15 Hz before), over the time since its last step; within LOD.a m ahead of the player, LOD.b m behind it along the race or LOD.r m of it in the world, at the full
 // rate. Every 13/20/22-car race (and every golden reference) stays at the full rate. Checked here:
 //   1. Nürburg, 100 cars, the flying start's column with a 15 s countdown (the player at its back 15 s below the line, half the field far
-//      below it too: their crossings of the line in a longer step), the player on the autopilot, 30 s: no NaN; cars at all three rates; every car near
-//      the player worked out every step over one step; the far ones every 4th or 8th step at most, and on the way (none stuck, none rescued,
+//      below it too: their crossings of the line in a longer step), the player on the autopilot, 30 s: no NaN; cars at the full and the lower rates; every car near
+//      the player worked out every step over one step; the far ones every LOD.k-th or LOD.k2-th step at most, and on the way (none stuck, none rescued,
 //      each over 250 m) and drawn smoothly between their steps (Race.lodT, as render.js and the replay use it); the cars that cross the line
 //      in a step of several: the time taken where the line was crossed inside it
 //   2. Marrakesh (a short circuit), 34 cars, the lights, one lap to the finish, the player last on the grid: every car home, each lap time
@@ -21,6 +21,12 @@
 //      pile-up in the first corners (no rival standing 3 s on end, none rescued, the player over the line). Without LOD.nr the far cars
 //      at 15 Hz touched on extrapolated places, spun and closed the corners: 23-30 rivals stood 3 s or more, 12-19 rescued, the player
 //      still 235-280 m behind the line after 40 s (four seeds; on Trois-Rivières, the shortest circuit, a pile-up stays in some races)
+//   8. Spa, 101 cars from the grid (the lights), the player 50th, three seeds, 45 s, LOD on and off: the first corner does not stall the
+//      field (no safety car, no rivals in reverse by the dozen, the field as far as with LOD off). The stall: a jam in the first corner,
+//      a yellow, the safety car, the field brakes to a stop behind it and backs away. With the cars over LOD.r2 m ahead at 15 Hz (k2 8)
+//      in all three of these races (35-57 rivals in reverse at once, the field 52-85 km on instead of 128 km) and in 6 of 20 after 30 s
+//      (seeds 1-20); at 30 Hz there (k2 4) in none of the three and in 1 of 20; with LOD off in 1 of 20 too (another seed): the jam
+//      itself is not the LOD's, the 15 Hz stage made it six times as common
 //   node tests/lod.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -87,12 +93,12 @@ const tLin = (t, x, d0, d1, m) => t - DT * m * (d1 - x) / (d1 - d0);
       }
     }
   });
-  for (let i = 0; i < N; i++) if (gapMax[i] + 1 > L.k2) lodMaxBad++;
+  for (let i = 0; i < N; i++) if (gapMax[i] + 1 > Math.max(L.k, L.k2)) lodMaxBad++;
   const prog = r.cars.map((c, i) => c.dist - start[i]), stuck = Math.max(...r.cars.map(c => c.stuckT));
   check('Nürburg, 100 cars, the flying start, 30 s: no NaN in any car', nan === 0, `${nan} bad values; ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-  check('the cars at all three rates: the full one near the player, every 4th and every 8th step further away', seen[1] > 0 && seen[L.k] > 0 && seen[L.k2] > 0, JSON.stringify(seen));
+  check(`the cars at the full rate near the player and at the lower ones further away (every ${L.k}th step, every ${L.k2}th over ${L.r2} m away)`, seen[1] > 0 && seen[L.k] > 0 && seen[L.k2] > 0, JSON.stringify(seen));
   check(`every car within ${L.a} m ahead of the player, ${L.b} m behind it or ${L.r} m of it: worked out every step, over one step (the first there over the time since its last)`, nearN > 1000 && nearBad === 0, `${nearBad} of ${nearN} car-steps`);
-  check(`a far car: never more than ${L.k2} steps between two of its steps`, lodMaxBad === 0, `${lodMaxBad} cars; most ${Math.max(...gapMax) + 1}`);
+  check(`a far car: never more than ${Math.max(L.k, L.k2)} steps between two of its steps`, lodMaxBad === 0, `${lodMaxBad} cars; most ${Math.max(...gapMax) + 1}`);
   check('the far cars on the way: each car over 250 m, none stuck, none rescued', Math.min(...prog) > 250 && stuck < 2 && resc === 0, `least ${Math.min(...prog).toFixed(0)} m, most stuck ${stuck.toFixed(1)} s, ${resc} rescues`);
   jerk.sort((a, b) => a - b); const jq = (p) => jerk[Math.min(jerk.length - 1, Math.floor(jerk.length * p))];
   check('a far car drawn smoothly between its steps (Race.lodT): it moves on as fast as it goes, every step, not in jumps every 4th or 8th',
@@ -205,6 +211,27 @@ for (const seed of [9, 7]) {   // (the longest a rival stood: 0.7 and 0.6 s; 0.0
   });
   check(`Spa, 100 cars from the grid (the lights), seed ${seed}, 40 s: no pile-up in the first corners (no rival standing 3 s on end, none rescued, the player over the line)`,
     r.cars.length === 101 && worst < 3 && resc === 0 && P.dist > 0, `the longest a rival stood ${worst.toFixed(1)} s, ${resc} rivals rescued, the player at ${P.dist.toFixed(0)} m`);
+}
+
+// ---- 8. Spa, 101 cars from the grid (the lights), the player 50th: the first corner does not stall the field ----
+{
+  // a race of 45 s: the most rivals in reverse at once, the safety car out or not, how far the field got (the sum of dist), where the player is
+  const run = (seed, off) => {
+    L.off = off; const r = race('spa', 100, { playerGrid: 50, laps: 3, seed }), P = r.player; let rev = 0, sc = false;
+    r.start();
+    drive(r, Math.round(45 / DT), () => {
+      let m = 0; for (const c of r.cars) if (c !== P && c.gear === -1 && c.vl < -0.5) m++;
+      if (m > rev) rev = m; if (r.fl && r.fl.sc) sc = true;
+    });
+    L.off = false;
+    return { rev, sc, km: r.cars.reduce((a, c) => a + c.dist, 0) / 1000, p: P.dist, lod: !!(r._lod && r._lod.on), n: r.cars.length };
+  };
+  for (const seed of [9, 10, 11]) {   // (k2 8: the safety car out in all three, 35-57 in reverse, 52.9, 51.6 and 84.7 km; k2 4: 128.7, 128.2, 129.9 km; off: 127.5, 127.9, 128.1 km)
+    const a = run(seed, false), b = run(seed, true);
+    check(`Spa, 101 cars from the grid, the player 50th, seed ${seed}, 45 s: no stall in the first corner (no safety car, at most 5 rivals in reverse at once, the field at least 0.95 of as far as with LOD off)`,
+      a.n === 101 && a.lod && !b.lod && !a.sc && a.rev <= 5 && a.km > 0.95 * b.km,
+      `LOD on: ${a.sc ? 'the safety car out, ' : ''}most in reverse ${a.rev}, the field ${a.km.toFixed(1)} km, the player at ${a.p.toFixed(0)} m; off: ${b.sc ? 'the safety car out, ' : ''}most in reverse ${b.rev}, ${b.km.toFixed(1)} km, the player at ${b.p.toFixed(0)} m`);
+  }
 }
 
 console.log(`\n${n - bad}/${n} OK`);

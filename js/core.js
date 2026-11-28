@@ -4740,7 +4740,9 @@ const Core = (function () {
   // a very big field (more than LOD.min cars, with the player, not online): an AI car away from the player is worked out at a lower rate, its AI,
   // physics, walls, tow, debris and progress every k-th step over the time since its last one (Race._lodPlan): at the full rate within LOD.a m
   // ahead of the player or LOD.b m behind it along the race or LOD.r m of it in the world, every LOD.k-th step (30 Hz) up to LOD.r2 m, every
-  // LOD.k2-th (15 Hz) beyond. A car between its steps is touched where it would be by now (Race._lodPair: on along its speed since its last
+  // LOD.k2-th beyond (30 Hz too: with 15 Hz there, k2 8, Spa's 101 cars from the grid with the player 50th jammed in the first corner in 6
+  // races of 20, a yellow, the safety car, the field in reverse behind it; at 30 Hz in 1 of 20, as with LOD off: tests/lod.test.js, 8).
+  // A car between its steps is touched where it would be by now (Race._lodPair: on along its speed since its last
   // step), so none drives into where another was a few steps ago; the turns spread by the grid slot, so each step has about the same work.
   // Alone, the cs physics and the AI drive a lap 0.2-0.3 % slower at 30 Hz, about 0.7 % at 15 Hz (Nürburg); lap, sector and finish times
   // are taken where the line was crossed inside the longer step. The safety car on the track: the full rate within LOD.r m of it too.
@@ -4749,7 +4751,7 @@ const Core = (function () {
   // bumper or 0.6 m of its side, more by nrV s of their speed apart, stays at the full rate for nrT steps (Race._pairs, _lodPlan): no touch
   // on an extrapolated place, and two far cars between their steps do not run through each other (Nürburg, 100 cars: hard knocks far ahead
   // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0)
-  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 8, fol: 1, nrT: 60, nrV: 0.15, off: false };
+  const LOD = { min: 30, a: 60, b: 30, r: 60, k: 4, r2: 300, k2: 4, fol: 1, nrT: 60, nrV: 0.15, off: false };
   // the indices 0..n-1 in I sorted by cmp, ties by the index (what a stable sort of the list gives), by insertion from the order I had the last
   // time: from one step to the next only a few cars change places (Race._byDist, the order)
   function isortIx(I, n, cmp) {
