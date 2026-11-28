@@ -3406,7 +3406,7 @@ const Render = (function () {
       crackWarm = new THREE.Mesh(g, matCrack); crackWarm.frustumCulled = false; crackWarm.onAfterRender = () => { crackWarm.userData.drawn = true; }; }
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
-    glows = new Glows(10 * 16 + 240 + 96 + 160); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars, its reversing, fog and bus-window lamps; the pits' lamps)
+    glows = new Glows(10 * 16 + 240 + 96 + 200); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars, its reversing, fog and bus-window lamps; the pits' lamps)
     skids = new Skids(8000); scene.add(skids.mesh);
     rain = new Rain(3200); scene.add(rain.mesh);
     streaks = new Streaks(420); scene.add(streaks.mesh); splash = new Splashes(360); scene.add(splash.mesh);   // (the wet road: the lights' reflections, the drops' splashes)
@@ -6828,11 +6828,11 @@ const Render = (function () {
         const fwd = v.st === 0 ? v.v : (v.vx || 0) * ch + (v.vz || 0) * sh;
         if (fwd < -0.4 && K < 3) for (const sd of [-1, 1]) { const [x, z] = at(-hl - 0.02, sd * hw * 0.55); glows.add(x, hy + 0.04, z, 1.05, 1.0, 0.97, 0.9, 0.75); }
         const fg = Math.max(fgR, v.y < fgTop ? 1 : 0);
-        if (fg > 0.15 && v.st === 0 && K < 3) { const yel = u > 0.67, a = Math.min(1, fg) * (dusk ? 0.55 : 0.4);
+        if (fg > 0.15 && v.st === 0 && K < 3) { const yel = u > 0.67, a = Math.min(1, fg) * (dusk ? 0.7 : 0.55);
           for (const sd of [-1, 1]) { const [x, z] = at(hl + 0.02, sd * (v.wid * 0.4)); glows.add(x, v.y + 0.38, z, 1.0, 1.0, yel ? 0.82 : 0.95, yel ? 0.35 : 0.82, a); }
-          const [x, z] = at(-hl - 0.02, fgSd * hw); glows.add(x, hy + 0.02, z, 1.25, 1.0, 0.1, 0.06, Math.min(1, fg) * 0.7); }
-        if (dusk && K === 2 && v.p !== 5 && d2 < 90 * 90) { const wy = v.y + 2.15, wa = 0.16 * rl;
-          for (const sd of [-1, 1]) for (let j = 0; j < 4; j++) { const [x, z] = at(-4.6 + j * 2.9, sd * (v.wid / 2 + 0.04)); glows.add(x, wy, z, 2.2, 1.0, 0.8, 0.5, wa); } }
+          const [x, z] = at(-hl - 0.02, fgSd * hw); glows.add(x, hy + 0.02, z, 1.5, 1.0, 0.1, 0.06, Math.min(1, fg) * 0.95); }
+        if (dusk && K === 2 && v.p !== 5 && d2 < 90 * 90) { const wy = v.y + 2.1, wa = 0.26 * rl;
+          for (const sd of [-1, 1]) for (let j = 0; j < 5; j++) { const [x, z] = at(-4.9 + j * 2.3, sd * (v.wid / 2 + 0.01)); glows.add(x, wy, z, 1.25, 1.0, 0.8, 0.48, wa); } }
         if (v.ind && v.st === 0) { nind++; if ((time + v.id * 0.137) % 0.7 < 0.38) { const sd = v.ind * v.dir, lw = K === 3 ? 0.14 : v.wid / 2 + 0.04; for (const e of [hl + 0.03, -hl - 0.03]) { const [x, z] = at(e, sd * lw); glows.add(x, hy + 0.06, z, 1.1, 1.0, 0.6, 0.0, 1.0); } } } }
     }
     for (const im of [...V.car, V.van, V.bus, V.truck, V.moto, V.bike]) { im.count = cnt.get(im) || 0; if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; } }
