@@ -1405,23 +1405,23 @@
   }
  },
  "isuna": {
-  "meshes": 921,
-  "verts": 780797,
-  "instances": 1423,
+  "meshes": 901,
+  "verts": 790287,
+  "instances": 1398,
   "props": 143,
   "crowd": 86,
-  "world": "724f514b",
+  "world": "e63b3627",
   "propsHash": "ccf26f9b",
   "floor": "63545b41/7784",
   "groups": {
-   "-:MeshLambertMaterial": "cff12599",
+   "-:MeshLambertMaterial": "bf317dc0",
    "-:MeshPhongMaterial": "40e448a3",
    "-:MeshBasicMaterial": "3297c9b3",
-   "rob:MeshLambertMaterial": "320be760",
+   "rob:MeshLambertMaterial": "27e80d5a",
    "roadside-ways:MeshLambertMaterial": "cb00bcf0",
    "crowd:MeshLambertMaterial": "3e3ed416",
-   "flags:MeshLambertMaterial": "c6afae8b",
-   "ao:MeshBasicMaterial": "fc7dcfa7",
+   "flags:MeshLambertMaterial": "132b4e44",
+   "ao:MeshBasicMaterial": "6d24d9dd",
    "tyremarks:MeshBasicMaterial": "7ca91873",
    "roadwear:MeshLambertMaterial": "5d32f644"
   }
