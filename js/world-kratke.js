@@ -57,6 +57,44 @@
       // a group of spectators by the memorial (the top of the climb)
       fans: (c) => { const q = c.names.find(n => n.n.startsWith('Spomenik')); if (q) c.run(c.sStart + q.d - 30, c.sStart + q.d + 10, -1, { rows: 1, dens: 0.35, clump: 0.9, label: 'KR memorial' }); },
     },
+    // Tatev (Armenia): the Vorotan gorge's steep slopes of dry grass and oak and hornbeam scrub, the grey-brown basalt and andesite in faces
+    // and crags over the scree (rocks.crag, rocks.scree), the river and the natural rock bridge on the gorge's floor; the asphalt with a dashed
+    // white centre line, low concrete parapets on the drops (red and white blocks round the hairpins); the boards in Armenian and English
+    // (only places and plain words); a few spectators at the rock bridge
+    tatev: {
+      seed: 7461, dust: [0.66, 0.6, 0.5],
+      pal: { grass: [0.58, 0.56, 0.36], dry: [0.7, 0.63, 0.43], soil: [0.5, 0.42, 0.33], shrub: [0.33, 0.39, 0.22], tree: [0.25, 0.33, 0.18],
+        field: [0.55, 0.56, 0.32], field2: [0.69, 0.62, 0.42], wall: [0.55, 0.52, 0.48], built: [0.62, 0.58, 0.52], bare: [0.56, 0.52, 0.47],
+        rock: [0.52, 0.48, 0.44], rock2: [0.4, 0.37, 0.34], path: [0.62, 0.56, 0.46], verge: [0.58, 0.54, 0.45], karst: 0,
+        patch: [0.47, 0.42, 0.36], patchK: 0.45, noise: 0.11 },   // (the darker stony ground in patches: the scree under the faces)
+      far: (A, sl, q) => { const rk = Math.min(1, sstep(0.45, 0.9, sl) * 0.8), wood = sstep(0.18, 0.4, sl) * (1 - rk) * 0.45;
+        let c = [0.6 + q * 0.05, 0.56 + q * 0.04, 0.38 + q * 0.03]; c = [lerp(c[0], 0.3, wood), lerp(c[1], 0.36, wood), lerp(c[2], 0.22, wood)];
+        return [lerp(c[0], 0.5 + q * 0.05, rk), lerp(c[1], 0.46 + q * 0.04, rk), lerp(c[2], 0.42 + q * 0.03, rk)]; },
+      lines: { centre: [0.92, 0.91, 0.86], dash: [3, 6] },
+      para: { stone: [0.7, 0.69, 0.66], top: [0.84, 0.83, 0.8], hp: [0.8, 0.16, 0.13], back: [0.56, 0.55, 0.52], wall: [0.52, 0.49, 0.45], cope: [0.68, 0.66, 0.62] },
+      rocks: { main: [[0.5, 0.47, 0.43], [0.56, 0.52, 0.47], [0.45, 0.42, 0.39], [0.6, 0.56, 0.5]], alt: [[0.38, 0.35, 0.33], [0.44, 0.4, 0.36]], karst: 0, scree: 0.35, crag: 0.6 },
+      bank: { ratio: 0.8, batter: 0.2 },
+      kinds: ['broad', 'shrub', 'tuft'],
+      tint: { tuft: [1.18, 1.08, 1.0] },   // (the grass dry and straw-coloured in summer)
+      mix: { 0: [0.07, [0.03, 0.4, 0.57]], 1: [0.38, [0.62, 0.38, 0]], 2: [0.3, [0.08, 0.77, 0.15]], 3: [0.04, [0.3, 0.5, 0.2]], 4: [0.01, [0, 0.7, 0.3]],
+        5: [0, [0, 1, 0]], 6: [0.04, [0, 0.3, 0.7]] },
+      house: { cols: [[0.66, 0.6, 0.52], [0.58, 0.53, 0.47], [0.78, 0.74, 0.66]], roof: [0.46, 0.3, 0.24], flat: [0.6, 0.58, 0.54], gable: 0.8, tall: 0.15 },
+      words: { start: 'ՄԵԿՆԱՐԿ · START', finish: 'ԱՎԱՐՏ · FINISH', fin: 'ՏԱԹԵՎ · TATEV', title: 'ՏԱԹԵՎ · TATEV', sub: 'ՈՐՈՏԱՆԻ ԿԻՐՃ · Հ-46',
+        cp: ['#1f3f8a', '#f2a400'], finBg: '#1f3f8a', ban: ['#d90012', '#f2a400'] },
+      boards: [['ՏԱԹԵՎ\nTATEV', '#1d4f9a'], ['ՀԱԼԻՁՈՐ\nHALIDZOR', '#1d4f9a'], ['ՍԱՏԱՆԱՅԻ ԿԱՄՈՒՐՋ\nDEVIL\'S BRIDGE', '#6b4a22'], ['ՈՐՈՏԱՆ\nVOROTAN', '#6b4a22'],
+        ['ՎՏԱՆԳԱՎՈՐ ՈԼՈՐԱՆՆԵՐ\nDANGEROUS BENDS', '#f2f0ea'], ['ԴԱՆԴԱՂԵՑՐԵՔ\nSLOW DOWN', '#f2f0ea'], ['ԳՈՐԻՍ\nGORIS', '#1d4f9a'], ['Հ-46', '#1d4f9a']],
+      // the signs (krAtlas2's boards by number): Halidzor and Goris behind the start for the cars going back, the road's number after the start,
+      // the dangerous bends before the first curve, the rock bridge's board before it, the river's before the climb, slow before the first
+      // hairpin of the climb, Tatev ahead past the finish
+      signs: (c) => { c.signAt(c.sStart - 60, -1, 1); c.signAt(c.sStart - 115, -1, 6); c.signAt(c.sStart + 40, 1, 7);
+        if (c.cv[0]) c.signAt(c.sStart + c.cv[0][0] - 110, 1, 4);
+        const b = c.names.find(n => n.n.startsWith('Hudičev')); if (b) c.signAt(c.sStart + b.d - 120, 1, 2);
+        const r = c.names.find(n => n.n.startsWith('Reka')); if (r) c.signAt(c.sStart + r.d - 80, 1, 3);
+        const h = c.names.find(n => n.n.startsWith('Serpentina 1')); if (h) c.signAt(c.sStart + h.d - 90, 1, 5);
+        c.signAt(c.sFin + 110, -c.sdP, 0); for (const v of c.views) c.signAt(v.i * c.ds - 45, v.sd || 1, 3); },
+      // a few spectators at the rock bridge (the bottom of the gorge)
+      fans: (c) => { const q = c.names.find(n => n.n.startsWith('Hudičev')); if (q) c.run(c.sStart + q.d - 25, c.sStart + q.d + 10, -1, { rows: 1, dens: 0.3, clump: 0.9, label: 'KR bridge' }); },
+    },
     // Wadi Mujib (Jordan): the canyon's bare slopes of pale limestone and marl in beds (pal.strata: bands of their colours by height; the
     // harder beds standing out of the scree as long low ledges along the contours: rocks.ledges), boulders, sparse grey-green shrubs and
     // tufts of dry grass, a few umbrella acacias; the dam's lake on the canyon's floor far below (far; def.far.lake); the asphalt with a dashed
@@ -1426,4 +1464,6 @@
   World.ext.banaue = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.banaue);
   World.keep('VR', 'atitlan');
   World.ext.atitlan = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.atitlan);
+  World.keep('VR', 'tatev');
+  World.ext.tatev = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.tatev);
 })();
