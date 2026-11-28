@@ -354,6 +354,15 @@ Pred dirko na krožni progi lahko odpelješ en leteči krog sam na progi. Kvalif
 - Kvalifikacije so tudi pred vsako dirko prvenstva. V dirki s prijateljem, na kronometrih (Pikes Peak, Ouninpohja, Harju, Katu-Jaryk, Vršič, Los Caracoles) in na dirkah na Vršič in Los Caracoles (odprti cesti, brez letečega kroga) jih ni.
 - Krog iz kvalifikacij šteje tudi za rekord kroga proge.
 
+## Hot lap
+
+Kratek način za najboljši krog brez tekmecev (meni: kartica **Hot lap** med načini). Na vsaki krožni progi z dirko; ne na odprtih cestah, kronometrih, testnih progah (Jezero, Toskana) in progah, ki čakajo na izbiro. Sam si na progi, začneš na ravnini pred ciljno črto (kot v kvalifikacijah), brez semaforja; ura teče od črte. Odpelješ 3 merjene kroge, vsak je leteči. Ni goriva, zastav, okvar, radia ne značajev tekmecev: samo krog.
+
+- Pred prvim krogom je pod uro rekord kroga v tem načinu; po vsakem krogu njegov čas in razlika do najboljšega pred njim (zlato: nov najboljši).
+- Rekord Hot lapa se shrani posebej (ločeno od dirke, kjer je krog odvisen od tekmecev). Duh najboljšega kroga vozi s tabo od prvega kroga.
+- Na koncu ni stopničk: rezultat pokaže najboljši krog (nov rekord ali zaostanek zanj) in vse kroge.
+- Svetovna lestvica (#672) je naslednji korak; Hot lap deluje brez povezave.
+
 ## Sektorski časi
 
 Krog na krožni progi je razdeljen na tri enake dele (S1, S2, S3). Okvirčkov s časi sektorjev pod uro kroga ni več (uporabnikova želja); časi se še merijo in shranijo. **Vijoličen** je najhitrejši sektor med vsemi na dirki (v kvalifikacijah hitrejši od vseh krogov tekmecev do takrat), **zelen** tvoj najboljši (na tej progi ali na tej dirki), **rumen** počasnejši. Najboljši sektorji se shranijo pri vsaki progi. Na kronometrih jih ni, ker imajo svoje vmesne čase.

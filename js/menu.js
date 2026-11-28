@@ -89,8 +89,9 @@
     { id: 'elim', name: 'Elimination', sub: 'Every 30 s the last cars are out.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
     { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' },   // (Zabava: docs/zabava.md)
     { id: 'endless', name: 'Endless traffic', sub: 'Ever denser traffic. Close passes add time.', chip: 'ONE TOUCH ENDS IT', img: 'assets/menu/mode-endless.webp' },   // (docs/neskoncna-voznja.md)
-    { id: 'drag', name: 'Drag race', sub: '402 m from a standstill, you shift the gears.', chip: '1 RIVAL · 402 M', img: 'assets/menu/mode-trial.webp' }]);   // (Zabava, the drag race: docs/drag-dirka.md)
-  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov', endless: 'endless', drag: 'drag' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit', endless: 'endless', drag: 'drag' };
+    { id: 'drag', name: 'Drag race', sub: '402 m from a standstill, you shift the gears.', chip: '1 RIVAL · 402 M', img: 'assets/menu/mode-trial.webp' },   // (Zabava, the drag race: docs/drag-dirka.md)
+    { id: 'hot', name: 'Hot lap', sub: 'Alone on the circuit, a flying start. Your best lap counts.', chip: 'BEST LAP · NO RIVALS', img: 'assets/menu/mode-trial.webp' }]);   // (Zabava, Hot lap: js/zabava/hot.js, docs/igra.md)
+  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov', endless: 'endless', drag: 'drag', hot: 'hot' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit', endless: 'endless', drag: 'drag', hot: 'hot' };
   const W_SET = ['dry', 'rain', 'random', 'change'];   // (the rain over the picture: none, falling, coming and going; Changing the same, slower)
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
@@ -1277,6 +1278,7 @@
     else if (mode === 'trial') { const gold = G.medals(d); last = gold ? cell('Gold time', clock(gold[0]), 'gt') : '<div class="opp">' + oppN(0) + '</div>'; }
     else if (mode === 'endless') { const E = typeof Core !== 'undefined' && Core.EN; last = cell('Clock', (E ? E.clock[Math.max(0, Math.min(3, G.S.difficulty | 0))] : 30) + ' s', 'clk'); }   // (the clock's start at the game's level, js/core.js EN.clock; the row's last cell, as the police's)
     else if (mode === 'race' && rivOf(d)) { const k = G.rivals(d); last = '<div class="opp' + twOn('riv') + '">' + twB('riv', 'Opponents: ' + k + '. Choose how many', oppN(k)) + '</div>'; }
+    else if (mode === 'hot') last = '<div class="opp">' + oppN(0) + '</div>';   // (Hot lap: alone, js/zabava/hot.js)
     else last = '<div class="opp">' + oppN(mode === 'duel' || mode === 'pursuit' || mode === 'drag' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21) + '</div>';   // (Elimination: at least 5, js/zabava/elim.js E.min)
     // the flag: the quick list (js/menu-izbor.js; a country without a flag: its first letters)
     const flagB = IZ() ? '<div class="flag"><button data-act="izbor" aria-haspopup="dialog" aria-label="' + esc((ctry ? 'Flag of ' + ctry + '. ' : '') + 'Choose a track by country') + '">' +

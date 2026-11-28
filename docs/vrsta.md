@@ -103,6 +103,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Nova proga: Armenija (ena proga iz države; 2–3 predlogi ceste na strani Odločitve) | partyslo (rezerva croatiadata) | raziskava 25. 11. |
 | Orodje za prekrivanje `tools/prekrivanje.mjs` (odprti PR z isto progo ali datoteko, račun lastnika; `docs/odlocitve.md`, »Brez dvojnega dela«, točka 3) | croatiadata | #1089 osnutek, test OK 25. 11. |
 | Nova proga: El Castaño, Venezuela (rezerva uporabnika 13. 11.; pot in zanimivosti na kartici Odločitve, veja `proga/el-castano`) | partyslo (rezerva croatiadata) | v delu od 25. 11. |
+| Hot lap: kratek način za najboljši krog brez tekmecev (docs/svetovna-lestvica.md, svetovna-lestvica-obseg) | croatiadata | 1.0; Matej 26. 11. (komentar 7205740929) |
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
