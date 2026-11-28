@@ -341,7 +341,7 @@
     const on = cab.indexOf(S.car);
     G.front({ cars: cab.map(id => id && spec(id)), lit: on >= 0 ? on : 3, lock: [false, false, !!cab[2]], price: [cab[1] ? eur(rentOf(cab[1])) : '', cab[2] ? eur(PRICE[cab[2]] || 0) : ''] });
   }
-  function render() { head(); if (menu) drawMenu(); }
+  function render() { head(); zpDraw(); if ($('g-cmp').classList.contains('on')) { if (cmpB === S.car) cmpB = ORDER[(ORDER.indexOf(S.car) + 1) % ORDER.length]; cmpDraw(); } if (menu) drawMenu(); }
 
   /* ---------------- the car pictures for the buttons (drawn by Garage3D one at a time, between frames) ---------------- */
   // thumbs[id][colour]: a car's picture in that colour; thumbs[id].sig its stripe and upgrades (others: drawn again). Kept over a reset
@@ -572,9 +572,66 @@
     if (menu && m.part) G.openPart(m.part);
     G.bayCam(!!(menu && m.part === 'hood'));   // (into the bay with the bonnet up, home again otherwise)
   }
+  /* ---------------- e1 and f1 (Matej 27. 11. 2026, #1068): two cars side by side, and the car »Za to progo« ----------------
+     Only the game's own car data (Core.MODELS: kW, kg, the drive, the category, the grip on loose ground; the parts' upgrade levels for
+     the power); the driving does not change. */
+  const DRV = { AWD: ['AWD', 'vsa štiri kolesa'], FR: ['FR', 'zadaj, motor spredaj'], FF: ['FF', 'spredaj'], MR: ['MR', 'zadaj, motor v sredini'], RR: ['RR', 'zadaj, motor zadaj'] };
+  const kwOf = (id) => Math.round(Core.upgStats(model(id), levels(S.cars[id].parts)).kw);
+  const kwt = (id) => Math.round(kwOf(id) / model(id).mass * 1000);
+  // the car for the track chosen in the game (ZP: its name and whether it is makadam, from the game's address or garageOpen): of the cars
+  // the player has (none: of all). Makadam: the grip on loose ground (a road car 1), all four wheels driven, a rally car, a light one;
+  // asphalt: the power per tonne and the grip (stats). Its reasons in a few words
+  let ZP = null;
+  function zaProgo(gravel, ids) {
+    let best = null, bs = -1e9;
+    for (const id of ids) { const Mm = model(id), loose = Mm.loose || 1, pt = Math.min(kwt(id), 450) / 450, g = (Mm.stats ? Mm.stats.grip : 5) / 10;
+      const s = gravel ? loose * (Mm.drive === 'AWD' ? 1.2 : 1) * (Mm.cat === 'reli' ? 1.3 : 1) + 0.3 * pt - (Mm.mass > 2000 ? 0.3 : 0) : 0.55 * pt + 0.45 * g;
+      if (s > bs + 1e-9) { bs = s; best = id; } }
+    if (!best) return null;
+    const Mm = model(best), why = [];
+    if (gravel) { if (Mm.drive === 'AWD') why.push('pogon na vsa štiri kolesa'); if (Mm.cat === 'reli') why.push('reli avto'); if ((Mm.loose || 1) > 1) why.push('dober oprijem na makadamu'); if (!why.length) why.push('največ oprijema na makadamu od tvojih avtov'); }
+    else { why.push('{0} kW na tono'); if (Mm.stats && Mm.stats.grip >= 8) why.push('dober oprijem'); }
+    return { id: best, why };
+  }
+  const zpIds = () => { const o = ORDER.filter(id => S.cars[id].own || S.rent === id); return o.length ? o : ORDER; };
+  function zpDraw() {
+    $('g-cmpb').textContent = tr('Primerjaj');
+    const el = $('g-zp'); if (!ZP) { el.hidden = true; return; }
+    const r = zaProgo(ZP.gravel, zpIds()); if (!r) { el.hidden = true; return; }
+    const why = r.why.map(w => tr(w, kwt(r.id))).join(', ');
+    el.hidden = false; el.dataset.car = r.id; el.classList.toggle('on', r.id === S.car);
+    el.innerHTML = r.id === S.car ? '<b>' + esc(tr('ZA TO PROGO')) + '</b><span>' + esc(ZP.proga) + ' · ' + esc(why) + '</span>'
+      : '<b>' + esc(tr('ZA TO PROGO')) + '</b><span>' + esc(model(r.id).name) + ' · ' + esc(why) + ' ›</span>';
+    el.setAttribute('aria-label', tr('Za to progo ({0}): {1}', ZP.proga, model(r.id).name) + ', ' + why);
+  }
+  // the comparison: the car on the table left, another right (the one before it at first; its arrows step it through the cars)
+  let cmpB = null;
+  function cmpOpen() { closeMenu(); const i = ORDER.indexOf(S.car); if (!cmpB || cmpB === S.car) cmpB = ORDER[(i + 1) % ORDER.length]; cmpDraw(); $('g-cmp').classList.add('on'); }
+  function cmpClose() { $('g-cmp').classList.remove('on'); }
+  function cmpStep(d) { let i = ORDER.indexOf(cmpB); do i = (i + d + ORDER.length) % ORDER.length; while (ORDER[i] === S.car); cmpB = ORDER[i]; cmpDraw(); }
+  function cmpDraw() {
+    const a = S.car, b = cmpB, A = model(a), B = model(b), cat = (Mm) => { const c = Core.CATS.find(x => x.id === Mm.cat); return c ? tr(c.name) : ''; };
+    const card = (Mm, side) => '<div class="c ' + side + '">' + (side === 'r' ? '<button class="ar" data-act="cmp-prev" aria-label="' + esc(tr('Prejšnji avto')) + '">‹</button>' : '') +
+      '<div><b>' + esc(Mm.name) + '</b><small>' + esc(cat(Mm)) + '</small></div>' + (side === 'r' ? '<button class="ar" data-act="cmp-next" aria-label="' + esc(tr('Naslednji avto')) + '">›</button>' : '') + '</div>';
+    const row = (name, unit, va, vb, max) => { const w = (v) => Math.max(4, Math.min(100, v / max * 100)).toFixed(1);
+      return '<div class="r"><span class="lb">' + esc(tr(name)) + ' <i>' + unit + '</i></span><div class="br"><em class="l">' + num(va) + '</em><span class="bl"><i style="width:' + w(va) + '%"></i></span><span class="bb"><i style="width:' + w(vb) + '%"></i></span><em>' + num(vb) + '</em></div></div>'; };
+    const max = (va, vb, m) => Math.max(m, va, vb);
+    const drv = (Mm) => { const d = DRV[Mm.drive] || [Mm.drive, '']; return d[0] + (d[1] ? ' · ' + tr(d[1]) : ''); };
+    const ka = kwOf(a), kb = kwOf(b), ta = kwt(a), tb = kwt(b);
+    $('g-cmp').innerHTML = '<div class="hd"><b>' + esc(tr('Primerjava')) + '</b><small>' + esc(tr('Garaža · dva avta')) + '</small><button class="x" data-act="cmp-close" aria-label="' + esc(tr('Zapri')) + '">✕</button></div>' +
+      '<div class="cs">' + card(A, 'l') + card(B, 'r') + '</div>' +
+      row('Moč', 'kW', ka, kb, max(ka, kb, 450)) + row('Masa', 'kg', A.mass, B.mass, max(A.mass, B.mass, 1500)) + row('Moč na tono', 'kW/t', ta, tb, max(ta, tb, 340)) +
+      '<div class="r pg"><span class="lb">' + esc(tr('Pogon')) + '</span><div class="ps"><span class="p l">' + esc(drv(A)) + '</span><span class="p r">' + esc(drv(B)) + '</span></div></div>';
+  }
+
   function onAct(act) {
     G.sound(S.sound);
     switch (act) {
+      case 'cmp': cmpOpen(); break;
+      case 'cmp-close': cmpClose(); break;
+      case 'cmp-prev': cmpStep(-1); break;
+      case 'cmp-next': cmpStep(1); break;
+      case 'zp': { const id = $('g-zp').dataset.car; if (id && id !== S.car && ORDER.includes(id)) pickCar(id); break; }
       case 'prev': step(-1); break;
       case 'next': step(1); break;
       case 'buy': buy(); break;
@@ -639,7 +696,7 @@
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
     window.addEventListener('resize', resize);
-    window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') closeMenu(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') { closeMenu(); cmpClose(); } });
     G.onTap = onTap;
     G.onHud = (k, d) => {
       if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); B = null; stepsOff(!d); cancelAnimationFrame(barRaf); barRaf = 0; if (d) { barZero(); if (pp && !pp.armed && !pp.tap) ppOff(); } else { if (pp) pp.tap = false; ppShow(); } return; }
@@ -786,6 +843,7 @@
   let GAME_CAR = null;
   function fromGame(P) {
     if (!P) try { P = new URLSearchParams(location.search); } catch (_) { return; }
+    const pg = (P.get('proga') || '').trim().slice(0, 48); ZP = pg ? { proga: pg, gravel: P.get('podlaga') === 'makadam' } : null;   // (f1: the track chosen in the game)
     const id = heirId((P.get('car') || '').trim().toLowerCase()); if (!ORDER.includes(id)) return;
     GAME_CAR = id; S.car = id;
     const hx = parseInt(P.get('color') || '', 16), ci = COLORS.findIndex(c => c[0] === hx); if (ci >= 0) S.cars[id].color = ci;
@@ -819,7 +877,7 @@
       run = false; G.frame(0.016);
       setTimeout(() => { $('g-load').classList.add('done'); try { parent.__garageReady(); } catch (_) { } }, 0);
     } else { looping = true; requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); }); }
-    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, vetMoney, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
+    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, vetMoney, onAct, onTap, pickCar, zaProgo, cmpOpen, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
 

@@ -288,3 +288,39 @@ svg { display: block; }
 .g-sa { padding: 3px 10px; border-radius: 999px; background: #e3e8f0; color: #46546c; font: 800 11.5px/1.2 var(--f); border: 0; }
 .g-sa.sel { background: #36aef2; color: #fff; }
 .g-nm { min-width: 28px; text-align: center; font: 800 14px/1 var(--f); color: #142033; }
+/* e1 and f1 (#1068, maketi primerjava-1 and priporocen-1): above the cars' buttons the car »Za to progo« (gold) and »Primerjaj«; the
+   comparison of two cars over the garage (the car on the table cyan, the other red, the bars mirrored from the middle) */
+.g-tools { position: absolute; left: 14px; right: 14px; bottom: calc(100% + 6px); display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; pointer-events: none !important; }
+.g-tools > button { pointer-events: auto; }
+.g-cmpb, .g-zp { min-height: 34px; padding: 6px 12px; border-radius: 999px; font: 800 12.5px/1.15 var(--f); color: #e9eef7; background: rgba(12, 14, 19, .72); border: 1.5px solid rgba(255, 255, 255, .35); }
+.g-zp { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; border-color: var(--gold); color: #fff; }
+.g-zp b { flex: none; padding: 3px 7px; border-radius: 999px; background: var(--gold); color: #1d1606; font: 900 10.5px/1 var(--f); letter-spacing: .06em; }
+.g-zp span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-zp.on { background: rgba(60, 46, 10, .82); box-shadow: 0 0 0 2px rgba(245, 200, 76, .35); }
+.g-cmp { position: fixed; z-index: 30; left: 50%; top: 50%; width: min(440px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; padding: 14px 14px 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--edge); color: var(--text); box-shadow: 0 18px 50px rgba(0, 0, 0, .55); opacity: 0; pointer-events: none; transform: translate(-50%, -46%) scale(.97); transition: opacity .2s, transform .2s; }
+.g-cmp.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+.g-cmp .hd { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.g-cmp .hd b { font: italic 900 20px/1 var(--f); }
+.g-cmp .hd small { color: var(--muted); font: 700 12px/1 var(--f); }
+.g-cmp .x { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--text); font: 800 15px/1 var(--f); }
+.g-cmp .cs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.g-cmp .c { display: flex; align-items: center; gap: 6px; padding: 9px 10px; border-radius: 12px; border: 2px solid var(--cyan); background: rgba(108, 200, 247, .08); min-width: 0; }
+.g-cmp .c.r { border-color: var(--red); background: rgba(226, 56, 45, .08); }
+.g-cmp .c > div { flex: 1; min-width: 0; text-align: center; }
+.g-cmp .c b { display: block; font: italic 900 14px/1.1 var(--f); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-cmp .c small { color: var(--muted); font: 700 11px/1.2 var(--f); }
+.g-cmp .ar { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--text); font: 900 17px/1 var(--f); }
+.g-cmp .r { margin-top: 9px; }
+.g-cmp .lb { display: block; text-align: center; font: 800 12px/1.2 var(--f); color: var(--muted); margin-bottom: 4px; }
+.g-cmp .lb i { font-style: normal; opacity: .75; }
+.g-cmp .br { display: grid; grid-template-columns: 52px 1fr 1fr 52px; align-items: center; gap: 4px; }
+.g-cmp .br em { font: italic 900 14px/1 var(--f); }
+.g-cmp .br em.l { text-align: right; }
+.g-cmp .bl, .g-cmp .bb { height: 10px; border-radius: 5px; background: rgba(255, 255, 255, .07); display: flex; overflow: hidden; }
+.g-cmp .bl { justify-content: flex-end; }
+.g-cmp .bl i { background: var(--cyan); border-radius: 5px; }
+.g-cmp .bb i { background: var(--red); border-radius: 5px; }
+.g-cmp .ps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.g-cmp .p { padding: 6px 8px; border-radius: 999px; text-align: center; font: 800 11.5px/1.2 var(--f); border: 1.5px solid var(--cyan); color: #d9f1fd; }
+.g-cmp .p.r { border-color: var(--red); color: #fde0dd; margin-top: 0; }
+.g-cmpb::before { content: '⇄ '; }

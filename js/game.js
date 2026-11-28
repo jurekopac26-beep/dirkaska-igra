@@ -374,19 +374,27 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   /* ---------------- statistics and achievements (Dosežki): the player's own numbers over all races, and the achievements ----------------
      st (kept in the browser, tdgp-stats): the km and the time driven, races, wins, podiums, poles, fastest laps, time trials run, medals, titles,
      escapes, races online, the top speed, the longest jump and drift, the tracks raced to the line (and those with a gold medal), the
-     achievements unlocked (id -> date). Counted as the game goes (stDrive after each physics step of a race, the rest at the finish); an
+     achievements unlocked (id -> date), the km of each week (wk: the week's Monday 'YYYY-MM-DD' -> km, the last WK_N weeks; the graph on
+     Dosežki, profil igralca b3). Counted as the game goes (stDrive after each physics step of a race, the rest at the finish); an
      achievement unlocked: a message at once and a line on the results. */
-  const stNew = () => ({ v: 1, km: 0, time: 0, races: 0, wins: 0, podiums: 0, poles: 0, fl: 0, tt: 0, gold: 0, silver: 0, bronze: 0, titles: 0, escapes: 0, online: 0, vmax: 0, jump: 0, drift: 0, tracks: {}, goldT: {}, ach: {} });
+  const stNew = () => ({ v: 1, km: 0, time: 0, races: 0, wins: 0, podiums: 0, poles: 0, fl: 0, tt: 0, gold: 0, silver: 0, bronze: 0, titles: 0, escapes: 0, online: 0, vmax: 0, jump: 0, drift: 0, tracks: {}, goldT: {}, ach: {}, wk: {} });
   let st = stNew();
   try {
     const j = JSON.parse(localStorage.getItem('tdgp-stats') || 'null');
     if (isObj(j) && j.v === 1) {
       for (const k in st) if (typeof st[k] === 'number' && k !== 'v' && posNum(j[k])) st[k] = j[k];
-      for (const k of ['tracks', 'goldT', 'ach']) if (isObj(j[k])) for (const id in j[k]) if (posNum(j[k][id])) st[k][id] = j[k][id];
+      for (const k of ['tracks', 'goldT', 'ach', 'wk']) if (isObj(j[k])) for (const id in j[k]) if (posNum(j[k][id])) st[k][id] = j[k][id];
     }
   } catch (_) { st = stNew(); }
   let stHold = false;   // (a profile brought in: the game starts again with its stats, not these saved over them as the page goes)
-  function stSave() { if (stHold) return; Shramba.keep('tdgp-stats', JSON.stringify(st)); }
+  const WK_N = 12;   // (weeks kept; the graph shows 8)
+  function wkOf(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; }   // (the week's Monday, local time)
+  const wkKey = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  let wkNow = { k: '', end: 0 };   // (this week's key, until its end: not worked out at every physics step)
+  function wkCur() { const t = Date.now(); if (t >= wkNow.end) { const d = wkOf(t), e = new Date(d); e.setDate(e.getDate() + 7); wkNow = { k: wkKey(d), end: +e }; } return wkNow.k; }
+  function stSave() { if (stHold) return; const ks = Object.keys(st.wk).sort(); for (const k of ks.slice(0, Math.max(0, ks.length - WK_N))) delete st.wk[k]; Shramba.keep('tdgp-stats', JSON.stringify(st)); }
+  // a copy of the progress after every race to the line (Shramba 'dirka', the last two kept: profil igralca d1), once the finish is saved
+  const kopRace = (id) => setTimeout(() => { Shramba.snap('dirka', id).catch(() => { }); }, 1500);
   // [id, name, how to get it, progress: () => [now, goal]]
   // the tracks as the menu lists them: a road variant (Pikes Peak on its historic gravel) counts with its track, either road driven
   const trackCards = () => Core.TRACKS.filter(d => !d.variantOf && !nuTrack(d)), droveCard = (d) => Core.TRACKS.some(x => (x === d || x.variantOf === d.id) && st.tracks[x.id]);
@@ -437,7 +445,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   let stRun = { drift: 0, lapWall: false, lapAP: false, wall: false, car: false, laps: 0, pole: false, done: false };
   function stDrive(P, dt) {   // after each physics step of a race
     if (phase !== 'racing' || P.finished) return;
-    st.km += Math.abs(P.speed) * dt / 1000; st.time += dt;
+    const dk = Math.abs(P.speed) * dt / 1000, wk = wkCur(); st.km += dk; st.wk[wk] = (st.wk[wk] || 0) + dk; st.time += dt;
     const v = P.speed * 3.6; if (v > st.vmax) st.vmax = v; if (v >= 300) achGet('speed');
     if (Math.abs(P.beta || 0) > 0.35 && P.speed > 12 && !P.air) { stRun.drift += dt; if (stRun.drift >= 3) achGet('drift'); }
     else { if (stRun.drift > st.drift) st.drift = stRun.drift; stRun.drift = 0; }
@@ -453,7 +461,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function stRace(pos, n, fl) {
     if (stRun.done) return; stRun.done = true;
     const P = race.player, id = track.def.id, rv = n > 1;
-    st.races++; st.tracks[id] = (st.tracks[id] || 0) + 1;
+    st.races++; st.tracks[id] = (st.tracks[id] || 0) + 1; kopRace(id);
     if (rv) { if (pos === 1) st.wins++; if (pos <= 3) st.podiums++; if (fl) st.fl++; }
     achGet('first');
     if (rv && pos === 1) { achGet('win'); if (P.grid >= n && n >= 10) achGet('fromLast'); if (race.rain) achGet('rain'); if (S.tod === 'night') achGet('night'); if (stRun.pole && fl) achGet('hattrick'); }
@@ -869,6 +877,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const o = { from: carFrom, track: !!(menuOn && Menu.fromTrack), before: (Core.MODELS[carBefore] || M).id };
     const td = Core.TRACKS.find(d => d.id === S.track), dz = td && /, /.test(td.name) ? td.name.split(', ').pop() : '';   // (the selected track's country: the flag on the garage's IZBERI PROGO)
     const p = { car: M.id, color: PLAYER_COLORS[colNow()].toString(16).padStart(6, '0') }; if (dz) p.drzava = dz;
+    if (o.track && td) { p.proga = ((Lang.cur === 'en' && td.en && td.en.name) || td.name).split(', ')[0]; p.podlaga = td.roadSurface === 'makadam' ? 'makadam' : 'asfalt'; }   // (f1, #1068: the garage's car »Za to progo«)
     garPre(true);
     if (garF && !garOn) {
       garCtx = o; garOn = true; garF.classList.remove('off'); garF.removeAttribute('aria-hidden'); try { garF.focus(); } catch (_) { }
@@ -2116,27 +2125,43 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       posNum(o.izvoz) ? tr('Zadnji izvoz v datoteko: {0}.', new Date(o.izvoz).toLocaleDateString(Lang.locale)) : tr('Profil še ni izvožen v datoteko.'),
       tr('Zasedeno je {0} % prostora za shranjeno igro.', Math.max(u.used ? 1 : 0, Math.round(u.share * 100)))].filter(Boolean).join(' ');
     if (p == null && !profNote.asked) { profNote.asked = true; Shramba.persisted().then((v) => { if (v != null && screen === 'settings') profNote(); }); }   // (the browser's answer, nothing asked)
+    // (Shranjena igra, profil igralca c2: the last file under Izvozi, the number of copies beside Varnostne kopije)
+    const ex = $('prof-exp-t'), dd = Shramba.days();
+    if (ex) ex.textContent = dd == null ? tr('še ni izvožen') : dd < 1 ? tr('zadnjič danes') : dd < 2 ? tr('zadnjič včeraj') : dd < 3 ? tr('zadnjič pred {0} dnevoma', dd) : tr('zadnjič pred {0} dnevi', dd);
+    kopCount();
     const box = $('set-kopije'); if (box && !box.dataset.on) { box.dataset.on = '1'; box.addEventListener('toggle', () => { if (box.open) kopList(); }); }
     if (box && box.open) kopList();
   }
+  function kopCount() {
+    const el = $('kop-n'); if (!el) return;
+    Shramba.list().then((a) => { const n = a.length; el.textContent = n === 0 ? tr('ni kopij') : n === 1 ? tr('{0} kopija', n) : n === 2 ? tr('{0} kopiji', n) : n < 5 ? tr('{0} kopije', n) : tr('{0} kopij', n); }, () => { el.textContent = ''; });
+  }
+  const kopTrack = (id) => { const d = id && Core.TRACKS.find(x => x.id === id); return d ? String(Lang.of(d, 'name')) : ''; };
   function kopName(r) {   // (when, why, the races and the career's money then)
     const s = r.sum || {}, t = new Date(r.t);
     return t.toLocaleDateString(Lang.locale) + ' ' + t.toLocaleTimeString(Lang.locale, { hour: '2-digit', minute: '2-digit' }) + ' · ' +
-      tr(r.why === 'dan' ? 'ob zagonu' : r.why === 'uvoz' ? 'pred uvozom profila' : r.why === 'obnova' ? 'pred obnovo' : 'ročna') +
+      (r.why === 'dirka' ? (kopTrack(r.track) ? tr('po dirki {0}', kopTrack(r.track)) : tr('po dirki')) : tr(r.why === 'dan' ? 'ob zagonu' : r.why === 'uvoz' ? 'pred uvozom profila' : r.why === 'obnova' ? 'pred obnovo' : 'ročna')) +
       ' · ' + tr('dirke: {0}', s.races || 0) + (s.money != null ? ' · ' + eur(s.money) : '');
   }
   function kopList() {
     const box = $('kopije-list'); if (!box) return;
     Shramba.list().then((a) => {
       box.innerHTML = a.length ? a.map(r => '<div class="row kop-row"><span class="rlbl">' + esc(kopName(r)) + '</span><button class="btn mini" data-act="kop-back" data-kop="' + r.id + '">' + esc(tr('Obnovi')) + '</button></div>').join('')
-        : '<div class="set-note">' + esc(tr('Kopij še ni: prva nastane ob naslednjem zagonu igre.')) + '</div>';
+        : '<div class="set-note">' + esc(tr('Kopij še ni: prva nastane po naslednji končani dirki.')) + '</div>';
     }, () => { box.innerHTML = '<div class="set-note">' + esc(tr('Kopije v tem brskalniku niso na voljo.')) + '</div>'; });
+  }
+  // what a copy put back loses: the races and money since it (profil igralca d1: the dialog says it)
+  function kopLoss(r) {
+    let now = {}; try { now = Shramba.summary(Shramba.collect().data) || {}; } catch (_) { }
+    const s = r.sum || {}, dr = (now.races || 0) - (s.races || 0), dm = now.money != null && s.money != null ? now.money - s.money : 0, t = [];
+    if (dr > 0) t.push(tr('dirke: {0}', dr)); if (dm > 0) t.push(eur(dm));
+    return t.length ? '\n\n' + tr('Izgubi se: {0}.', t.join(', ')) : '';
   }
   // a copy put back (asked first; a copy of the saved game as it is made before, so this can be undone too), the game started again
   function kopBack(id) {
     Shramba.get(id).then((r) => {
       if (!r) { kopList(); return; }
-      if (!confirm(tr('Obnovim kopijo napredka: {0}? Trenutni napredek (nastavitve, rekordi, kariera, prvenstvo, dosežki) se zamenja, duhovi ostanejo.', kopName(r)))) return;
+      if (!confirm(tr('Obnovim kopijo napredka: {0}? Trenutni napredek (nastavitve, rekordi, kariera, prvenstvo, dosežki) se zamenja, duhovi ostanejo.', kopName(r)) + kopLoss(r))) return;
       Promise.race([Shramba.snap('obnova').catch(() => null), new Promise((res) => setTimeout(res, 3000))]).then(() => {
         if (!Shramba.apply(r)) { toast(tr('Kopije ni bilo mogoče obnoviti (premalo prostora).'), 3600); return; }
         stHold = true; location.reload();
@@ -2764,7 +2789,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       ' ' + esc(Lang.of(T.def, 'name')) + (race && race.opts && race.opts.winter ? (race.rain ? tr(' v snegu') : tr(' pozimi')) : race && race.rain ? tr(' v dežju') : '') + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? tr('{0} mesto na lestvici.', Lang.ord(r.rank)) : tr('izven prvih 10.')) +
       (medalSet(T.def) ? '<br>' + medalLine(T.def, r.time) : '') + (jumpLine() ? '<br>' + jumpLine() : '');
     if (!r.st) {   // the statistics: a time trial run, its medal (once per run)
-      r.st = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1; st.tt++; st.tracks[T.def.id] = (st.tracks[T.def.id] || 0) + 1;
+      r.st = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1; st.tt++; st.tracks[T.def.id] = (st.tracks[T.def.id] || 0) + 1; kopRace(T.def.id);
       if (k >= 0) st[['gold', 'silver', 'bronze'][k]]++;
       if (k === 0) { st.goldT[T.def.id] = 1; achGet('gold'); if (trackCards().every(d => !d.medals || st.goldT[d.id])) achGet('allGold'); }
       if (trackCards().every(droveCard)) achGet('allTracks');
@@ -3018,15 +3043,35 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // the results of the first race: what comes next
   function resPrvi() { const el = $('res-prvi'); if (el) el.classList.toggle('off', !(prvi && prvi.race && race && race.player && race.player.finished)); }
 
+  // Dosežki (profil igralca b3, a2): the km of the last 8 weeks as a graph (this week gold), the wins and the favourite track as two tiles, the
+  // rest of the numbers below; the achievements as a list with progress, the nearest to unlock on top, the unlocked at the end (newest first)
   function buildStatsScreen() {
     const hm = (t) => { const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60); return h ? tr('{0} h {1} min', h, m) : tr('{0} min', m); };
-    const rows = [['Prevoženo', kmTxt(st.km * 1000, 1) + ' km'], ['Čas vožnje', hm(st.time)], ['Dirke', st.races], ['Zmage', st.wins], ['Stopničke', st.podiums], ['Prva štartna mesta', st.poles], ['Najhitrejši krogi', st.fl],
+    const w0 = wkOf(Date.now()), W = [];
+    for (let i = 7; i >= 0; i--) { const d = new Date(w0); d.setDate(d.getDate() - 7 * i); W.push({ d, km: st.wk[wkKey(d)] || 0, now: i === 0 }); }
+    const wMax = Math.max(1, ...W.map(w => w.km)), wSum = W.reduce((x, w) => x + w.km, 0);
+    const graph = '<div class="st-card"><div class="st-card-h"><span>' + tr('Kilometri na teden') + '</span><b>' + kmTxt(wSum * 1000, 0) + ' km</b></div><div class="st-wk">' +
+      W.map(w => '<div class="st-wk-c' + (w.now ? ' now' : '') + '" title="' + kmTxt(w.km * 1000, 1) + ' km"><i style="height:' + Math.round(w.km / wMax * 100) + '%"></i><span>' +
+        w.d.toLocaleDateString(Lang.locale, { day: 'numeric', month: 'numeric' }) + '</span></div>').join('') + '</div><div class="st-wk-n">' + tr('zadnjih 8 tednov') + '</div></div>';
+    // the favourite track: the most races and time trials to the line, a track's variants (def.variantOf) counted on its card
+    let fav = null, favN = 0;
+    for (const d of trackCards()) { const n = [d].concat(Core.TRACKS.filter(x => x.variantOf === d.id)).reduce((x, v) => x + (st.tracks[v.id] || 0), 0); if (n > favN) { fav = d; favN = n; } }
+    const fn = fav ? String(Lang.of(fav, 'name')) : '', fc = fn.lastIndexOf(', ');
+    const tiles = '<div class="st-tiles"><div class="st-tile"><span>' + tr('Zmage') + '</span><b>' + st.wins + '</b><em>' + (st.races ? tr('{0} % dirk', Math.round(st.wins / st.races * 100)) : tr('še brez dirke')) + '</em></div>' +
+      '<div class="st-tile"><span>' + tr('Najljubša proga') + '</span>' + (fav ? '<b class="st-fav">' + esc(fc > 0 ? fn.slice(0, fc) : fn) + '</b><em>' + esc(fc > 0 ? fn.slice(fc + 2) + ' · ' : '') + tr('dirke: {0}', favN) + '</em>'
+        : '<b class="st-fav">–</b><em>' + tr('še nobene končane dirke') + '</em>') + '</div></div>';
+    const rows = [['Prevoženo', kmTxt(st.km * 1000, 1) + ' km'], ['Čas vožnje', hm(st.time)], ['Dirke', st.races], ['Stopničke', st.podiums], ['Prva štartna mesta', st.poles], ['Najhitrejši krogi', st.fl],
       ['Kronometri', st.tt], ['Medalje', MEDAL_ICON[0] + ' ' + st.gold + '  ' + MEDAL_ICON[1] + ' ' + st.silver + '  ' + MEDAL_ICON[2] + ' ' + st.bronze], ['Naslovi prvaka', st.titles], ['Pobegi policiji', st.escapes], ['Dirke s prijatelji', st.online],
       ['Najvišja hitrost', Math.round(st.vmax) + ' km/h'], ['Najdaljši skok', Math.round(st.jump) + ' m'], ['Najdaljše drsenje', Lang.dec(st.drift.toFixed(1)) + ' s'], ['Proge', trackCards().filter(droveCard).length + '/' + trackCards().length]];
-    const n = ACH.filter(a => st.ach[a[0]]).length;
-    $('stats-body').innerHTML = '<div class="st-grid">' + rows.map(([k, v]) => '<div class="st-cell"><b>' + v + '</b><span>' + tr(k) + '</span></div>').join('') + '</div>' +
-      '<p class="ltab-h">' + tr('Dosežki {0}/{1}', n, ACH.length) + '</p><div class="ach-list">' + ACH.map(a => { const d = st.ach[a[0]], p = !d && a[3] ? a[3]() : null;
-        return '<div class="ach' + (d ? ' got' : '') + '"><i>' + (d ? '\u{1F3C6}' : '\u{1F512}') + '</i><div><b>' + tr(a[1]) + '</b><span>' + tr(a[2]) + (d ? ' · ' + new Date(d).toLocaleDateString(Lang.locale) : p ? ' (' + (a[0].startsWith('km') ? kmTxt(p[0] * 1000, 1) : Math.floor(p[0])) + '/' + p[1] + ')' : '') + '</span></div></div>'; }).join('') + '</div>';
+    // the achievements: each with its progress (0..1); locked with progress first (the nearest on top), then locked without, then unlocked (newest first)
+    const A = ACH.map((a, i) => { const d = st.ach[a[0]], p = !d && a[3] ? a[3]() : null; return { a, i, d, p, f: d ? 1 : p && p[1] > 0 ? Math.max(0, Math.min(0.999, p[0] / p[1])) : 0 }; });
+    const rank = (x) => x.d ? 2 : x.f > 0 ? 0 : 1;
+    A.sort((x, y) => rank(x) - rank(y) || (x.d ? y.d - x.d : y.f - x.f) || x.i - y.i);
+    const n = A.filter(x => x.d).length;
+    $('stats-body').innerHTML = graph + tiles + '<div class="st-grid">' + rows.map(([k, v]) => '<div class="st-cell"><b>' + v + '</b><span>' + tr(k) + '</span></div>').join('') + '</div>' +
+      '<p class="ltab-h">' + tr('Dosežki {0}/{1}', n, ACH.length) + '</p><div class="ach-list">' + A.map(({ a, d, p, f }) =>
+        '<div class="ach' + (d ? ' got' : '') + '"><i>' + (d ? '\u{1F3C6}' : '\u{1F512}') + '</i><div><b>' + tr(a[1]) + '</b><span>' + tr(a[2]) + (d ? ' · ' + new Date(d).toLocaleDateString(Lang.locale) : p ? ' (' + (a[0].startsWith('km') ? kmTxt(p[0] * 1000, 1) : Math.floor(p[0])) + '/' + p[1] + ')' : '') + '</span>' +
+        (d ? '' : '<div class="ach-bar"><i style="width:' + Math.round(f * 100) + '%"></i></div>') + '</div></div>').join('') + '</div>';
     $('stats-body').scrollTop = 0;
   }
   /* ---------------- PIKES PEAK: race classes, the summit ceremony, TV splits ---------------- */
@@ -3377,7 +3422,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const P = race.player, pol = race.pol, esc = !pol.busted, chk = pol.arrestK === 'chk', t = P.finishTime || race.time, R0 = rec(track.def.id), L = polLen(), done = esc ? L : clamp(P.dist, 0, L);
     let newRec = false; if (esc && t > 0 && (!R0.bestRace || t < R0.bestRace)) { R0.bestRace = t; newRec = true; }
     if (esc) R0.escapes = (R0.escapes || 0) + 1; else R0.busts = (R0.busts || 0) + 1; saveRecords();
-    if (!stRun.done) { stRun.done = true; st.races++; st.tracks[track.def.id] = (st.tracks[track.def.id] || 0) + 1; if (esc) { st.escapes++; achGet('escape'); } if (trackCards().every(droveCard)) achGet('allTracks'); stSave(); }
+    if (!stRun.done) { stRun.done = true; st.races++; st.tracks[track.def.id] = (st.tracks[track.def.id] || 0) + 1; kopRace(track.def.id); if (esc) { st.escapes++; achGet('escape'); } if (trackCards().every(droveCard)) achGet('allTracks'); stSave(); }
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-restart').textContent = tr('Ponovi beg');
     $('res-pos').textContent = esc ? '✓' : '✕'; $('res-title').textContent = tr(esc ? (pol.goal ? 'Misija opravljena!' : 'Pobegnil si!') : chk ? 'Aretiran na kontroli' : 'Ulovljen!');
     $('res-sub').textContent = esc ? (pol.goal ? tr('Skril si se v garažo na vrhu Vršiča v {0}', fmt(t, true)) : track.def.escTo ? tr('{0} v {1}', Lang.of(track.def, 'escTo'), fmt(t, true)) : tr('Čez prelaz v {0}', fmt(t, true))) + (newRec ? tr(' (najhitrejši pobeg).') : '.')
@@ -7205,7 +7250,6 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       if (LPX) { try { lpMine(); } catch (_) { } } lpHash(); addEventListener('hashchange', () => { lpHash(); });   // (the friends' leaderboard: the player's times seen now get a day from here on; a friend's link just opened, or opened later in this tab)
       quickGo();   // (opened with a quick entry's address: straight on a race)
       garageBack();   // (back from the garage: its car screen)
-      setTimeout(() => { Shramba.daily().catch(() => { }); }, 5000);   // (the day's copy of the progress, once the title stands: js/shramba.js)
       if (prviCan()) { Shramba.keep('tdgp-prvi', '0'); prviShow(); }   // (Prvič na cesti: a new player's first start; shown again at the next start until skipped or the first race is driven)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
