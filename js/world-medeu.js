@@ -92,6 +92,26 @@
   // the monuments (OSM nodes): a steel sculpture of a climber on a stone plinth, a bronze bear with her cub, the memorial stone of the mudflow
   const MONU = [[68.3, 149.3, 'climber'], [91.2, 89.4, 'bears'], [771.6, 2064.2, 'stone']];
   const FLAG = [33.8, 249.4];   // (the flagpole by the west stand: 20 m, the national flag, a plain sky blue with the sun in it)
+  /* the great staircase up the dam's face, its chain from the foot of the dam to the crest (OSM highway=steps, incline up): [the map's
+     step_count, x, z, ...]; 0 is the landing between the pavilions (a footway); 103 + 49 + 206 + 96 + 149 + 5 + 46 + 183 = 837 steps */
+  const STAIR = [[103, 366.4, 682.7, 367.2, 708.5, 367.5, 718.4, 367.7, 730.9, 367.7, 733.6], [49, 367.7, 733.6, 367.9, 738.1, 368.4, 750.7, 368.7, 760.6],
+    [206, 368.7, 760.6, 369.3, 779, 369.7, 795.2, 371, 839.9], [96, 371, 839.9, 371.7, 863, 372.3, 881.9], [149, 372.3, 881.9, 373.2, 913, 373.6, 928.4, 373.9, 936.8],
+    [0, 373.9, 936.8, 374.3, 950.4], [5, 374.3, 950.4, 374.3, 951.6], [46, 374.3, 951.6, 374.5, 958.9, 374.7, 965.9, 374.9, 969.9], [183, 374.9, 969.9, 375.5, 992.7, 376.8, 1037.6]];
+  const STAIR_W = 3.5;   // (the map gives no width: the rest spots' footways start ~4.5 m from its line, so ~3.5 m (a guess, docs/proge/medeu.md))
+  // its rest spots: a short footway off the stair [from x, z, to x, z, 1 a bench there (amenity=bench) or 0 a platform (leisure=yes)]; the
+  // two highest (by the road) have their footways from js/world-medeu-obcestje.js
+  const REST = [[367.2, 708.5, 373.2, 709, 0], [367.5, 718.4, 363, 718.2, 1], [367.7, 730.9, 374.4, 730.6, 1], [368.4, 750.7, 362.1, 750.9, 1], [369.3, 779, 373.6, 778.6, 1],
+    [369.7, 795.2, 363, 796.5, 0], [371.7, 863, 366.8, 863.3, 0], [373.2, 913, 376.8, 913, 0], [373.6, 928.4, 368, 928.8, 0]];
+  const LAMP = [[367.4, 767.3]];   // (highway=street_lamp by the stair)
+  // the terraces at the dam's foot: the retaining walls (barrier=retaining_wall; the low side on the right of the way, OSM's rule) and the two
+  // asphalt footways along them (width 4 m, as the map has it); x, z, ...
+  const RWALL = [[363, 732.7, 327.9, 733.3, 274.1, 734.2], [438.2, 726.5, 427.6, 729, 371.4, 732.2], [362.6, 755.9, 280.1, 757.5],
+    [529.9, 692.6, 506, 719.1, 490.6, 737, 482, 744.5, 469.2, 750.6, 464.1, 753.1, 452.3, 754.9, 371.4, 755.7], [367.4, 831.3, 250.9, 835.9, 242.6, 842.3], [422.3, 828.4, 372.8, 831]];
+  const BERM = [[278.3, 740.4, 367.9, 738.1, 435.3, 734.1, 442.6, 731.8, 447.6, 728.5, 449.8, 725.7, 451.2, 723.9, 458.8, 710.1, 460.1, 705.5, 459.8, 700.2, 457.9, 696.4, 457.2, 694.9, 451.9, 690.3, 443.9, 686.7, 433.3, 682.7],
+    [283.2, 762.5, 368.7, 760.6, 459.8, 757.9, 469.7, 756.2, 478.3, 752.6, 484.9, 748.6, 492.5, 743.4, 536.9, 696]];
+  // (a polyline [x, z, ...] cut into pieces of at most m metres: [x0, z0, x1, z1, length, angle] each)
+  const pieces = (a, m) => { const r = []; for (let i = 0; i + 3 < a.length; i += 2) { const x0 = a[i], z0 = a[i + 1], dx = a[i + 2] - x0, dz = a[i + 3] - z0, L = Math.hypot(dx, dz), n = Math.max(1, Math.ceil(L / m));
+    for (let k = 0; k < n; k++) r.push([x0 + dx * k / n, z0 + dz * k / n, x0 + dx * (k + 1) / n, z0 + dz * (k + 1) / n, L / n, Math.atan2(dz, dx)]); } return r; };
 
   const hex = (h, k) => { const v = parseInt(h.slice(1), 16), f = (k || 1) / 255; return [((v >> 16) & 255) * f, ((v >> 8) & 255) * f, (v & 255) * f]; };
   const ringOf = (a) => { const r = []; for (let i = 0; i + 1 < a.length; i += 2) r.push([a[i], a[i + 1]]); return r; };
@@ -149,6 +169,11 @@
     for (const [x0, z0, what] of MONU) { let x = x0, z = z0; const n = vrNear(x, z);
       if (n.i >= 0 && n.dd < 2.5) { const i = n.i, sd = n.lat >= 0 ? 1 : -1, to = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 3.5); x += T.nx[i] * (to - n.lat); z += T.nz[i] * (to - n.lat); }
       mon.push([x, z, what]); exclPush(x, z, 4); }
+    // the staircase, its rest spots, the terraces' walls and footways: no trees, rocks or people on them
+    for (const f of STAIR) for (const [x, z] of pieces(f.slice(1), 4)) exclPush(x, z, STAIR_W / 2 + 1.5);
+    for (const r of REST) exclPush(r[2], r[3], 3);
+    for (const w of RWALL) for (const [x, z] of pieces(w, 4)) exclPush(x, z, 2);
+    for (const b of BERM) for (const [x, z] of pieces(b, 4)) exclPush(x, z, 3.2);
   };
 
   /* ---- the landmarks, after the rest of the pass is built ---- */
@@ -180,6 +205,62 @@
         const hx = 2.5, A = [x + fx * 0.78 - fz * hx, y + 33.7, z + fz * 0.78 + fx * hx], B = [x + fx * 0.78 + fz * hx, y + 33.7, z + fz * 0.78 - fx * hx];
         g.quadO(A, B, [B[0], y + 36.1, B[2]], [A[0], y + 36.1, A[2]], lamp, [x, y + 35, z]);   // (the lamps' face, towards the ice)
         st.masts++;
+      }
+      // the rink's details (shapes only, no letters): the boards round the ice, the lanes painted on the 400 m oval, the railing round the
+      // deck where it looks over the square, the rows of seats on the stands' tops (docs/proge/medeu.md, Približki)
+      {
+        const off = (R, d) => {   // (the ring R moved d m inwards (d < 0: outwards), its corners mitred)
+          const sd = area(R) > 0 ? 1 : -1, n = R.length, nm = [];
+          for (let i = 0; i < n; i++) { const [ax, az] = R[i], [bx, bz] = R[(i + 1) % n], l = Math.hypot(bx - ax, bz - az) || 1; nm.push([-(bz - az) / l * sd, (bx - ax) / l * sd]); }
+          return R.map(([x, z], i) => { const a = nm[(i + n - 1) % n], b = nm[i], ml = Math.hypot(a[0] + b[0], a[1] + b[1]) || 1, mx = (a[0] + b[0]) / ml, mz = (a[1] + b[1]) / ml, k = d / Math.max(0.5, mx * b[0] + mz * b[1]); return [x + mx * k, z + mz * k]; });
+        };
+        const yI = yB + 12, oval = RINK.find(p => RINK_COL[p[3]] === '#89c9f0'), HOLE = ringOf(oval[5][0]), stands = RINK.filter(p => (p[0] === 18 || p[0] === 19) && !p[1]).map(p => ({ h: p[0], R: ringOf(p[4]) }));
+        const inStand = (x, z) => stands.some(q => inPoly(q.R, x, z));
+        // the boards: 1.1 m, white, a blue band along the top; round the outside of the oval and round the infield (both faces)
+        const white = [0.93, 0.94, 0.95], band = [0.16, 0.36, 0.7];
+        st.boards = 0;
+        for (const R of [ICE, HOLE]) for (let i = 0; i < R.length; i++) {
+          const [ax, az] = R[i], [bx, bz] = R[(i + 1) % R.length], l = Math.hypot(bx - ax, bz - az); if (l < 0.05) continue;
+          const g = scen.get((ax + bx) / 2, (az + bz) / 2), nx = -(bz - az) / l, nz = (bx - ax) / l;
+          for (const e of [-1, 1]) { const ins = [(ax + bx) / 2 + nx * e, yI + 0.5, (az + bz) / 2 + nz * e];
+            g.quadO([ax, yI, az], [bx, yI, bz], [bx, yI + 0.95, bz], [ax, yI + 0.95, az], white, ins);
+            g.quadO([ax, yI + 0.95, az], [bx, yI + 0.95, bz], [bx, yI + 1.1, bz], [ax, yI + 1.1, az], band, ins); }
+          st.boards++;
+        }
+        // the lanes (the map has none; a 400 m oval's: two lanes of 4 m from the outer boards, the warm-up lane inside them): a red line
+        // between the two lanes, a blue one along the inner lane's edge, 0.25 m wide, on the ice
+        st.lanes = 0;
+        for (const [d, col] of [[4, [0.78, 0.2, 0.2]], [8, [0.2, 0.36, 0.72]]]) {
+          const A = off(ICE, d - 0.125), B = off(ICE, d + 0.125);
+          for (let i = 0; i < A.length; i++) { const j = (i + 1) % A.length, g = scen.get(A[i][0], A[i][1]), y = yI + 0.02;
+            g.quadUp([A[i][0], y, A[i][1]], [A[j][0], y, A[j][1]], [B[j][0], y, B[j][1]], [B[i][0], y, B[i][1]], [col, col, col, col]); st.lanes++; }
+        }
+        // the deck's railing, where the deck's edge looks over the square (not where a stand rises behind it): steel posts every ~4 m, two rails
+        const steelR = [0.62, 0.64, 0.66], DR = off(D, 0.3);
+        st.rails = 0;
+        for (let i = 0; i < DR.length; i++) {
+          const [ax, az] = DR[i], [bx, bz] = DR[(i + 1) % DR.length], l = Math.hypot(bx - ax, bz - az); if (l < 0.5) continue;
+          const mx = (ax + bx) / 2, mz = (az + bz) / 2, ox = mx + (D[i][0] - DR[i][0]) * 5, oz = mz + (D[i][1] - DR[i][1]) * 5;   // (1.5 m outside the deck's edge)
+          if (inStand(ox, oz) || inPoly(ICE, mx, mz)) continue;
+          const g = scen.get(mx, mz), a = Math.atan2(bz - az, bx - ax), np = Math.max(1, Math.round(l / 4));
+          for (let q = 0; q <= np; q++) { const t = q / np; box(g, lerp(ax, bx, t), yI, lerp(az, bz, t), 0.07, 1.1, 0.07, a, steelR); }
+          for (const h of [0.5, 1.05]) { const ins = [mx - (ox - mx), yI, mz - (oz - mz)];
+            g.quadO([ax, yI + h, az], [bx, yI + h, bz], [bx, yI + h + 0.06, bz], [ax, yI + h + 0.06, az], steelR, ins);
+            g.quadO([ax, yI + h, az], [bx, yI + h, bz], [bx, yI + h + 0.06, bz], [ax, yI + h + 0.06, az], steelR, [ox, yI, oz]); }
+          st.rails++;
+        }
+        // the rows of seats on the stands' tops: rings round the oval every 0.9 m, a darker stripe where one runs over a stand
+        const seat = [0.42, 0.44, 0.47];
+        st.rows = 0;
+        for (let d = -2; d > -48; d -= 0.9) {
+          const A = off(ICE, d), B = off(ICE, d + 0.35);
+          for (let i = 0; i < A.length; i++) {
+            const j = (i + 1) % A.length, mx = (A[i][0] + A[j][0]) / 2, mz = (A[i][1] + A[j][1]) / 2;
+            const p = stands.find(q => inPoly(q.R, mx, mz)); if (!p || !inPoly(p.R, A[i][0], A[i][1]) || !inPoly(p.R, A[j][0], A[j][1])) continue;
+            const y = yB + p.h + 0.03, g = scen.get(mx, mz);
+            g.quadUp([A[i][0], y, A[i][1]], [A[j][0], y, A[j][1]], [B[j][0], y, B[j][1]], [B[i][0], y, B[i][1]], [seat, seat, seat, seat]); st.rows++;
+          }
+        }
       }
       // the flagpole by the west stand: a white pole, the flag sky blue with a golden disc (a flag, not anyone's badge)
       { const [x, z] = FLAG, y = G(x, z), g = scen.get(x, z), sky = [0.0, 0.66, 0.78], sun = [0.98, 0.8, 0.12];
@@ -270,6 +351,60 @@
             st.cabins++;
           }
         }
+      }
+    }
+    // the great staircase up the dam's face: every flight with as many steps as the map counts on it, each one a concrete slab the flight's
+    // length over that count deep, STAIR_W wide, its tread on the ground at its upper edge (none where the road runs: its crossing at the crest)
+    {
+      const con = [0.6, 0.59, 0.56], tread = [0.66, 0.65, 0.62], walk = [0.5, 0.49, 0.47];
+      const along = (a) => { const seg = []; let L = 0; for (let i = 0; i + 3 < a.length; i += 2) { const l = Math.hypot(a[i + 2] - a[i], a[i + 3] - a[i + 1]); seg.push([a[i], a[i + 1], a[i + 2], a[i + 3], L, l]); L += l; }
+        return { L, at: (s) => { const q = seg.find(e => s <= e[4] + e[5]) || seg[seg.length - 1], t = clamp((s - q[4]) / (q[5] || 1), 0, 1); return [lerp(q[0], q[2], t), lerp(q[1], q[3], t), (q[2] - q[0]) / (q[5] || 1), (q[3] - q[1]) / (q[5] || 1)]; } }; };
+      const onRoad = (x, z, m) => { const v = vrNear(x, z); return v.i >= 0 && v.dd < m; };
+      st.steps = 0; st.landings = 0;
+      for (const f of STAIR) {
+        const n = f[0], pl = along(f.slice(1));
+        if (n > 0) for (let k = 0; k < n; k++) {
+          const r = pl.L / n, [x, z, dx, dz] = pl.at((k + 0.5) * r), [ux, uz] = pl.at((k + 1) * r);
+          if (onRoad(x, z, 0.8)) continue;
+          const y = G(ux, uz) + 0.04; box(scen.get(x, z), x, y - 0.7, z, r + 0.02, 0.7, STAIR_W, Math.atan2(dz, dx), vary(con, RL, 0.02), tread, true); st.steps++;
+        }
+        // the landing at the flight's foot (where two flights meet, or a rest spot's footway leaves it): a level slab a little wider
+        const [x, z, dx, dz] = pl.at(0); if (!onRoad(x, z, 1.5)) { box(scen.get(x, z), x, G(x, z) - 0.5, z, 1.4, 0.56, STAIR_W + 0.6, Math.atan2(dz, dx), con, walk, true); st.landings++; }
+      }
+      // the rest spots: a short concrete footway out of the stair to a paved square; a bench (a plain seat with a backrest, facing the stair)
+      // where the map has one
+      st.rests = 0;
+      for (const [sx, sz, ex, ez, bench] of REST) {
+        const L = Math.hypot(ex - sx, ez - sz), ux = (ex - sx) / L, uz = (ez - sz) / L, a = Math.atan2(uz, ux), g = scen.get(ex, ez), y = G(ex, ez);
+        if (L > STAIR_W / 2 + 0.5) { const x0 = sx + ux * STAIR_W / 2, z0 = sz + uz * STAIR_W / 2, x1 = ex - ux * 1.2, z1 = ez - uz * 1.2, w = 0.8, nx = -uz * w, nz = ux * w;
+          g.quadO([x0 + nx, G(x0 + nx, z0 + nz) + 0.06, z0 + nz], [x1 + nx, G(x1 + nx, z1 + nz) + 0.06, z1 + nz], [x1 - nx, G(x1 - nx, z1 - nz) + 0.06, z1 - nz], [x0 - nx, G(x0 - nx, z0 - nz) + 0.06, z0 - nz], walk, [(x0 + x1) / 2, y - 2, (z0 + z1) / 2]); }
+        box(g, ex, y - 0.4, ez, 2.6, 0.47, 2.6, a, con, walk, true);
+        if (bench) {   // (its legs, its seat, its backrest on the side away from the stair)
+          const bx = ex + ux * 0.7, bz = ez + uz * 0.7, wood = [0.48, 0.34, 0.2], iron = [0.3, 0.3, 0.31], ba = a + Math.PI / 2;
+          for (const e of [-0.7, 0.7]) box(g, bx - uz * e, y + 0.06, bz + ux * e, 0.4, 0.38, 0.06, a, iron);
+          box(g, bx, y + 0.44, bz, 1.7, 0.06, 0.42, ba, wood); box(g, bx + ux * 0.22, y + 0.5, bz + uz * 0.22, 1.7, 0.42, 0.05, ba, wood);
+        }
+        st.rests++;
+      }
+      // the street lamp by the stair: a slim grey pole, its lantern
+      for (const [x, z] of LAMP) { const g = scen.get(x, z), y = G(x, z); ouRod(g, [x, y, z], [x, y + 5.5, z], 0.07, [0.42, 0.43, 0.45], 5); box(g, x, y + 5.4, z, 0.5, 0.25, 0.3, 0, [0.42, 0.43, 0.45], [0.9, 0.88, 0.78]); }
+      // the terraces at the dam's foot: the retaining walls of concrete, 0.5 m thick, from below the low side's ground to above the high side's
+      // (the map gives no heights: at least 1.4 m over the low side, docs/proge/medeu.md), cut in pieces of up to 4 m that follow the ground
+      st.walls = 0;
+      for (const w of RWALL) for (const [x0, z0, x1, z1, L, a] of pieces(w, 4)) {
+        const x = (x0 + x1) / 2, z = (z0 + z1) / 2, nx = -(z1 - z0) / L, nz = (x1 - x0) / L;
+        if (onRoad(x, z, 0.5)) continue;
+        const lo = G(x + nx * 1.5, z + nz * 1.5), hi = G(x - nx * 1.5, z - nz * 1.5), y0 = Math.min(lo, hi) - 0.3, y1 = Math.max(hi + 0.4, lo + 1.4);
+        box(scen.get(x, z), x, y0, z, L + 0.06, y1 - y0, 0.5, a, vary(con, RL, 0.03), [0.64, 0.63, 0.6], true); st.walls++;
+      }
+      // the two asphalt footways along the terraces (4 m, as the map has them): a ribbon on the ground
+      st.berms = 0;
+      const asph = [0.33, 0.33, 0.34];
+      for (const b of BERM) for (const [x0, z0, x1, z1, L] of pieces(b, 3)) {
+        const nx = -(z1 - z0) / L * 2, nz = (x1 - x0) / L * 2, h = (x, z) => G(x, z) + 0.08;
+        if (onRoad((x0 + x1) / 2, (z0 + z1) / 2, 0.5)) continue;
+        scen.get((x0 + x1) / 2, (z0 + z1) / 2).quadO([x0 + nx, h(x0 + nx, z0 + nz), z0 + nz], [x1 + nx, h(x1 + nx, z1 + nz), z1 + nz], [x1 - nx, h(x1 - nx, z1 - nz), z1 - nz], [x0 - nx, h(x0 - nx, z0 - nz), z0 - nz],
+          asph, [(x0 + x1) / 2, G(x0, z0) - 2, (z0 + z1) / 2]); st.berms++;
       }
     }
     out.medeu = st;   // (what was built: the tests)

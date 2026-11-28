@@ -210,11 +210,11 @@
   "jsMs": 1.14
  },
  "medeu": {
-  "calls": 181,
-  "maxCalls": 200,
-  "kverts": 492,
+  "calls": 182,
+  "maxCalls": 204,
+  "kverts": 500,
   "maxKverts": 581,
-  "jsMs": 1.11
+  "jsMs": 1.4
  },
  "ella": {
   "calls": 187,
