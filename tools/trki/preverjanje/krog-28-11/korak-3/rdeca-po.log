@@ -1,0 +1,18 @@
+cv 1 bathurst, trenutki 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110
+   veja rdeca v 15 s: 17 od 17 (sploh 17), povp. 6.6 s, najv. 8.1 s | ustavitev povp. 3.4 s, najv. 5.3 s, neustavljenih 0, prestavljenih 0 | pot povp. 63 m, najv. 106 m | koraki dotika med razbitinama 0, razbitina-drugi 251
+   brez rdeca v 15 s: 17 od 17 (sploh 17), povp. 6.6 s, najv. 8.1 s | ustavitev povp. 3.4 s, najv. 5.3 s, neustavljenih 0, prestavljenih 0 | pot povp. 63 m, najv. 106 m | koraki dotika med razbitinama 0, razbitina-drugi 237
+   t=40:
+      veja rdeca 8.1 s | vortex ustavi 5.3 s, 72 m; strega ustavi 4.3 s, 81 m | dotiki 0/46
+      brez rdeca 8.1 s | vortex ustavi 5.3 s, 72 m; strega ustavi 4.2 s, 81 m | dotiki 0/32
+cv 6 bathurst, trenutki 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110
+   veja rdeca v 15 s: 17 od 17 (sploh 17), povp. 7.6 s, najv. 12.4 s | ustavitev povp. 4.5 s, najv. 15.7 s, neustavljenih 0, prestavljenih 2 | pot povp. 72 m, najv. 122 m | koraki dotika med razbitinama 2, razbitina-drugi 304
+   brez rdeca v 15 s: 16 od 17 (sploh 16), povp. 7.4 s, najv. 12.4 s | ustavitev povp. 4.5 s, najv. 24.0 s, neustavljenih 0, prestavljenih 0 | pot povp. 74 m, najv. 169 m | koraki dotika med razbitinama 1417, razbitina-drugi 304
+   t=40:
+      veja rdeca 8.0 s | vortex ustavi 4.8 s, 69 m; strega ustavi 5.1 s, 103 m | dotiki 0/90
+      brez rdeca 8.0 s | vortex ustavi 4.8 s, 69 m; strega ustavi 5.0 s, 104 m | dotiki 1/90
+   t=50:
+      veja rdeca 7.3 s | strega ustavi 2.7 s, 48 m; kaze ustavi 12.3 s, 75 m (prestavljen) | dotiki 0/55
+      brez rdeca 7.4 s | strega ustavi 2.7 s, 48 m; kaze ustavi 6.5 s, 94 m | dotiki 0/55
+   t=90:
+      veja rdeca 10.5 s | vortex ustavi 4.6 s, 65 m; strega ustavi 15.7 s, 99 m (prestavljen) | dotiki 0/0
+      brez rdeca - s | vortex ustavi 4.6 s, 65 m; strega ustavi 24.0 s, 169 m | dotiki 1414/0

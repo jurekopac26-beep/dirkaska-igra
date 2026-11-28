@@ -1,0 +1,45 @@
+cv 1 kotor k=240 avto 3
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 301 | skoda izl. 0.000 drugi 0.082 | ustavi 2.9 s pot 22 m, 1.7 m od roba | zavora 0,8: 10
+   brez dotiki izl. 0 (najv. 0.0 m/s) drugi 212 | skoda izl. 0.000 drugi 0.175 | ustavi 2.9 s pot 22 m, 1.7 m od roba | zavora 0,8: 0
+cv 1 kotor k=1500 avto 7
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 323 | skoda izl. 0.000 drugi 0.928 | ustavi 2.9 s pot 20 m, 2.6 m od roba | zavora 0,8: 26
+   brez dotiki izl. 0 (najv. 0.0 m/s) drugi 203 | skoda izl. 0.000 drugi 0.136 | ustavi 2.8 s pot 22 m, 2.5 m od roba | zavora 0,8: 0
+cv 1 spa k=1500 avto 7
+   veja dotiki izl. 30 (najv. 5.5 m/s) drugi 299 | skoda izl. 0.000 drugi 0.093 | ustavi 3.6 s pot 30 m, 2.9 m od roba | zavora 0,8: 21
+   brez dotiki izl. 2 (najv. 4.6 m/s) drugi 483 | skoda izl. 0.000 drugi 0.000 | ustavi 3.8 s pot 32 m, 2.6 m od roba | zavora 0,8: 0
+cv 1 kagerod k=1500 avto 7
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 61 | skoda izl. 0.000 drugi 0.016 | ustavi 2.6 s pot 34 m, 2.4 m od roba | zavora 0,8: 27
+   brez dotiki izl. 1 (najv. 2.2 m/s) drugi 62 | skoda izl. 0.000 drugi 0.000 | ustavi 2.8 s pot 36 m, 2.4 m od roba | zavora 0,8: 0
+cv 1 toskana k=1500 avto 7
+   veja dotiki izl. 54 (najv. 8.1 m/s) drugi 171 | skoda izl. 0.250 drugi 0.383 | ustavi 3.1 s pot 30 m, 3.3 m od roba | zavora 0,8: 90
+   brez dotiki izl. 13 (najv. 8.5 m/s) drugi 257 | skoda izl. 0.301 drugi 0.395 | ustavi 3.3 s pot 36 m, 3.1 m od roba | zavora 0,8: 0
+cv 6 kotor k=240 avto 3
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 71 | skoda izl. 0.000 drugi 0.119 | ustavi 2.9 s pot 22 m, 1.7 m od roba | zavora 0,8: 10
+   brez dotiki izl. 0 (najv. 0.0 m/s) drugi 125 | skoda izl. 0.000 drugi 0.157 | ustavi 2.9 s pot 22 m, 1.7 m od roba | zavora 0,8: 0
+cv 6 kotor k=600 avto 7
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 115 | skoda izl. 0.000 drugi 0.847 | ustavi 2.9 s pot 17 m, 1.7 m od roba | zavora 0,8: 92
+   brez dotiki izl. 7 (najv. 11.6 m/s) drugi 612 | skoda izl. 0.179 drugi 0.593 | ustavi 2.7 s pot 20 m, 1.7 m od roba | zavora 0,8: 0
+cv 6 kotor k=1500 avto 3
+   veja dotiki izl. 29 (najv. 2.1 m/s) drugi 143 | skoda izl. 0.000 drugi 0.150 | ustavi 2.8 s pot 21 m, 2.7 m od roba | zavora 0,8: 22
+   brez dotiki izl. 24 (najv. 2.6 m/s) drugi 245 | skoda izl. 0.000 drugi 0.165 | ustavi 2.8 s pot 22 m, 2.6 m od roba | zavora 0,8: 0
+cv 6 spa k=1500 avto 7
+   veja dotiki izl. 4 (najv. 5.3 m/s) drugi 16 | skoda izl. 0.076 drugi 0.094 | ustavi 2.8 s pot 25 m, 2.5 m od roba | zavora 0,8: 22
+   brez dotiki izl. 2 (najv. 4.6 m/s) drugi 176 | skoda izl. 0.000 drugi 0.042 | ustavi 3.7 s pot 32 m, 2.6 m od roba | zavora 0,8: 0
+cv 6 kagerod k=600 avto 3
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 413 | skoda izl. 0.000 drugi 0.389 | ustavi 2.9 s pot 38 m, 1.1 m od roba | zavora 0,8: 4
+   brez dotiki izl. 0 (najv. 0.0 m/s) drugi 290 | skoda izl. 0.000 drugi 0.481 | ustavi 2.9 s pot 38 m, 1.1 m od roba | zavora 0,8: 0
+cv 6 kagerod k=600 avto 7
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 130 | skoda izl. 0.000 drugi 0.156 | ustavi 3.4 s pot 60 m, 1.4 m od roba | zavora 0,8: 31
+   brez dotiki izl. 0 (najv. 0.0 m/s) drugi 18 | skoda izl. 0.000 drugi 0.093 | ustavi 3.5 s pot 65 m, 1.1 m od roba | zavora 0,8: 0
+cv 6 kagerod k=1500 avto 3
+   veja dotiki izl. 0 (najv. 0.0 m/s) drugi 51 | skoda izl. 0.000 drugi 0.000 | ustavi 2.9 s pot 41 m, 2.0 m od roba | zavora 0,8: 48
+   brez dotiki izl. 0 (najv. 0.0 m/s) drugi 67 | skoda izl. 0.000 drugi 0.286 | ustavi 3.1 s pot 48 m, 1.9 m od roba | zavora 0,8: 0
+cv 6 toskana k=1500 avto 7
+   veja dotiki izl. 18 (najv. 7.5 m/s) drugi 218 | skoda izl. 0.184 drugi 0.189 | ustavi 4.3 s pot 47 m, 3.5 m od roba | zavora 0,8: 63
+   brez dotiki izl. 18 (najv. 7.1 m/s) drugi 114 | skoda izl. 0.163 drugi 0.218 | ustavi 5.3 s pot 56 m, 2.7 m od roba | zavora 0,8: 0
+SKUPAJ cv 1: primerov 42, vsi enaki 37
+   veja enakih veji 42, primerov z dotikom izl. 8, korakov dotika izl. 149, drugih 7023, skoda izl. 0.84 (najv. 0.250), skoda drugih 6.72, ustavljen: 42 (povp. 3.2 s), pot povp. 42 m
+   brez enakih veji 37, primerov z dotikom izl. 9, korakov dotika izl. 81, drugih 7085, skoda izl. 0.89 (najv. 0.301), skoda drugih 5.92, ustavljen: 42 (povp. 3.2 s), pot povp. 43 m
+SKUPAJ cv 6: primerov 42, vsi enaki 34
+   veja enakih veji 42, primerov z dotikom izl. 8, korakov dotika izl. 124, drugih 5257, skoda izl. 0.62 (najv. 0.233), skoda drugih 7.96, ustavljen: 42 (povp. 3.2 s), pot povp. 41 m
+   brez enakih veji 34, primerov z dotikom izl. 9, korakov dotika izl. 124, drugih 5747, skoda izl. 0.71 (najv. 0.233), skoda drugih 8.05, ustavljen: 42 (povp. 3.3 s), pot povp. 42 m

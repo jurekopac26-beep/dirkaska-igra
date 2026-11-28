@@ -1,0 +1,178 @@
+proga w=6.4 dolzina=1449.7074488700307
+odstop k=1500 7:pico s=377.8 d=-1.5 smer=-1° vl=23.1 v=23.2 thr=0.00 brk=0.48 dmg=0.00 DNF stran=-1
+     blizu: 0:vortex s=428.8 d=1.6 smer=18° vl=21.6 v=21.5 thr=0.00 brk=0.60 dmg=0.00
+     blizu: 1:kaze s=403.6 d=-1.3 smer=-19° vl=16.6 v=17.7 thr=0.80 brk=0.00 dmg=0.00
+     blizu: 2:strega s=403.3 d=-5.2 smer=-16° vl=15.5 v=16.7 thr=0.80 brk=0.00 dmg=0.00
+     blizu: 3:pico s=394.5 d=2.2 smer=-27° vl=14.7 v=15.2 thr=0.00 brk=0.17 dmg=0.00
+     blizu: 4:vortex s=396.6 d=-4.9 smer=-26° vl=14.4 v=15.2 thr=0.45 brk=0.00 dmg=0.00
+     blizu: 5:kaze s=383.3 d=-3.3 smer=0° vl=20.9 v=20.9 thr=0.00 brk=0.65 dmg=0.00
+     blizu: 6:strega s=375.5 d=-4.9 smer=-9° vl=23.7 v=24.0 thr=0.00 brk=0.40 dmg=0.00
+     blizu: 8:vortex s=371.6 d=1.4 smer=-9° vl=24.5 v=24.9 thr=0.00 brk=0.23 dmg=0.00
+     blizu: 9:kaze s=355.5 d=2.2 smer=-13° vl=22.9 v=24.5 thr=0.80 brk=0.00 dmg=0.01
+     blizu: 10:strega s=357.6 d=-5.3 smer=-10° vl=24.1 v=24.8 thr=0.80 brk=0.00 dmg=0.00
+     blizu: 11:rally(igr) s=370.8 d=-2.4 smer=-20° vl=25.6 v=26.9 thr=0.42 brk=0.00 dmg=0.01
+     blizu: 12:pico s=345.9 d=1.7 smer=-5° vl=21.8 v=21.9 thr=0.00 brk=0.15 dmg=0.00
+t=0.00 7:pico s=378.0 d=-1.5 smer=-1° vl=23.1 v=23.1 thr=0.00 brk=0.80 dmg=0.00 DNF | ZAPRT za 5:kaze reza 1.3 m, zapiranje 2.3 m/s
+        5:kaze s=383.4 d=-3.3 smer=0° vl=20.8 v=20.8 thr=0.00 brk=0.63 dmg=0.00 razdalja 5.7
+        6:strega s=375.7 d=-4.9 smer=-9° vl=23.6 v=24.0 thr=0.00 brk=0.39 dmg=0.00 razdalja 4.1
+        8:vortex s=371.8 d=1.4 smer=-9° vl=24.5 v=24.8 thr=0.00 brk=0.40 dmg=0.00 razdalja 6.9
+        11:rally(igr) s=371.0 d=-2.4 smer=-20° vl=25.6 v=26.9 thr=0.42 brk=0.00 dmg=0.01 razdalja 6.8
+t=0.50 7:pico s=387.6 d=-1.5 smer=-44° vl=13.0 v=14.9 thr=0.00 brk=0.80 dmg=0.00 DNF | ZAPRT za 5:kaze reza 0.3 m, zapiranje 0.6 m/s
+        5:kaze s=392.9 d=-2.8 smer=-16° vl=15.3 v=16.0 thr=0.00 brk=0.33 dmg=0.00 razdalja 5.2
+        6:strega s=387.1 d=-4.9 smer=-8° vl=19.7 v=19.7 thr=0.00 brk=0.77 dmg=0.01 razdalja 3.5
+        8:vortex s=382.9 d=1.9 smer=-2° vl=20.3 v=20.3 thr=0.00 brk=0.63 dmg=0.00 razdalja 5.8
+        11:rally(igr) s=383.3 d=-3.1 smer=-18° vl=20.5 v=20.9 thr=0.00 brk=0.87 dmg=0.02 razdalja 4.6
+t=0.66 7:pico s=389.7 d=-2.2 smer=-52° vl=11.3 v=14.0 thr=0.00 brk=0.12 dmg=0.07 DNF | DOTIK 6:strega rel 7.3
+        5:kaze s=395.6 d=-2.7 smer=-17° vl=14.2 v=15.0 thr=0.00 brk=0.13 dmg=0.00 razdalja 5.5
+        6:strega s=390.3 d=-5.1 smer=-20° vl=17.2 v=16.4 thr=0.00 brk=0.78 dmg=0.07 razdalja 3.0
+        8:vortex s=386.0 d=1.9 smer=-4° vl=18.7 v=18.7 thr=0.00 brk=0.53 dmg=0.00 razdalja 5.5
+        11:rally(igr) s=386.3 d=-3.5 smer=-23° vl=17.7 v=18.1 thr=0.00 brk=0.90 dmg=0.02 razdalja 3.6
+t=0.67 7:pico s=389.8 d=-2.2 smer=-52° vl=10.6 v=14.2 thr=0.00 brk=0.12 dmg=0.07 DNF | DOTIK 6:strega rel 2.5
+        5:kaze s=395.7 d=-2.7 smer=-17° vl=14.2 v=14.9 thr=0.00 brk=0.13 dmg=0.00 razdalja 5.5
+        6:strega s=390.4 d=-5.1 smer=-20° vl=16.2 v=17.0 thr=0.00 brk=0.95 dmg=0.07 razdalja 3.0
+        8:vortex s=386.1 d=1.9 smer=-4° vl=18.7 v=18.6 thr=0.00 brk=0.51 dmg=0.00 razdalja 5.5
+        11:rally(igr) s=386.4 d=-3.5 smer=-23° vl=17.6 v=16.9 thr=0.00 brk=0.90 dmg=0.02 razdalja 3.6
+t=0.83 7:pico s=392.1 d=-2.6 smer=-57° vl=9.9 v=11.6 thr=0.00 brk=0.12 dmg=0.10 DNF | DOTIK 6:strega rel 6.0
+        5:kaze s=399.0 d=-2.5 smer=-13° vl=14.9 v=15.9 thr=0.80 brk=0.00 dmg=0.00 razdalja 5.9
+        6:strega s=393.3 d=-5.8 smer=-15° vl=15.1 v=14.5 thr=0.00 brk=0.43 dmg=0.10 razdalja 3.4
+        8:vortex s=389.1 d=1.9 smer=-6° vl=17.1 v=17.1 thr=0.00 brk=0.40 dmg=0.00 razdalja 5.3
+        11:rally(igr) s=389.1 d=-4.0 smer=-24° vl=14.1 v=14.2 thr=0.00 brk=0.93 dmg=0.02 razdalja 3.1
+t=0.97 7:pico s=393.5 d=-3.0 smer=-61° vl=8.8 v=10.5 thr=0.00 brk=0.80 dmg=0.14 DNF | ZAPRT za 6:strega reza -0.3 m, zapiranje 0.4 m/s | DOTIK 11:rally(igr) rel 5.7
+        6:strega s=396.4 d=-6.1 smer=3° vl=14.1 v=14.1 thr=0.45 brk=0.00 dmg=0.10 razdalja 3.7
+        5:kaze s=401.5 d=-2.2 smer=-16° vl=14.9 v=16.5 thr=0.80 brk=0.00 dmg=0.00 razdalja 6.6
+        8:vortex s=391.2 d=1.9 smer=-8° vl=15.9 v=16.0 thr=0.00 brk=0.37 dmg=0.00 razdalja 5.4
+        11:rally(igr) s=390.8 d=-4.4 smer=-23° vl=12.0 v=10.7 thr=0.00 brk=0.94 dmg=0.06 razdalja 2.8
+t=1.00 7:pico s=394.1 d=-3.1 smer=-61° vl=8.4 v=9.7 thr=0.00 brk=0.80 dmg=0.14 DNF | ZAPRT za 6:strega reza -0.2 m, zapiranje 0.1 m/s
+        6:strega s=396.9 d=-6.1 smer=6° vl=14.4 v=14.4 thr=0.45 brk=0.00 dmg=0.10 razdalja 3.7
+        5:kaze s=402.2 d=-2.1 smer=-16° vl=14.9 v=16.6 thr=0.80 brk=0.00 dmg=0.00 razdalja 6.8
+        8:vortex s=391.7 d=1.9 smer=-9° vl=15.6 v=15.7 thr=0.00 brk=0.50 dmg=0.00 razdalja 5.4
+        11:rally(igr) s=391.1 d=-4.5 smer=-22° vl=10.3 v=10.3 thr=0.00 brk=0.87 dmg=0.06 razdalja 2.8
+t=1.09 7:pico s=394.9 d=-3.4 smer=-62° vl=7.3 v=8.4 thr=0.00 brk=0.80 dmg=0.16 DNF | ZAPRT za 6:strega reza -0.0 m, zapiranje 0.1 m/s | DOTIK 11:rally(igr) rel 5.2
+        6:strega s=399.2 d=-5.9 smer=17° vl=14.6 v=14.6 thr=0.00 brk=0.25 dmg=0.10 razdalja 3.9
+        8:vortex s=393.0 d=1.9 smer=-11° vl=14.7 v=15.0 thr=0.00 brk=0.33 dmg=0.00 razdalja 5.6
+        11:rally(igr) s=392.1 d=-4.8 smer=-20° vl=9.1 v=7.8 thr=0.00 brk=0.82 dmg=0.09 razdalja 2.9
+t=1.32 7:pico s=396.9 d=-4.2 smer=-58° vl=6.5 v=7.9 thr=0.15 brk=0.00 dmg=0.23 DNF | DOTIK 11:rally(igr) rel 8.1
+        6:strega s=403.6 d=-4.6 smer=18° vl=14.9 v=15.1 thr=0.45 brk=0.00 dmg=0.10 razdalja 4.9
+        8:vortex s=395.9 d=1.9 smer=-15° vl=13.7 v=14.3 thr=0.45 brk=0.00 dmg=0.00 razdalja 6.1
+        10:strega s=388.6 d=-4.9 smer=-8° vl=9.2 v=7.7 thr=0.00 brk=0.91 dmg=0.06 razdalja 6.9
+        11:rally(igr) s=393.3 d=-5.3 smer=-16° vl=9.9 v=8.4 thr=0.00 brk=0.36 dmg=0.22 razdalja 2.9
+t=1.32 7:pico s=397.0 d=-4.2 smer=-58° vl=6.0 v=8.2 thr=0.15 brk=0.00 dmg=0.23 DNF | DOTIK 11:rally(igr) rel 1.9
+        6:strega s=403.7 d=-4.6 smer=18° vl=14.9 v=15.2 thr=0.36 brk=0.00 dmg=0.10 razdalja 5.0
+        8:vortex s=396.0 d=1.9 smer=-16° vl=13.7 v=14.3 thr=0.45 brk=0.00 dmg=0.00 razdalja 6.1
+        10:strega s=388.7 d=-4.9 smer=-8° vl=7.7 v=7.5 thr=0.45 brk=0.00 dmg=0.06 razdalja 6.9
+        11:rally(igr) s=393.3 d=-5.3 smer=-16° vl=8.4 v=7.9 thr=0.00 brk=0.84 dmg=0.22 razdalja 2.9
+t=1.48 7:pico s=398.9 d=-4.5 smer=-54° vl=6.8 v=7.6 thr=0.15 brk=0.00 dmg=0.24 DNF | DOTIK 11:rally(igr) rel 5.4
+        6:strega s=406.6 d=-3.4 smer=4° vl=15.0 v=16.2 thr=0.80 brk=0.00 dmg=0.10 razdalja 6.1
+        8:vortex s=398.1 d=1.9 smer=-17° vl=14.7 v=15.5 thr=0.80 brk=0.00 dmg=0.00 razdalja 6.5
+        10:strega s=389.7 d=-5.0 smer=-10° vl=6.7 v=5.6 thr=0.00 brk=0.21 dmg=0.06 razdalja 7.0
+        11:rally(igr) s=394.8 d=-5.7 smer=-9° vl=6.8 v=6.0 thr=0.00 brk=0.44 dmg=0.22 razdalja 2.9
+t=1.50 7:pico s=399.1 d=-4.6 smer=-54° vl=6.5 v=7.5 thr=0.15 brk=0.00 dmg=0.24 DNF
+        6:strega s=406.8 d=-3.3 smer=3° vl=14.9 v=16.3 thr=0.80 brk=0.00 dmg=0.10 razdalja 6.2
+        8:vortex s=398.3 d=1.9 smer=-17° vl=14.8 v=15.6 thr=0.80 brk=0.00 dmg=0.00 razdalja 6.5
+        11:rally(igr) s=394.9 d=-5.7 smer=-9° vl=5.9 v=6.0 thr=0.45 brk=0.00 dmg=0.22 razdalja 3.0
+t=1.58 7:pico s=400.3 d=-4.8 smer=-53° vl=7.0 v=7.7 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.8
+        6:strega s=408.3 d=-2.7 smer=-3° vl=14.8 v=16.5 thr=0.80 brk=0.00 dmg=0.10 razdalja 7.0
+        8:vortex s=399.6 d=2.0 smer=-17° vl=15.2 v=16.2 thr=0.45 brk=0.00 dmg=0.00 razdalja 6.8
+        11:rally(igr) s=395.3 d=-5.9 smer=-7° vl=6.7 v=5.8 thr=0.36 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.68 7:pico s=401.0 d=-5.1 smer=-58° vl=6.9 v=7.4 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.0
+        11:rally(igr) s=396.5 d=-6.0 smer=-1° vl=6.4 v=5.2 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.73 7:pico s=401.4 d=-5.2 smer=-60° vl=6.6 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.6
+        11:rally(igr) s=396.8 d=-6.0 smer=1° vl=6.0 v=5.2 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.78 7:pico s=402.3 d=-5.4 smer=-60° vl=6.5 v=7.0 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.6
+        11:rally(igr) s=397.1 d=-6.0 smer=2° vl=5.5 v=4.9 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.79 7:pico s=402.3 d=-5.4 smer=-60° vl=6.2 v=7.0 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 4.9
+        11:rally(igr) s=397.1 d=-6.0 smer=3° vl=4.9 v=4.8 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.80 7:pico s=402.4 d=-5.4 smer=-60° vl=6.3 v=7.0 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.1
+        11:rally(igr) s=397.2 d=-6.0 smer=3° vl=4.8 v=5.3 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.81 7:pico s=402.4 d=-5.5 smer=-60° vl=6.3 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.4
+        11:rally(igr) s=397.2 d=-6.0 smer=3° vl=5.3 v=5.0 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.82 7:pico s=402.5 d=-5.5 smer=-60° vl=6.2 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.2
+        11:rally(igr) s=397.3 d=-6.0 smer=3° vl=5.0 v=4.9 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.82 7:pico s=402.5 d=-5.5 smer=-61° vl=6.3 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.3
+        11:rally(igr) s=397.3 d=-6.0 smer=4° vl=4.9 v=4.9 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.83 7:pico s=402.6 d=-5.5 smer=-61° vl=6.3 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.4
+        11:rally(igr) s=397.4 d=-6.0 smer=4° vl=4.9 v=4.8 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.84 7:pico s=402.6 d=-5.6 smer=-61° vl=6.3 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.5
+        11:rally(igr) s=397.4 d=-6.0 smer=4° vl=4.8 v=4.7 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.85 7:pico s=402.7 d=-5.6 smer=-61° vl=6.4 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.6
+        11:rally(igr) s=397.4 d=-6.0 smer=5° vl=4.7 v=4.6 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.86 7:pico s=402.8 d=-5.6 smer=-61° vl=6.4 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.6
+        11:rally(igr) s=398.4 d=-6.0 smer=9° vl=4.6 v=4.6 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.87 7:pico s=402.8 d=-5.7 smer=-61° vl=6.4 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.7
+        11:rally(igr) s=398.5 d=-6.0 smer=9° vl=4.6 v=4.5 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.88 7:pico s=402.9 d=-5.7 smer=-61° vl=6.5 v=7.1 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.8
+        11:rally(igr) s=398.5 d=-6.0 smer=9° vl=4.5 v=5.0 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.88 7:pico s=402.9 d=-5.7 smer=-61° vl=6.5 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.0
+        11:rally(igr) s=398.6 d=-6.0 smer=10° vl=5.0 v=4.7 thr=0.80 brk=0.00 dmg=0.23 razdalja 2.9
+t=1.89 7:pico s=403.0 d=-5.7 smer=-61° vl=6.4 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.8
+        11:rally(igr) s=398.6 d=-6.0 smer=10° vl=4.7 v=4.6 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.90 7:pico s=403.0 d=-5.8 smer=-61° vl=6.5 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.9
+        11:rally(igr) s=398.6 d=-6.0 smer=10° vl=4.6 v=4.5 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.91 7:pico s=403.1 d=-5.8 smer=-61° vl=6.5 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 5.9
+        11:rally(igr) s=398.7 d=-6.0 smer=10° vl=4.5 v=4.4 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.92 7:pico s=403.1 d=-5.8 smer=-61° vl=6.5 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.0
+        11:rally(igr) s=398.7 d=-6.0 smer=10° vl=4.4 v=4.7 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.93 7:pico s=403.2 d=-5.9 smer=-61° vl=6.6 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.2
+        11:rally(igr) s=398.7 d=-6.0 smer=11° vl=4.7 v=4.5 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.93 7:pico s=403.2 d=-5.9 smer=-61° vl=6.5 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.1
+        11:rally(igr) s=398.8 d=-6.0 smer=11° vl=4.5 v=4.5 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.94 7:pico s=403.3 d=-5.9 smer=-61° vl=6.6 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.1
+        11:rally(igr) s=398.8 d=-6.0 smer=11° vl=4.5 v=4.4 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.95 7:pico s=403.3 d=-6.0 smer=-61° vl=6.6 v=7.2 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.2
+        11:rally(igr) s=398.9 d=-6.0 smer=11° vl=4.4 v=4.6 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.0
+t=1.96 7:pico s=403.4 d=-6.0 smer=-61° vl=6.7 v=7.3 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.4
+        11:rally(igr) s=398.9 d=-5.9 smer=11° vl=4.6 v=4.6 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.1
+t=1.97 7:pico s=403.4 d=-6.0 smer=-61° vl=6.7 v=7.3 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.4
+        11:rally(igr) s=398.9 d=-5.9 smer=12° vl=4.6 v=4.5 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.1
+t=1.98 7:pico s=403.5 d=-6.1 smer=-61° vl=6.7 v=7.3 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.4
+        11:rally(igr) s=399.0 d=-5.9 smer=12° vl=4.5 v=4.4 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.1
+t=1.98 7:pico s=403.6 d=-6.1 smer=-61° vl=6.8 v=7.4 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.5
+        11:rally(igr) s=399.0 d=-5.9 smer=12° vl=4.4 v=4.3 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.1
+t=1.99 7:pico s=403.6 d=-6.1 smer=-61° vl=6.8 v=7.4 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.5
+        11:rally(igr) s=399.0 d=-5.9 smer=12° vl=4.3 v=4.6 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.1
+t=2.00 7:pico s=404.2 d=-6.2 smer=-60° vl=6.8 v=7.5 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.6
+        11:rally(igr) s=399.1 d=-5.9 smer=12° vl=4.6 v=4.3 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.1
+t=2.01 7:pico s=404.3 d=-6.2 smer=-59° vl=6.8 v=7.5 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.5
+        11:rally(igr) s=399.1 d=-5.9 smer=12° vl=4.3 v=4.2 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.2
+t=2.02 7:pico s=404.3 d=-6.2 smer=-59° vl=6.8 v=7.5 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.5
+        11:rally(igr) s=399.1 d=-5.9 smer=12° vl=4.2 v=4.1 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.2
+t=2.02 7:pico s=404.4 d=-6.3 smer=-59° vl=6.8 v=7.5 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.6
+        11:rally(igr) s=399.2 d=-5.9 smer=13° vl=4.1 v=4.1 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.2
+t=2.03 7:pico s=404.4 d=-6.3 smer=-59° vl=6.9 v=7.6 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.6
+        11:rally(igr) s=399.2 d=-5.9 smer=13° vl=4.1 v=4.0 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.2
+t=2.04 7:pico s=404.5 d=-6.3 smer=-59° vl=6.9 v=7.6 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.7
+        11:rally(igr) s=399.2 d=-5.9 smer=13° vl=4.0 v=4.4 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.3
+t=2.05 7:pico s=404.6 d=-6.3 smer=-59° vl=7.0 v=7.6 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.9
+        11:rally(igr) s=399.3 d=-5.9 smer=13° vl=4.4 v=4.2 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.3
+t=2.06 7:pico s=404.6 d=-6.4 smer=-59° vl=6.9 v=7.6 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.7
+        11:rally(igr) s=399.3 d=-5.9 smer=13° vl=4.2 v=4.1 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.3
+t=2.07 7:pico s=404.7 d=-6.4 smer=-59° vl=7.0 v=7.7 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.7
+        11:rally(igr) s=399.4 d=-5.9 smer=13° vl=4.1 v=4.0 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.3
+t=2.08 7:pico s=404.7 d=-6.4 smer=-59° vl=7.0 v=7.7 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.8
+        11:rally(igr) s=399.4 d=-5.9 smer=13° vl=4.0 v=4.0 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.4
+t=2.08 7:pico s=404.8 d=-6.5 smer=-59° vl=7.0 v=7.7 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.8
+        11:rally(igr) s=399.4 d=-5.8 smer=14° vl=4.0 v=3.9 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.4
+t=2.09 7:pico s=404.8 d=-6.5 smer=-59° vl=7.1 v=7.7 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.9
+        11:rally(igr) s=399.5 d=-5.8 smer=14° vl=3.9 v=3.8 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.4
+t=2.10 7:pico s=404.9 d=-6.5 smer=-58° vl=7.1 v=7.7 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.9
+        11:rally(igr) s=399.5 d=-5.8 smer=14° vl=3.8 v=4.3 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.5
+t=2.11 7:pico s=405.0 d=-6.6 smer=-58° vl=7.1 v=7.8 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 7.1
+        11:rally(igr) s=399.5 d=-5.8 smer=14° vl=4.3 v=4.0 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.5
+t=2.12 7:pico s=405.0 d=-6.6 smer=-58° vl=7.1 v=7.8 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.9
+        11:rally(igr) s=400.3 d=-5.8 smer=17° vl=4.0 v=3.9 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.5
+t=2.13 7:pico s=405.1 d=-6.6 smer=-58° vl=7.1 v=7.8 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.9
+        11:rally(igr) s=400.4 d=-5.8 smer=17° vl=3.9 v=3.8 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.6
+t=2.13 7:pico s=405.1 d=-6.7 smer=-58° vl=7.1 v=7.8 thr=0.15 brk=0.00 dmg=0.25 DNF | DOTIK 11:rally(igr) rel 6.9
+        11:rally(igr) s=400.4 d=-5.8 smer=17° vl=3.8 v=3.7 thr=0.80 brk=0.00 dmg=0.23 razdalja 3.6
+t=2.50 7:pico s=408.3 d=-8.6 smer=-35° vl=6.3 v=6.3 thr=0.00 brk=0.50 dmg=0.25 DNF
+        11:rally(igr) s=402.9 d=-5.2 smer=14° vl=7.2 v=7.3 thr=0.80 brk=0.00 dmg=0.23 razdalja 5.0
+t=3.00 7:pico s=410.6 d=-9.7 smer=-26° vl=1.7 v=1.6 thr=0.00 brk=0.50 dmg=0.25 DNF
+        11:rally(igr) s=408.7 d=-4.0 smer=-15° vl=10.9 v=11.9 thr=0.80 brk=0.00 dmg=0.23 razdalja 5.9
+t=3.50 7:pico s=410.7 d=-9.7 smer=-23° vl=0.0 v=0.0 thr=0.00 brk=0.10 dmg=0.25 DNF STOJI
+        10:strega s=410.3 d=-4.1 smer=-10° vl=13.9 v=14.4 thr=0.80 brk=0.00 dmg=0.06 razdalja 5.6
+t=4.00 7:pico s=410.7 d=-9.7 smer=-23° vl=0.0 v=0.0 thr=0.00 brk=0.10 dmg=0.25 DNF STOJI
+t=4.50 7:pico s=410.7 d=-9.7 smer=-23° vl=0.0 v=0.0 thr=0.00 brk=0.10 dmg=0.25 DNF STOJI
+t=5.00 7:pico s=410.7 d=-9.7 smer=-23° vl=0.0 v=0.0 thr=0.00 brk=0.10 dmg=0.25 DNF STOJI
+t=5.50 7:pico s=410.7 d=-9.7 smer=-23° vl=0.0 v=0.0 thr=0.00 brk=0.10 dmg=0.25 DNF STOJI
+t=6.00 7:pico s=410.7 d=-9.7 smer=-23° vl=0.0 v=0.0 thr=0.00 brk=0.10 dmg=0.25 DNF STOJI
+t=6.50 7:pico s=410.7 d=-9.7 smer=-23° vl=0.0 v=0.0 thr=0.00 brk=0.10 dmg=0.25 DNF STOJI

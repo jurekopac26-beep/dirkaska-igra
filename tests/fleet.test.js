@@ -16,7 +16,8 @@
 //    vehicle's bigger race (fieldN, fill): its own fieldN spread through the field, the rest its fill's cars in turn; a
 //    one-make race of every vehicle (a big one's: mixed) for 20 s (every rival > 150 m on, every speed profile its model's own and finite, no NaN); retiring:
 //    two wheels off (damage alone, or damage for looks only, never); a retired car drives off onto the run-off (from speed, or standing
-//    across the road; on Spa's Kemmel straight over to the side with room) and stands there, the marshals place one that does not get
+//    across the road; on Spa's Kemmel straight over to the side with room) and stands there, braking behind a slower car in its way (not
+//    for one beside it or in its flank), the marshals place one that does not get
 //    there (never two on one spot; with no spot that takes it, once, and there it stays), never a lap or a finish for it; the flags: an
 //    incident for 30 s (and as long as it stands on the asphalt), no penalty for passing it; a lost wheel: refitted by the marshals
 //    without pits (W.fix counts), a pit stop in a tyre race (in the rain too); whole races on the Nordschleife and in Monaco with wheels
@@ -490,6 +491,27 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
     if (!L || L.finished || r.finishOrder.includes(L) || L.lap > 1) bad.push('retired before the line: ' + (L ? 'lap ' + L.lap + ', finished ' + L.finished : 'no set-up'));
   }
   check('a retired car drives off onto the run-off and stands there: from 15-25 m/s within 12 s, from standing across the road within 15 s; off the asphalt (or at the barrier), no hard knock once it stands, no lap or finish past the line; on Spa\'s Kemmel straight (no room on the right): over to the left, or put there by the marshals once', !bad.length, bad.length ? bad.join('; ') : rows.join('; '));
+}
+{ // a retired car brakes behind a slower car in its way (retireBlocked: the other's middle past its nose), not for one beside it: one
+  // alongside, or running into its flank as it turns for the edge, stopped it on the road before the field (Toskana, 28. 11. 2026: at a
+  // stand 4 m short of the edge for the car in its flank, hit from behind at 13 m/s and destroyed; docs/trki-realizem.md, »korak 3«)
+  const T = track('jezero'); Math.random = seeded(23);
+  const r = new C.Race(T, { numAI: 2, playerGrid: 3, laps: 3, playerModel: model('jelen'), assist: 2, seed: 23, difficulty: 1, damage: 2 });
+  r.start(); const P = r.player; let k = 0; const step = () => { Math.random = seeded(23000 + ++k); C.aiControl(P, r, DT); r.step(DT); };
+  for (let i = 0; i < 3 / DT; i++) step();
+  const [X, Y] = r.cars.filter(c => !c.isPlayer), i0 = (P.q.i + Math.round(300 / T.ds)) % T.N, h0 = T.hd[i0];
+  // (300 m up the road from the field: f m ahead of that point along the road and lat m beside it, turned dh from the road, at v m/s)
+  const put = (c, f, lat, dh, v) => {
+    const h = h0 + dh; c.place(T.px[i0] + Math.cos(h0) * f - Math.sin(h0) * lat, T.pz[i0] + Math.sin(h0) * f + Math.cos(h0) * lat, h); if (T.hasElev) c.y = c.py = T.hy[i0];
+    c.q = T.query(c.x, c.z, i0, c.q); c.sPrev = c.q.s; c.vx = Math.cos(h) * v; c.vz = Math.sin(h) * v; c.vl = v;
+  };
+  put(X, 0, 0, 0, 15); r.retire(X);
+  // (the retired car on the middle of the road at 15 m/s, the other placed by it: the brake it takes in the next step)
+  const brk = (f, lat, dh, v) => { put(X, 0, 0, 0, 15); put(Y, f, lat, dh, v); step(); return X.inBrk; };
+  const flank = (X.m.wid + Y.m.wid * 0.5 + Y.m.len * Math.sin(Math.PI / 3)) * 0.5 + 0.1;   // (turned 60 deg into it: its nearest corner 0.1 m from the retired car's flank)
+  const alone = brk(60, 30, 0, 3), ahead = brk(12, 0, 0, 3), intoR = brk(0.6, flank, -Math.PI / 3, 2), intoL = brk(0.6, -flank, Math.PI / 3, 2), beside = brk(1, (X.m.wid + Y.m.wid) / 2 + 0.15, 0, 3);
+  check('a retired car brakes (0.8) behind a slower car in its way; one beside it does not stop it on the road (alongside 0.15 m off its flank, or turned 60 deg into its flank from either side: the brake as with no car near)',
+    alone > 0.1 && alone < 0.35 && ahead === 0.8 && intoR === alone && intoL === alone && beside === alone, `no car near ${alone}, a slower car 12 m ahead ${ahead}, one into its flank ${intoR} / ${intoL}, one alongside ${beside}`);
 }
 { // the marshals: a retired car that can not get off (here held where it is: locked) is put on its side's run-off after 8 s, clear of a
   // retired car standing there; the flags: a retired car is an incident (a yellow flag) for 30 s, by when it stands off the road, then not

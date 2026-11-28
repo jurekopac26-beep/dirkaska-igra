@@ -7224,13 +7224,14 @@ const Core = (function () {
     if (v < 2.5) W.cr += dt;
   }
   // a slower car close ahead in a retired car's way (another wreck stopping or standing at the edge before it; its box as it lies across
-  // the path): the retired car brakes behind it, it does not run into it and push it on
+  // the path): the retired car brakes behind it, it does not run into it and push it on. Ahead: the other's middle past this car's nose
+  // (one alongside, or running into its flank as it turns for the edge, is not in its way: it would stop on the road for it)
   function retireBlocked(c, race, v) {
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     for (const o of race.cars) {
       if (o === c || o.inPit) continue;
       const dx = o.x - c.x, dz = o.z - c.z, f = dx * ch + dz * sh;
-      if (f <= 0 || f > 150) continue;
+      if (f <= c.m.len * 0.5 || f > 150) continue;
       const kc = Math.abs(Math.cos(o.h - c.h)), ks = Math.abs(Math.sin(o.h - c.h));
       if (Math.abs(dz * ch - dx * sh) > (c.m.wid + o.m.wid * kc + o.m.len * ks) * 0.5 + 0.2) continue;
       const cl = v - (o.vx * ch + o.vz * sh);
