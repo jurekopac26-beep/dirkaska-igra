@@ -36,8 +36,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   check('climb: up all the way (nowhere more than 2 m back down), ~170 m in all; the finish\'s sign at its altitude; no hairpins; nowhere steeper than ~12.5 %',
     !!top && Math.abs(+top.n.match(/(\d+) m$/)[1] - T.altAt(T.hFinish)) < 2 && drop < 2 && !(def.curves || []).length && gmax < 0.125 && T.hFinish - T.hStart > 150,
     `${T.altAt(T.hStart).toFixed(1)} -> ${T.altAt(T.hFinish).toFixed(1)} m, back down at most ${drop.toFixed(1)} m, steepest ${(gmax * 100).toFixed(1)} %`);
-  check('names: the HUD and the commentator know Letava, Vaoala, the forest and Tiapapata at the finish',
-    T.names.length === 4 && T.names[0].n === 'Letava' && T.names[1].n === 'Vaoala' && T.names.some(q => q.n === 'Gozd nad Vaoalo' && q.say) && T.names[3] === top && top.d > T.raceLen - 30,
+  check('names: the HUD and the commentator know Letava, the fruit stalls, Vaoala, its court, the forest, Lamosa and Tiapapata at the finish, each with its lines',
+    T.names.length === 7 && T.names[0].n === 'Letava' && T.names[2].n === 'Vaoala' && T.names.some(q => q.n === 'Gozd nad Vaoalo') && T.names.every(q => q.say && q.say.length >= 2) && T.names[6] === top && top.d > T.raceLen - 30,
     T.names.map(q => q.n).join(' | '));
 }
 

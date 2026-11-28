@@ -35,11 +35,18 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Letava", "d": 150.0, "say": ["Up out of Letava, and it only gets steeper!", "Through Letava, the houses close on both sides!"]},
+      {"n": "Stojnice s sadjem", "d": 382.0, "say": ["Past the fruit stalls by the road, bananas and coconuts piled high!", "The fruit stalls of Letava flash by on the right!"]},
       {"n": "Vaoala", "d": 554.0, "say": ["Into Vaoala, the village on the hill!", "Vaoala! Mind the bends between the houses!"]},
+      {"n": "Igrišče v Vaoali", "d": 903.0, "say": ["Past the basketball court, the heart of the village!", "The village court on the right, and the last houses of Vaoala!"]},
       {"n": "Gozd nad Vaoalo", "d": 1250.0, "say": ["Into the rain forest, the road climbing under the trees!", "The forest closes in, and the bends get tighter!"]},
+      {"n": "Lamosa", "d": 1536.0, "say": ["The turning for Lamosa, and still climbing through the forest!", "Lamosa! The air is cooler up here, the cloud is not far off!"]},
       {"n": "Tiapapata · 480 m", "d": 1910.0, "say": ["Tiapapata, four hundred and eighty metres, and across the line!", "Up into Tiapapata! The top of the climb and the finish!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
+    cloudTh: 0.22,   // (the high ground above Apia: often under low cloud, its shadows darker than on the coast)
+    // the animals and things by the road (js/world-zivali.js): the black and the pink pigs and the hens that roam the villages of Upolu,
+    // the open-sided huts (fale) and the water tanks by the houses
+    zivali: { a: ['pig', 'hen'], t: ['palmHut', 'waterTank'] },
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, under two kilometres and uphill all the way, and you start {grid}.", "Here we are in Letava. A race up through the forest to Tiapapata, and you line up {grid}."],
       goPass: ["And away they go, up the hill!", "And they're off! Under two kilometres to Tiapapata!", "The race is on! The pack charges up out of the village!"],
