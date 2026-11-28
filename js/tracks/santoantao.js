@@ -33,6 +33,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xc8d4da, sun: 0xfff3e0, sunI: 1.25, sky: 0x84b4e0, gnd: 0x5c6a40, hemiI: 0.62, tint: [1.0, 1.02, 0.98], sat: 1.05, sunOff: [-64, 96, 54], split: [[0.96, 0.99, 1.06], [1.05, 1.0, 0.93]] },   // Santo Antão: a bright afternoon of the trade winds, the sun from the south-west behind the cars going north along the ridge, the Atlantic's pale blue haze
     say: 'the Delgadim ridge', rainP: 0.15,
     zivali: { a: ['goatW', 'donkey'], t: [], open: true },
+    // its sound (js/sfx-okolje.js): the north-east trade wind blows all year and hardest on the bare ridge (docs/proge/santoantao.md,
+    // »Raziskava kraja«): a wind that never drops below this (less under the trees)
+    windMin: 0.32,
+    // the flyover (render.js): [metres after the start (-1 the finish), its caption], from the names
+    fly: [[0, 'START'], [261, 'Sedlo Delgadim'], [746, 'Vrh grebena'], [1011, 'Šest serpentin'], [3694, 'Spust proti Ribeiri Grande'], [-1, 'CILJ']],
     id: 'santoantao', name: 'Santo Antão, Zelenortski otoki', theme: 'santoantao', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.5,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the narrow road past the line (~256 m)
     desc: 'Tlakovana cesta EN1-SA-01 na otoku Santo Antão na Zelenortskih otokih: 5 km po ozkem grebenu Delgadim, kjer pobočji na obeh straneh ceste strmo padata v doline, nato po šestih serpentinah navzdol proti Ribeiri Grande in morju, od 672 m čez sedlo in vrh grebena na 710 m do 336 m. Bazaltne kocke, nizki kamniti zidovi, travnata in grmovnata vulkanska pobočja, agave, ciprese in evkalipti, terase v dolinah. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu in beg pred policijo.',
