@@ -3449,56 +3449,6 @@
   "nan": false,
   "digest": "5bb8ae4fe7ccf88d1e3a45eb"
  },
- "longyearbyen/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 85.55,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "728c7f06074df8c7fc424502"
- },
- "longyearbyen/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 96.23,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "b3bc166fcb12967ef2f2c6a5"
- },
- "longyearbyen/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 68.53,
-  "spins": 0,
-  "walls": 3,
-  "rescues": 1,
-  "nan": false,
-  "digest": "52532f35ef118cfa38f7d0d2"
- },
- "longyearbyen/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 69.32,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "d09427dd6180d3b5fea5f4cf"
- },
- "longyearbyen/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 85.69,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "3da76599d1b79bac807bb3c6"
- },
  "irishtown/cs": {
   "finished": 13,
   "cars": 13,
@@ -3648,5 +3598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "e20e46921c7571f4c4c76817"
+ },
+ "tatev/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 237.74,
+  "spins": 0,
+  "walls": 10,
+  "rescues": 0,
+  "nan": false,
+  "digest": "535c131463fc782f40c137f7"
+ },
+ "tatev/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 279.71,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "74c6950989f95ad47817d621"
+ },
+ "tatev/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 214.74,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e7ecdb03327989cf4fabc088"
+ },
+ "tatev/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 217.8,
+  "spins": 0,
+  "walls": 12,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c0fb6f84ff950e480396101c"
+ },
+ "tatev/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 239.28,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "988b587c30283e45e73373ee"
  }
 }
