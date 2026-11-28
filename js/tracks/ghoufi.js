@@ -20,7 +20,23 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#16181c', text: '#f4f6f0' }, escTo: 'Do cilja',
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xdcd6c8, fogK: 1.5, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
-    names: [],
+// the places by the road (metres after the start line; docs/proge/ghoufi-raziskava.md: OpenStreetMap and js/world-ghoufi.js): the road's own
+    // name, the palms of the oasis (OSM way 520836757, landuse=orchard, trees=date_palms, 58 m from the road), the river on the canyon's floor
+    // (OSM way 335697911, Oued Labiod / Ighzer Amellal, 22 m at the nearest), the old stone village on the wall below the road (js/world-ghoufi.js,
+    // 115-385 m), the viewpoint (OSM node 3135560243, 'Balcon de ghoufi', 20 m), the houses cut into the soft rock under the rim (the public
+    // descriptions of the site: part troglodyte dwellings), the last ruins of the village and the rock rim of the canyon (OSM way 1130863921, natural=cliff, 41 m)
+    names: [
+      { n: 'Route Touristique', d: 15, say: ['Along the Route Touristique, the canyon opening up on the left!', 'The Route Touristique, a narrow road on the rim!'] },
+      { n: 'Palmov gaj oaze', d: 105, say: ['The date palms of the oasis down on the canyon floor!', 'Palms below on the left, green against the ochre rock!'] },
+      { n: 'Oued Labiod', d: 150, say: ['The Oued Labiod down in the canyon, the river that cut it!', 'Down to the left, the riverbed of the Oued Labiod!'] },
+      { n: 'Stara vas', d: 185, say: ['The old stone village, stacked down the canyon wall!', 'Past the old village on the wall, houses one above another!'] },
+      { n: 'Balcon de Ghoufi', d: 260, say: ['The Balcon de Ghoufi, the viewpoint over the canyon!', 'Past the viewpoint, the whole canyon below on the left!'] },
+      { n: 'Hiše v skali', d: 320, say: ['The old houses dug into the soft rock under the rim!', 'Doorways in the rock below the road, empty for decades!'] },
+      { n: 'Zadnje ruševine', d: 380, say: ['The last ruins of the village, roofless stone walls!', 'Past the last of the old houses, the rim opens out!'] },
+      { n: 'Rob kanjona', d: 470, say: ['Along the rock rim of the canyon, nearly at the finish!', 'The canyon rim on the left, keep it on the road!'] },
+    ],
+    // the flight over the road before the race (js/render.js def.fly: metres after the start line, -1 the finish)
+    fly: [[0, 'START'], [105, 'Palmov gaj oaze'], [185, 'Stara vas'], [260, 'Balcon de Ghoufi'], [470, 'Rob kanjona'], [-1, 'CILJ']],
     comm: {
       introPass: ["Welcome to {track}! {cars} cars on a short, twisting road, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
       goPass: ["And away they go!", "They're off! Every bend counts on a road this short!", "The race is on!"],

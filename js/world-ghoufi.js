@@ -165,12 +165,40 @@
     return placed;
   }
 
+  /* the dwellings cut into the soft rock under the rim (the public descriptions of the site: the houses turn into troglodyte dwellings higher
+     up the wall, under the rim; docs/proge/ghoufi-raziskava.md): s 260-385 after the start line, on the canyon's side of the road, 20-44 m out,
+     3-26 m under the road, on the steep ground. Each a dark opening in the slope facing down it, a stone lintel over it and a low
+     walled front of the local stone beside it (a part of them only the bare opening). Assumed: the size, the number and the place of each */
+  function caves(ctx, roadAt, placed) {
+    const { scen, R, exclPush } = ctx, A = World.api, T = A.T, gH = A.vrGround, { box } = A, got = [];
+    for (let s = T.startS + 260; s < T.startS + 385; s += 4) {
+      const i = T.idx(s);
+      for (const side of [-1, 1]) for (let d = 20 + R() * 3; d < 44; d += 5 + R() * 3) {
+        if (R() > 0.45) continue;
+        const x = T.px[i] + T.nx[i] * side * d + (R() - 0.5) * 2, z = T.pz[i] + T.nz[i] * side * d + (R() - 0.5) * 2, [rd, ry] = roadAt(x, z), g0 = gH(x, z);
+        if (rd < 18 || g0 > ry - 3 || g0 < ry - 26 || A.vrSlope(x, z) < 0.35) continue;
+        if (placed.some(p => Math.hypot(p[0] - x, p[1] - z) < p[2] + 2.2) || got.some(p => Math.hypot(p[0] - x, p[1] - z) < 4.5)) continue;
+        // down the slope (the opening looks out of it), and across it (the opening's width)
+        let gx = gH(x + 1.5, z) - gH(x - 1.5, z), gz = gH(x, z + 1.5) - gH(x, z - 1.5); const gl = Math.hypot(gx, gz) || 1; gx /= -gl; gz /= -gl;
+        const ux = -gz, uz = gx, w = 1.4 + R() * 1.2, h = 1.5 + R() * 0.6, y = g0 + 0.1, o = 0.35, g = scen.get(x, z);
+        const a = [x - ux * w / 2 + gx * o, y, z - uz * w / 2 + gz * o], b = [x + ux * w / 2 + gx * o, y, z + uz * w / 2 + gz * o];
+        g.quadO(a, b, [b[0], y + h, b[2]], [a[0], y + h, a[2]], DARK, [x - gx * 2, y + h / 2, z - gz * 2]);
+        const rot = Math.atan2(uz, ux);
+        box(g, x + gx * (o + 0.15), y + h, z + gz * (o + 0.15), w + 0.6, 0.35, 0.45, rot, STONE2, STONE3, true);   // (the lintel)
+        if (R() < 0.65) { const sd = R() < 0.5 ? -1 : 1, L = 0.9 + R() * 1.4, cx = x + ux * sd * (w / 2 + L / 2) + gx * (o + 0.1), cz = z + uz * sd * (w / 2 + L / 2) + gz * (o + 0.1);
+          box(g, cx, gH(cx, cz) - 0.6, cz, L, h + 0.6 + R() * 0.5, 0.5, rot, STONE, STONE3, true); }   // (the walled front beside it)
+        got.push([x, z]); exclPush(x, z, 2.5);
+      }
+    }
+    return got.length;
+  }
+
   function extra(ctx, tex) {
     const { scen, R, exclPush } = ctx, A = World.api, T = A.T, gH = A.vrGround;
     // the road's height and distance near (x, z): the nearest of the track's samples
     const roadAt = (x, z) => { let bd = 1e9, bi = 0; for (let i = 0; i < T.N; i += 2) { const d = Math.hypot(T.px[i] - x, T.pz[i] - z); if (d < bd) { bd = d; bi = i; } } return [bd, T.hy[bi], bi]; };
 
-    const placed = landmark(ctx, roadAt);
+    const placed = landmark(ctx, roadAt), nCaves = caves(ctx, roadAt, placed);
 
     const nRiver = RL ? river(ctx, tex) : 0;
 
@@ -196,7 +224,7 @@
       for (const u of [-2.8, 2.8]) { const c = Math.cos(rot), s = Math.sin(rot); box(g, VX + u * c - 1 * s, y, VZ + u * s + 1 * c, 1.8, 0.45, 0.5, rot, STONE2, STONE3, true); }
       exclPush(VX, VZ, 10);
     }
-    ctx.out.ghoufi = { houses: placed.length, palms: np, river: RL ? RL.length : 0, riverMeshes: nRiver };
+    ctx.out.ghoufi = { houses: placed.length, caves: nCaves, palms: np, river: RL ? RL.length : 0, riverMeshes: nRiver };
     if (World.ext.goreRob) World.ext.goreRob(ctx, 'ghoufi');   // (the roadside ground from the chase camera: js/world-chase-bt11.js)
   }
 
