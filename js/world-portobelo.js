@@ -169,9 +169,11 @@
         const w = T.wAt(i), offs = [-w, -w / 2, 0, w / 2, w], v = i * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o, w)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, 4); pr = r;
         const wl = [0.9, 0.9, 0.86], cl = CL ? CL[i] : 0, lp = [Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)];
-        if (cl) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));
-        const l = gl.row(lp, lp.map(() => wl));
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
+        const cd = cl === 2 && CZ.dvojna ? 2 : cl ? 1 : 0;   // (the centre line: none, one line, or double where overtaking is forbidden: two 12 cm lines 12 cm apart)
+        if (cd === 1) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));
+        else if (cd === 2) lp.push(Pt(i, -0.18, 0.034), Pt(i, -0.06, 0.034), Pt(i, 0.06, 0.034), Pt(i, 0.18, 0.034));
+        const l = gl.row(lp, lp.map((_, k) => k >= 4 ? CZ.barvaSred : wl));   // (the centre line in the country's colour)
+        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cd && cd === pc) { gl.link(pl, l, 4, 5); if (cd === 2) gl.link(pl, l, 6, 7); } } pl = l; pc = cd;
       }
       for (const q of xk.get(c0 / RC) || []) layX(gl, q);
       addM(gr, aMat); addM(gl, lMat);
