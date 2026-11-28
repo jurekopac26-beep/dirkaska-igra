@@ -103,6 +103,11 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   if (opts.init) await page.addInitScript(opts.init);   // (a test's own set-up, run before the game's scripts)
   await page.goto(address, { timeout: 180000 });   // (as long as the wait for the game below: Playwright's own 30 s are too short on a slow machine)
   await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
+  // (the worlds loaded only when needed, World.need, I17 step 5: all of them now, so a test can build any track's world at once, as before;
+  // opts.lazy: only what the game itself loads, tests/browser/svet-nalaganje.test.mjs)
+  if (!opts.lazy) await page.evaluate(() => typeof World !== 'undefined' && World.needAll ? World.needAll() : null);   // (World je const, ne window.World)
+  // (and the whole tracks, I17 lazy tracks: the track screen otherwise loads them all first, and a card shows only then)
+  if (!opts.lazy) await page.evaluate(() => typeof Core !== 'undefined' && Core.loadTracks ? Core.loadTracks(Core.TRACKS.map(d => d.id)) : null);
   return { ctx, page, errors };
 }
 
@@ -112,7 +117,9 @@ export function startTrack(page, id, mode) {
   return page.evaluate(async ([id, mode]) => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
-    const card = document.querySelector(`[data-track="${id}"]`); if (!card) throw new Error('no track card ' + id);
+    // (a page opened again by the test itself has its lazy tracks as heads: the screen loads them first, its cards only then)
+    let card = null; for (let k = 0; k < 600 && !(card = document.querySelector(`[data-track="${id}"]`)); k++) await wait(100);
+    if (!card) throw new Error('no track card ' + id);
     card.click(); await wait(150);
     if (mode) { const b = document.querySelector(`[data-track="${id}"] [data-set="mode"] [data-v="${mode}"]`); if (!b) throw new Error('no way ' + mode + ' on ' + id); b.click(); await wait(150); }
     g.onAction('start');

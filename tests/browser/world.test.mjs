@@ -32,6 +32,8 @@ try {
   for (const id of half) {
     if (only && !only.includes(id)) continue;
     await startTrack(page, id);
+    if (id === 'pikes' || id === 'pikesg') { const g = await page.evaluate(() => { const G = World.api.PK.G; return [G.pre, G.lzb]; });   // (Pikes' precomputed terrain grid, def.teren: taken, and every vertex the build reads in it)
+      T.check(`${id}: the terrain grid from def.teren (else node tools/pikes-teren.mjs)`, g[0] === 'ok' && g[1] === 0, `G.pre ${g[0]}, ${g[1]} vertices computed in the build`); }
     if (id === 'sacalobra' && !update) { const h = hills(await page.evaluate(saProbe, HILL_DL)), have = saFile();   // (Sa Calobra: a hill where no rail and no wall is drawn, the user's report of 13. 11. 2026)
       T.check('sacalobra: def.hills as its terrain and walls give them (else node tools/sacalobra-hribi.mjs)', have === hillsLine(h), have ? `${h.stats.length} hills, ${h.stats.reduce((a, x) => a + x[2], 0)} m` : 'no def.hills');
       const r = await page.evaluate(() => { const T = window.__game.race.track, P = Render.world.hillProbe, e = Math.ceil(8 / T.ds) + 2; let both = 0, none = 0;   // (a hill nowhere at a wall; no wall missing where no hill is but at the road's closed ends and under the knot's arch)
@@ -133,5 +135,5 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(only || DEL !== 'vse' ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
+if (update) { fs.writeFileSync(FILE, JSON.stringify(Object.assign({}, golden, out), null, 1) + '\n'); console.log('written ' + FILE); }   // (the tracks not measured, the test ones such as Longyearbyen, keep their references)
 else T.done();

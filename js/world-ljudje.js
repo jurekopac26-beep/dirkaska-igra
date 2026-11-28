@@ -1652,11 +1652,15 @@
   const kv = (band, f) => 1 - (band[0] + 0.5 + Math.max(0, Math.min(1, f)) * (band[1] - band[0] - 1)) / KIT.H;   // (a band's v: f 0 its top row, 1 its bottom)
   const kq = (band, u0, u1, f0, f1) => [[u0, kv(band, f0)], [u1, kv(band, f0)], [u1, kv(band, f1)], [u0, kv(band, f1)]];   // (a quad a b c d: a-b at f0, d-c at f1)
   class SB {   // a stand's geometry, non-indexed with flat normals: per vertex the concrete's colour (the seasons paint it), the seat's own (aSeat), the kit's uv
-    constructor() { this.P = []; this.N = []; this.C = []; this.S = []; this.U = []; }
-    get empty() { return !this.P.length; }
+    constructor() { this.nt = 0; this.cap = 0; this.P = this.N = this.C = this.S = this.U = null; }   // (Float32Arrays grown by doubling: nt triangles written)
+    get empty() { return !this.nt; }
     tri(a, b, c, col, seat, ua, ub, uc, n) {
-      this.P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); this.U.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]);
-      for (let k = 0; k < 3; k++) { this.N.push(n[0], n[1], n[2]); this.C.push(col[0], col[1], col[2]); this.S.push(seat[0], seat[1], seat[2]); }
+      if (this.nt === this.cap) { const cap = this.cap ? this.cap * 2 : 256, g = (A, w) => { const B = new Float32Array(cap * w); if (A) B.set(A); return B; };
+        this.P = g(this.P, 9); this.N = g(this.N, 9); this.C = g(this.C, 9); this.S = g(this.S, 9); this.U = g(this.U, 6); this.cap = cap; }
+      const i = this.nt * 9, P = this.P, N = this.N, C = this.C, S = this.S, U = this.U, j = this.nt * 6; this.nt++;
+      P[i] = a[0]; P[i + 1] = a[1]; P[i + 2] = a[2]; P[i + 3] = b[0]; P[i + 4] = b[1]; P[i + 5] = b[2]; P[i + 6] = c[0]; P[i + 7] = c[1]; P[i + 8] = c[2];
+      U[j] = ua[0]; U[j + 1] = ua[1]; U[j + 2] = ub[0]; U[j + 3] = ub[1]; U[j + 4] = uc[0]; U[j + 5] = uc[1];
+      for (let k = i; k < i + 9; k += 3) { N[k] = n[0]; N[k + 1] = n[1]; N[k + 2] = n[2]; C[k] = col[0]; C[k + 1] = col[1]; C[k + 2] = col[2]; S[k] = seat[0]; S[k + 1] = seat[1]; S[k + 2] = seat[2]; }
     }
     quad(a, b, c, d, out, col, seat, uv) {   // a b c d around, facing out (a direction)
       const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
@@ -1682,7 +1686,7 @@
       for (const s of [1, -1]) this.quad(a, b, [b[0], b[1] + h, b[2]], [a[0], a[1] + h, a[2]], [s * f[0], 0, s * f[1]], col, null, U);
     }
     geometry() {
-      const g = new THREE.BufferGeometry(), F = (a, n) => new THREE.Float32BufferAttribute(a, n);
+      const g = new THREE.BufferGeometry(), F = (a, n) => new THREE.Float32BufferAttribute(a.subarray(0, this.nt * n * 3), n);
       g.setAttribute('position', F(this.P, 3)); g.setAttribute('normal', F(this.N, 3)); g.setAttribute('color', F(this.C, 3)); g.setAttribute('aSeat', F(this.S, 3)); g.setAttribute('uv', F(this.U, 2));
       g.computeBoundingSphere(); return g;
     }
@@ -1792,20 +1796,52 @@
     const solids = [], DOWN = new THREE.Vector3(0, -1, 0); o.root.updateMatrixWorld(true);
     const onGround = (m) => { for (let p = m; p; p = p.parent) if (p === o.ground) return true; return false; };   // (the ground's own pieces: its mesh may stand a little over groundH)
     o.root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.visible || (m.userData && m.userData.lj) || !m.geometry || !m.geometry.attributes.position || (o.ground && onGround(m))) return; const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); const b = g.boundingBox.clone().applyMatrix4(m.matrixWorld); if (b.max.x - b.min.x > 300 && b.max.z - b.min.z > 300) return; solids.push({ m, b }); });   // (not the ground's big pieces: under the rays' reach, and many triangles)
-    let near2 = [];
-    const free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (rc.intersectObjects(near2, false).length) return false; } return true; };
+    let near2B = [];
+    // (the rays only at the meshes whose box in the world they pass through, 1 cm round it: looser than the raycaster's own test of each
+    // mesh's box, so the same hits, without inverting every mesh's matrix for every ray)
+    const RB = [], boxes = (list, far) => { const O = rc.ray.origin, D = rc.ray.direction, E = 0.01, ox = O.x, oy = O.y, oz = O.z, dx = D.x, dy = D.y, dz = D.z, px = Math.abs(dx) < 1e-12, py = Math.abs(dy) < 1e-12, pz = Math.abs(dz) < 1e-12; RB.length = 0;
+      for (let i = 0, n = list.length; i < n; i++) { const e = list[i], mn = e.b.min, mx = e.b.max; let t0 = 0, t1 = far + E, a, c;
+        if (px) { if (ox < mn.x - E || ox > mx.x + E) continue; } else { a = (mn.x - E - ox) / dx; c = (mx.x + E - ox) / dx; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) continue; }
+        if (py) { if (oy < mn.y - E || oy > mx.y + E) continue; } else { a = (mn.y - E - oy) / dy; c = (mx.y + E - oy) / dy; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) continue; }
+        if (pz) { if (oz < mn.z - E || oz > mx.z + E) continue; } else { a = (mn.z - E - oz) / dz; c = (mx.z + E - oz) / dz; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) continue; }
+        RB.push(e.m); } };
+    const cast = (list, far) => { boxes(list, far); return rc.intersectObjects(RB, false); };
+    // a ray down (rc) on a solid: what THREE's Mesh.raycast finds (the same tests on the same triangles), only the triangles whose box in the
+    // world (on the ground) holds the ray's (x, z) tested, and done at the first hit: the triangles of each in a grid of 4 m, made at its first ray
+    const DH = new Map(), DS = new THREE.Sphere(), DR = new THREE.Ray(), DA = new THREE.Vector3(), DB = new THREE.Vector3(), DC = new THREE.Vector3(), DP = new THREE.Vector3(), DW = new THREE.Vector3();
+    const dhOf = (m) => { let h = DH.get(m); if (h !== undefined) return h; const g = m.geometry, M = m.material, d = g.drawRange, Pa = g.attributes.position, I = g.index;
+      if (m.raycast !== THREE.Mesh.prototype.raycast || m.isSkinnedMesh || Array.isArray(M) || !M || !g.isBufferGeometry || (g.morphAttributes.position && M.morphTargets) || d.start !== 0 || d.count < (I ? I.count : Pa.count)) { DH.set(m, null); return null; }
+      const n = I ? I.count : Pa.count, cells = new Map(), big = [], e = m.matrixWorld.elements, Q = 4, pad = 1e-3;
+      for (let t = 0; t + 2 < n; t += 3) { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (let j = 0; j < 3; j++) { DA.fromBufferAttribute(Pa, I ? I.getX(t + j) : t + j).applyMatrix4(m.matrixWorld); if (DA.x < x0) x0 = DA.x; if (DA.x > x1) x1 = DA.x; if (DA.z < z0) z0 = DA.z; if (DA.z > z1) z1 = DA.z; }
+        if (!(x0 <= x1 && z0 <= z1)) { big.push(t); continue; }
+        const i0 = Math.floor((x0 - pad) / Q), i1 = Math.floor((x1 + pad) / Q), j0 = Math.floor((z0 - pad) / Q), j1 = Math.floor((z1 + pad) / Q);
+        if ((i1 - i0 + 1) * (j1 - j0 + 1) > 256) { big.push(t); continue; }
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = i * 1048576 + j; let L = cells.get(k); if (!L) cells.set(k, L = []); L.push(t); } }
+      h = { cells, big, Q, I, Pa, inv: new THREE.Matrix4().copy(m.matrixWorld).invert() }; DH.set(m, h); return h; };
+    const downTri = (m, h, t) => { const I = h.I, M = m.material; DA.fromBufferAttribute(h.Pa, I ? I.getX(t) : t); DB.fromBufferAttribute(h.Pa, I ? I.getX(t + 1) : t + 1); DC.fromBufferAttribute(h.Pa, I ? I.getX(t + 2) : t + 2);
+      const l = M.side === THREE.BackSide ? DR.intersectTriangle(DC, DB, DA, true, DP) : DR.intersectTriangle(DA, DB, DC, M.side !== THREE.DoubleSide, DP); if (l === null) return false;
+      DW.copy(DP).applyMatrix4(m.matrixWorld); const c = rc.ray.origin.distanceTo(DW); return !(c < rc.near || c > rc.far); };
+    const downHit = (m, px, pz) => { const h = dhOf(m); if (!h) { FRH.length = 0; return rc.intersectObject(m, false, FRH).length > 0; }
+      if (!m.layers.test(rc.layers)) return false; const g = m.geometry; if (g.boundingSphere === null) g.computeBoundingSphere();
+      DS.copy(g.boundingSphere).applyMatrix4(m.matrixWorld); if (!rc.ray.intersectsSphere(DS)) return false;
+      DR.copy(rc.ray).applyMatrix4(h.inv); if (g.boundingBox !== null && !DR.intersectsBox(g.boundingBox)) return false;
+      for (const t of h.big) if (downTri(m, h, t)) return true;
+      const L = h.cells.get(Math.floor(px / h.Q) * 1048576 + Math.floor(pz / h.Q)); if (L) for (const t of L) if (downTri(m, h, t)) return true; return false; };
+    const FRO = new THREE.Vector3(), FRH = [], free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0), px = x + dx, pz = z + dz; rc.set(FRO.set(px, g0 + 30, pz), DOWN); rc.far = 29.65;
+      for (const { m, b } of near2B) { if (px < b.min.x - 0.05 || px > b.max.x + 0.05 || pz < b.min.z - 0.05 || pz > b.max.z + 0.05 || b.max.y < g0 + 0.3 || b.min.y > g0 + 30.05) continue; if (downHit(m, px, pz)) return false; } } return true; };   // (a ray down can only hit a solid whose box in the world it passes through: the others are not tested)
     for (const f of feet) {
       if (f.fr3.length < 2 || f.bk3.length < 2) continue;
-      near2 = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40)).map(e => e.m);
+      near2B = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40));
       let nx = 0, nz = 0; for (const e of f.fr3) { nx += e.f[0]; nz += e.f[1]; } const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;   // (towards the road)
       const tx = f.tx, tz = f.tz, B = f.bk3, Fr = f.fr3, len = Math.hypot(Fr[Fr.length - 1].p[0] - Fr[0].p[0], Fr[Fr.length - 1].p[2] - Fr[0].p[2]);
-      const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10); });
+      const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10);}).map(m => ({ m, b: m.geometry.boundingBox.clone().applyMatrix4(m.matrixWorld) }));
       // the back wall's outer face (a ray from 6 m behind the back row towards the road, under the top tread): how far behind the back row it is
       // (a temporary stand: none (no wall of its own), no rays)
       const offs = []; let hi = 0; if (!temp) for (let k = 0; k < Math.min(8, B.length); k++) { const e = B[Math.round(k * (B.length - 1) / Math.max(1, Math.min(8, B.length) - 1))], g0 = gr(e.p[0], e.p[2], e.p[1] - 3);
         rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, Math.min(e.p[1] - 0.4, g0 + 1.6), e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); rc.far = 6.6;
-        const h = rc.intersectObjects(near, false)[0]; if (h) offs.push(6 - h.distance);
-        if (h && e.p[1] - 1.2 > g0 + 2.6) { rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, e.p[1] - 1.2, e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); const h2 = rc.intersectObjects(near, false)[0]; if (h2 && Math.abs(h2.distance - h.distance) < 0.3) hi++; } }   // (the same face higher up: a wall that stands)
+        const h = cast(near, rc.far)[0]; if (h) offs.push(6 - h.distance);
+        if (h && e.p[1] - 1.2 > g0 + 2.6) { rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, e.p[1] - 1.2, e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); const h2 = cast(near, rc.far)[0]; if (h2 && Math.abs(h2.distance - h.distance) < 0.3) hi++; } }   // (the same face higher up: a wall that stands)
       offs.sort((a, b) => a - b); (f.at || (f.at = {})).wall = [offs.length, hi, Math.min(8, B.length)]; const wall = !temp && offs.length >= Math.min(8, B.length) * 0.6 ? Math.max(0, offs[offs.length >> 1]) : null, wo = (wall != null ? wall : 0.3) + 0.05, clad = wall != null && hi >= 2 && hi >= offs.length * 0.6;
       // its floodlights, lit in the evening and at night (js/render-vecer.js): under a roof's front edge (below), where it has none on masts along its back
       const lampAt = (x, y, z, ax, az, roof) => (o.standLamps || (o.standLamps = [])).push(x, y, z, ax, az, roof);
@@ -2053,14 +2089,17 @@
       let keep = false, built = false; mid++;
       const e = m.matrixWorld.elements, I = g.index ? g.index.array : null, n = I ? I.length : Pa.count, BU = 0.05;
       // the parts of the surface (two stands across the road share their uvs; a stepped stand's tiers are a part each): its triangles joined where they share a corner
-      const tris = [], par = new Map(), find = (k) => { let r = k; while (par.get(r) !== r) r = par.get(r); let c = k; while (c !== r) { const nx = par.get(c); par.set(c, r); c = nx; } return r; };
+      const tris = [], kid = new Map(), par = [], find = (k) => { let r = k; while (par[r] !== r) r = par[r]; let c = k; while (c !== r) { const nx = par[c]; par[c] = r; c = nx; } return r; };   // (a corner's key once to a number: the same joins in the same order)
       const key = (q) => Math.round(q.x * 50) + ',' + Math.round(q.y * 50) + ',' + Math.round(q.z * 50);
+      // (each corner once: an indexed surface's triangles share them; only read after)
+      const VC = new Array(Pa.count), vert = (k) => { let q = VC[k]; if (q) return q; const x = Pa.getX(k), y = Pa.getY(k), z = Pa.getZ(k);
+        q = VC[k] = { u: uv.getX(k), v: uv.getY(k), x: e[0] * x + e[4] * y + e[8] * z + e[12], y: e[1] * x + e[5] * y + e[9] * z + e[13], z: e[2] * x + e[6] * y + e[10] * z + e[14], k: null }; return q; };
       for (let t = 0; t + 2 < n; t += 3) {
-        const T = [0, 1, 2].map(j => { const k = I ? I[t + j] : t + j, x = Pa.getX(k), y = Pa.getY(k), z = Pa.getZ(k);
-          return { u: uv.getX(k), v: uv.getY(k), x: e[0] * x + e[4] * y + e[8] * z + e[12], y: e[1] * x + e[5] * y + e[9] * z + e[13], z: e[2] * x + e[6] * y + e[10] * z + e[14] }; });
+        const T = I ? [vert(I[t]), vert(I[t + 1]), vert(I[t + 2])] : [vert(t), vert(t + 1), vert(t + 2)];
         const den = (T[1].v - T[2].v) * (T[0].u - T[2].u) + (T[2].u - T[1].u) * (T[0].v - T[2].v); if (Math.abs(den) < 1e-12) continue;
-        const ks = T.map(key); for (const k of ks) if (!par.has(k)) par.set(k, k); const r0 = find(ks[0]); for (const k of ks.slice(1)) { const r = find(k); if (r !== r0) par.set(r, r0); }
-        tris.push({ T, den, k: ks[0] });
+        for (const q of T) if (q.k === null) { const s = key(q); let id = kid.get(s); if (id === undefined) { id = par.length; kid.set(s, id); par.push(id); } q.k = id; }
+        const r0 = find(T[0].k); for (let j = 1; j < 3; j++) { const r = find(T[j].k); if (r !== r0) par[r] = r0; }
+        tris.push({ T, den, k: T[0].k });
       }
       const isl = new Map(); for (const tr of tris) { const r = find(tr.k); let L = isl.get(r); if (!L) isl.set(r, L = []); L.push(tr); }
       // each part: p(u, v) on it, its u stations, its rows (a tier each: from its front vf to its back vb)
@@ -2107,7 +2146,8 @@
         const a = parts[i], b = parts[j], lo = Math.max(a.U[0], b.U[0]), hi = Math.min(a.U[a.U.length - 1], b.U[b.U.length - 1]);
         if (hi - lo < 0.3 * Math.min(a.U[a.U.length - 1] - a.U[0], b.U[b.U.length - 1] - b.U[0])) continue;
         const uo = (lo + hi) / 2;
-        const meets = (p, q) => p.rows.some(r => q.rows.some(s => { if (s.y <= r.y) return false; const rb = p.Q(uo, r.vb), sf2 = q.Q(uo, s.vf); return rb && sf2 && H2(rb, sf2) < 1.3 && sf2[1] - rb[1] < 1.6; }));
+        const meets = (p, q) => { const SF = new Array(q.rows.length); return p.rows.some(r => { let rb; return q.rows.some((s, k) => { if (s.y <= r.y) return false;   // (Q has no side effects: each edge's point once)
+          if (rb === undefined) rb = p.Q(uo, r.vb); if (!rb) return false; let sf2 = SF[k]; if (sf2 === undefined) sf2 = SF[k] = q.Q(uo, s.vf); return sf2 && H2(rb, sf2) < 1.3 && sf2[1] - rb[1] < 1.6; }); }); };
         if (meets(a, b) || meets(b, a)) sp[sf(i)] = sf(j);
       }
       const stands = new Map(); for (let i = 0; i < parts.length; i++) { const r = sf(i); let L = stands.get(r); if (!L) stands.set(r, L = []); L.push(parts[i]); }

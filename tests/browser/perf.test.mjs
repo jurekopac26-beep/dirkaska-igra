@@ -73,6 +73,7 @@ const T = checker('phone budget (844x390, normal quality, NIZKA detail, shadows)
 const srv = await serve();
 const browser = await launch();
 const out = {};
+let allIds = [];
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345 });
   await page.evaluate(() => {   // count every WebGL draw (all render passes)
@@ -82,6 +83,7 @@ try {
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]);
     wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
   });
+  allIds = await trackIds(page, true);   // (the test tracks too: those not measured keep their references on --update)
   // (Jezero too, a test track trackIds leaves out: tests/browser/fleet.test.mjs reads its budget from here)
   const ids = await trackIds(page); if (!ids.includes('jezero')) ids.unshift('jezero');
   for (const id of ids) {
@@ -127,5 +129,5 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
+if (update) { fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : Object.assign(Object.fromEntries(Object.entries(golden).filter(([k]) => allIds.includes(k) && !(k in out))), out), null, 1) + '\n'); console.log('written ' + FILE); }
 else T.done();

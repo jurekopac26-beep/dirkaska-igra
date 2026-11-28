@@ -140,6 +140,7 @@ try {
     // 5. the online picker in the same order (a room made without the network: Net stood in for, one friend in it): the arrows, every
     //    vehicle in turn round the whole order, X / Y on the pad the category before / after; the friend told each time (the host sends
     //    the room's list round, with its car in it)
+    await page.evaluate(() => window.__game.lazy('spletna'));   // (the online code comes only with the online screen: here first, to stand in for it)
     await page.evaluate(() => {
       const K = window.__netKeep = { available: Net.available, host: Net.host, send: Net.send, sendTo: Net.sendTo, close: Net.close, ids: Object.getOwnPropertyDescriptor(Net, 'ids') };
       window.__sent = []; Net.available = () => true; Net.host = () => { }; Net.send = (m) => window.__sent.push(JSON.parse(JSON.stringify(m))); Net.sendTo = (id, m) => window.__sent.push(JSON.parse(JSON.stringify(m))); Net.close = () => { };   // (as sent: a copy)

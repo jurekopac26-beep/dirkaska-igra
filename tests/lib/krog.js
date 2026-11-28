@@ -29,7 +29,7 @@ function gitIn(cwd) {
 // the tracks at a commit: every js/tracks/*.js run as index.html runs them, one after another into the same TRACK_DEFS, in its order (a
 // variant's file reads its track's: js/tracks/pikesg.js), the files it has not got after them
 function progeV(git, ref) {
-  const out = {}, ctx = vm.createContext({ TRACK_DEFS: [] }), fs = git('ls-tree', '--name-only', '-z', ref, 'js/tracks/').split('\0').filter(f => /^js\/tracks\/[\w-]+\.js$/.test(f));
+  const out = {}, ctx = vm.createContext({ TRACK_DEFS: [] }), fs = git('ls-tree', '--name-only', '-z', ref, 'js/tracks/').split('\0').filter(f => /^js\/tracks\/[\w-]+\.js$/.test(f) && f !== 'js/tracks/glave.js');   // (the heads: tools/glave-prog.js)
   let red = [];
   try { red = (git('show', `${ref}:index.html`).match(/js\/tracks\/[\w-]+\.js/g) || []).filter(f => fs.includes(f)); } catch (e) { /* no index.html */ }
   ctx.window = ctx;
@@ -104,12 +104,25 @@ function tabele(nove = []) {
 // index.html, garaza.html: only the tracks' own script lines (js/tracks/<id>.js, js/data/<id>.js, js/world-<theme>.js); a new track's line
 // after every other track's (Core.TRACKS keeps the scripts' order: the cars of the other tracks' races, races.test.js /car, go by it)
 function strani(stara, nova, { Pt }) {
-  const SKR = /^\s*<script src="js\/(?:tracks\/|data\/|world-)([\w-]+)\.js"><\/script>\s*$/, svoja = (l) => { const m = SKR.exec(l); return !!(m && Pt.has(m[1])); };
+  // (a real track's file may be a lazy link, <link rel="x-lazy-script" data-lazy="proga-<id>" href="js/tracks/<id>.js">: I17 korak 4;
+  //  a world's file one with data-svet, <link rel="x-lazy-script" data-lazy="svet-<ime>" data-svet="…" href>: korak 5)
+  const SKR = /^\s*(?:<script src|<link rel="x-lazy-script" data-lazy="(?:proga-[\w-]+|svet-[\w-]+" data-svet="[^"]*)" href)="js\/(?:tracks\/|data\/|world-)([\w-]+)\.js">(?:<\/script>)?\s*$/, svoja = (l) => { const m = SKR.exec(l); return !!(m && Pt.has(m[1])); };
   const a = stara.split('\n').filter(l => !svoja(l)), b = nova.split('\n').filter(l => !svoja(l));
   if (a.join('\n') !== b.join('\n')) return 'other lines than the tracks\' scripts';
-  const red = (t) => t.split('\n').map(l => (/^\s*<script src="js\/tracks\/([\w-]+)\.js"><\/script>/.exec(l) || [])[1]).filter(Boolean);
+  const red = (t) => t.split('\n').map(l => (/^\s*(?:<script src|<link rel="x-lazy-script" data-lazy="proga-[\w-]+" href)="js\/tracks\/([\w-]+)\.js">/.exec(l) || [])[1]).filter(Boolean);
   const po = red(stara), pn = red(nova);
   return pn.slice(0, po.length).join() === po.join() ? null : 'a track\'s script not after all the others\' (the order of Core.TRACKS)';
+}
+// js/tracks/glave.js (tools/glave-prog.js): only the heads of the tracks and their places in TRACK_ORDER
+function glave(stara, nova, { P }) {
+  const brez = (t) => t.split('\n').map(l => {
+    let m = /^TRACK_DEFS\.push\((.*)\);$/.exec(l);
+    if (m) { try { return P.has(JSON.parse(m[1]).id) ? null : l; } catch (e) { return l; } }
+    m = /^var TRACK_ORDER = (\[.*\]);$/.exec(l);
+    if (m) { try { return 'var TRACK_ORDER = ' + JSON.stringify(JSON.parse(m[1]).filter(id => !P.has(id))); } catch (e) { return l; } }
+    return l;
+  }).filter(l => l !== null).join('\n');
+  return brez(stara) === brez(nova) ? null : 'other heads than the tracks\' (or other lines)';
 }
 // js/lang.js: only lines of new translations added (a new key each: an old one would change another track's or the game's words)
 const VNOS = /'(?:[^'\\]|\\.)*'\s*:\s*'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"\s*:\s*"(?:[^"\\]|\\.)*"/g;
@@ -145,7 +158,7 @@ const SKUPNE = {
   'js/routes.js': tabele(), 'js/menu-data.js': tabele(['window.MENU.globe']), 'js/menu.js': tabele(['FLAG_FILES']), 'tools/menu-globe.mjs': tabele(['SUBUNITS']),
   'tests/golden/sim.json': json, 'tests/golden/races.json': json, 'tests/golden/world.json': json, 'tests/golden/perf.json': json,
   'tools/menu-corners.json': json, 'maketa-menija/orodja/proge_igra.json': json,
-  'tests/run.js': seznamTestov, 'tests/lib/sim.js': crashAt,
+  'tests/run.js': seznamTestov, 'tests/lib/sim.js': crashAt, 'js/tracks/glave.js': glave,
 };
 
 // the change from base to head (commits; git diff, renames as a file gone and a new one)

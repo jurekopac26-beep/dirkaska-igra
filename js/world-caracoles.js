@@ -29,22 +29,74 @@
     // by a leg the blend is that leg's height, between two legs of a hairpin ladder it passes smoothly from one to the other (no seam where the
     // nearest leg changes); env: the highest the ground may lie under every part of the road around (0.3 m below it inside its barriers, rising
     // behind them: gently for 5 m, then at 2 in 1)
-    const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds;
+    const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds, ds2 = 2 * ds;
     let ws = 0, hs = 0, bd = 1e9, bi = -1, bdd = 1e9, env = 1e9;
-    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
-      const L = P.cells[b * P.ncx + a]; if (!L) continue;
-      for (let q = 0; q < L.length; q++) {
-        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+    const HC = API.VRHC, RR = (66 + ds) * (66 + ds);   // (a cell farther than 64 m + ds (+2 m slack) holds no sample within d < 64: d >= the true distance - ds)
+    const cells = P.cells, ncx = P.ncx, cx0 = P.cx0, cz0 = P.cz0, a0 = Math.max(0, cx - 2), a1 = Math.min(ncx - 1, cx + 2), b1 = Math.min(P.ncz - 1, cz + 2);
+    const px = T.px, pz = T.pz, tx = T.tx, tz = T.tz, nx = T.nx, nz = T.nz, br = T.br, bl = T.bl, hy = T.hy, grade = T.grade;   // (the road's arrays, read once)
+    for (let b = Math.max(0, cz - 2); b <= b1; b++) {
+      const zl = (b + cz0) * HC, gz = z < zl ? zl - z : z > zl + HC ? z - zl - HC : 0, gz2 = gz * gz; if (gz2 >= RR) continue;
+      for (let a = a0; a <= a1; a++) {
+      const L = cells[b * ncx + a]; if (!L) continue;
+      const xl = (a + cx0) * HC, gx = x < xl ? xl - x : x > xl + HC ? x - xl - HC : 0; if (gx * gx + gz2 >= RR) continue;
+      for (let q = 0, nq = L.length; q < nq; q++) {
+        const i = L[q], dx = x - px[i], dz = z - pz[i], lat = dx * nx[i] + dz * nz[i]; if (lat >= 64 || lat <= -64) continue;   // (64 m or more aside: d >= 64 whatever al is)
+        const al = dx * tx[i] + dz * tz[i], ex = Math.max(0, Math.abs(al) - ds); if (ex >= 64) continue;
+        const d = Math.sqrt(lat * lat + ex * ex);
         if (d >= 64) continue;
-        const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), hc = T.hy[i] + T.grade[i] * clamp(al, -2 * ds, 2 * ds), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
+        const dd = Math.max(0, d - (lat > 0 ? br[i] : bl[i])), hc = hy[i] + grade[i] * (al < -ds2 ? -ds2 : al > ds2 ? ds2 : al), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
         ws += wq; hs += wq * hc;
         if (d < bd) { bd = d; bi = i; }
         if (dd < bdd) bdd = dd;
         const e = hc - 0.3 + (dd < 5 ? 0.2 * dd * dd : 5 + 2 * (dd - 5)); if (e < env) env = e;
       }
+      }
     }
     CAN.i = bi; CAN.d = bd; CAN.dd = bdd; CAN.h = bi < 0 ? 0 : hs / ws; CAN.env = env;
     return CAN;
+  }
+  let caMBT = null, caMB = 0;   // (the widest barrier offset of the road, for caNearLt's cell skip)
+  function caNearLt(x, z, lim) {   // API.vrNear(x, z).dd < lim, the same sums, without the blend: true at the first sample within 64 m whose distance beyond its barrier is under lim
+    const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds, HC = API.VRHC;
+    if (caMBT !== T) { caMBT = T; caMB = 0; for (let i = 0; i < T.N; i++) caMB = Math.max(caMB, T.br[i], T.bl[i]); }
+    const R = Math.min(66, lim + caMB + 2) + ds, RR = R * R;   // (a cell farther than that holds no such sample: d >= the true distance - ds)
+    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
+      const zl = (b + P.cz0) * HC, gz = z < zl ? zl - z : z > zl + HC ? z - zl - HC : 0, gz2 = gz * gz; if (gz2 >= RR) continue;
+      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
+        const L = P.cells[b * P.ncx + a]; if (!L) continue;
+        const xl = (a + P.cx0) * HC, gx = x < xl ? xl - x : x > xl + HC ? x - xl - HC : 0; if (gx * gx + gz2 >= RR) continue;
+        for (let q = 0; q < L.length; q++) {
+          const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i];
+          if (lat >= 64 || lat <= -64) continue;
+          const bar = lat > 0 ? T.br[i] : T.bl[i]; if ((lat > 0 ? lat : -lat) - bar >= lim + 1e-6) continue;   // (d >= |lat|; the margin for the rounding of the root)
+          const ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+          if (d >= 64) continue;
+          if (Math.max(0, d - bar) < lim) return true;
+        }
+      }
+    }
+    return false;
+  }
+  function caNearDd(x, z) {   // API.vrNear(x, z).dd alone (the least distance beyond a barrier over the samples within 64 m, 1e9 without one): the same minimum, cells and samples that cannot lower it skipped
+    const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds, HC = API.VRHC;
+    if (caMBT !== T) { caMBT = T; caMB = 0; for (let i = 0; i < T.N; i++) caMB = Math.max(caMB, T.br[i], T.bl[i]); }
+    let bdd = 1e9;
+    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
+      const zl = (b + P.cz0) * HC, gz = z < zl ? zl - z : z > zl + HC ? z - zl - HC : 0;
+      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
+        const L = P.cells[b * P.ncx + a]; if (!L) continue;
+        const xl = (a + P.cx0) * HC, gx = x < xl ? xl - x : x > xl + HC ? x - xl - HC : 0, R = Math.min(66, bdd + caMB + 2) + ds; if (gx * gx + gz * gz >= R * R) continue;
+        for (let q = 0; q < L.length; q++) {
+          const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i];
+          if (lat >= 64 || lat <= -64) continue;
+          const bar = lat > 0 ? T.br[i] : T.bl[i]; if ((lat > 0 ? lat : -lat) - bar >= bdd + 1e-6) continue;   // (d >= |lat|: no lower)
+          const ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+          if (d >= 64) continue;
+          const dd = Math.max(0, d - bar); if (dd < bdd) bdd = dd;
+        }
+      }
+    }
+    return bdd;
   }
   function caH(x, z) {   // terrain height (as vrH, on caNear: the road's blend near it, the real terrain farther out; never above the road around)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
@@ -53,8 +105,8 @@
       if (V.sea === null) h = lerp(hr, f, sstep(1, 42, dd));
       else if (V.brS && V.brS[i]) h = lerp(hr, Math.min(f, V.sea - 2.2), sstep(1, 3, dd));   // (by the sea: under the bridge the sea floor right past the parapets,
       else h = lerp(hr, f, sstep(1, f < V.sea + 1 ? 7 : 42, dd)); } }                       //  beside a causeway a steep bank down into the water)
-    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
-    for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
+    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 12, dx = x - p.x, dz = z - p.z, R = p.r + pb; if (dx >= R || dx <= -R || dz >= R || dz <= -R) continue; const d = Math.hypot(dx, dz); if (d < R) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
+    const gul = API.VR.gul; if (i >= 0 && gul.length) for (const b of gul) {   // the stream bed under the bridge (as vrH; i < 0: none)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
       const dx = x - b.x, dz = z - b.z, al = Math.abs(dx * b.tx + dz * b.tz), lat = Math.abs(dx * b.nx + dz * b.nz);
       if (al < b.half + 14 && lat < 60) h = Math.min(h, lerp(h, b.y, sstep(60, 22, lat)) + Math.max(0, al - b.bw / 2) * 1.2);
@@ -75,19 +127,27 @@
     const d = caGH(i + 1, j + 1); return d + (1 - u) * (caGH(i, j + 1) - d) + (1 - v) * (caGH(i + 1, j) - d);
   }
   function caSlope(x, z) { const a = caGround(x - 2.5, z), b = caGround(x + 2.5, z), c = caGround(x, z - 2.5), d = caGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
-  function caSnow(x, z, A, ny, sz) {   // how much of the old summer snow lies at (x, z) (A: metres above the sea, ny / sz: the ground's up and south
+  const CALC = [0, 0, 0, 0, 0];   // caLC4: the shares of land cover classes 1-4 around (x, z), each as API.vrLCf gives it (the same sums), in one pass
+  function caLC4(x, z) {
+    const P = API.VR, L = P.L, lc = P.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+    const W = L.nx, H = L.nz, i1 = i + 1, j1 = j + 1, iin = i >= 0 && i < W, i1n = i1 >= 0 && i1 < W, jn = j >= 0 && j < H, j1n = j1 >= 0 && j1 < H;   // (the cells' classes, -1 off the map)
+    const c00 = iin && jn ? lc[j * W + i] : -1, c10 = i1n && jn ? lc[j * W + i1] : -1, c01 = iin && j1n ? lc[j1 * W + i] : -1, c11 = i1n && j1n ? lc[j1 * W + i1] : -1;
+    for (let c = 1; c <= 4; c++) CALC[c] = ((c00 === c ? 1 : 0) * (1 - u) + (c10 === c ? 1 : 0) * u) * (1 - v) + ((c01 === c ? 1 : 0) * (1 - u) + (c11 === c ? 1 : 0) * u) * v;
+    return CALC;
+  }
+  function caSnow(x, z, A, ny, sz, s4, c5) {   // (s4: the share of land cover 4 when the caller has it) how much of the old summer snow lies at (x, z) (A: metres above the sea, ny / sz: the ground's up and south
     // components): above ~3350 m on the sunny north faces, from ~2690 m on the shady south faces (the southern hemisphere), in patches and in the
     // hollows, off the steepest faces; and the snowfields WorldCover maps (lc 4)
     const P = API.VR, line = 3020 - 330 * clamp(sz * 2.4, -1, 1) + (P.c4(x, z) - 0.5) * 240;
-    const k = sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, P.c5(x, z) + 0.3 * sstep(line, line + 450, A));
-    return Math.max(k, API.vrLCf(x, z, 4) * sstep(0.32, 0.6, ny));
+    const k = A <= line || ny <= 0.42 ? 0 : sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, (c5 === undefined ? P.c5(x, z) : c5) + 0.3 * sstep(line, line + 450, A));   // (below the line or flatter than 0.42: a factor is 0, the noise is not read)
+    return Math.max(k, (s4 === undefined ? API.vrLCf(x, z, 4) : s4) * sstep(0.32, 0.6, ny));
   }
   function caCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the scree and rock in grey-brown, banded with rust and ochre (the
     // volcanic layers of the range), pale with ash here and there, darker and banded on the steep faces; on the slopes the scree's fans and runnels down the
     // fall line (sx, sz: the ground's east and south components); straw in patches where the bunch grass grows (lc 1: thin on the scree, the tufts
     // themselves are the plants), olive under the shrubs (lc 2), gravel yards in Portillo (lc 3), the summer snow, a trodden gravel verge
     const P = API.VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), r = P.c3(x, z), f = P.n4(x, z);
-    const gr = API.vrLCf(x, z, 1), sh = API.vrLCf(x, z, 2), se = API.vrLCf(x, z, 3);
+    const LC = caLC4(x, z), gr = LC[1], sh = LC[2], se = LC[3], s4 = LC[4];
     let R = 0.575, G = 0.555, B = 0.53;
     const rust = sstep(0.6, 0.86, m), och = sstep(0.58, 0.84, q) * (1 - 0.6 * rust), dark = sstep(0.6, 0.84, r), ash = sstep(0.6, 0.86, P.c4(x * 1.4, z * 1.4)) * (1 - rust) * (1 - dark);
     R = lerp(R, 0.62, rust); G = lerp(G, 0.5, rust); B = lerp(B, 0.43, rust);
@@ -97,20 +157,25 @@
     R += (f - 0.5) * 0.09; G += (f - 0.5) * 0.085; B += (f - 0.5) * 0.08;
     const st = sstep(0.8, 0.52, ny);   // the steep faces: rock in bands along the height
     const hz = Math.hypot(sx || 0, sz), fan = sstep(0.12, 0.3, hz) * (1 - st);   // the scree slopes: fans of fresher, paler scree and darker runnels down the fall line
-    if (fan > 0) { const u = (z * (sx || 0) - x * sz) / hz, w = Math.sin(u * 0.23 + P.c5(x, z) * 6 + P.n2(x, z) * 4), k = w * fan * (0.06 + 0.09 * P.n3(x, z)); R += k; G += k * 0.97; B += k * 0.92; }
+    let c5;   // (P.c5(x, z), read once for the fans and the snow)
+    if (fan > 0) { c5 = P.c5(x, z); const u = (z * (sx || 0) - x * sz) / hz, w = Math.sin(u * 0.23 + c5 * 6 + P.n2(x, z) * 4), k = w * fan * (0.06 + 0.09 * P.n3(x, z)); R += k; G += k * 0.97; B += k * 0.92; }
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 7.5 + P.c2(x * 0.4, z * 0.4) * 7), k = 0.8 + 0.18 * band; R = lerp(R, 0.57 * k + rust * 0.06, st); G = lerp(G, 0.53 * k, st); B = lerp(B, 0.5 * k, st); }
     const gk = gr * sstep(0.4, 0.78, P.n2(x * 1.9, z * 1.9)) * 0.55 * (1 - 0.7 * st);
     R = lerp(R, 0.69, gk); G = lerp(G, 0.64, gk); B = lerp(B, 0.5, gk);
     R = lerp(R, 0.52, sh * 0.6); G = lerp(G, 0.52, sh * 0.6); B = lerp(B, 0.35, sh * 0.6);
     R = lerp(R, 0.68, se * 0.5); G = lerp(G, 0.65, se * 0.5); B = lerp(B, 0.6, se * 0.5);
-    const sn = caSnow(x, z, A, ny, sz); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
+    const sn = caSnow(x, z, A, ny, sz, s4, c5); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.45 * (1 - sn); R = lerp(R, 0.6, t); G = lerp(G, 0.57, t); B = lerp(B, 0.52, t); }
     CACOL[0] = R; CACOL[1] = G; CACOL[2] = B; return CACOL;
   }
+  let caGCC = null, caGCG = null, caGCF = null;   // (caGCol's colours of the grid vertices, each worked out once: the grid, the colouring they are for)
   function caGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in caTileGeo)
     const G = API.VR.G, gx = clamp((x - G.x0) / API.VRC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / API.VRC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
-    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, h = caGH(ii, jj);
-      const nx = -(caGH(ii + 1, jj) - caGH(ii - 1, jj)) / (2 * API.VRC), nz = -(caGH(ii, jj + 1) - caGH(ii, jj - 1)) / (2 * API.VRC), l = Math.hypot(nx, 1, nz), c = (API.VR.col || caCol)(G.x0 + ii * API.VRC, G.z0 + jj * API.VRC, h, 1 / l, nz / l, G.dd[jj * G.nx + ii], nx / l);
+    const cf = API.VR.col || caCol; if (caGCG !== G || caGCF !== cf) { caGCC = new Map(); caGCG = G; caGCF = cf; }
+    for (let q = 0; q < 4; q++) { const a = q & 1, b = q >> 1, w = q === 0 ? (1 - u) * (1 - v) : q === 1 ? u * (1 - v) : q === 2 ? (1 - u) * v : u * v, ii = i + a, jj = j + b, kk = jj * G.nx + ii;
+      let c = caGCC.get(kk);
+      if (!c) { const h = caGH(ii, jj), nx = -(caGH(ii + 1, jj) - caGH(ii - 1, jj)) / (2 * API.VRC), nz = -(caGH(ii, jj + 1) - caGH(ii, jj - 1)) / (2 * API.VRC), l = Math.hypot(nx, 1, nz), r = cf(G.x0 + ii * API.VRC, G.z0 + jj * API.VRC, h, 1 / l, nz / l, G.dd[kk], nx / l);
+        c = [r[0], r[1], r[2]]; caGCC.set(kk, c); }
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
   }
@@ -120,12 +185,13 @@
   }
   function caTileGeo(ti, tj, st) {   // one 100 m terrain tile (every st-th grid vertex), as vrTileGeo, coloured by caCol (or the road's own, VR.col: the Moki Dugway's)
     const G = API.VR.G, m = API.VRT / st, n = m + 1, pos = new Float32Array(n * n * 3), nor = new Float32Array(n * n * 3), col = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2), stp = new Float32Array(n * n), i0 = ti * API.VRT, j0 = tj * API.VRT;
+    const cf = API.VR.col || caCol, VRC = API.VRC, dn = 2 * VRC * st, gnx = G.nx, gnz1 = G.nz - 1, dd = G.dd;   // (per tile: the colouring, the normals' denominator)
     let k = 0;
     for (let b = 0; b < n; b++) for (let a = 0; a < n; a++, k++) {
-      const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * API.VRC, z = G.z0 + j * API.VRC, h = caGH(i, j);
-      let nx = -(caGH(i + st, j) - caGH(i - st, j)) / (2 * API.VRC * st), nz = -(caGH(i, j + st) - caGH(i, j - st)) / (2 * API.VRC * st), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
+      const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * VRC, z = G.z0 + j * VRC, h = caGH(i, j);
+      let nx = -(caGH(i + st, j) - caGH(i - st, j)) / dn, nz = -(caGH(i, j + st) - caGH(i, j - st)) / dn, l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; nor[k * 3] = nx; nor[k * 3 + 1] = ny; nor[k * 3 + 2] = nz;
-      const c = (API.VR.col || caCol)(x, z, h, ny, nz, G.dd[clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1)], nx); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
+      const c = cf(x, z, h, ny, nz, dd[clamp(j, 0, gnz1) * gnx + clamp(i, 0, gnx - 1)], nx); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
       uv[k * 2] = x / 10; uv[k * 2 + 1] = -z / 10; stp[k] = sstep(0.78, 0.5, ny);
     }
     if (st === 1) {   // (no cracks against a coarse neighbour: as vrTileGeo)
@@ -388,7 +454,7 @@
     const scen = new Chunks(110), fac = new Chunks(110, true), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (fac: the walls with windows; ban: the race's boards, ban2: the signs)
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.84, 0.12, 0.12], [0.95, 0.95, 0.95], [0.1, 0.24, 0.66], [0.46, 0.7, 0.92], [0.95, 0.95, 0.95], [0.96, 0.78, 0.18], [0.84, 0.12, 0.12], [0.12, 0.14, 0.2], [0.2, 0.55, 0.32], [1, 0.55, 0.1]];   // (Chile's red, white and blue, Argentina's sky blue)
-    const CR = crowdCtx({ gH: caGround, near: (x, z) => API.vrNear(x, z).dd, excluded, maxSlope: 0.6, water: (x, z) => API.vrWater(x, z).e > -4, shirts: fans }), crSoft = new Set();
+    const CR = crowdCtx({ gH: caGround, near: caNearDd, excluded, maxSlope: 0.6, water: (x, z) => API.vrWater(x, z).e > -4, shirts: fans }), crSoft = new Set();
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (bottom centre cx, cy, cz) readable from +t and -t; atlas cell u0..u1 x v0..v1; tilt leans its top towards +t
       const ux = tz, uz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;
       for (const f of [-1, 1]) { const ox = tx * ca * 0.04 * f, oy = -sa * 0.04 * f, oz = tz * ca * 0.04 * f, hw = W / 2 * f;
@@ -470,9 +536,9 @@
         for (const o of [-3.3, 3.3]) box(gb, bx + T.tx[bi] * o, by - 0.2, bz + T.tz[bi] * o, 0.14, 3.0, 0.14, T.hd[bi], [0.3, 0.3, 0.32]);
         bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 6.6, 0.82, v0, v1); exclPush(bx, bz, 4.5); }
       const hh = T.hd[padS.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(2931);   // the trucks in the lay-by, side by side
-      for (let k = 0; k < 3; k++) { const b = (k - 1) * 4.2, px = padS.x - sn * b, pz = padS.z + c * b; if (API.vrNear(px, pz).dd < 1.5) continue;
+      for (let k = 0; k < 3; k++) { const b = (k - 1) * 4.2, px = padS.x - sn * b, pz = padS.z + c * b; if (caNearLt(px, pz, 1.5)) continue;
         parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]); }
-      for (let k = 0; k < 6; k++) { const px = padS.x + (R() - 0.5) * 16, pz = padS.z + (R() - 0.5) * 16; if (API.vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
+      for (let k = 0; k < 6; k++) { const px = padS.x + (R() - 0.5) * 16, pz = padS.z + (R() - 0.5) * 16; if (caNearLt(px, pz, 1)) continue; person(px, pz, R() * TAU); }
     }
 
     /* ---- the checkpoints: a blue gantry "CPn  altitude" ---- */
@@ -495,14 +561,14 @@
         for (const [k, yy] of [[2, 2.9], [7, 2.1]]) { const [v0, v1, u0, u1] = board(k); bannerQ(bx, by + yy, bz, -T.tx[bi], -T.tz[bi], 3.6, 0.9, v0, v1, u0, u1, ban2); }
         exclPush(bx, bz, 2.5); }
       const hh = T.hd[padF.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(2941);
-      for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -5 : 5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (API.vrNear(px, pz).dd < 1.5) continue;
+      for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -5 : 5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (caNearLt(px, pz, 1.5)) continue;
         if (k === 4 || k === 9) parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]);
         else if (k < 4 || k > 5) parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(fans[(k * 3) % fans.length], R, 0.2)); }
-      for (let k = 0; k < 20; k++) { const px = padF.x + (R() - 0.5) * 26, pz = padF.z + (R() - 0.5) * 26; if (API.vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
+      for (let k = 0; k < 20; k++) { const px = padF.x + (R() - 0.5) * 26, pz = padF.z + (R() - 0.5) * 26; if (caNearLt(px, pz, 1)) continue; person(px, pz, R() * TAU); }
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road towards the border: concrete blocks across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
       { const RT2 = rng(2951);   // and the queue of trucks waiting behind the blocks on the shoulder, nose to tail
-        for (let k = 0; k < 4; k++) { const s = T.len - 24 - k * 19, i = T.idx(s), o = (T.br[i] + 3.2), px = T.px[i] + T.nx[i] * o, pz = T.pz[i] + T.nz[i] * o; if (API.vrNear(px, pz).dd < 1.2 || excluded(px, pz)) continue;
+        for (let k = 0; k < 4; k++) { const s = T.len - 24 - k * 19, i = T.idx(s), o = (T.br[i] + 3.2), px = T.px[i] + T.nx[i] * o, pz = T.pz[i] + T.nz[i] * o; if (caNearLt(px, pz, 1.2) || excluded(px, pz)) continue;
           parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, T.hd[i] + PI, truckCols[Math.floor(RT2() * truckCols.length)], trailerCols[Math.floor(RT2() * trailerCols.length)]); exclPush(px, pz, 9); } }
     }
 
@@ -553,7 +619,7 @@
     {
       const mkPosts = [], need = [new Uint8Array(N), new Uint8Array(N)];
       for (const c of T.corners) if (c.sev >= 2) { const sd = -c.dir > 0 ? 1 : 0; for (let k = Math.max(0, c.i0 - 8); k <= Math.min(N - 1, c.i1 + 8); k++) need[sd][k] = 1; }
-      for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];
+      for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i], nd = need[side > 0 ? 1 : 0]; if (nd[i] && (i + 1 >= N || nd[i + 1])) continue;   // (already railed: a curve's)
         for (const d of [4, 8, 13, 19, 26]) { const o = side * (bar + d);
           if (caGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < T.hy[i] - (d <= 8 ? 2.4 : 2.4 + (d - 8) * 0.35)) { need[side > 0 ? 1 : 0][i] = 1; if (i + 1 < N) need[side > 0 ? 1 : 0][i + 1] = 1; break; } } }
       const iS0 = T.idx(sStart + 40), iS1 = T.idx(sFin - 40), steel = [0.8, 0.82, 0.84], steelB = [0.56, 0.58, 0.6], postC = [0.48, 0.49, 0.52];
@@ -688,22 +754,24 @@
     let nPlants = 0;
     {
       const G = P.G, Lt = API.VRC * API.VRT, maxT = Math.round(70000 * dens), RT = rng(2961), SP = 3.4 / Math.sqrt(dens);
+      const R230 = LOD.radius(230), R70 = LOD.radius(70), vrDist = API.vrDist, vrLC = API.vrLC;   // (hoisted: pure, the same for every spot)
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = API.vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
-          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
-          const c = API.vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
-          let kind = -1;
+          const hd = vrDist(x, z); if (hd > R230) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > R70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const c = vrLC(x, z);
+          let kind = -1;   // (the kind first, from the land cover and r1 alone: the ground's height and slope only for the spots that grow something)
           if (c === 1) kind = r1 < 0.52 ? 0 : r1 < 0.56 ? 1 : -1;
           else if (c === 2) kind = r1 < 0.3 ? 1 : r1 < 0.42 ? 0 : -1;
-          else if (c === 0) kind = r1 < 0.05 ? 0 : r1 < 0.065 ? 3 : A > 2620 && r1 < 0.085 ? 2 : r1 < 0.09 ? 1 : -1;
+          else if (c === 0) kind = r1 < 0.05 ? 0 : r1 < 0.065 ? 3 : r1 >= 0.09 ? -1 : r1 < 0.085 && caGround(x, z) + base > 2620 ? 2 : 1;
           if (kind < 0) continue;
+          const y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           if (sl > (kind === 3 ? 1.1 : 0.85)) continue;
           if (API.vrWater(x, z).e > -3) continue;
-          const nn = API.vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
+          if (caNearLt(x, z, 1.6)) continue;
           if (excluded(x, z)) continue;
           const ny = 1 / Math.sqrt(1 + sl * sl); if (caSnow(x, z, A, ny, 0) > 0.35) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.6 + r3 * 0.6, 0.45 + r4 * 0.45, [0.92 + r2 * 0.16, 0.92 + r3 * 0.12, 0.88 + r4 * 0.16]);
@@ -720,7 +788,7 @@
       edge: for (let s = 12; s < T.len - 12; s += 0.9 / dens) for (const side of [-1, 1]) {
         if (galAt[T.idx(s)]) continue;
         const o = 1.7 + Math.pow(RS(), 2) * 42, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
-        if (API.vrNear(x, z).dd < 1.2 || excluded(x, z) || API.vrWater(x, z).e > -3) continue;
+        if (caNearLt(x, z, 1.2) || excluded(x, z) || API.vrWater(x, z).e > -3) continue;
         const y0 = caGround(x, z), sl = caSlope(x, z); if (sl > 1.15 || (API.vrLC(x, z) === 1 && r1 < 0.45)) continue;
         if (caSnow(x, z, y0 + base, 1 / Math.sqrt(1 + sl * sl), 0) > 0.3) continue;
         const k = 0.84 + r3 * 0.28, sc = 0.85 + r1 * 1.25 - 0.006 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);   // (a little bigger at the road's edge)
@@ -735,17 +803,17 @@
       const RV = rng(2971), rockC = [[0.64, 0.6, 0.55], [0.63, 0.53, 0.46], [0.68, 0.62, 0.53], [0.5, 0.48, 0.47], [0.6, 0.58, 0.56]];
       for (let s = 10; s < T.len - 10; s += 6) for (const side of [-1, 1]) {   // at the foot of the cuts and out on the scree
         const i = T.idx(s); if (galAt[i] || RV() > 0.36) continue;
-        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.3; if (API.vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || API.vrWater(x, z).e > -3) continue;
+        const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.3; if (caNearLt(x, z, sz + 0.6) || excluded(x, z) || API.vrWater(x, z).e > -3) continue;
         const y = caGround(x, z), sl = caSlope(x, z); if (sl < 0.3 && API.vrLC(x, z) !== 0) continue;
         const g = scen.get(x, z), col = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.12);
         rock(g, x, y + sz * 0.3, z, sz * 1.2, sz, sz, RV() * TAU, col, RV, 0.32);
       }
       for (let s = 16; s < T.len - 16; s += 16) for (const side of [-1, 1]) {   // crags where the slope is steep
         if (RV() < 0.4) continue;
-        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || API.vrNear(x, z).dd < 6 || API.vrDist(x, z) > LOD.cap(90)) continue;
+        const [x, z] = onSide(s, side, 8 + RV() * 70); if (excluded(x, z) || caNearLt(x, z, 6) || API.vrDist(x, z) > LOD.cap(90)) continue;
         const sl = caSlope(x, z); if (sl < 0.7) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.08);
-        for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 3.8, qx = x + (RV() - 0.5) * 8, qz = z + (RV() - 0.5) * 8, qy = caGround(qx, qz); if (API.vrNear(qx, qz).dd < r0 + 1) continue;
+        for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 3.8, qx = x + (RV() - 0.5) * 8, qz = z + (RV() - 0.5) * 8, qy = caGround(qx, qz); if (caNearLt(qx, qz, r0 + 1)) continue;
           rock(g, qx, qy + r0 * 0.4, qz, r0, r0 * (0.8 + RV() * 0.8), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.08), RV, 0.35); }
       }
     }

@@ -119,6 +119,7 @@
   // one nearest the finish); within ~0.5 % of Core's Track.raceLen without building the track
   function km(d) {
     if (Number.isFinite(d.realKm) && d.realKm > 0) return d.realKm;
+    if (d.head && d.hd && Number.isFinite(d.hd.km)) return d.hd.km;   // (a lazy track's head, js/tracks/glave.js: no points, its km as the full file gives it)
     const p = d.points || [];
     const near = (q) => { let b = 0, bd = Infinity; p.forEach((x, i) => { const e = Math.hypot(x[0] - q[0], x[1] - q[1]); if (e < bd) { bd = e; b = i; } }); return b; };
     let a = 0, b = p.length - 1;
