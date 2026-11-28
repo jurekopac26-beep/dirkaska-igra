@@ -42,3 +42,9 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Zvoki** (predpostavka po splošno znanem, ne po posnetkih): veter, ki z višino narašča in na sedlu žvižga; bučanje ledeniške vode iz jezika in jezera; žvižgi svizcev na travnikih in v grušču (svizec živi v vsem visokogorju Alp).
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py furka --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`; `led` doda ledenike na daljni teren). Vire glej v `README.md` pod »Zasluge«.
+
+## Dodelava (O-28-36): kaj je narejeno
+- **Ronski ledenik od blizu** (`js/world-furka-ledenik.js`, podatki `tools/furka-ledenik.py`): v oddaljenem pogledu se blok 2,25 × 3,75 km (jezik, ledni slap, spodnji del zgornjega ledenika, jezero) nadomesti z lastno mrežo na 41,7 m (55 × 91 oglišč, 9216 trikotnikov, en klic risanja) iz Copernicus DEM GLO-30 in ESA WorldCover 2021: led po višini in naklonu, razpoke, ledni slap, morene ob robu, pokrivala nad lednim jezikom ob hotelu, mlečno jezero. Robna oglišča so enaka oddaljeni mreži (brez šiva).
+- **Zvok višine** (`js/sfx-furka.js`): veter od 2.045 m do sedla vse močnejši, na sedlu piš; ob hotelu zavetje pobočja; talnica ledenika ob iztoku jezera (stran po kameri); redki žvižgi svizcev nad 2.100 m podnevi. Splošni veter `js/sfx-okolje.js` za Furko utihne.
+- **Zanimivosti**: nove Pogled na Gletsch, Ledeniško jezero, Galenstock (3.586 m), Furkastock (3.026 m); vse po 2–3 vrstice komentatorja; `cloudTh` 0,22.
+- **Predpostavke (brez vira)**: kraj svizcev, `cloudTh`, kraj iztoka (iz WorldCover: najbližja voda ~440 m od hotela), mesto Galenstocka in Furkastocka na cesti (po smeri pogleda). Potok Muttbach ni dodan: kraj prečkanja ceste iz OSM ni preverjen.
