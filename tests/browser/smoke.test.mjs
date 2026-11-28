@@ -8,7 +8,7 @@
 //   node tests/browser/smoke2.test.mjs           the other half of the tracks (SMOKE_DEL=2), the title demo, the rain and the runs (5-6e):
 //                                                each part within GitHub's time limit (over 60 min with every track in one; tests/run.js SECS)
 //   SMOKE_DEL=vse node tests/browser/smoke.test.mjs  everything in one go (PROGE: all of it in the first part, the second has nothing)
-//   SMOKE_SEME=<n>                               another run from the police on Vršič (6d), to try the test on
+//   SMOKE_SEME=<n>                               another seed for the 20 s races (3, the test mode) and the run from the police on Vršič (6d)
 import path from 'node:path';
 import url from 'node:url';
 import { ROOT, serve, launch, openGame, startTrack, trackIds, izbrane, simulate, checker } from './lib.mjs';
@@ -16,7 +16,7 @@ import { ROOT, serve, launch, openGame, startTrack, trackIds, izbrane, simulate,
 const T = checker('smoke');
 const DEL = process.env.SMOKE_DEL || '1', PROGE = !!(process.env.PROGE || '').trim(), DRUGI = DEL === '2', VSE = DEL === 'vse';
 const ENA = !DRUGI, DVA = DEL !== '1' || PROGE;   // (the checks of the first part, of the second; both with SMOKE_DEL=vse or PROGE)
-const SEME = +process.env.SMOKE_SEME || 7;   // (the run from the police on Vršič repeatable: the dice its race's seed is drawn from at its start, 6d)
+const SEME = +process.env.SMOKE_SEME || 7;   // (the 20 s races repeatable, the game's test mode's seed (3), and the run from the police on Vršič: the dice its race's seed is drawn from at its start, 6d)
 if (DRUGI && PROGE) { T.check('the second half: PROGE\'s tracks and every other check in the first part (smoke.test.mjs)', true, ''); T.done(); process.exit(0); }
 const srv = await serve();
 const browser = await launch();
@@ -70,7 +70,11 @@ try {
 
   // 3. every real track: race 20 s on autopilot with full graphics (not the test tracks: frozen until they are deleted, CLAUDE.md »Testne proge«;
   //    PROGE: only those, the menu still checked whole)
-  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
+  // (the page opened in the game's test mode, ?proga=…&seme=SEME: every race of the visit started from the menu repeatable, its random events
+  // (the lights' hold, the rivals' launches and moves, the weather left to chance) from the seed (Zandvoort 27. 11. on GitHub: 11 m from
+  // -166 m, 177 m moved on a commit that passed before; locally 493-721 m, in the test mode 681 m every time; docs/nestabilni-testi.md, cause 4)
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=bathurst&seme=' + SEME, { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 120000 });
   const menu = await trackIds(page, true), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
   const test = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), real = menu.filter(id => !test.includes(id)), sel = izbrane(real), ids = VSE || PROGE ? sel : sel.filter((_, i) => i % 2 === (DRUGI ? 1 : 0));   // (the half of this part)
   T.check('track menu lists every track of the game', [...menu].sort().join(',') === [...all].sort().join(',') && real.length >= 8, menu.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
@@ -103,14 +107,14 @@ try {
     await startTrack(page, id);
     const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
     const { nan, resc, rt } = await drive(20);
-    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, fin: !!P.finished, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { repro: !!(g.repro && g.repro.on), phase: g.phase, fin: !!P.finished, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane)
     // (a road shorter than 20 s, Ghoufi's 0.57 km: across the line, the race over; the sign below then on the race started again)
-    T.check(`${id}: 20 s race on autopilot`, (r.phase === 'racing' || r.fin) && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `${r.fin ? 'at the finish, ' : ''}dist ${r.dist} m (from ${Math.round(d0)} m, ${rt} s from the green light), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+    T.check(`${id}: 20 s race on autopilot`, (r.phase === 'racing' || r.fin) && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && r.repro && errors.length === e0,
+      `${r.repro ? '' : 'not repeatable (test mode off), '}${r.fin ? 'at the finish, ' : ''}dist ${r.dist} m (from ${Math.round(d0)} m, ${rt} s from the green light), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
