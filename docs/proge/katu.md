@@ -8,7 +8,8 @@ Legendarni spust s prelaza Katu-Jaryk (Кату-Ярык) v Republiki Altaj v Ru
 - **Spust**: avto na klancu pospešuje tudi brez plina in se ustavlja dlje. Avtopilot zato pred ovinki zavira prej kot na ravnem, do ~20 km/h počasneje pred lasnicami; na drugih progah se vožnja AI ni spremenila.
 - Pod uro piše nadmorska višina, ki pada, pod njo je višinski profil spusta. Štiri kontrolne točke (CP1–CP4) z vmesnimi časi in višino, lestvica najboljših 10, duh najboljše vožnje in medalje (zlato je približno čas relijskega avta na avtopilotu: 2:13 na suhem, 2:24 v dežju). Spust v dežju ima svoje rekorde, lestvico, duha in medalje; v dežju je makadam temnejši in se sveti.
 - **Sovoznik** (kot na Ouninpohji) bere opombe za progo: vseh sedem lasnic, ovinke od ena do šest in dolžine ravnin.
-- Med vožnjo se pod uro izpišejo kraji (Prelaz Katu-Jaryk · 1.206 m, Serpentina 1–7 z višino, Prečka nad Čulišmanom, Dolina Čulišmana · 684 m), komentator pa jih občasno omeni.
+- Med vožnjo se pod uro izpišejo kraji (Prelaz Katu-Jaryk · 1.206 m, Skalna stena, Serpentina 1–7 z višino, Prečka nad Čulišmanom, Pečine nad Čulišmanom, Dolina Čulišmana · 684 m), komentator pa jih občasno omeni. Skalna stena (17 m levo od ceste) in pečine (52 m desno in 39 m levo) so pečine iz OpenStreetMap.
+- **Komentator** ima za ta spust svoje vrstice (dobrodošlica, štart, prva kontrolna točka, cilj): rob planote na ~1200 m, kjer se stepa sreča z gozdom, edina cesta v dolino Čulišmana; drugi spusti (Ngorongoro, Sa Calobra) obdržijo skupne.
 - **Prelet proge**: pred spustom (ob startu iz menija, ne po »Ponovi spust«) TV kamera v 11,5 s preleti progo od starta do cilja: s planote čez rob kanjona, nad pobočjem z lasnicami in nad prečenjem v dolino, z napisi START, Prelaz Katu-Jaryk, Sedem serpentin, Prečka nad Čulišmanom in CILJ z nadmorsko višino. Tap ali katera koli tipka ga preskoči, izklopi se v Nastavitvah (Prelet proge pred startom), kot na Pikes Peaku.
 
 Okolica:
