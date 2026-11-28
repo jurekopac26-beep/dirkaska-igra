@@ -181,6 +181,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Silkeborg, Denmark', desc: %(desc_en)s },
     start: [0, 0], runoff: 1.1, inner: 4, side: 7, gradeForce: true, elevSmooth: 10, realKm: %(real)s,
     elev: SK_H.map((h, i) => [i / SK_H.length, h / 10]),
+    // the commentator's own lines for the start (Comm: def.comm, js/game.js ownLine; docs/proge/silkeborg-raziskava.md): the heath, the plantations, the burial mounds
+    comm: {
+      intro: ["Welcome to {track}, out on the sandy heath of Jutland! {laps} laps, {cars} cars, and you line up {grid}.", "Here we are at {track}. A short, twisty lap between the pines and the heather, {laps} times round, and you start {grid}.", "Welcome to {track}! Two point three kilometres, sixteen corners and hardly a straight. {laps} laps, and you start {grid}."],
+      go: ["Lights out, and they charge for the double left!", "And they're off, down to the double left!", "Green light! {cars} cars into the first corner on the heath!"],
+    },
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
 %(names)s

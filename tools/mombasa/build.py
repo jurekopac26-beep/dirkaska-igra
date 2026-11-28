@@ -36,19 +36,26 @@ def widths():
 NAMES = [
     ('Mestno središče', 40, ['Through the town centre, the avenue wide open!', 'Down the avenue, the old town ahead!']),
     ('Krožišče', 265, ['Into the roundabout, mind the kerbs!', 'Round the roundabout and east!']),
-    ('Stari del mesta', 520, ['Along the edge of the old town!', 'The old town on the left, the harbour ahead!']),
+    ('Stolpnice', 340, ['Between the tower blocks, sixteen floors of glass and concrete!', 'The office towers right up against the pavement!']),
+    ('Stari del mesta', 520, ['Along the edge of the old town, coral stone and carved balconies!', 'The old town alongside, the harbour ahead!']),
+    ('Krožišče', 960, ['Another roundabout, the fortress is close now!', 'Round the roundabout, nearly at the walls!']),
     ('Trdnjava', 1130, ['Under the walls of the old fortress!', 'The fortress on the left, four centuries of coral stone!']),
-    ('Obalna cesta', 1340, ['Onto the shore road, the sea on the left!', 'Out to the shore road, flat out now!']),
-    ('Kanal Likoni', 2300, ['Above the channel, the ferries cross below!', 'Along the channel to the finish!']),
+    ('Krožišče', 1317, ['Round the last roundabout and south!', 'Out of the roundabout, away from the old town!']),
+    ('Kizingo', 1700, ['Through Kizingo, villas and gardens behind the walls!', 'Down through the leafy streets of Kizingo!']),
+    ('Svetilnik', 2140, ['Past the light tower on the point!', 'The white light tower on the cape, the channel just beyond!']),
+    ('Obalna cesta', 2280, ['Onto the shore road, the sea right there!', 'Out to the shore road, flat out now!']),
+    ('Golf igrišče', 2450, ['Along the golf course, palms and fairways!', 'The golf course and its ponds, the sea beyond!']),
+    ('Kanal Likoni', 2900, ['Above the channel, the ferries cross below!', 'Along the channel to the finish!']),
+    ('Park ob obali', 3300, ['The park on the shore, the line in sight!', 'Into the last metres by the shore park!']),
 ]
-EN_NAMES = {'Mestno središče': 'Town Centre', 'Krožišče': 'Roundabout', 'Stari del mesta': 'Old Town', 'Trdnjava': 'Fortress', 'Obalna cesta': 'Shore Road', 'Kanal Likoni': 'Likoni Channel'}
+EN_NAMES = {'Mestno središče': 'Town Centre', 'Krožišče': 'Roundabout', 'Stari del mesta': 'Old Town', 'Trdnjava': 'Fortress', 'Obalna cesta': 'Shore Road', 'Kanal Likoni': 'Likoni Channel', 'Stolpnice': 'Tower Blocks', 'Kizingo': 'Kizingo', 'Svetilnik': 'Lighthouse', 'Golf igrišče': 'Golf Course', 'Park ob obali': 'Shore Park'}
 
 DESC = ('Mestna proga v Mombasi, pristaniškem mestu na otoku ob obali Kenije: po aveniji skozi mestno središče, ob robu starega dela mesta, pod zahodnim '
         'zidom stare portugalske trdnjave iz 16. stoletja in po obalni cesti nad kanalom Likoni. Vozi se po levi. Dirka s tekmeci, vožnja proti uri, '
         'dvoboj v prometu ali beg pred policijo.')
 DESC_EN = ('A city course in Mombasa, the port city on an island off the coast of Kenya: down the avenue through the town centre, along the edge of the '
            'old town, under the west wall of the old Portuguese fortress of the 16th century and along the shore road above the Likoni channel. '
-           'They keep left here. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
+           'Drive on the left. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
 MEDALS = {'cs': [90, 94, 101], 'wet': {'cs': [105, 110, 118]}, 'winter': {'cs': [102, 107, 115], 'wet': {'cs': [124, 130, 140]}}}   # (the stock rally car on the autopilot x 1.01 / 1.06 / 1.14, as tools/nova-proga.mjs --medalje)
 
@@ -80,7 +87,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xd6e1e6, sun: 0xfff3dc, sunI: 1.24, sky: 0x9fc6ea, gnd: 0x66684a, hemiI: 0.64, tint: [1.02, 1.0, 0.96], sat: 1.1, sunOff: [55, 86, 40], split: [[0.97, 1.0, 1.05], [1.04, 1.0, 0.95]] },   // Mombasa: a humid afternoon on the coast, the sun high in the south
     say: 'Mombasa',
-    zivali: { a: ['egret'], t: ['palmHut'], city: true },
+    zivali: { a: ['egret'], t: [], city: true },
     id: 'mombasa', name: 'Mombasa, Kenija', theme: 'mombasa', open: true, leftHand: true, sea: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~130 m of road past the line, two rows a side
     halfWidth: 5.4,
@@ -100,6 +107,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
 %(names)s
     ],
+    // the flyover of the menu ([metres after the start line, caption]; -1 = the finish)
+    fly: [[0, 'START'], [340, 'Stolpnice'], [1130, 'Trdnjava'], [2140, 'Svetilnik'], [2900, 'Kanal Likoni'], [-1, 'CILJ']],
     // the commentator's own lines on this road
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, the town centre, the old fortress and the shore road, and you start {grid}.", "Here we are in the heart of the island city. A race past the fortress and along the channel, and you line up {grid}."],
@@ -220,6 +229,7 @@ def build_world():
         'trees': [[t[0], t[1], t[2]] for t in J['trees']],
         'bridges': [[round(a_, 1), round(b_, 1)] for a_, b_ in J['bridges']],
         'onRoad': on_road(),
+        'streets': [pl(r_[8]) for r_ in J['roads']] + [pl(s_[7]) for s_ in J['side']],   # (the other roads and the side streets of OSM: the gaps in the old town's street front)
     }
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'mombasa.js'); open(path, 'w').write(src)

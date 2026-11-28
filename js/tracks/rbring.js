@@ -22,10 +22,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     grassNat: 0.45, lawn: [0.96, 1.0, 0.9],
     zivali: { a: ['roe', 'chamois', 'cowB', 'fox'], t: ['huntStand', 'feedRack', 'logPile', 'cabin', 'hayrack'], open: true },
     id: 'rbring', name: 'Štajerska, Avstrija', theme: 'rbring', laps: 2, halfWidth: 6.5,
-    desc: 'Hitra proga v štajerskih hribih: 4,3 km, 10 zavojev in 64 m višinske razlike. Strm vzpon (12 %) od 1. zavoja do lasnice na vrhu hriba, spust do 4. zavoja, hitra leva zavoja 6 in 7 ter zavoja 9 in 10 nazaj na ciljno ravnino. Tribune, boksi (zapelji vanje in mehaniki ti popravijo avto) in štajerski gozdovi. Podatki: © OpenStreetMap (ODbL), DGM Avstrija, ESA WorldCover.',
-    en: { name: 'Styria, Austria', desc: 'A fast circuit in the Styrian hills: 4.3 km, 10 turns and 64 m of height difference. A steep climb (12 %) from Turn 1 to the hairpin at the top of the hill, down to Turn 4, the fast left-handers 6 and 7 and turns 9 and 10 back onto the finish straight. Grandstands, pits (drive in and the mechanics fix your car) and Styrian forests. Data: © OpenStreetMap (ODbL), DGM Austria, ESA WorldCover.' },   // (the English page: Jezik · Language)
-    start: [0, 0], runoff: 1, inner: 4.2, side: 5, gradeForce: true, elevSmooth: 12, realKm: 4.318, runoffTarmac: true,
+    desc: 'Hitra proga v štajerskih hribih: 4,3 km, 10 zavojev in 64 m višinske razlike. Strm vzpon (12 %) od 1. zavoja do lasnice na vrhu hriba, spust do 4. zavoja, hitra leva zavoja 6 in 7 ter zavoja 9 in 10 nazaj na ciljno ravnino. Tribune, boksi (zapelji vanje in mehaniki ti popravijo avto), smrekovi gozdovi, Spielbergbach in Schönbergbach v prepustih pod progo, ribnik ob 2. zavoju in znamenje pod listnatim drevesom pred 6. zavojem, nad kotlino Mure. Podatki: © OpenStreetMap (ODbL), DGM Avstrija, ESA WorldCover.',
+    en: { name: 'Styria, Austria', desc: 'A fast circuit in the Styrian hills: 4.3 km, 10 turns and 64 m of height difference. A steep climb (12 %) from Turn 1 to the hairpin at the top of the hill, down to Turn 4, the fast left-handers 6 and 7 and turns 9 and 10 back onto the finish straight. Grandstands, pits (drive in and the mechanics fix your car), spruce woods, the Spielbergbach and the Schönbergbach in culverts under the track, a pond by Turn 2 and a wayside shrine under a broadleaf tree before Turn 6, above the Mur valley. Data: © OpenStreetMap (ODbL), DGM Austria, ESA WorldCover.' },   // (the English page: Jezik · Language)
+    start: [0, 0], runoff: 1, inner: 4.2, side: 5, gradeForce: true, elevSmooth: 12, realKm: 4.318, alt: [677.5, 741], runoffTarmac: true,
     elev: RBR_H.map((h, i) => [i / RBR_H.length, h / 10]),
+    // the commentator's own lines for this circuit (docs/proge/rbring-raziskava.md: the Murtal basin, the hill of Turn 3, the Styrian woods)
+    comm: {
+      introPass: ["Welcome to {track}! {cars} cars on the hill above the Mur valley, and you start {grid}.", "Here we are in the Styrian hills, at {track}. Up to the top of the hill at Turn Three and back down, and you line up {grid}.", "Welcome to the Murtal! {rivals} rivals, sixty four metres of climbing every lap, and you start {grid}."],
+      goPass: ["And they're away, uphill to Turn One!", "Lights out in Styria! {cars} cars charging up the hill!", "The race is on! Up through the woods to the top of the hill!"],
+    },
     // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers only (no names of people, places or sponsors)
     names: [
       ["Zavoj 1", -314.9, 81.6, ["Turn one, the first big stop!", "Hard on the brakes, uphill into Turn One!", "Into Turn One, and the long climb begins!"]],
@@ -35,6 +40,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ["Zavoj 6", -461.8, -494.1, ["Turn six, the first of the fast lefts!", "Sweeping left through Turn Six!", "Turn six, keep it on the kerbs!"]],
       ["Zavoj 7", -328, -230.7, ["Turn seven, fast and downhill!", "Left again through Turn Seven!", "Turn seven, that one is quick!"]],
       ["Zavoj 9", 357.8, -336, ["Turn nine, flat out over the crest!", "Through Turn Nine, brave and blind!", "Turn nine, fast and blind over the crest!"]],
+      // places beside the road within 60 m (OSM; docs/proge/rbring-raziskava.md): d = metres after the start line
+      { n: 'Spielbergbach', d: 600, say: ['Over the Spielbergbach, the stream runs under the track here!', 'The Spielbergbach down in its culvert, climbing on!'] },
+      { n: 'Ribnik ob potoku', d: 890, say: ['Past the pond by the stream on the left!', 'The little pond down by the Spielbergbach!'] },
+      { n: 'Rob smrekovega gozda', d: 1130, say: ['Along the edge of the spruce forest, up to Turn Three!', 'Spruce and beech on the left, the brook below!'] },
+      { n: 'Schönbergbach', d: 1753, say: ['Down past the Schönbergbach, foot to the floor!', 'The Schönbergbach in the meadow, hard on the way down!'] },
+      { n: 'Znamenje', d: 2407, say: ['Past the old wayside shrine under the tree!', 'The little shrine on the left, the stream goes under the track here!'] },
+      { n: 'Podvoz', d: 3241, say: ['Over the underpass, up towards the crest!', 'Across the road tunnel, Turn Nine is coming!'] },
+      { n: 'Gozd na pobočju', d: 3480, say: ['The woods on the hillside, now the blind crest!', 'Trees close on the right, flat out to Turn Nine!'] },
       ["Zavoj 10", 417.5, -148.9, ["The last corner, Turn Ten!", "Turn ten, and onto the main straight!", "Through Turn Ten, the lap is nearly done!"]],
     ],
     pit: [18, -360, 245, -95],   // pit lane on the right of the straight: [centre offset to the right, from, to, the player's box] (metres from the start line)

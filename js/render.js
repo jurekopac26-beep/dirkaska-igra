@@ -10408,8 +10408,8 @@ const Render = (function () {
     const shot = { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fov: 50, fogD: 80, near: 2, gy: 0 }, res = { shot, k: -1, a: 0 };
     function build(T) {
       const PL = places(T), TL = themeId === 'pikes' ? 196 : Infinity;   // TL: the tree line, metres above the start (Pikes Peak's; elsewhere trees all the way)
-      const G = world.groundH, s0 = T.startS, s1 = T.finishS, n = Math.ceil((s1 - s0) / STEP) + 1, sAt = (j) => Math.min(s1, s0 + j * STEP);
-      const road = (s) => { const f = clamp(s, 0, T.len - 1) / T.ds, i = Math.min(T.N - 2, Math.floor(f)), u = f - i; return [lerp(T.px[i], T.px[i + 1], u), lerp(T.hy[i], T.hy[i + 1], u), lerp(T.pz[i], T.pz[i + 1], u)]; };
+      const G = world.groundH, loop = T.finishS <= T.startS, s0 = T.startS, s1 = loop ? T.startS + T.len : T.finishS, n = Math.ceil((s1 - s0) / STEP) + 1, sAt = (j) => Math.min(s1, s0 + j * STEP);   // (a circuit: one lap from the start line round to it)
+      const road = (s) => { const f = (loop ? ((s % T.len) + T.len) % T.len : clamp(s, 0, T.len - 1)) / T.ds, i = Math.min(T.N - 2, Math.floor(f)), u = f - i; return [lerp(T.px[i], T.px[i + 1], u), lerp(T.hy[i], T.hy[i + 1], u), lerp(T.pz[i], T.pz[i + 1], u)]; };
       const mid = (s) => {   // the course's middle line: the road averaged over +-150 m (less towards the ends: there the start line, the finish itself)
         const W = 150 * Math.min(Core.sstep(s0, s0 + 450, s), Core.sstep(s1, s1 - 450, s)); if (W < 2) return road(s);
         let x = 0, y = 0, z = 0, w = 0; for (let d = -2 * W; d <= 2 * W; d += 10) { const p = road(s + d), q = Math.exp(-(d * d) / (W * W)); x += p[0] * q; y += p[1] * q; z += p[2] * q; w += q; }

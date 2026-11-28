@@ -32,11 +32,11 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
 {
   const want = { 'Desni pregib': [-1, 20], 'Lasnica': [-1, 110], 'Levi za lasnico': [1, 15], 'Desni v gozdu': [-1, 15], 'Spust k jezeru': [-1, 12], 'Levi ob jezeru': [1, 40],
     'Zahodni ovinek': [-1, 65], 'Severni ovinek': [-1, 45], 'Desni na klancu': [-1, 30], 'Levi na vrhu': [1, 40], 'Desni pred ravnino': [-1, 45], 'Levi na ravnino': [1, 45] };
-  const order = ['Desni pregib', 'Lasnica', 'Levi za lasnico', 'Vzpon skozi gozd', 'Desni v gozdu', 'Spust k jezeru', 'Levi ob jezeru', 'Klanec od jezera', 'Zahodni ovinek',
+  const order = ['Desni pregib', 'Lasnica', 'Levi za lasnico', 'Vzpon skozi gozd', 'Desni v gozdu', 'Spust k jezeru', 'Levi ob jezeru', 'Jezero Linezers', 'Klanec od jezera', 'Peščene sipine', 'Zahodni ovinek',
     'Gozdna ravnina', 'Severni ovinek', 'Desni na klancu', 'Levi na vrhu', 'Spust', 'Desni pred ravnino', 'Levi na ravnino', 'Ciljna ravnina'];
   const turn = (s) => { let a = 0; for (let d = -50; d <= 50; d += T.ds) a += T.k[T.idx(s + d)] * T.ds; return -a * 180 / Math.PI; };   // (Track.k > 0: a right-hander; here + left)
   const at = def.names.map(([nm, x, z]) => { const q = near(x, z); return { nm, d: q.d, off: q.off, deg: turn(q.i * T.ds) }; });
-  check('corners: the 17 named places in their order round the lap (the right kink ... the finish straight), each on the road, the commentator\'s lines for each',
+  check('corners: the 19 named places in their order round the lap (the right kink ... the lake, the dunes ... the finish straight), each on the road, the commentator\'s lines for each',
     at.map(c => c.nm).join('|') === order.join('|') && at.every((c, k) => c.off < 6 && (k === 0 || c.d > at[k - 1].d)) && def.names.every(c => Array.isArray(c[3]) && c[3].length >= 2),
     at.map(c => `${c.nm} ${Math.round(c.d)} m`).join(', '));
   const cs = at.filter(c => want[c.nm]);

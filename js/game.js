@@ -2613,7 +2613,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       else if (race.tf && !on) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
-        else if (!(race.opts.flying > 0)) Comm.say(race.cars.length < 2 ? 'introAlone' : track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? ownLine(track.def, 'introOne') : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, run: race.laps === 1 ? 'one lap' : Comm.words(race.laps) + ' laps', grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words; a flying start: the commentator only counts down, flyStep)
+        else if (!(race.opts.flying > 0)) Comm.say(race.cars.length < 2 ? 'introAlone' : track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? ownLine(track.def, 'introOne') : ownLine(track.def, 'intro'), { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, run: race.laps === 1 ? 'one lap' : Comm.words(race.laps) + ' laps', grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words; a flying start: the commentator only counts down, flyStep)
         if (!(race.opts.flying > 0)) showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);   // (a flying start: only its countdown, flyHUD; a championship's round with VOZIŠ TI!)
         if (race.strat) toast(tr(race.fuelRate ? 'Dolga dirka: gorivo ne zdrži do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.' : 'Dolga dirka: gume se obrabijo hitreje in ne zdržijo do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.'), 5200);   // (a strategy race, Core STRAT: with fuel the tank makes the stops, else the tyres)
       }
@@ -4730,7 +4730,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function flyStep() {
     const n = race.flyOn ? clamp(Math.ceil(FLY_T - race.time - 1e-6), 1, FLY_T) : 0;   // (late at the line: 1 until it is over it)
     if (n > 0 && n !== fly.n) { fly.n = n; flyHUD(n); Sfx.beep(520, 0.16, 0.14); Comm.say(['flyOne', 'flyTwo', 'flyThree'][n - 1] || 'flyOne', null, 5); }
-    if (!n) { fly.on = false; fly.n = 0; flyHUD(0); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('VOZIŠ TI!'), 'fast', race.champ ? 1.8 : 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say('flyGo', null, 5); }
+    if (!n) { fly.on = false; fly.n = 0; flyHUD(0); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('VOZIŠ TI!'), 'fast', race.champ ? 1.8 : 1.4); Sfx.beep(1040, 0.42, 0.16); vibrate(40); $('touch').classList.remove('ap'); Comm.say(ownLine(track.def, 'flyGo'), null, 5); }
   }
   function pitFree(P, told) {   // the player's own car again (told: the countdown ran out: the bar full, gone with VOZIŠ TI!)
     if (told) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); hap('handBack'); pa.k = 1; $('h-pit').lastElementChild.firstElementChild.style.width = '100%'; teamRadioGo(); pitFightOpen(); pitExitOpen(); }   // (a fight for a place from here: pitFightStep; the reaction's clock for a perfect exit: pitExitStep)
@@ -5846,7 +5846,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
         phase = 'racing'; phaseT = 0; race.start(); if (on) on.startT = Net.now(); startCamEnd();
         setLights(0, true); Sfx.beep(1040, 0.42, 0.16);
         showMsg(tr('START!'), 'gold', 0.9);
-        Comm.say(race.timeTrial ? ownLine(track.def, ttLine(track.def, 'go')) : on ? 'goNet' : race.pol ? 'goPolice' : race.en ? 'zbEnGo' : race.tf ? 'goTraffic' : track.open ? ownLine(track.def, 'goPass') : 'go', { cars: Comm.words(race.cars.length) }, 4);
+        Comm.say(race.timeTrial ? ownLine(track.def, ttLine(track.def, 'go')) : on ? 'goNet' : race.pol ? 'goPolice' : race.en ? 'zbEnGo' : race.tf ? 'goTraffic' : track.open ? ownLine(track.def, 'goPass') : ownLine(track.def, 'go'), { cars: Comm.words(race.cars.length) }, 4);
         setTimeout(() => { if (phase === 'racing') { $('h-lights').classList.remove('show'); setLights(0, false); } }, 1100);
       }
     } else if (phase === 'racing') {

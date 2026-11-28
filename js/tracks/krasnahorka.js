@@ -23,12 +23,22 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xd8dfe4, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [
-      {"n":"Serpentina 1","d":304,"say":["Into the hairpin!"]},
-      {"n":"Serpentina 2","d":1306},
+      // (the places after OpenStreetMap, docs/proge/krasnahorka.md: the viewpoint, the meadows, the bridge, the bus stops, the car parks, the gravel, the chapel)
+      {"n":"Serpentina 1","d":304,"say":["Into the hairpin!", "First hairpin, hard on the brakes!"]},
+      {"n":"Zvodidlá","d":560,"say":["Along the guard rail, the slope drops away on the right!"]},
+      {"n":"Lúky","d":640,"say":["Out across the open meadows!", "Meadows either side, nowhere to hide a mistake!"]},
+      {"n":"Vyhliadka","d":732,"say":["Past the viewpoint on the right, the whole basin below!", "The viewpoint flashes by, no time for the view!"]},
+      {"n":"Serpentina 2","d":1306,"say":["Hairpin two, tight and downhill!"]},
       {"n":"Serpentina 3","d":1786,"say":["Round the hairpin, and away!"]},
+      {"n":"Mostík","d":2010,"say":["Over the little bridge across the brook!", "Across the bridge, down at the bottom of the valley!"]},
+      {"n":"Zastávka","d":2546,"say":["Past the bus stop, and now the road climbs!"]},
+      {"n":"Parkovisko","d":2778,"say":["Past the car park, the castle hill ahead!"]},
+      {"n":"Parkovisko pod hradom","d":3212,"say":["The car park below the castle, nearly there!", "Under the castle now, the last few bends!"]},
+      {"n":"Makadam","d":3330,"say":["Onto the gravel for the last climb to the castle!", "Gravel now, careful on the throttle!"]},
+      {"n":"Pod hradom","d":3395,"say":["The castle walls right above, the finish in sight!", "White walls and dark roofs above, and here comes the line!"]},
     ],
     comm: {
-      introPass: ["Welcome to {track}! {cars} cars on a twisting road down the valley and up to the castle, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
+      introPass: ["Welcome to {track}! {cars} cars on a twisting road down the valley and up to the castle, and you start {grid}.", "{track}: down through the meadows, over the brook and up to the white castle on its limestone hill. You start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
       goPass: ["And away they go!", "They're off! Every bend counts on the way to the castle!", "The race is on!"],
       introPassTT: ["Welcome to {track}! Just you and the clock.", "Here we are at {track}. {cps} checkpoints between you and the finish."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack every bend!"],
@@ -38,6 +48,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       summitRecord: ["At the finish! A new personal best, {time}!"], summitEven: ["{time} at the finish, dead level with your best!"],
       summit: ["At the finish in {time}, {delta} seconds off your best."],
     },
+    zivali: { a: ['roe', 'boar', 'fox', 'hare'], t: ['huntStand', 'logPile', 'fallenTree', 'feedRack'], open: true },
     // ---- uvoz: začetek (tools/proga-uvoz.mjs: ne urejaj ročno; izhodišče 48.670543, 20.619917)
     realKm: 3.43, alt: [624,469],
     start: [0,0], finish: [-1324.2,1388.5], cps: [[-357.8,-123.4],[-818.2,124.2],[-702.4,419.1],[-897.9,993.3]],

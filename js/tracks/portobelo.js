@@ -20,8 +20,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'portobelo', name: 'Portobelo, Panama', theme: 'portobelo', open: true, sea: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     maxRivals: 40,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the 150 m of the narrow road past the line
     halfWidth: 5.0,
-    desc: "Odprta cesta ob karibski obali Paname: ob zalivu Portobelo med zelenimi griči, čez greben nad vodo, mimo razvalin španske obalne trdnjave iz koralnega kamna in skozi staro mesto do vzhodnega brega zaliva. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
-    en: { name: 'Portobelo, Panama', desc: "An open road on the Caribbean coast of Panama: along the bay of Portobelo between green hills, over a crest above the water, past the ruins of a Spanish coastal fort of coral stone and through the old town to the east shore of the bay. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the east shore' },
+    desc: "Odprta cesta ob karibski obali Paname: ob zalivu Portobelo med zelenimi griči deževnega gozda, čez greben nad vodo, mimo razvalin španske obalne trdnjave iz koralnega kamna, skozi staro mesto mimo kraljeve carinarnice z arkadami in bele cerkve z zvonikom ter ob ruševinah do vzhodnega brega zaliva (utrdbe so na Unescovem seznamu svetovne dediščine). Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
+    en: { name: 'Portobelo, Panama', desc: "An open road on the Caribbean coast of Panama: along the bay of Portobelo between green rainforest hills, over a crest above the water, past the ruins of a Spanish coastal fort of coral stone, through the old town past the arcaded royal customs house and the white church with its bell tower, and by old ruins to the east shore of the bay (the forts are a UNESCO World Heritage site). A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the east shore' },
     realKm: 2.57, alt: [4, 9],
     start: [64.4, -96.2], finish: [2399.2, -691.2], cps: [[466.7, -408.8], [938.4, -594.0], [1406.5, -678.0], [1900.5, -670.0]],
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
@@ -35,13 +35,22 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n": "Ob zalivu", "d": 40, "say": ["Along the bay of Portobelo!", "The bay on the left, the jungle on the right!"]},
+      {"n": "Ravnina ob vodi", "d": 330, "say": ["A straight by the water, flat out!", "The long straight along the bay, keep it pinned!"]},
       {"n": "Obalna cesta", "d": 650, "say": ["The coast road, flowing bends by the water!", "Down the coast road, the hills all green!"]},
+      {"n": "Gozdni ovinki", "d": 1080, "say": ["Into the bends under the rainforest!", "Left, right, left, the jungle right up to the road!"]},
       {"n": "Nad zalivom", "d": 1250, "say": ["Up over the bay and down again!", "A crest above the water, then down to the town!"]},
-      {"n": "Trdnjava", "d": 1600, "say": ["Past the old coral-stone fort above the road!", "The fort on the right, three centuries of it!"]},
+      {"n": "Ovinek pod trdnjavo", "d": 1400, "say": ["The big left-hander under the fort, brake now!", "Hard left under the old walls!"]},
+      {"n": "Trdnjava", "d": 1600, "say": ["Past the old coral-stone fort above the road!", "The fort on the right, its battery down by the water on the left!"]},
       {"n": "Staro mesto", "d": 1820, "say": ["Into the old town, houses on both sides!", "Through the old town, the bay on the left!"]},
+      {"n": "Carinarnica", "d": 1900, "say": ["The old customs house on the left, where the king counted his gold!", "Past the arches of the customs house, nearly four centuries old!"]},
       {"n": "Most čez potok", "d": 1980, "say": ["Over the stream and on!", "The little bridge, keep it straight!"]},
+      {"n": "Cerkev", "d": 2030, "say": ["The white church and its bell tower on the left!", "Past the church, out of the old town!"]},
+      {"n": "Šola", "d": 2160, "say": ["Past the school, mind the bus stop!", "The school on the left, the last of the town!"]},
       {"n": "Vzhodni breg", "d": 2250, "say": ["Out along the east of the bay to the finish!", "The last of the bay, flat out!"]},
+      {"n": "Ruševine", "d": 2440, "say": ["Old stone ruins in the grass by the road!", "Ruined walls of coral stone, the finish is near!"]},
     ],
+    // the flyover before the race (render.js places(): [metres after the start line, caption]; -1 the finish)
+    fly: [[0, 'START'], [1400, 'Ovinek pod trdnjavo'], [1600, 'Trdnjava'], [1900, 'Carinarnica'], [2030, 'Cerkev'], [2440, 'Ruševine'], [-1, 'CILJ']],
     // the commentator's own lines on this road
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, the bay, the jungle and the old fort, and you start {grid}.", "Here we are by the bay of Portobelo. A race along the water and through the old town, and you line up {grid}."],

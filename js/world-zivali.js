@@ -147,6 +147,9 @@
     goatW: B({ L: 1.3, H: 0.75, W: 0.42, col: 0xf0ede4, legs: 0xe0dccf, neck: 0.3, nk: 0.8, hs: 0.24, ears: 0.4, horns: 'hook', tail: 'short', shag: 0xe6e1d3 }),
     cow: B({ L: 1.9, H: 0.9, W: 0.62, bh: 0.65, col: 0xf2efe6, legs: 0xe9e2cf, neck: 0.25, nk: 0.2, hs: 0.36, snout: 0.7, snoutCol: 0xe8b8a8, ears: 0.3, horns: 'cow', tail: 'long', graze: true }),
     cowB: B({ L: 1.9, H: 0.9, W: 0.62, bh: 0.65, col: 0x8a5a3a, legs: 0x7a4a2a, neck: 0.25, nk: 0.2, hs: 0.36, snout: 0.7, ears: 0.3, horns: 'cow', tail: 'long' }),
+    // the zebu of Madagascar (Isalo: the herds grazing the grass plains along the RN7): lean, long-legged, the hump over the shoulders and the dewlap,
+    // long horns, reddish brown (a lighter fawn and a grey-white in the herd: vary)
+    zebu: B({ L: 1.8, H: 1.0, W: 0.52, bh: 0.6, col: 0x9a5a36, legs: 0x8a5232, neck: 0.25, nk: 0.15, hs: 0.34, snout: 0.7, ears: 0.32, horns: 'cow', hornCol: 0xe6dcc4, tail: 'long', hump: true, humpCol: 0x86492c, dewlap: true }),
     cowK: B({ L: 1.9, H: 0.9, W: 0.62, bh: 0.65, col: 0x1d1a18, legs: 0x1d1a18, neck: 0.25, nk: 0.2, hs: 0.36, snout: 0.7, ears: 0.3, tail: 'long', graze: true }),
     sheep: B({ L: 1.0, H: 0.48, W: 0.5, bh: 0.5, col: 0xe9e4d6, legs: 0x2a241f, head: 0x2a241f, neck: 0.15, nk: 0.3, hs: 0.2, ears: 0.3, tail: 'short', graze: true }),
     bighorn: B({ L: 1.25, H: 0.78, W: 0.42, col: 0x7a5a3a, legs: 0x6a4a2a, rump: 0xe9e2cf, neck: 0.3, nk: 0.7, hs: 0.26, ears: 0.35, horns: 'curl', tail: 'short' }),
@@ -287,7 +290,7 @@
     ibex: { one: 0.2, pair: 0.15, herd: [3, 8], F: 'ibexF', ys: 0.6, yp: 0.3 }, bighorn: { one: 0.2, pair: 0.1, herd: [3, 8], F: 'bighornF', ys: 0.6, yp: 0.3 },
     mouflon: { one: 0.15, pair: 0.15, herd: [3, 7], F: 'mouflonF', ys: 0.6, yp: 0.3 }, elk: { one: 0.2, pair: 0.15, herd: [4, 10], F: 'elkF', ys: 0.6, yp: 0.3 },
     muleDeer: { one: 0.3, pair: 0.3, herd: [3, 6], M: 'muleBuck', ys: 0.6, yp: 0.35 }, sika: { one: 0.25, pair: 0.3, herd: [3, 8], F: 'sikaF', ys: 0.6, yp: 0.3 },
-    sheep: { herd: [5, 10], ys: 0.6, yp: 0.3 }, cow: { herd: [4, 10], ys: 0.6, yp: 0.2 }, cowB: { herd: [4, 10], ys: 0.6, yp: 0.2 }, cowK: { herd: [4, 10], ys: 0.6, yp: 0.2 },
+    sheep: { herd: [5, 10], ys: 0.6, yp: 0.3 }, cow: { herd: [4, 10], ys: 0.6, yp: 0.2 }, cowB: { herd: [4, 10], ys: 0.6, yp: 0.2 }, zebu: { herd: [4, 10], ys: 0.6, yp: 0.2 }, cowK: { herd: [4, 10], ys: 0.6, yp: 0.2 },
     bison: { one: 0.15, herd: [4, 10], ys: 0.55, yp: 0.25 }, yak: { herd: [3, 8], ys: 0.55, yp: 0.25 }, buffalo: { one: 0.2, herd: [3, 6], ys: 0.55, yp: 0.25 },
     horse: { one: 0.15, pair: 0.25, herd: [3, 8], rest: ['horse', 'horseG'], ys: 0.6, yp: 0.25 }, horseG: { one: 0.15, pair: 0.25, herd: [3, 8], rest: ['horseG', 'horse'], ys: 0.6, yp: 0.25 },
     donkey: { one: 0.35, pair: 0.4, herd: [3, 4], ys: 0.6, yp: 0.3 }, camel: { one: 0.2, herd: [3, 6], ys: 0.6, yp: 0.25 }, guanaco: { one: 0.15, herd: [4, 10], ys: 0.6, yp: 0.25 },
@@ -725,6 +728,7 @@
     iroha: { kind: 'macaque', n: 9, thing: 'lantern' },   // (a troop of macaques by a stone lantern)
     caracoles: { kind: 'guanaco', n: 9, live: 2 },   // (guanacos on the slope)
     spa: { kind: 'cowB', n: 8, thing: 'trough', live: 2 },   // (cows at a trough)
+    isalo: { kind: 'zebu', n: 8, with: ['egret', 'herd', 3], live: 2 },   // (a herd of zebu on the grass plain, the white egrets among them: public photo archives of the RN7)
     longford: { kind: 'sheep', n: 10, with: ['emu', 'pair'], live: 1 },   // (a flock of sheep, two emus)
     katu: { kind: 'yak', n: 8, with: ['horse', 'herd', 4], live: 1 },   // (yaks and horses on the steppe; not Marrakesh: a street circuit, its open ground paved)
     sani: { kind: 'eland', n: 8, with: ['baboon', 'herd', 5], live: 1 },   // (elands, a troop of baboons)

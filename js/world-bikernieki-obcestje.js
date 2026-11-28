@@ -222,7 +222,7 @@
 
   function lay(o) {
     const { root, scen, exclPush, CR, tex } = o, { RB, nrGround, nrNear, box } = A, cyl = A.cyl;
-    const st = { ways: 0, wayM: 0, narrowed: 0, split: 0, parkCells: 0, stops: 0, meshes: 0 };
+    const st = { ways: 0, wayM: 0, narrowed: 0, split: 0, parkCells: 0, stops: 0, pois: 0, meshes: 0 };
     const past = (x, z, m) => { const n = nrNear(x, z); return n.i < 0 || n.dd >= m; };
     const near = (x, z, m) => { const n = nrNear(x, z); return n.i >= 0 && n.dd < m; };
     // what is laid on the ground goes into a mesh per 240 m square, so three.js leaves out of the frame what is out of view
@@ -367,6 +367,47 @@
       cyl(g, x - ux * 1.1, nrGround(x - ux * 1.1, z - uz * 1.1) - 0.05, z - uz * 1.1, 0.22, 0.8, 8, BIN, BIN);
       exclPush(sx, sz, 1.4); CR.avoid(sx, sz, 1.2);
       exclPush(x, z, 1.2); CR.avoid(x, z, 1); st.stops++;
+    }
+
+    // the park's furniture by the lake and in the woods (OSM amenity=bench, waste_basket, leisure=picnic_table/picnic_site, bird feeder,
+    // leisure=fitness_station, barrier=log; 28. 11. 2026): only what lies past the barriers, within 60 m of the road; into the scenery batches
+    if (cyl) {
+      // which way the road lies from (x, z): the fall of the distance to it around the point (no road near: 0)
+      const toRoad = (x, z) => { const a = nrNear(x + 1, z).d - nrNear(x - 1, z).d, b = nrNear(x, z + 1).d - nrNear(x, z - 1).d; return Math.atan2(-b, -a); };
+      const bench = (g, x, z, ang) => {   // ang: the way it faces; the seat runs across it
+        const ux = -Math.sin(ang), uz = Math.cos(ang), fx = Math.cos(ang), fz = Math.sin(ang), y = nrGround(x, z);
+        for (const f of [-0.7, 0.7]) box(g, x + ux * f, y - 0.1, z + uz * f, 0.42, 0.52, 0.06, ang, POLE, POLE);
+        box(g, x, y + 0.42, z, 0.44, 0.05, 1.7, ang, SEAT, SEAT);
+        box(g, x - fx * 0.22, y + 0.5, z - fz * 0.22, 0.04, 0.4, 1.7, ang, SEAT, SEAT);
+        exclPush(x, z, 1.4); CR.avoid(x, z, 1.2);
+      };
+      const ok = (x, z) => past(x, z, 4) && near(x, z, 60);
+      const BENCH = [[170, 414], [138, 464], [114, 483], [52, 558], [-316, -136], [-313, -146], [-316, -157], [-321, -160], [-365, -236], [-374, -244]];
+      const BINS = [[169, 416], [136, 467], [51, 560], [-320, -98], [-316, -134], [-318, -160]];
+      for (const [x, z] of BENCH) if (ok(x, z)) { bench(scen.get(x, z), x, z, toRoad(x, z)); st.pois++; }
+      for (const [x, z] of BINS) if (ok(x, z)) { cyl(scen.get(x, z), x, nrGround(x, z) - 0.05, z, 0.22, 0.8, 8, BIN, BIN); exclPush(x, z, 0.8); CR.avoid(x, z, 0.6); st.pois++; }
+      // the picnic site: three tables with their benches on both sides, around its OSM point
+      const PIC = [-327, -197];
+      if (ok(PIC[0], PIC[1])) for (const [dx, dz, a] of [[0, 0, 0.3], [-4.5, 2.5, 1.1], [3.5, 4, -0.4]]) {
+        const x = PIC[0] + dx, z = PIC[1] + dz, g = scen.get(x, z), y = nrGround(x, z), ux = -Math.sin(a), uz = Math.cos(a), fx = Math.cos(a), fz = Math.sin(a);
+        for (const f of [-0.75, 0.75]) box(g, x + ux * f, y - 0.1, z + uz * f, 0.7, 0.85, 0.08, a, SEAT, SEAT);
+        box(g, x, y + 0.72, z, 0.8, 0.05, 1.9, a, SEAT, SEAT);
+        for (const sd of [-0.65, 0.65]) box(g, x + fx * sd, y + 0.4, z + fz * sd, 0.28, 0.05, 1.9, a, SEAT, SEAT);
+        exclPush(x, z, 1.8); CR.avoid(x, z, 1.6); st.pois++;
+      }
+      // the bird feeder: a post and a small roofed box
+      const BF = [-382, -254];
+      if (ok(BF[0], BF[1])) { const [x, z] = BF, g = scen.get(x, z), y = nrGround(x, z);
+        cyl(g, x, y - 0.1, z, 0.05, 1.6, 6, SEAT, SEAT); box(g, x, y + 1.5, z, 0.4, 0.06, 0.4, 0, SEAT, SEAT);
+        box(g, x, y + 1.6, z, 0.06, 0.2, 0.06, 0, SEAT, SEAT); box(g, x, y + 1.78, z, 0.5, 0.05, 0.5, 0.785, SEAT, SEAT); exclPush(x, z, 0.6); st.pois++; }
+      // the trim trail's station: two posts and a bar between them
+      const FS = [-465, -316];
+      if (ok(FS[0], FS[1])) { const [x, z] = FS, g = scen.get(x, z), y = nrGround(x, z), a = toRoad(x, z), ux = -Math.sin(a), uz = Math.cos(a);
+        for (const f of [-0.9, 0.9]) cyl(g, x + ux * f, y - 0.2, z + uz * f, 0.08, 2.4, 6, SEAT, SEAT);
+        box(g, x, y + 2.0, z, 0.06, 0.06, 1.9, a, POLE, POLE); box(g, x, y + 1.2, z, 0.06, 0.06, 1.9, a, POLE, POLE); exclPush(x, z, 1.4); CR.avoid(x, z, 1.2); st.pois++; }
+      // the logs across the forest tracks: a peeled trunk lying on the sand (boxes of eight sides would cost the same; a long box reads as one)
+      const LOG = [[-654, -480], [-702, -441], [-264, -615], [-430, -859]];
+      for (const [x, z] of LOG) if (ok(x, z)) { const a = toRoad(x, z) + Math.PI / 2; box(scen.get(x, z), x, nrGround(x, z) - 0.1, z, 4.5, 0.38, 0.38, a, SEAT, POLE); exclPush(x, z, 2.4); st.pois++; }
     }
 
     const opt = { map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 };

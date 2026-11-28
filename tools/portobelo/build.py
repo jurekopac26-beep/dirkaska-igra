@@ -33,19 +33,28 @@ def widths():
 # ---- names on the HUD ({n, d: metres after the start line, say}): places and plain descriptions only (no names of people, events or firms) ----
 NAMES = [
     ('Ob zalivu', 40, ['Along the bay of Portobelo!', 'The bay on the left, the jungle on the right!']),
+    ('Ravnina ob vodi', 330, ['A straight by the water, flat out!', 'The long straight along the bay, keep it pinned!']),
     ('Obalna cesta', 650, ['The coast road, flowing bends by the water!', 'Down the coast road, the hills all green!']),
+    ('Gozdni ovinki', 1080, ['Into the bends under the rainforest!', 'Left, right, left, the jungle right up to the road!']),
     ('Nad zalivom', 1250, ['Up over the bay and down again!', 'A crest above the water, then down to the town!']),
-    ('Trdnjava', 1600, ['Past the old coral-stone fort above the road!', 'The fort on the right, three centuries of it!']),
+    ('Ovinek pod trdnjavo', 1400, ['The big left-hander under the fort, brake now!', 'Hard left under the old walls!']),
+    ('Trdnjava', 1600, ['Past the old coral-stone fort above the road!', 'The fort on the right, its battery down by the water on the left!']),
     ('Staro mesto', 1820, ['Into the old town, houses on both sides!', 'Through the old town, the bay on the left!']),
+    ('Carinarnica', 1900, ['The old customs house on the left, where the king counted his gold!', 'Past the arches of the customs house, nearly four centuries old!']),
     ('Most čez potok', 1980, ['Over the stream and on!', 'The little bridge, keep it straight!']),
+    ('Cerkev', 2030, ['The white church and its bell tower on the left!', 'Past the church, out of the old town!']),
+    ('Šola', 2160, ['Past the school, mind the bus stop!', 'The school on the left, the last of the town!']),
     ('Vzhodni breg', 2250, ['Out along the east of the bay to the finish!', 'The last of the bay, flat out!']),
+    ('Ruševine', 2440, ['Old stone ruins in the grass by the road!', 'Ruined walls of coral stone, the finish is near!']),
 ]
-EN_NAMES = {'Ob zalivu': 'Along the Bay', 'Obalna cesta': 'The Coast Road', 'Nad zalivom': 'Above the Bay', 'Trdnjava': 'Fortress', 'Staro mesto': 'The Old Town', 'Most čez potok': 'The Stream Bridge', 'Vzhodni breg': 'The East Shore'}
+EN_NAMES = {'Ob zalivu': 'Along the Bay', 'Obalna cesta': 'The Coast Road', 'Nad zalivom': 'Above the Bay', 'Trdnjava': 'Fortress', 'Staro mesto': 'The Old Town', 'Most čez potok': 'The Stream Bridge', 'Vzhodni breg': 'The East Shore', 'Ravnina ob vodi': 'The Waterside Straight', 'Gozdni ovinki': 'The Forest Bends', 'Ovinek pod trdnjavo': 'The Bend under the Fort', 'Carinarnica': 'The Customs House', 'Cerkev': 'The Church', 'Šola': 'The School', 'Ruševine': 'The Ruins'}
 
-DESC = ('Odprta cesta ob karibski obali Paname: ob zalivu Portobelo med zelenimi griči, čez greben nad vodo, mimo razvalin španske obalne trdnjave '
-        'iz koralnega kamna in skozi staro mesto do vzhodnega brega zaliva. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.')
-DESC_EN = ('An open road on the Caribbean coast of Panama: along the bay of Portobelo between green hills, over a crest above the water, past the '
-           'ruins of a Spanish coastal fort of coral stone and through the old town to the east shore of the bay. '
+DESC = ('Odprta cesta ob karibski obali Paname: ob zalivu Portobelo med zelenimi griči deževnega gozda, čez greben nad vodo, mimo razvalin španske obalne '
+        'trdnjave iz koralnega kamna, skozi staro mesto mimo kraljeve carinarnice z arkadami in bele cerkve z zvonikom ter ob ruševinah do vzhodnega brega '
+        'zaliva (utrdbe so na Unescovem seznamu svetovne dediščine). Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.')
+DESC_EN = ('An open road on the Caribbean coast of Panama: along the bay of Portobelo between green rainforest hills, over a crest above the water, past the '
+           'ruins of a Spanish coastal fort of coral stone, through the old town past the arcaded royal customs house and the white church with its bell '
+           'tower, and by old ruins to the east shore of the bay (the forts are a UNESCO World Heritage site). '
            'A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
 MEDALS = {'cs': [60, 63, 68], 'wet': {'cs': [71, 75, 80]}, 'winter': {'cs': [69, 72, 78], 'wet': {'cs': [85, 89, 96]}}}
@@ -98,6 +107,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
 %(names)s
     ],
+    // the flyover before the race (render.js places(): [metres after the start line, caption]; -1 the finish)
+    fly: [[0, 'START'], [1400, 'Ovinek pod trdnjavo'], [1600, 'Trdnjava'], [1900, 'Carinarnica'], [2030, 'Cerkev'], [2440, 'Ruševine'], [-1, 'CILJ']],
     // the commentator's own lines on this road
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, the bay, the jungle and the old fort, and you start {grid}.", "Here we are by the bay of Portobelo. A race along the water and through the old town, and you line up {grid}."],
