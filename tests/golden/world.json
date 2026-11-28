@@ -1752,15 +1752,15 @@
  },
  "chamarel": {
   "meshes": 2419,
-  "verts": 815070,
+  "verts": 814920,
   "instances": 72836,
   "props": 123,
   "crowd": 192,
-  "world": "3a7cfd63",
+  "world": "c5f190bf",
   "propsHash": "3dbc9db1",
   "floor": "d865fb43/10556",
   "groups": {
-   "-:MeshLambertMaterial": "68d3f39a",
+   "-:MeshLambertMaterial": "ec5a0bfc",
    "-:MeshPhongMaterial": "4d17686",
    "-:MeshBasicMaterial": "a91bd46d",
    "irFar:MeshLambertMaterial": "2b925d9c",

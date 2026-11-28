@@ -11,7 +11,7 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api || !World.api.PL_LOOK) return;
   const API = World.api;
-  const { GB, IChunks, TAU, box, caGround, caSlope, clamp, rng, vary, vrNear } = API;
+  const { GB, IChunks, TAU, box, gable, caGround, caSlope, clamp, rng, vary, vrNear } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
 
@@ -33,7 +33,7 @@
   };
 
   const marks = [];   // (the build under way: [what, x, z, the road's heading, the side, the road's index])
-  const VIEW_S = 2900, CANE = [[3050, 3900], [4000, 4450]];   // (metres from the start line: the viewpoint; the stretches with the cane round the village)
+  const VIEW_S = 2900, CHURCH_S = 3667, CANE = [[3050, 3900], [4000, 4450]];   // (metres from the start line: the viewpoint; the stretches with the cane round the village)
 
   // a place beside the road at s metres from the start line, o metres beyond the barrier on the side sd (+1 the right): [x, z, heading, sd, i]
   function atS(s, sd, o) {
@@ -42,8 +42,14 @@
   }
 
   /* ---- before the terrain: the viewpoint's level plot on the side the ground falls away ---- */
-  LOOK.pre = function ({ P, exclPush }) {
+  LOOK.pre = function ({ P, exclPush, blds }) {
     marks.length = 0;
+    {   // the village church (OpenStreetMap: the footprint ~25 m off the road by the junction for Plaine Champagne, s ~3667): out of the shared
+      // houses, drawn here as a church (generic: white walls, a red iron roof, a small bell tower at the end; no name, no sign)
+      const i = T.idx(T.startS + CHURCH_S); let k = -1, best = 45;
+      blds.forEach((b, j) => { const d = Math.hypot(b.x - T.px[i], b.z - T.pz[i]); if (d < best) { best = d; k = j; } });
+      if (k >= 0) { const b = blds.splice(k, 1)[0]; exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5); marks.push(['church', b.x, b.z, b.ang, 0, i, b.L, b.W]); }
+    }
     const D = P.D, dem = (x, z) => { const i = clamp(Math.round((x - D.x0) / D.cell), 0, D.nx - 1), j = clamp(Math.round((z - D.z0) / D.cell), 0, D.nz - 1); return P.dem[j * D.nx + i]; };
     const low = [-1, 1].map(sd => { const [x, z] = atS(VIEW_S, sd, 30); return dem(x, z); }), sd = low[0] < low[1] ? -1 : 1;
     const [x, z, hd, , i] = atS(VIEW_S, sd, 4.5);
@@ -63,14 +69,24 @@
   /* ---- the viewpoint and the cane, after the rest of the road is built ---- */
   LOOK.extra = function ({ scen, root, out, P, excluded, matV }) {
     const G = (x, z) => caGround(x, z), dens = Math.min(1, LOD.dens != null ? LOD.dens : 1);
-    const st = { views: 0, cane: 0 }, basalt = [0.3, 0.29, 0.28], basaltT = [0.38, 0.36, 0.34];
-    for (const [what, x, z, hd, sd, i] of marks) {
+    const st = { views: 0, cane: 0, churches: 0 }, basalt = [0.3, 0.29, 0.28], basaltT = [0.38, 0.36, 0.34];
+    for (const [what, x, z, hd, sd, i, bl, bw] of marks) {
       const g = scen.get(x, z), c = Math.cos(hd), s = Math.sin(hd), nx = -s * sd, nz = c * sd;   // (nx, nz: the way from the road out to it)
       if (what === 'view') {   // the viewpoint: a paved lay-by beside the road, a low parapet of dark basalt blocks on its outer edge
         const yy = T.hy[i] - 0.25;
         for (let k = -3; k <= 3; k++) { const u = k * 1.6, px = x + c * u + nx * 4.4, pz = z + s * u + nz * 4.4, gy = Math.min(yy, G(px, pz));
           box(g, px, gy - 0.6, pz, 1.7, yy - gy + 1.3, 0.5, hd, basalt, basaltT); }
         st.views++;
+      } else if (what === 'church') {   // the church: a plinth to the lowest corner, white walls, a gable roof of red iron, a bell tower at one end
+        const L = Math.min(bl, 24), W = Math.min(bw, 14), ca = Math.cos(hd), sa = Math.sin(hd); let lo = 1e9, hi = -1e9;
+        for (const [u, v] of [[-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const y = G(x + ca * u - sa * v, z + sa * u + ca * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
+        const y0 = hi + 0.3, wall = [0.94, 0.93, 0.88], tx = x + ca * (L / 2 - 1.6), tz = z + sa * (L / 2 - 1.6);
+        box(g, x, lo - 0.4, z, L + 0.4, y0 - lo + 0.4, W + 0.4, hd, basalt, basaltT, true);   // (the plinth of basalt)
+        box(g, x, y0, z, L, 6, W, hd, wall, null, true);
+        gable(g, x, y0 + 6, z, L + 1, W + 1, 3.6, hd, [0.62, 0.24, 0.18], wall);
+        box(g, tx, y0 + 6, tz, 3.2, 6.5, 3.2, hd, wall, wall);   // (the bell tower over the front)
+        gable(g, tx, y0 + 12.5, tz, 3.6, 3.6, 1.6, hd, [0.62, 0.24, 0.18], wall);
+        st.churches = (st.churches || 0) + 1;
       }
       out.marks[what] = (out.marks[what] || 0) + 1;
     }

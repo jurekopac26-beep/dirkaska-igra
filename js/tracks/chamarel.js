@@ -40,12 +40,19 @@ var TRACK_DEFS = TRACK_DEFS || [];
     maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): ~74 m of road past the line, a bigger field's slots would stand on each other
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Case Noyale", "d": 120.0, "say": ["Away from the coast at Case Noyale, the hills ahead!", "Up from Case Noyale, the sea behind you!"]},
+      {"n": "Case Noyale", "d": 120.0, "say": ["Away from the coast at Case Noyale, the hills ahead!", "Up from Case Noyale, the sea behind you!", "Case Noyale in the mirrors, the green wall ahead!"]},
       {"n": "Gozd", "d": 860.0, "say": ["Into the forest, the bends begin!", "Under the trees now, and climbing!"]},
+      {"n": "Grmovje", "d": 1130.0, "say": ["Past the scrub on the open slope, a tight right!", "Out of the trees for a moment, the scrub on the bank!"]},
       {"n": "Serpentine · 196 m", "d": 1775.0, "say": ["Into the hairpins, tight and steep!", "The switchbacks now, left and right and up again!"]},
-      {"n": "Razgledišče · 300 m", "d": 2900.0, "say": ["Past the viewpoint, the whole west coast below!", "By the viewpoint, the lagoon far below!"]},
+      {"n": "Druga serpentina", "d": 2190.0, "say": ["The second hairpin, a tight left!", "Round the second hairpin, hard on the brakes!"]},
+      {"n": "Tretja serpentina", "d": 2505.0, "say": ["The third hairpin, the tightest of them all!", "Through the last of the hairpins, the top is near!"]},
+      {"n": "Razgledišče · 300 m", "d": 2900.0, "say": ["Past the viewpoint, the whole west coast below!", "By the viewpoint, the lagoon far below!", "The viewpoint flashes by, no time for the view!"]},
+      {"n": "Pešpot", "d": 3065.0, "say": ["Past the footpath into the mountains!", "By the trail up to the island's highest peak!"]},
       {"n": "Chamarel", "d": 3450.0, "say": ["Into Chamarel, the village on the plateau!", "Through Chamarel, mind the houses close to the road!"]},
+      {"n": "Cerkev", "d": 3640.0, "say": ["By the church, the junction for Plaine Champagne!", "Past the church in the middle of the village!"]},
+      {"n": "Postajališče", "d": 4405.0, "say": ["Past the lay-by, keep climbing!", "By the lay-by, the forest closing in again!"]},
       {"n": "Proti Plaine Champagne · 341 m", "d": 4755.0, "say": ["The last climb toward Plaine Champagne, the line is close!", "Up through the forest again, nearly there!"]},
+      {"n": "Gozd nad Rivière Noire", "d": 4930.0, "say": ["Into the forest above the Rivière Noire gorges, the line is right there!", "The forest of the gorges, the last metres!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
