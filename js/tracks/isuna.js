@@ -24,7 +24,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n": "Ob reki", "d": 60, "say": ["Along the river, the pine forest above!", "The river right beside the road!"]},
       {"n": "Dolina", "d": 800, "say": ["Up the valley!", "The valley opens up ahead!"]},
       {"n": "Verižni most", "d": 1560, "say": ["The old iron chain bridge, down by the river!", "Past the chain bridge and its white gatehouses!"]},
+      {"n": "Svetišče nad mostom", "d": 1700, "say": ["The white temple up on the hillside above the bridge!", "Prayer flags on the poles by the bridge!"]},
       {"n": "Proti Paru", "d": 2500, "say": ["On up the valley towards Paro!", "The last stretch up the valley!"]},
+      {"n": "Terase", "d": 2850, "say": ["Terraced fields stepping down to the river!", "Fields on the terraces either side now!"]},
+      {"n": "Vas", "d": 3250, "say": ["The village ahead, white houses with painted windows!", "Into the village, the chorten just past the finish!"]},
     ],
     comm: {
       introPass: ["Welcome to {track}! {cars} cars on a short road up the river valley, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
