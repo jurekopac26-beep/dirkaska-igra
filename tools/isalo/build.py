@@ -31,11 +31,17 @@ def widths():
 # ---- names on the HUD ({n, d: metres after the start line, say}): places and plain descriptions only (no names of people, events or firms) ----
 NAMES = [
     ('Planota Isalo', 60, ['Down off the Isalo plateau!', 'The grass plain all round, the rocks ahead!']),
+    ('Skalni stolpi', 160, ['Sandstone towers on the left, under the massif!', 'The rocks worn into towers and domes, close on the left!']),
+    ('Pašniki', 330, ['Across the grazing land, watch for the zebu!', 'Open grass both sides, the herds graze right up to the road!']),
+    ('Dolinica', 460, ['Down into the little dip and up again!', 'Through the hollow at the bottom, 831 metres!']),
     ('Pod skalami', 700, ['Into the bends under the sandstone!', 'The rocks close in, left and right now!']),
+    ('Vrh klanca', 1200, ['Over the crest of the rise!', 'Up on the top of the rise, 851 metres, and down the other side!']),
+    ('Pogorišča', 1450, ['Burnt grass by the road, the fresh green coming through!', 'Black patches in the grass, burnt off for the grazing!']),
+    ('Palme na ravnini', 1650, ['Lone fan palms out on the grass!', 'The palms standing alone on the plain, left and right!']),
     ('Kraljica Isala', 1850, ['There she is on the left, the Queen of Isalo!', 'Past the Queen of Isalo, the rock that looks like a crowned head!']),
     ('Ravnina proti jugu', 2250, ['Out onto the plain, flat out to the south!', 'The long straight across the grass, nothing but sky!']),
 ]
-EN_NAMES = {'Planota Isalo': 'Isalo Plateau', 'Pod skalami': 'Under the Rocks', 'Kraljica Isala': 'Queen of Isalo', 'Ravnina proti jugu': 'The Plain to the South'}
+EN_NAMES = {'Planota Isalo': 'Isalo Plateau', 'Skalni stolpi': 'Sandstone Towers', 'Pašniki': 'The Grazing Land', 'Dolinica': 'The Dip', 'Vrh klanca': 'Top of the Rise', 'Pogorišča': 'The Burnt Grass', 'Palme na ravnini': 'Palms on the Plain', 'Pod skalami': 'Under the Rocks', 'Kraljica Isala': 'Queen of Isalo', 'Ravnina proti jugu': 'The Plain to the South'}
 
 DESC = ('Odprta cesta RN7 na jugu Madagaskarja, ob narodnem parku Isalo: s travnate planote na višini 860 m med skale iz rdečega peščenjaka, '
         'skozi zavoje ob stenah in mimo Kraljice Isala, skale v obliki glave s krono, ki stoji tik ob cesti, nato po ravnini proti jugu. '
@@ -74,7 +80,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xdfe2dc, sun: 0xfff0d4, sunI: 1.26, sky: 0x8fbbe6, gnd: 0x8a6a45, hemiI: 0.6, tint: [1.04, 1.0, 0.95], sat: 1.1, sunOff: [55, 80, -50], split: [[0.97, 1.0, 1.05], [1.05, 1.0, 0.94]] },   // Isalo: a clear dry-season afternoon over the grass, the sun high in the north
     say: 'Isalo',
-    zivali: { a: ['egret'], t: [], open: true },   // (no huts: OSM has no buildings within 60 m of this road)
+    zivali: { a: ['egret', 'zebu'], t: [], open: true },   // (no huts: OSM has no buildings within 60 m of this road; the zebu herds graze the plains along the RN7: docs/proge/isalo-raziskava.md)
     id: 'isalo', name: 'Isalo, Madagaskar', theme: 'isalo', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     halfWidth: 5.0,
     desc: %(desc)s,

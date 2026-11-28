@@ -345,9 +345,9 @@
  "isalo": {
   "calls": 126,
   "maxCalls": 142,
-  "kverts": 354,
-  "maxKverts": 376,
-  "jsMs": 0.71
+  "kverts": 417,
+  "maxKverts": 480,
+  "jsMs": 1.06
  },
  "portobelo": {
   "calls": 123,

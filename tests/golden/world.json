@@ -1344,25 +1344,25 @@
   }
  },
  "isalo": {
-  "meshes": 468,
-  "verts": 852580,
-  "instances": 1274,
+  "meshes": 479,
+  "verts": 890397,
+  "instances": 5465,
   "props": 0,
   "crowd": 84,
-  "world": "d5d02e0c",
+  "world": "333cd000",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "d58dd273",
+   "-:MeshLambertMaterial": "d8a6bcee",
    "crowd:MeshLambertMaterial": "bbf55e50",
    "rob:MeshLambertMaterial": "59b3f049",
    "flags:MeshLambertMaterial": "c3d43254",
    "ao:MeshBasicMaterial": "a63406a8",
    "tyremarks:MeshBasicMaterial": "356f0607",
    "roadwear:MeshLambertMaterial": "9d76c6be",
-   "life:MeshLambertMaterial": "bd4336a3",
-   "lifeShadow:MeshBasicMaterial": "1e1501c3",
-   "life:MeshBasicMaterial": "c8dc7e11"
+   "life:MeshLambertMaterial": "dfa7e2be",
+   "lifeShadow:MeshBasicMaterial": "7ad437ef",
+   "life:MeshBasicMaterial": "af6e76a0"
   }
  },
  "portobelo": {

@@ -16,7 +16,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xdfe2dc, sun: 0xfff0d4, sunI: 1.26, sky: 0x8fbbe6, gnd: 0x8a6a45, hemiI: 0.6, tint: [1.04, 1.0, 0.95], sat: 1.1, sunOff: [55, 80, -50], split: [[0.97, 1.0, 1.05], [1.05, 1.0, 0.94]] },   // Isalo: a clear dry-season afternoon over the grass, the sun high in the north
     say: 'Isalo',
-    zivali: { a: ['egret'], t: [], open: true },   // (no huts: OSM has no buildings within 60 m of this road)
+    zivali: { a: ['egret', 'zebu'], t: [], open: true },   // (no huts: OSM has no buildings within 60 m of this road; the zebu herds graze the plains along the RN7: docs/proge/isalo-raziskava.md)
     id: 'isalo', name: 'Isalo, Madagaskar', theme: 'isalo', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     halfWidth: 5.0,
     desc: "Odprta cesta RN7 na jugu Madagaskarja, ob narodnem parku Isalo: s travnate planote na višini 860 m med skale iz rdečega peščenjaka, skozi zavoje ob stenah in mimo Kraljice Isala, skale v obliki glave s krono, ki stoji tik ob cesti, nato po ravnini proti jugu. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
@@ -35,7 +35,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n": "Planota Isalo", "d": 60, "say": ["Down off the Isalo plateau!", "The grass plain all round, the rocks ahead!"]},
+      {"n": "Skalni stolpi", "d": 160, "say": ["Sandstone towers on the left, under the massif!", "The rocks worn into towers and domes, close on the left!"]},
+      {"n": "Pašniki", "d": 330, "say": ["Across the grazing land, watch for the zebu!", "Open grass both sides, the herds graze right up to the road!"]},
+      {"n": "Dolinica", "d": 460, "say": ["Down into the little dip and up again!", "Through the hollow at the bottom, 831 metres!"]},
       {"n": "Pod skalami", "d": 700, "say": ["Into the bends under the sandstone!", "The rocks close in, left and right now!"]},
+      {"n": "Vrh klanca", "d": 1200, "say": ["Over the crest of the rise!", "Up on the top of the rise, 851 metres, and down the other side!"]},
+      {"n": "Pogorišča", "d": 1450, "say": ["Burnt grass by the road, the fresh green coming through!", "Black patches in the grass, burnt off for the grazing!"]},
+      {"n": "Palme na ravnini", "d": 1650, "say": ["Lone fan palms out on the grass!", "The palms standing alone on the plain, left and right!"]},
       {"n": "Kraljica Isala", "d": 1850, "say": ["There she is on the left, the Queen of Isalo!", "Past the Queen of Isalo, the rock that looks like a crowned head!"]},
       {"n": "Ravnina proti jugu", "d": 2250, "say": ["Out onto the plain, flat out to the south!", "The long straight across the grass, nothing but sky!"]},
     ],
