@@ -86,6 +86,9 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
   for (let j = 0; j < D.nz; j++) for (let i = 0; i < D.nx; i++) if (D.lo + bin[j * D.nx + i] * D.step < sk.sea.y - 0.5) { nSea++; if (D.z0 + j * D.cell < sk.sea.z0) north++; }
   check('scenery: the sea at the finish line\'s height below it (4-5 m), the terrain\'s sea cells under it (1000 or more, none north of the plane\'s edge), the hills on the horizon (def.far, 10 rings to 11.5 km)',
     sk.sea.y < -4 && sk.sea.y > -5 && nSea >= 1000 && !north && def.far && def.far.r.length === 10 && def.far.r[9] === 11500, `sea ${sk.sea.y} m, ${nSea} cells under it, ${north} north of z ${sk.sea.z0}`);
+  const polys = (S) => { let n = 0; for (let k = 0; k < (S || []).length; k += 1 + S[k] * 2) n++; return n; }, nB = polys(sk.beach), nK = polys(sk.cliff);
+  check('scenery: the coast (OSM): the beaches\' outlines (3 or more, the sand) and the cliffs (1 or more, the rock) on the terrain, the sea\'s plane over the bay to the west (its north edge z < 200 m)',
+    nB >= 3 && nK >= 1 && sk.sea.z0 < 200 && sk.sea.d > 4600, `${nB} beaches, ${nK} cliffs, the sea from z ${sk.sea.z0} (${sk.sea.d} m)`);
   const ways = (S) => { let nr = 0, np = 0, inb = 0, short = 0; for (let k = 0; k < S.length;) { const m = S[k]; nr++; if (m < 2) short++;
     for (let q = 0; q < m; q++) { const qq = near(S[k + 1 + q * 2], S[k + 2 + q * 2]); np++; if (Math.abs(qq.lat) < (qq.lat > 0 ? T.br[qq.i] : T.bl[qq.i])) inb++; } k += 1 + m * 2; } return { nr, np, inb, short }; };
   const sv = ways(sk.svc), tr = ways(sk.trk);
