@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NR_A64, TAU, atSf, box, parkedCar, clamp, cone, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico,
+    Chunks, GB, IChunks, NR_A64, TAU, atSf, box, parkedCar, clamp, cone, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, fineBand, fineMix, gable, ico,
     inPoly, lerp, nrChamfer, polyDist, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, starCone, valueNoise2, vary
   } = API;
   let LOD, T;   // (World's, for the build under way)
@@ -50,7 +50,7 @@
         let h = (tr[k0] * (1 - u) + tr[k0 + 1] * u) * (1 - v) + (tr[k0 + TR.nx] * (1 - u) + tr[k0 + TR.nx + 1] * u) * v;
         if (i >= a && i < a + n) h += rb.charCodeAt(q++) - 128;
         dem[j * D.nx + i] = h - D.base; } }
-    P.dem = dem; P.D = D;
+    P.dem = dem; P.D = D; P.fine = def.demFine ? fineBand(def.demFine) : null;   // (the band beside the road on a finer grid: Furka)
     // land cover (def.lc, 16 m cells, run-length coded: a symbol = class * 8 + run - 1; a run of 8 or more: 7, then digits of 64 until one below 63):
     // 0 open, 1 forest, 2 dwarf pine and scrub, 3 settlement, 4 rock and scree, 5 water
     const L = def.lc, lc = new Uint8Array(L.nx * L.nz), dg = new Int8Array(128); for (let k = 0; k < 64; k++) dg[NR_A64.charCodeAt(k)] = k;
@@ -141,6 +141,7 @@
   }
   function vrFar(x, z) {   // the land away from the road: the real terrain, a little made-up relief, the lake basins
     const P = VR, d0 = vrDem(x, z); let f = d0 + (P.n1(x, z) - 0.5) * 5 + (P.n2(x, z) - 0.5) * 2;
+    if (P.fine) f = fineMix(P.fine, x, z, vrDist(x, z), f, d0);   // (AAA V3': the real detail instead of the made-up relief within ~60 m of the road)
     if (P.sea !== null && d0 < P.sea + 1.4) f = Math.min(f, lerp(P.sea - 2.2, f, sstep(P.sea + 0.3, P.sea + 1.4, d0)));   // (the sea's floor: no made-up relief poking out of the water)
     const W = vrWater(x, z), L = W.L;
     if (L) { const e = W.e, shore = W.h + 0.9 - 0.35 * e; if (e > -30) f = Math.min(f, e > 0 ? Math.max(W.h - 3.5, shore) : lerp(shore, f, sstep(0, -30, e))); }   // (the water line ~3 m inside the shore polygon)

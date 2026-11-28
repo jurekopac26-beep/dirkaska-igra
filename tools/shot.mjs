@@ -35,13 +35,14 @@ const CHANGED = 0.5;   // (a picture counts as changed from this share of change
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
 const CAS = { jutro: 'dawn', dan: 'day', vecer: 'dusk', 'večer': 'dusk', noc: 'night', 'noč': 'night' };
 const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), pred = flag('--pred'), gumaArg = flag('--guma'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
+const dpr = Number(flag('--dpr')) || 1;   // (--dpr <n>: the browser's device pixel ratio, e.g. 2 for pictures to show a person at a phone's sharpness)
 const root = path.resolve(flag('--root') || process.env.GAME_ROOT || REPO), nabor = has('--nabor'), nizka = has('--nizka'), velika = has('--velika');   // (--nizka: the graphics detail NIZKA, as perf.test.mjs measures the phone's load)
 let orient = ['pokonci', 'lezece'].filter(o => has('--' + o)); if (!orient.length) orient = ['pokonci', 'lezece'];
 const ids = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
 const guma = gumaArg != null ? Number(gumaArg) : null;
 if (velika) for (const o of Object.values(SIZE)) { o.width *= BIG; o.height *= BIG; }
 if ((!ids.length && !nabor) || bad.length || (vreme && !/^(suho|dez|dež)$/.test(vreme)) || (cas && !CAS[cas]) || (guma != null && !(guma >= 0 && guma <= 1))) {
-  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--cas jutro|dan|vecer|noc] [--nizka] [--guma <0-1>] [--velika] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
+  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--cas jutro|dan|vecer|noc] [--nizka] [--guma <0-1>] [--velika] [--dpr <n>] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
     '       node tools/shot.mjs --nabor [--pred <ref|folder>]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
   process.exit(2);
 }
@@ -89,7 +90,7 @@ if (nabor) {
 async function takeAll(browser, gameRoot, tag) {
   const srv = await serve(gameRoot), shots = {}, problems = [];
   try {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: cas ? CAS[cas] : 'day', season: 'summer' }, nizka ? { quality: 'normal', detail: 'low' } : {}), SIZE[orient[0]], { seed: 11 });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: cas ? CAS[cas] : 'day', season: 'summer' }, nizka ? { quality: 'normal', detail: 'low' } : {}), SIZE[orient[0]], { seed: 11, context: { deviceScaleFactor: dpr } });
     for (const [id, places] of jobs) {
       const q = new URLSearchParams({ proga: id, t: String(t != null ? t : places ? 0.5 : 3) }); if (vreme) q.set('vreme', vreme); if (avto) q.set('avto', avto);
       const n0 = errors.length;
@@ -120,9 +121,9 @@ async function takeAll(browser, gameRoot, tag) {
           Render.resetCam(); for (let k = 0; k < 6; k++) { Render.frame(1 / 60, 1, P, 'chase', {}); await raf(); }   // (the camera behind the car at once, the world's near pieces there)
           const hid = m != null ? R.cars.filter(c => c !== P).map(c => Render.viewOf(c)).filter(v => v && v.grp.visible) : [];
           for (const v of hid) v.grp.visible = false;
-          const c = Render.snapshot(P, 'chase', Math.max(side.width, side.height));
+          const d = window.devicePixelRatio || 1, c = Render.snapshot(P, 'chase', Math.max(side.width, side.height) * d);   // (--dpr: the picture in device pixels)
           for (const v of hid) v.grp.visible = true;
-          const k = document.createElement('canvas'); k.width = side.width; k.height = side.height; k.getContext('2d').drawImage(c, 0, 0, k.width, k.height);
+          const k = document.createElement('canvas'); k.width = side.width * d; k.height = side.height * d; k.getContext('2d').drawImage(c, 0, 0, k.width, k.height);
           return { src: k.toDataURL('image/png'), at, s: Math.round((((P.q.s - T.startS) % T.len) + T.len) % T.len), name: T.def.name || T.def.id, ver: g.ver };
         }, [m, SIZE[o], guma]);
         const key = `${id}-${m != null ? m + 'm' : 't' + (t != null ? t : 3) + 's'}-${o}`;

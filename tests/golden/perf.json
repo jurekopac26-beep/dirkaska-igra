@@ -28,11 +28,11 @@
   "jsMs": 3.05
  },
  "spa": {
-  "calls": 186,
+  "calls": 193,
   "maxCalls": 232,
-  "kverts": 494,
-  "maxKverts": 618,
-  "jsMs": 1.5
+  "kverts": 507,
+  "maxKverts": 617,
+  "jsMs": 1.36
  },
  "rbring": {
   "calls": 228,
@@ -144,7 +144,7 @@
   "maxCalls": 251,
   "kverts": 633,
   "maxKverts": 806,
-  "jsMs": 1.05
+  "jsMs": 1.12
  },
  "kildare": {
   "calls": 227,
@@ -184,9 +184,9 @@
  "furka": {
   "calls": 173,
   "maxCalls": 211,
-  "kverts": 384,
-  "maxKverts": 532,
-  "jsMs": 1.13
+  "kverts": 383,
+  "maxKverts": 546,
+  "jsMs": 1.12
  },
  "santoantao": {
   "calls": 179,
