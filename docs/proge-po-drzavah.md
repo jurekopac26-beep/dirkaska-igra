@@ -213,6 +213,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Poljska | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | v delu (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Mavricij | Chamarel (rezerva uporabnika 13. 11. 2026; PR #1091, veja `proga/chamarel`) | v delu (partyslo, od 25. 11. 2026); pot Case Noyale – Chamarel 5,0 km (možnost 1 kartice, odgovor 25. 11. 2026); na `main` po #788; prva proga države |
 | Bosna in Hercegovina | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Egipt | Giza (TOP 20; načrt v6, PR #1212, veja `proga/giza`) | v delu (jure.kopac26); izjema pri izletni coni po odločitvi O-28-33 (pesek do asfalta kot v resnici, brez ograj, ki jih viri ne kažejo); prva proga države |
 | Ciper | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Bolgarija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026; med njimi Šipka, rezerva uporabnika 8. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Armenija | Tatev (cesta H-46 čez sotesko Vorotana; odsek izbrala seja proge, uporabnik potrdil 26. 11. 2026; PR #1097, veja `proga/tatev`) | v delu (partyslo, rezerva croatiadata); prva proga države |

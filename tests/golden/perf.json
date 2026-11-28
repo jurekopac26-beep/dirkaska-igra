@@ -537,5 +537,12 @@
   "kverts": 542,
   "maxKverts": 804,
   "jsMs": 1.17
+ },
+ "giza": {
+  "calls": 75,
+  "maxCalls": 80,
+  "kverts": 197,
+  "maxKverts": 207,
+  "jsMs": 1.73
  }
 }

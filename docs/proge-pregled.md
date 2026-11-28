@@ -16,6 +16,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
+| Mã Pí Lèng, Vietnam | `mapileng` | odprta cesta | 1,0 km | 963 | 24 % | 3 | +61 m |
 | Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
 | Sa Calobra, Španija | `sacalobra` | odprta cesta | 4,9 km | 946 | 35 % | 14 | −342 m |
 | Santo Antão, Zelenortski otoki | `santoantao` | odprta cesta | 5,0 km | 936 | 27 % | 6 | −336 m |
@@ -30,28 +31,25 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Džebel Hafit, Združeni arabski emirati | `hafit` | odprta cesta | 4,8 km | 692 | 30 % | 11 | +394 m |
 | Chamarel, Mavricij | `chamarel` | odprta cesta | 5,0 km | 675 | 39 % | 3 | +339 m |
 | Bâlea, Romunija | `balea` | odprta cesta | 3,5 km | 673 | 38 % | 4 | +232 m |
+| Tatev, Armenija | `tatev` | odprta cesta | 7,2 km | 673 | 51 % | 19 | +225 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Kanaba, Uganda | `kanaba` | odprta cesta | 5,0 km | 618 | 30 % | 1 | −118 m |
+| Tapini, Papua Nova Gvineja | `tapini` | kronometer | 0,5 km | 618 | 30 % | 0 | −46 m |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
 | Gudauri, Gruzija | `gudauri` | odprta cesta | 4,8 km | 587 | 39 % | 5 | +260 m |
 | Kågeröd, Švedska | `kagerod` | krog | 2,1 km | 557 | 45 % | 2 | 13 m razpona |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
-| Hải Vân, Vietnam | `haivan` | odprta cesta | 2,0 km | 522 | 38 % | 1 | +91 m |
-| Mã Pí Lèng, Vietnam | `mapileng` | odprta cesta | 1,0 km | 963 | 24 % | 3 | +61 m |
-| Tatev, Armenija | `tatev` | odprta cesta | 7,2 km | 673 | 51 % | 19 | +225 m |
 | Furka, Švica | `furka` | odprta cesta | 5,0 km | 519 | 45 % | 7 | +371 m |
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
-| Krásna Hôrka, Slovaška | `krasnahorka` | odprta cesta | 3,4 km | 471 | 49 % | 0 | −155 m |
 | Seul, Južna Koreja | `seoul` | odprta cesta | 2,5 km | 501 | 44 % | 0 | −77 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 493 | 57 % | 4 | +183 m |
 | Ujarrás, Kostarika | `ujarras` | odprta cesta | 0,7 km | 490 | 43 % | 0 | +41 m |
+| Krásna Hôrka, Slovaška | `krasnahorka` | odprta cesta | 3,4 km | 466 | 55 % | 3 | −155 m |
 | Quezaltepeque, Salvador | `quezaltepeque` | krog | 3,2 km | 455 | 51 % | 4 | 16 m razpona |
-| Sogeri, Papua Nova Gvineja | `sogeri` | odprta cesta | 2,0 km | 448 | 52 % | 1 | +117 m |
-| Tapini, Papua Nova Gvineja | `tapini` | kronometer | 0,5 km | 618 | 30 % | 0 | −46 m |
 | Cusco, Peru | `cusco` | odprta cesta | 0,9 km | 440 | 47 % | 1 | +61 m |
 | Savusavu, Fidži | `savusavu` | odprta cesta | 2,5 km | 431 | 50 % | 0 | +7 m |
 | Batangas, Filipini | `batangas` | krog | 3,6 km | 422 | 50 % | 2 | ravno |
@@ -66,6 +64,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Hiva, Uzbekistan | `hiva` | krog | 3,0 km | 359 | 68 % | 0 | ravno |
 | Mombasa, Kenija | `mombasa` | odprta cesta | 3,4 km | 335 | 69 % | 0 | −16 m |
 | El Jem, Tunizija | `eljem` | odprta cesta | 1,5 km | 335 | 66 % | 0 | −3 m |
+| Giza, Egipt | `giza` | odprta cesta | 9,9 km | 312 | 75 % | 0 | −0 m |
 | Sepang, Malezija | `sepang` | krog | 5,5 km | 304 | 63 % | 4 | 21 m razpona |
 | Pembrey, Wales | `pembrey` | krog | 2,3 km | 297 | 64 % | 1 | ravno |
 | Lombok, Indonezija | `lombok` | krog | 4,3 km | 297 | 62 % | 1 | ravno |
@@ -117,6 +116,7 @@ Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, 
 - **Hakone, Japonska** (`hakone`, asfalt): Bele jeklene ograje, kjer teren pada, in na zunanji strani ostrejših ovinkov, na mostovih betonski parapeti; Vasi s toplicami (Yumoto, Tōnosawa, Miyanoshita, Kowakidani, Moto-Hakone, Hatajuku): hiše z opečnimi strehami, hoteli, ryokani, svetišča, električni drogovi z žicami; Gorska železnica ob cesti: greda, tirnici, vozna mreža, rdeči jekleni mostovi (most čez cesto pri Deyami), nivojski prehod v Kowakidaniju, peroni, portali predorov, ob progi hortenzije; Zredčen gozd: listavci, kriptomerije, javorji, bambus ob vaseh, ob cesti sasa; cedrov drevored in kamnit tlak stare poti Tōkaidō, rdeča vrata (torii) v Hatajuku, jezeri Shōjin in Otama-ga-ike; Na startu portal s šahovnico, redke mirne skupine gledalcev. Dlje: Kaldera Hakone, jezero Ashi z rdečimi vrati v vodi in izletniškimi ladjami, Odawara in morje, gora Fuji (zakrijejo jo resnični grebeni).
 - **Ghoufi, Alžirija** (`ghoufi`, asfalt): Jeklene ograje na strani kanjona (padca čez rob ni); suha okrasta zemlja z redkim grmovjem in posameznimi drevesi; Pod cesto stare kamnite hiše, zložene po steni kanjona (ruševine brez streh in cele hiše z ravnimi strehami), 22–62 m od roba; Palme oaze in sadovnjak na dnu kanjona, globlje kot 45 m pod cesto; Kamnito razgledišče z nizkim zidom in dvema klopema ob cesti na sredini proge.
 - **El Jem, Tunizija** (`eljem`, asfalt): Mestne ulice, 9,6–12 m široke; Betonske ločilne ograje ob robovih (ograja prepreči izlet); Bele in peščene hiše z ravnimi strehami in parapeti; Oljke in palme na suhih okrastih tleh; Rimski amfiteater (trije nizi arkad, model iz Blenderja) ~23 m od ceste pri ~31 % dirke, cesta ga obvozi po vzhodni strani
+- **Giza, Egipt** (`giza`, asfalt): Pesek in kamnita tla planote do asfalta, brez ograj (O-28-33), nevidne ograje ~8 m za robom, v mestu 3,4 m; Sfinga ~55 m, Velika piramida ~86 m, Druga piramida ~81 m in mastabe ~50 m od ceste (obrisi iz OSM), Tretja piramida ~290 m; hiše mesta po obrisih OSM z ravnimi strehami, palme ob poljih in v naselju, nizko grmičevje; kamele in osli, malo gledalcev. Dlje: puščava in dolina Nila (površinski model).
 - **Harju, Finska** (`harju`, asfalt in makadam): Asfalt, ~460 m makadama (greben, park), ~130 m tlakovcev; cesta ponekod ožja; Jeklene ograje v mestu, oranžna mreža v parku, bale slame v šikanah in lasnicah; ~620 stavb (bloki, trgovine, lesene hiše, šola), vodni stolp 34 m, stadion ob spustu; Pločniki z granitnimi robniki, prehodi za pešce, ~800 parkiranih avtomobilov, cestne luči, semaforji; Park: ~3.600 dreves (rdeči bori, smreke, breze, lipe, javorji), borovnice, vresje, trave; Redke skupine gledalcev na pobočjih in stopnicah; stojnice, prenosna stranišča, redarji, TV stolpi. Dlje: Gozdnati griči okoli mesta in jezero Jyväsjärvi na obzorju.
 - **Hiva, Uzbekistan** (`hiva`, asfalt): Mestne ulice okoli starega mesta, 8,8–10,4 m široke; Betonske ločilne ograje ob robovih (nevidna ograja prepreči izlet); Obzidje Ičan Kale iz blatne opeke z okroglimi stolpi tik ob cesti na zahodu, severozahodu in jugu, nad njim dva minareta; Hiše iz blatne opeke z ravnimi strehami; Topoli, bresti in drevesa z okroglimi krošnjami na puhlično rumenih tleh; Štorklje ob cesti
 - **Irohazaka, Japonska** (`iroha`, asfalt): Bele jeklene ograje, kjer teren pada in na zunanji strani serpentin; Kamniti in betonski podporni zidovi z odprtinami za odvodnjavanje, kjer se pobočje dviga; Gost listnat gozd: javorji, hrasti, bukve, čugi; ob cesti bambus sasa in balvani; Jeseni škrlatni, oranžni in rumeni javorji, zlate bukve; pozimi sneg; Pred vsakim ovinkom na levi tabla s črko hiragane in številko (25 m prej); Razgledišče Kurokamidaira: parkirišče z ograjo nad dolino, avti in obiskovalci. Dlje: Gora Nantai (2.486 m), dolina reke Daiya, jezero Chūzenji in slap Kegon.
