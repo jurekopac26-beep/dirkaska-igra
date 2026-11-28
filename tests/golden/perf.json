@@ -523,5 +523,21 @@
   "kverts": 426,
   "maxKverts": 632,
   "jsMs": 1.47
+ },
+ "spa101": {
+  "calls": 238,
+  "maxCalls": 306,
+  "kverts": 511,
+  "maxKverts": 630,
+  "jsMs": 2.87,
+  "jsMs1": 0.54,
+  "cars": 68.1,
+  "x": 5.27,
+  "limits": {
+   "maxCalls": 342,
+   "maxKverts": 713,
+   "cars": 72.5,
+   "x": 7.38
+  }
  }
 }
