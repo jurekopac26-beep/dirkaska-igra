@@ -4,6 +4,9 @@
    park round it): a terrace of terracotta tiles on a stone retaining wall, a white balustrade along its valley side and its ends, an open
    shelter of timber posts under a hipped roof of clay tiles with picnic tables in its shade, benches facing the valley, a small kiosk (no sign),
    a coin telescope, bougainvillea in planters by the entrance, two flowering trees and a palm. Generic: no names, signs, plaques or art.
+   And the far view (farView, World.irFar): the Orosi valley beyond the corridor out to 7.5 km (Copernicus GLO-30 on a 150 m grid, coloured by
+   ESA WorldCover; OSM's orchards, the coffee by the reservoir, darker), the reservoir at its level and the ruins of the old church of Ujarrás by
+   it (OSM's footprint; the walls' 7 m and their openings a likeness, OSM has no height).
    ========================================================================= */
 (function () {
   'use strict';
@@ -115,6 +118,49 @@
     return { x: cx, z: cz, top, lo, d: dC };
   }
 
+  // the lookout's view: the land beyond the corridor (def.farDem, irFar as Irohazaka's: the valley, the Cachí reservoir at its level, the ridges
+  // round), each node coloured by its land cover (def.far.lc: ESA WorldCover, OpenStreetMap's orchards; the coffee by the reservoir), and the
+  // ruins of the old church of Ujarrás on the valley's floor (def.far.ruins: OpenStreetMap's footprint; roofless stone walls ~7 m high with
+  // openings, the height a guess: the map has none), part of the same mesh (moved with the camera as its ground, so never in front of the near world)
+  const FARC = { t: [0.17, 0.29, 0.13], s: [0.3, 0.37, 0.17], g: [0.4, 0.53, 0.24], c: [0.47, 0.52, 0.27], b: [0.64, 0.57, 0.5], r: [0.56, 0.5, 0.43], k: [0.14, 0.27, 0.12] };
+  const farCol = Object.assign(() => FARC.t, { wet: [0.25, 0.33, 0.31] });   // (the reservoir's water: a turbid green)
+  function farView(ctx) {
+    const T = API.T, def = T.def, F = def.farDem, FD = def.far; if (!API.irFar || !F || !FD) return null;
+    const FAR = API.irFar(farCol); if (!FAR) return null;
+    const nx = F.nx, nz = F.nz, n = nx * nz, g = FAR.mesh.geometry, col = g.attributes.color.array, wet = new Uint8Array(n);
+    for (let k = 0, p = 0, v = 0; k < F.lake.length; k++) { if (v) wet.fill(1, p, p + F.lake[k]); p += F.lake[k]; v ^= 1; }
+    // the land cover (runs of a letter and a count), each node a little lighter or darker (a hash of its place: the patchwork of the valley)
+    let k = 0; for (const m of FD.lc.matchAll(/([a-z])(\d*)/g)) { const c = FARC[m[1]] || FARC.t;
+      for (let e = k + (m[2] ? +m[2] : 1); k < e && k < n; k++) { if (wet[k]) continue; const h = Math.sin(k * 12.9898) * 43758.5453, f = 0.9 + 0.2 * (h - Math.floor(h));
+        col[3 * k] = c[0] * f; col[3 * k + 1] = c[1] * f; col[3 * k + 2] = c[2] * f; } }
+    // the haze round the corridor's hole: a narrower band than irFar's (the valley floor a kilometre off is the lookout's view, not haze)
+    const dr = (x, z) => { let m = 1e18; for (let q = 0; q < T.N; q += 5) { const dx = x - T.px[q], dz = z - T.pz[q], d = dx * dx + dz * dz; if (d < m) m = d; } return Math.sqrt(m); };
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) FAR.rim[j * nx + i] = API.sstep(640, 470, dr(F.x0 + i * F.cell, F.z0 + j * F.cell));
+    // the ground's height under a point of the grid (bilinear between its nodes: the mesh's own, so the walls stand on it)
+    const gh = (x, z) => { const u = Math.max(0, Math.min(nx - 1.001, (x - F.x0) / F.cell)), v = Math.max(0, Math.min(nz - 1.001, (z - F.z0) / F.cell)), i = u | 0, j = v | 0, a = u - i, b = v - j;
+      const H = (ii, jj) => FAR.P0[3 * (jj * nx + ii) + 1]; return (H(i, j) * (1 - a) + H(i + 1, j) * a) * (1 - b) + (H(i, j + 1) * (1 - a) + H(i + 1, j + 1) * a) * b; };
+    let walls = 0;
+    if (FD.ruins) {
+      const Rp = FD.ruins, nc = Rp.length / 2, V = [], C = [], I = [], st = [0.66, 0.6, 0.5], dk = [0.2, 0.18, 0.16];
+      let y0 = Infinity; for (let c = 0; c < nc; c++) y0 = Math.min(y0, gh(Rp[2 * c], Rp[2 * c + 1]));
+      const HW = 7, quad = (a, b, ya, yb, cc, out) => { for (const w of [0, 1]) { const v0 = V.length / 3;   // (both faces, each its own vertices: a wall seen from either side)
+        V.push(a[0], ya, a[1], b[0], ya, b[1], b[0], yb, b[1], a[0], yb, a[1]); for (let q = 0; q < 4; q++) C.push(cc[0], cc[1], cc[2]);
+        if (w === 0) I.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3); else I.push(v0, v0 + 2, v0 + 1, v0, v0 + 3, v0 + 2); } };
+      for (let c = 0; c < nc; c++) { const a = [Rp[2 * c], Rp[2 * c + 1]], b = [Rp[2 * ((c + 1) % nc)], Rp[2 * ((c + 1) % nc) + 1]], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        // each wall in bays of ~4 m: a solid plinth, the openings (dark: the inside of the roofless shell seen through them) every other bay, the top
+        const nb = Math.max(1, Math.round(L / 4)), P = (f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+        for (let q = 0; q < nb; q++) { const p0 = P(q / nb), p1 = P((q + 1) / nb), open = L > 20 ? q % 2 === 1 : q === (nb >> 1);
+          quad(p0, p1, y0 - 1.5, y0 + 1.2, st); quad(p0, p1, y0 + 1.2, y0 + 4.6, open ? dk : st); quad(p0, p1, y0 + 4.6, y0 + HW, st); walls++; } }
+      const nv0 = FAR.P0.length / 3, nv = nv0 + V.length / 3, P0 = new Float32Array(3 * nv), cl = new Float32Array(3 * nv), rim = new Float32Array(nv);
+      P0.set(FAR.P0); P0.set(V, 3 * nv0); cl.set(col); cl.set(C, 3 * nv0); rim.set(FAR.rim);
+      const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.BufferAttribute(P0.slice(), 3)); ng.setAttribute('color', new THREE.BufferAttribute(cl, 3));
+      ng.setAttribute('aHz', new THREE.BufferAttribute(new Float32Array(nv).fill(0.5), 1)); ng.setIndex(Array.from(g.index.array).concat(I.map((v) => v + nv0))); ng.computeVertexNormals();
+      g.dispose(); FAR.mesh.geometry = ng; FAR.P0 = P0; FAR.rim = rim;
+    } else g.attributes.color.needsUpdate = true;
+    FAR.th = 4; FAR.mesh.visible = false; ctx.root.add(FAR.mesh); ctx.out.dyn.irFar = FAR;   // (hidden until the first World.update; moved on once the camera is 4 m on)
+    return { nodes: n, wet: wet.reduce((a, b) => a + b, 0), walls };
+  }
+
   const near = (p, x, z, r) => Math.hypot(x - p[0], z - p[1]) < r;
   World.ext.ujarras = (scene, tex, opts) => World.gore.build(scene, tex, opts, {
     seed: 2020, snow: 'none',
@@ -128,7 +174,7 @@
     ownBld: (x, z) => near(MIRADOR, x, z, 22),
     extra: (ctx) => {
       const { scen, out } = ctx;
-      out.ujarras = { lookout: lookout(scen) };
+      out.ujarras = { lookout: lookout(scen), far: farView(ctx) };
       if (World.ext.goreRob) World.ext.goreRob(ctx, 'ujarras');   // (the roadside ground from the chase camera: js/world-chase-bt11.js)
     },
   });
