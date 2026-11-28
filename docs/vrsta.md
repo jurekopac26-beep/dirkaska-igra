@@ -136,9 +136,11 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 10.1 | #1075 | Popravek rdečega `main`: ploščica izbere progo pred izbrano (`pad.test`) | biketraveler | prvi v vrsti; CI zelen, združi seja Združevanje. |
-| 10.2 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: takoj za #1075) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
-| 10.21 | #1078 Zbirna: obcestje ostale (veja `zbirna/obcestje-2311-ostale`) | grafika ob progi: #1039 Koli, #1041 Bathurst, Harju, Štajerska, #1046 Katu, Quezaltepeque, #1050 Hakone; #1047 izločen (perf) | partyslo (rezerva croatiadata) | osnutek, povezani testi 39/39; kartica `obcestje-2311-ostale-ok` čaka »ok«; nato Združevanje |
+| 10.1 | #1069 | Grafika: zmogljivost v gneči 100 avtov (dim 15 m, test gneče) | jure.kopac26 | **prva prednost (Matej 27. 11., #1161)**: gneča; osnutek, »Ready for review« ob mestu med prvima dvema; pred združitvijo svež `main`, `test:related`. |
+| 10.2 | #1119 | Zatikanje na startu: testi in meritve | partyslo | **druga prednost (Matej 27. 11., #1161)**; osnutek, »Ready for review« ob mestu med prvima dvema; pred združitvijo svež `main`, `test:related`. |
+| 10.3 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: po #1069 in #1119) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
+| 10.4 | #1068 | Profil igralca: dosežki, statistika, izvoz, kopije, primerjava avtov, »ZA TO PROGO« | jure.kopac26 | osnutek; testi zeleni 27. 11. (`test:related` 26/26, `menu.test` 322/322, `stamp --check`); »Ready for review« ob mestu med prvima dvema, pred združitvijo svež `main`. |
+| 10.21 | #1078 Zbirna: obcestje ostale (veja `zbirna/obcestje-2311-ostale`) | grafika ob progi: #1039 Koli, #1041 Bathurst, Harju, Štajerska, #1046 Katu, Quezaltepeque, #1050 Hakone; #1047 izločen (perf) | partyslo (rezerva croatiadata) | osnutek; svež `main` 28. 11.; zbit sneg 10–20 % (odločitev Mateja); nato Združevanje |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 
