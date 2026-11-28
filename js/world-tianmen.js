@@ -626,8 +626,10 @@
           else if (c === 1 || c === 4) kind = r1 < 0.55 ? 3 : r1 < 0.75 ? 0 : -1;
           else if (c === 2) kind = r1 < 0.15 ? 3 : r1 < 0.2 ? 4 : -1;
           if (kind < 0) continue;
-          if (sl > 1.7) { if (kind !== 3 || sl > 2.6 || r2 < 0.4) continue; }   // (the trees cling to the steep slopes too; the cliffs bare but for a shrub on a ledge here and there)
-          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind < 2 ? 2.4 : 1.4)) continue;
+          // (the trees cling to the steep slopes too: in the forest (WorldCover lc 0, 85 % of the band 8-60 m from the road) the broadleaves and
+          // pines stand on the karst up to ~68 degrees, as between the stacked legs; elsewhere the cliffs bare but for a shrub on a ledge here and there)
+          if (sl > 1.7) { if (c === 0 && kind < 2 ? sl > 2.5 || r2 < 0.25 : kind !== 3 || sl > 2.6 || r2 < 0.4) continue; }
+          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind < 2 ? 1.3 : 1.0)) continue;   // (the crowns lean over the barrier, as the forest stands right at the road)
           if (excluded(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.2, z, r2 * TAU, 6 + r3 * 5, 8 + r4 * 9, [0.85 + r2 * 0.3, 0.88 + r3 * 0.24, 0.85 + r4 * 0.2]);
           else if (kind === 1) pk[1].add(x, y0 - 0.2, z, r2 * TAU, 7 + r3 * 4, 12 + r4 * 9, [0.88 + r2 * 0.2, 0.9 + r3 * 0.16, 0.9]);
@@ -640,6 +642,28 @@
     }
     const lt = World.rastje ? World.rastje.listje(def, pk.slice(0, 4)) : null;   // (Realizem G: the measured hue on the leaves, the unit plants' green vertices; the trunks and the boulders keep theirs)
     if (TMT || lt) out.rastje = { moc: World.rastje.MOC, tla: TMT, drevesa: lt };
+    {   // the undergrowth by the road: in the forest within 30 m of the road (WorldCover lc 0) shrubs and saplings under the crowns, so the
+      // shoulder and the slopes between the legs read as the forest's edge, not a lawn (one in ~30 m2; none on the road, the plots, the cliffs)
+      const G = P.G, Lt = VRC * VRT, RU = rng(3987), SU = 5.6 / Math.sqrt(dens);
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
+        for (let zz = za; zz < za + Lt - 0.01; zz += SU) for (let xx = xa; xx < xa + Lt - 0.01; xx += SU) {
+          const x = xx + (RU() - 0.5) * SU * 0.9, z = zz + (RU() - 0.5) * SU * 0.9, r1 = RU(), r2 = RU(), r3 = RU();
+          if (vrDist(x, z) > 30 || vrLC(x, z) !== 0 || tmSlope(x, z) > 2.2) continue;
+          const nn = vrNear(x, z);
+          // (inside the barrier, on the wide verge the car may run onto, only the low ground cover of the forest's edge, ferns and grass
+          // to the knee, in its outer 4 m and not within 2.5 m of the asphalt: nothing the car could seem to drive through)
+          let low = false;
+          if (nn.i >= 0 && nn.dd < 0.9) { const bar = nn.lat > 0 ? T.br[nn.i] : T.bl[nn.i]; if (nn.dd > 0 || nn.d < Math.max(w + 2.5, bar - 4) || nn.d > bar - 0.3) continue; low = true; }
+          if (excluded(x, z)) continue;
+          const y0 = tmGround(x, z);
+          if (low) pk[3].add(x, y0 - 0.05, z, r2 * TAU, 0.9 + r3 * 0.8, 0.5 + r2 * 0.5, [0.78 + r2 * 0.18, 0.84 + r3 * 0.16, 0.8]);
+          else if (r1 < 0.8) pk[3].add(x, y0 - 0.1, z, r2 * TAU, 1.0 + r3 * 1.4, 0.8 + r2 * 1.2, [0.82 + r2 * 0.22, 0.86 + r3 * 0.2, 0.84]);
+          else pk[0].add(x, y0 - 0.1, z, r2 * TAU, 2.2 + r3 * 1.5, 3.0 + r2 * 2.2, [0.85 + r2 * 0.25, 0.9 + r3 * 0.2, 0.86]);   // (a sapling, under 5.2 m)
+        }
+      }
+    }
     pk.forEach((t, k) => t.addTo(root, k < 3));   // (the trees cast shadows, the shrubs and the boulders do not)
     {   // crags: limestone boulders where the slope beside the road is steep
       const RV = rng(3991), rockC = [[0.68, 0.67, 0.63], [0.6, 0.6, 0.57], [0.64, 0.6, 0.54], [0.52, 0.53, 0.5]];
