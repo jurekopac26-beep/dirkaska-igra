@@ -100,8 +100,8 @@
       for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const k = i + ',' + j; let Lc = chash.get(k); if (!Lc) chash.set(k, Lc = []); Lc.push(n); } });
     // the built waterfront of the seafront road (the Marginal, from ~2.6 km of the race to the end): the pieces of the coastline within 110 m of
     // that stretch, with the land's side (QL: the unit normal towards the land). OSM's coastline is where the land ends; how it ends is not
-    // in OSM: a filled shore of the bay, its edge walled (assumed: a vertical quay of dressed stone with a concrete coping, QY m above the sea,
-    // about the road's own height there, broken stone at its foot)
+    // in OSM (only natural=coastline there, no man_made=quay or wall: checked 28. 11. 2026): a filled shore of the bay, its edge walled (assumed:
+    // a vertical quay of dressed stone with a concrete coping, QY m above the sea, about the road's own height there, broken stone at its foot)
     const QY = 2.0, QU = [];
     CO.forEach((e, n) => { const mx = (e[0] + e[2]) / 2, mz = (e[1] + e[3]) / 2; let bd = 1e9, bi = 0;
       for (let i = 0; i < N; i += 3) { const d = (T.px[i] - mx) ** 2 + (T.pz[i] - mz) ** 2; if (d < bd) { bd = d; bi = i; } }
@@ -143,7 +143,9 @@
       const rk = sstep(0.9, 0.66, ny) * 0.95;
       r = lerp(r, 0.82 + q * 0.06, rk); g = lerp(g, 0.56 + q * 0.05, rk); b = lerp(b, 0.42 + q * 0.04, rk);
       const qd = QU.length && sd > -40 ? quayD(x, z) : 1e9;
-      if (qd < 40) { const t = sstep(16, 9, qd), pv = 0.97 + (q - 0.5) * 0.08, gr2 = sstep(0.42, 0.7, P.n2(x, z)) * sstep(9, 22, qd) * 0.7;   // (the paved walk along the quay, the dry lawns behind it)
+      // (the paved walk along the quay and the dry lawns behind it, as OSM: footways 8-15 m from the coastline, ways 527981635-527981645;
+      // landuse=grass 10-34 m from it, ways 528099307-528099317)
+      if (qd < 40) { const t = sstep(17, 12, qd), pv = 0.97 + (q - 0.5) * 0.08, gr2 = (0.55 + sstep(0.42, 0.7, P.n2(x, z)) * 0.3) * sstep(12, 16, qd) * sstep(36, 32, qd);
         r = lerp(lerp(r, 0.64, gr2), 0.86 * pv, t); g = lerp(lerp(g, 0.66, gr2), 0.83 * pv, t); b = lerp(lerp(b, 0.42, gr2), 0.76 * pv, t); }
       else if (sd > -22 && h < 3.0) { const t = sstep(-22, -6, sd) * sstep(3.0, 1.2, h); r = lerp(r, 1.1, t); g = lerp(g, 1.0, t); b = lerp(b, 0.82, t); }
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.86, t); g = lerp(g, 0.8, t); b = lerp(b, 0.72, t); }
