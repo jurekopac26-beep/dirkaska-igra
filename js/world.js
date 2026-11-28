@@ -3853,7 +3853,8 @@ const World = (function () {
     'float gNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(gHash(i), gHash(i + vec2(1.0, 0.0)), u.x), mix(gHash(i + vec2(0.0, 1.0)), gHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
   function grassLook(m, sd, nat) {
     if (!m || m.userData.grassLook) return; m.userData.grassLook = true;
-    m.onBeforeCompile = (sh) => {
+    m.onBeforeCompile = (sh, rr) => {
+      if (m.userData.plasti) m.userData.plasti(sh, rr);   // (the ground's layers, js/world-plasti.js: only where a track's gate is open)
       sh.uniforms.uStr = { value: sd ? 1 : 0 }; sh.uniforms.uSd = { value: new THREE.Vector2(sd ? sd[0] : 1, sd ? sd[1] : 0) }; sh.uniforms.uNat = { value: nat || 0 }; sh.uniforms.uPat = m.userData.uPat || (m.userData.uPat = { value: 1 });   // (uPat: the patches' strength, 0 for one even meadow)
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGw; varying float vGd;')
         .replace('#include <project_vertex>', '#include <project_vertex>\nvGw = (modelMatrix * vec4(transformed, 1.0)).xz; vGd = -mvPosition.z;');
@@ -3872,7 +3873,7 @@ const World = (function () {
         '    if (uNat > 0.0) { float L = dot(gc, vec3(0.3, 0.59, 0.11)); gc = mix(gc, mix(vec3(L), gc, 0.72) * vec3(1.04, 0.96, 0.86), gg * uNat); }',
         '    diffuseColor.rgb = gc; } }'].join('\n'));
     };
-    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '') + (nat ? 'N' : '');
+    m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '') + (nat ? 'N' : '') + (m.userData.plastiKey || '');
     m.needsUpdate = true;
   }
   const GRASS_NAT = { lake: 0.75 };   // how much of the loud green to tone down, per theme

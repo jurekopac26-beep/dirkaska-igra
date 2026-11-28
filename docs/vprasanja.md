@@ -116,6 +116,14 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `plasti-sr3`
+
+Grafika AAA, SR3′ (`js/world-plasti.js`, pilot Spa, vrata zaprta do N9): tla ob progi imajo do dve od štirih plasti (trava, prst, gramoz, skala) po podatkih ESA WorldCover. Pod smrekami je rjava prst z iglicami, bankine in travniki ostanejo trava, gramoz samo kot redke obrabljene zaplate, skale na Spa ni. Prehodi so mehki, proti ponavljanju je velika tekstura. NIZKA: eno branje, anizotropija 2; klicev in oglišč enako kot prej. Slike (pred, po, razlika): `docs/slike/spa/plasti-srednja-suho-2600m.webp`, `plasti-srednja-dez-900m.webp`, `plasti-nizka-dez-4200m.webp`.
+
+1. **Ok, tako (priporočeno).**
+2. Prst svetlejša in redkejša (samo v gostem gozdu), sicer tako.
+3. Ne, ostane samo trava.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.

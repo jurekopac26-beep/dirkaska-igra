@@ -145,6 +145,7 @@
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(spaGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];
+    const PL = API.plasti ? API.plasti.prep(def, opts.tier) : null; if (PL) API.plasti.mat(PL, gMat, ownTex);   // (the ground's layers: js/world-plasti.js, def.plasti's gate)
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- road: asphalt (resurfaced in 2022: even, the rubbered line darker, more so in the braking zones), white edge lines, red and white
@@ -742,6 +743,7 @@
         }
         addM(gv, gMat);
       }
+      if (PL) root.traverse(m => { if (m.isMesh && m.material === gMat) API.plasti.geo(PL, m.geometry); });   // (each vertex: its two layers)
       if (World.ext.spaRob) out.rob = World.ext.spaRob({ excluded, inBrook, root, matV });   // the roadside ground from the camera behind the car: js/world-chase-bt9.js
       G.col = G.cov = P.edge = null;   // (build only)
     }
