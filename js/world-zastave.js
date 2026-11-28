@@ -99,26 +99,30 @@
   }
 
   // the cloths past the fog's end are not drawn (as js/render.js cullByDistance: the haze hides them anyway): still one mesh and one draw
-  // call, its index kept with the cloths within reach first and one draw range over those; looked at again once the camera has moved
+  // call. For the draw only, the geometry gets a second index with the cloths within reach first and one draw range over those; after it
+  // the index and the range are as built (the world's fingerprint, tests/browser/world.test.mjs). Looked at again once the camera has moved
   // STEP m, the index sent again only when a cloth comes into reach or leaves it. A world whose fog has no end: all of them, as before
   const STEP = 4;
   function reach(mesh, PC, I) {
-    let px = Infinity, py = 0, pz = 0, pf = -1;
+    const g0 = mesh.geometry, built = g0.index, near = new THREE.BufferAttribute(built.array.slice(), 1);
+    let px = Infinity, py = 0, pz = 0, pf = -1, n = I.length;
     mesh.onBeforeRender = function (rn, scene, camera, g) {
       const f = scene && scene.fog && scene.fog.far > 0 ? scene.fog.far + 20 + STEP : Infinity;
       const e = camera.matrixWorld.elements, cx = e[12], cy = e[13], cz = e[14];
-      if (f === pf && Math.hypot(cx - px, cy - py, cz - pz) < STEP) return;
-      px = cx; py = cy; pz = cz; pf = f;
-      let ch = false, n = 0;
-      for (const q of PC) { const on = Math.hypot(q.x - cx, q.y - cy, q.z - cz) - q.r < f; if (on !== q.on) { q.on = on; ch = true; } if (on) n += q.n; }
-      if (ch) {
-        const ix = g.index, A = ix.array; let w = 0;
-        for (const q of PC) if (q.on) { for (let k = 0; k < q.n; k++) A[w + k] = I[q.a + k]; w += q.n; }
-        for (const q of PC) if (!q.on) { for (let k = 0; k < q.n; k++) A[w + k] = I[q.a + k]; w += q.n; }
-        ix.needsUpdate = true;
+      if (f !== pf || Math.hypot(cx - px, cy - py, cz - pz) >= STEP) {
+        px = cx; py = cy; pz = cz; pf = f;
+        let ch = false; n = 0;
+        for (const q of PC) { const on = Math.hypot(q.x - cx, q.y - cy, q.z - cz) - q.r < f; if (on !== q.on) { q.on = on; ch = true; } if (on) n += q.n; }
+        if (ch) {
+          const A = near.array; let w = 0;
+          for (const q of PC) if (q.on) { for (let k = 0; k < q.n; k++) A[w + k] = I[q.a + k]; w += q.n; }
+          for (const q of PC) if (!q.on) { for (let k = 0; k < q.n; k++) A[w + k] = I[q.a + k]; w += q.n; }
+          near.needsUpdate = true;
+        }
       }
-      g.setDrawRange(0, n);
+      g.index = near; g.setDrawRange(0, n);
     };
+    mesh.onAfterRender = function (rn, scene, camera, g) { g.index = built; g.setDrawRange(0, Infinity); };
   }
 
   function flagMesh(list, uTime, o) {
