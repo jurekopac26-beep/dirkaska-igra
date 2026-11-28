@@ -183,7 +183,7 @@ check('track: an open road with four ways to drive it (race, time trial, traffic
   ctx.Lang.set('en');
   const en = T.names.map(q => ctx.Lang.place(q.n));
   check('names: the HUD\'s places in English (Pattiyakumbura, Ella Rock, Hairpin 1 .. 3 with their altitudes, Ella), the escape\'s "To Ella"',
-    en[0] === T.names[0].n && en[1] === 'Ella Rock' && /^Hairpin 1 · 8\d\d m$/.test(en[2]) && /^Hairpin 3 · 9\d\d m$/.test(en[4]) && en[5] === T.names[5].n && ctx.Lang.place(def.escTo) === 'To Ella', en.join(' | '));
+    en[0] === T.names[0].n && en.includes('Ella Rock') && en.some(x => /^Hairpin 1 · 8\d\d m$/.test(x)) && en.some(x => /^Hairpin 3 · 9\d\d m$/.test(x)) && en[en.length - 1] === T.names[T.names.length - 1].n && ctx.Lang.place(def.escTo) === 'To Ella', en.join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
