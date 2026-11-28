@@ -55,7 +55,7 @@ DESC_EN = ('A course at Giza, Egypt: from the Sphinx up onto the plateau past al
            'across the sand and through the town streets to the main road. Sand by the road, as it really is. '
            'A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
-MEDALS = {'cs': [0, 0, 0], 'wet': {'cs': [0, 0, 0]}, 'winter': {'cs': [0, 0, 0], 'wet': {'cs': [0, 0, 0]}}}
+MEDALS = {'cs': [267, 280, 301], 'wet': {'cs': [309, 324, 349]}, 'winter': {'cs': [302, 317, 341], 'wet': {'cs': [361, 379, 408]}}}
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 
@@ -70,8 +70,8 @@ def build_track():
     src = '''/* Track definition 'giza'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Giza, Egipt: a course on today's roads (docs/proge/giza.md, v6): from the plateau road by the Sphinx up past the three pyramids (simple
-  // stone shapes on their OSM outlines, World.znamenitost), round the third one to the viewpoint at the top of the plateau and its hairpin, down
+  // Giza, Egipt: a course on today's roads (docs/proge/giza.md, v6): from the plateau road by the Sphinx up past the three pyramids (stone
+  // frustums on their OSM outlines, the Sphinx in blocks: js/world-giza.js), round the third one to the viewpoint at the top of the plateau and its hairpin, down
   // to the desert road across the sand, and through the town's streets to the main road: %(km)s km of racing. Sand right by the road on the
   // plateau and in the desert, as it really is (decision O-28-33: the barriers out in the sand, no fences the sources do not show).
   // One card, four ways to drive it (def.modes). They drive on the right in Egypt.

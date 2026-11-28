@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Egypt</title>
+  <!-- Ratio 2:3. Three horizontal bands of equal height, from the top: red, white, black; in the middle of the white band the
+       national emblem: a golden eagle facing the hoist, its wings spread down, a shield on its breast (red, white and black
+       upright stripes) and a scroll below in its talons. The emblem is drawn as a simple outline for the menu's small flag.
+       Colours: red #CE1126, black #000000, gold #C09300. -->
+  <rect width="900" height="200" fill="#CE1126"/>
+  <rect y="200" width="900" height="200" fill="#FFFFFF"/>
+  <rect y="400" width="900" height="200" fill="#000000"/>
+  <g fill="#C09300">
+    <!-- the wings -->
+    <path d="M450 250 C400 248 360 270 345 320 C340 345 352 370 378 380 L420 372 Z"/>
+    <path d="M450 250 C500 248 540 270 555 320 C560 345 548 370 522 380 L480 372 Z"/>
+    <!-- the head, facing the hoist -->
+    <circle cx="444" cy="236" r="16"/>
+    <path d="M430 234 L414 240 L430 244 Z"/>
+    <!-- the tail and the scroll -->
+    <path d="M430 368 L470 368 L462 384 L438 384 Z"/>
+    <rect x="400" y="384" width="100" height="10" rx="4"/>
+  </g>
+  <!-- the shield on the breast -->
+  <rect x="428" y="276" width="44" height="78" fill="#C09300"/>
+  <rect x="433" y="282" width="11" height="66" fill="#CE1126"/>
+  <rect x="444" y="282" width="12" height="66" fill="#FFFFFF"/>
+  <rect x="456" y="282" width="11" height="66" fill="#000000"/>
+</svg>

@@ -1,8 +1,8 @@
 /* Track definition 'giza'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Giza, Egipt: a course on today's roads (docs/proge/giza.md, v6): from the plateau road by the Sphinx up past the three pyramids (simple
-  // stone shapes on their OSM outlines, World.znamenitost), round the third one to the viewpoint at the top of the plateau and its hairpin, down
+  // Giza, Egipt: a course on today's roads (docs/proge/giza.md, v6): from the plateau road by the Sphinx up past the three pyramids (stone
+  // frustums on their OSM outlines, the Sphinx in blocks: js/world-giza.js), round the third one to the viewpoint at the top of the plateau and its hairpin, down
   // to the desert road across the sand, and through the town's streets to the main road: 9.93 km of racing. Sand right by the road on the
   // plateau and in the desert, as it really is (decision O-28-33: the barriers out in the sand, no fences the sources do not show).
   // One card, four ways to drive it (def.modes). They drive on the right in Egypt.
@@ -30,7 +30,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: GZ_H.map((h, i) => [i / (GZ_H.length - 1), h / 10]),
     widths: [[-247.0, 4.5], [3883, 4.5], [3907, 5.5], [5751, 5.5], [5775, 4.8], [6506, 4.8], [6530, 5.5], [7890, 5.5], [7914, 4.6], [9423, 4.6], [9447, 5.4], [9928.8, 5.4]],
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {cs:[0,0,0],wet:{cs:[0,0,0]},winter:{cs:[0,0,0],wet:{cs:[0,0,0]}}},
+    medals: {cs:[267,280,301],wet:{cs:[309,324,349]},winter:{cs:[302,317,341],wet:{cs:[361,379,408]}}},
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck], a cyclist every so many metres each way
     traffic: { mix: [0.58, 0.2, 0.12, 0.06, 0.04], bike: 4000 },
     police: { label: 'POLICE', band: '#1d3f8a', text: '#ffffff' }, escTo: 'Do glavne ceste',
