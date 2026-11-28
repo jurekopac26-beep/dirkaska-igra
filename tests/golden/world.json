@@ -1958,5 +1958,24 @@
    "tyremarks:MeshBasicMaterial": "26675b3f",
    "roadwear:MeshLambertMaterial": "bec63044"
   }
+ },
+ "giza": {
+  "meshes": 491,
+  "verts": 402034,
+  "instances": 537,
+  "props": 0,
+  "crowd": 60,
+  "world": "2f5d7dec",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "f073d4c",
+   "crowd:MeshLambertMaterial": "3df0fac1",
+   "ao:MeshBasicMaterial": "34f090c5",
+   "tyremarks:MeshBasicMaterial": "6a649add",
+   "roadwear:MeshLambertMaterial": "eb10ad87",
+   "life:MeshLambertMaterial": "c908214d",
+   "life:MeshBasicMaterial": "41a56da8"
+  }
  }
 }
