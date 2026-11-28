@@ -644,11 +644,11 @@
  },
  "kotor": {
   "meshes": 985,
-  "verts": 857893,
+  "verts": 899159,
   "instances": 15415,
   "props": 79,
   "crowd": 125,
-  "world": "b7a089b2",
+  "world": "2245ad03",
   "propsHash": "67c890c8",
   "floor": "c3122f3f/10696",
   "groups": {
@@ -656,7 +656,7 @@
    "-:MeshPhongMaterial": "b9364527",
    "-:MeshBasicMaterial": "674336a7",
    "rob:MeshLambertMaterial": "87c6e9e9",
-   "irFar:MeshLambertMaterial": "15e91440",
+   "irFar:MeshLambertMaterial": "48dddc63",
    "crowd:MeshLambertMaterial": "e78ee90f",
    "ao:MeshBasicMaterial": "836866b6",
    "tyremarks:MeshBasicMaterial": "5d9ae004",
