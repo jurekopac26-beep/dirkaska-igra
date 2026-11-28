@@ -434,11 +434,11 @@
   "jsMs": 1.06
  },
  "savusavu": {
-  "calls": 191,
-  "maxCalls": 226,
-  "kverts": 507,
-  "maxKverts": 610,
-  "jsMs": 0.98
+  "calls": 194,
+  "maxCalls": 232,
+  "kverts": 555,
+  "maxKverts": 665,
+  "jsMs": 1.37
  },
  "koror": {
   "calls": 161,

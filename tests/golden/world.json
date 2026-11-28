@@ -1646,22 +1646,22 @@
   }
  },
  "savusavu": {
-  "meshes": 1703,
-  "verts": 994031,
-  "instances": 36794,
+  "meshes": 2041,
+  "verts": 1356336,
+  "instances": 35731,
   "props": 72,
   "crowd": 160,
-  "world": "4732cc4d",
+  "world": "13ef24f6",
   "propsHash": "37e200a6",
   "floor": "b69196fb/5684",
   "groups": {
-   "-:MeshLambertMaterial": "28786d0",
-   "-:MeshPhongMaterial": "f0e90f15",
+   "-:MeshLambertMaterial": "7bf4bf80",
+   "-:MeshPhongMaterial": "e8681707",
    "-:MeshBasicMaterial": "d683e0f1",
    "rob:MeshLambertMaterial": "84a7c92d",
-   "irFar:MeshLambertMaterial": "32084b9b",
+   "irFar:MeshLambertMaterial": "77fa81f3",
    "crowd:MeshLambertMaterial": "b8b20857",
-   "ao:MeshBasicMaterial": "db20cd73",
+   "ao:MeshBasicMaterial": "a2809f7",
    "tyremarks:MeshBasicMaterial": "261b350a",
    "roadwear:MeshLambertMaterial": "5fe9a624"
   }
