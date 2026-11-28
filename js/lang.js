@@ -440,7 +440,7 @@
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
     'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!', 'PREDALEČ OD CESTE!': 'TOO FAR OFF THE ROAD!',   // (Uncompahgre; Killar: a road with no barriers, too far off it)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
-    'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
+    'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Sedlo Delgadim': 'Delgadim Saddle', 'Skalna stena': 'Rock Wall', 'Gola skala': 'Bare Rock', 'Po grebenu': 'Along the Crest', 'Šest serpentin': 'Six Hairpins', 'Spust proti Ribeiri Grande': 'Down to Ribeira Grande', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs', 'Smučarska vas': 'Ski Village',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Vrh': 'Summit', 'Jezero Shōjin': 'Lake Shōjin', 'Sedem ovinkov': 'Seven Bends',   // (Hakone: the HUD; the names of the places stay as they are)

@@ -26,8 +26,8 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
-  const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608], santoantao: [17.15, 672] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
+  const SEA = new Set(['livorno', 'santoantao']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
     if (g && Number.isFinite(g.lat0)) return [g.lat0, Number.isFinite(g.offset) ? g.offset : 0];
@@ -129,7 +129,7 @@
     Z.clim = { lat: g ? g[0] : 45, alt: alt0 + (h0 + h1) / 2 };
     if (def.theme !== 'pikes') for (let k = 0; k < n; k++) {   // (Pikes Peak: its own wind, js/sfx.js atmo)
       const y = P[k * 5 + 4], hn = h1 > h0 ? (y - h0) / (h1 - h0) : 0, open = 1 - 0.75 * Math.max(Z.fL[k], Z.fR[k]), sn = Math.max(Z.kL[k] === SEAK ? Z.wL[k] : 0, Z.kR[k] === SEAK ? Z.wR[k] : 0);
-      Z.wind[k] = clamp((0.55 * sstep(500, 2500, alt0 + y) + 0.55 * relief * Math.pow(hn, 1.5) + seaB * Math.min(1, 0.4 + sn * 3)) * open, 0, 1);
+      Z.wind[k] = clamp((0.55 * sstep(500, 2500, alt0 + y) + 0.55 * relief * Math.pow(hn, 1.5) + seaB * Math.min(1, 0.4 + sn * 3)) * open, (def.windMin || 0) * open, 1);   // (def.windMin: a wind that never drops, e.g. the trade wind of Santo Antão)
     }
     Z.st.ms = Math.round(performance.now() - t0);
     return Z;
