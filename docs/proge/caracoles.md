@@ -20,3 +20,20 @@ Okolica:
 - **Cesta**: dvojna rumena sredinska črta (prehitevanje prepovedano), bele robne črte, jeklene ograje, kjer teren pada, in na zunanji strani ovinkov, oranžni snežni količki pri Portillu, most čez Juncalillo s potokom, ribnik ob startu.
 - **Dirka**: start z lučmi pod portalom LARGADA, modri portali kontrolnih točk z višino, cilj META v Portillu s tablo PORTILLO in modrima tablama proti meji, transparent SUBIDA LOS CARACOLES, čilske zastave ob štartni vrsti, gledalci ob startu, cilju, kontrolnih točkah, vsakem tretjem ovinku in pri razgledišču. Na zaprti cesti čakajo tovornjaki: ob startu v odstavnem pasu, v Portillu na parkirišču in na koncu ceste pred zaporo proti meji.
 - **Kondorji**: trije andski kondorji krožijo na vzgornikih nad cesto, blizu avta.
+
+Zanimivosti ob cesti (33, vse z vrsticami komentatorja; pod uro se izpišejo z višino):
+
+- **Río Juncalillo** (318 m po startu): most čez reko, začetek vzpona.
+- **Curva 1–20** (1,1–5,4 km, 2.271–2.562 m): »lestev« dvajsetih serpentin na pobočju; kontrolni točki za 5. in 15. ovinkom.
+- **Curva 17 · Mirador** (4,7 km): razgledišče s pogledom na vso lestev pod cesto.
+- **Curva 18 in 19** (5,1–5,3 km): ovinka, kjer se po komentatorjevih besedah najpogosteje prevrnejo tovornjaki.
+- **Galería in Galería 2** (6,9 km in 7,3 km): betonski galeriji proti plazovom, prva z zidom na desni, druga na levi; med njima 22. ovinek.
+- **Curva 23–28** (8,1–9,4 km, 2.720–2.788 m): druga lestev pod planoto; kontrolna točka za 26. ovinkom.
+- **Curva 29 · Llano La Calavera** (9,7 km): zadnji ovinek, vstop na planoto.
+- **Portillo · 2.866 m** (cilj, 10,8 km): jezero Laguna del Inca, smučišče in žičnice.
+
+Prelet proge pred dirko po odprti cesti (kot na Pikes Peaku in Katu-Jaryku): start, Río Juncalillo, 1. ovinek, Mirador, galeriji, Llano La Calavera, cilj.
+
+Vreme: dež na približno vsaki peti dirki (`rainP` 0,2), pozimi sneg ali mrzel asfalt z lastnimi medaljami (`docs/dez-sneg.md`). Zvok: veter, ki narašča z višino (`js/sfx-okolje.js`), in odmev motorja od skalnih sten lestve (`js/sfx.js`).
+
+Viri: sredinska črta, galeriji, most, jezera, stavbe, železnica, žičnice in stranske ceste iz OpenStreetMap (ODbL), višine in teren Copernicus DEM GLO-30, raba tal ESA WorldCover 2021 (`README.md`, »Zasluge«).
