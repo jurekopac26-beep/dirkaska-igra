@@ -69,6 +69,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Ljudje ob progi in grafika (`docs/ljudje-predlogi.md`) | partyslo | ko uporabnik reče; po #400; pred novimi progami |
 | Realizem E · Cesta in predmeti (`docs/realizem.md`), 15 prog v skupinah, ~23 sej | po tedenskem načrtu | **na `main` prvi** med realizmi, E → S → G (`js/world.js`) |
 | Realizem S · Stavbe, ~21 sej | po tedenskem načrtu | za E; Medvode po #494 |
+| Realizem S0–S3 · Stavbe na obrisih iz OSM (#668, #696, #699, #714: Spa, Nürburg, Livorno, Montréal, Bâlea, Los Caracoles) | jure.kopac26, croatiadata, partyslo | #696, #699, #714 odobreni na slikah (Matej, #382 7165701177, 25. 11.); na `main` po vrsti za #668 |
 | Realizem G · Rastje in teren, ~16 sej | po tedenskem načrtu | za S |
 | Realizem P · Poškodbe skupaj s Trki (#608), ~16 sej | biketraveler | takoj po #480, 30 avtih in #569 + #494; na `main` ~7. 12. |
 | Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo, croatiadata | potrjene 13. 11. (glej zgoraj); brez izletne cone se ne začnejo, razen 4 prog s prepadom (ograja na strani prepada) |

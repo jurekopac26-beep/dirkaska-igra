@@ -517,7 +517,7 @@
         if (hit) { const i = hit.i, sd = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i] >= 0 ? 1 : -1; x += T.nx[i] * sd * 2.5; z += T.nz[i] * sd * 2.5; hit = null; }
         for (const [u, v] of [[0, 0], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2], [Lb / 2, Wb / 2], [-Lb / 2, Wb / 2]]) { const n = vrNear(x + c * u - s * v, z + s * u + c * v); if (n.i >= 0 && n.dd < 1.2) { ok = false; hit = hit || n; } }
         if (!hit) { ok = true; break; } }
-      if (ok && vrDist(x, z) < 430 && !inSea(x, z)) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), ang, h: hb, kind }); }
+      if (ok && vrDist(x, z) < 430 && !inSea(x, z)) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), L0: Lb, W0: Wb, ang, h: hb, kind }); }
     // the car parks by the road (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
     for (let [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; let i = n.i; const s = i * T.ds; if (s < 30 || s > T.len - 20) continue;
@@ -830,6 +830,12 @@
     /* ---- the buildings (OpenStreetMap's footprints, generic: no names or signs): the huts of stone and timber under steep metal roofs, the big houses
        (a hut's two storeys), the stalls and sheds (timber, a tarp or a low roof) ---- */
     let nBld = 0;
+    // the huts and the big houses by the builder of houses where the track has it (js/world-stavbe.js: Romania's kit; docs/realizem/paket-s.md,
+    // S2), on their whole footprints (the stalls stay as below). A cable car's station: the building its line ends in (or 3 m short of), as
+    // tall as its rope deck (flat roofed: the deck on it), drawn instead of the plain station box
+    const HS = typeof World !== 'undefined' && World.stavbe ? World.stavbe.setup({ Chunks, list: blds.map(b => [b.x, b.z, b.L0, b.W0, b.ang, b.h, b.kind]), T, near: vrNear, gH: caGround }) : null;
+    const inBld = (b, x, z, m) => { const c = Math.cos(b.ang), s = Math.sin(b.ang), dx = x - b.x, dz = z - b.z; return Math.abs(dx * c + dz * s) < b.L0 / 2 + m && Math.abs(-dx * s + dz * c) < b.W0 / 2 + m; };
+    if (HS) for (const cb of def.cables || []) { if (L.chairs && /chair_lift|magic_carpet|drag|platter|t-bar|j-bar|rope_tow/.test(cb.k || '')) continue; const p = cb.p, n = p.length / 2; for (const k of [0, n - 1]) { const x = p[2 * k], z = p[2 * k + 1], b = blds.find(q => q.kind !== 1 && inBld(q, x, z, 3)); if (b) b.station = { x, z }; } }
     {
       const RB = rng(L.seed + 21), stone = [[0.58, 0.56, 0.52], [0.52, 0.5, 0.47], [0.62, 0.6, 0.56]], wood = [[0.46, 0.32, 0.2], [0.4, 0.28, 0.18], [0.54, 0.4, 0.26]], tarps = [[0.2, 0.34, 0.6], [0.7, 0.16, 0.14], [0.86, 0.86, 0.84], [0.22, 0.46, 0.3]];
       const PLASTER = [[0.88, 0.85, 0.77], [0.9, 0.9, 0.87], [0.85, 0.75, 0.58], [0.8, 0.64, 0.52], [0.7, 0.7, 0.68], [0.54, 0.4, 0.27]], GLASS = [0.15, 0.19, 0.23], BALC = [[0.74, 0.73, 0.7], [0.3, 0.26, 0.22]];   // (L.hotels: the walls' plaster, a few of timber; the windows; the balconies' slabs and rails)
@@ -855,6 +861,11 @@
         } else if (b.kind === 1) {   // a stall: timber walls, a tarp roof
           box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.5, b.W, b.ang, vary(wood[nBld % 3], RB, 0.1), null, true);
           gable(g, b.x, hi + 2.2, b.z, b.L + 0.5, b.W + 0.6, 0.5, b.ang, vary(tarps[Math.floor(RB() * tarps.length)], RB, 0.08), vary(wood[0], RB, 0.1));
+        } else if (HS) {   // (the builder's: R's draws as below, so that the rest stays as it was)
+          vary(stone[nBld % 3], RB, 0.08); vary(wood[nBld % 3], RB, 0.1); vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08);
+          const rec = {}, big = b.kind === 2, sy = b.station ? vrFar(b.station.x, b.station.z) + 9 : 0;
+          HS.put({ x: b.x, z: b.z, L: b.L0, W: b.W0, ang: b.ang, y0: hi, hh: b.station ? Math.max(4, sy - hi - 0.15) : b.h > 0 ? b.h : big ? 6.2 : 3.6, fl: b.station ? 2 : big ? 2 : 1, type: 'house', shape: b.station ? 3 : undefined, id: blds.indexOf(b), out: rec });
+          if (b.station) b.station.roof = (rec.y0 != null ? rec.y0 : hi + 0.15) + Math.max(4, sy - hi - 0.15);
         } else {
           const H1 = b.kind === 2 ? 6.2 : 3.2, st = vary(stone[nBld % 3], RB, 0.08), wd = vary(wood[nBld % 3], RB, 0.1), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08);
           box(g, b.x, lo - 0.4, b.z, b.L, hi - lo + 0.4 + H1 * 0.45, b.W, b.ang, st, null, true);
@@ -1079,7 +1090,9 @@
         for (let k = 0; k < n; k++) { const [x, z] = pts[k], y = vrFar(x, z), [dx, dz] = dir(k), dist = vrDist(x, z), hh = top[k][1] - y;
           if (end(k) && ch) { if (dist < 600) { const g = scen.get(x, z), a = Math.atan2(dz, dx);   // (a lift's station: the hut, the bull wheel's housing over the loop)
             box(g, x, y - 0.5, z, 6, 4.2, 5, a, [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); box(g, x, y + 3.7, z, 8.5, 1.3, 6.2, a, [0.84, 0.82, 0.78], [0.42, 0.44, 0.47]); exclPush(x, z, 7); } continue; }
-          if (end(k)) { if (dist < 600) { box(scen.get(x, z), x, y - 0.5, z, 14, hh + 0.5, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); exclPush(x, z, 10); } continue; }
+          if (end(k)) { const sb = HS ? blds.find(q => q.station && q.station.x === x && q.station.z === z) : null;
+            if (sb) { const ry = sb.station.roof, t = top[k][1]; if (t - ry > 0.3) box(scen.get(x, z), x, ry - 0.1, z, 14, t - ry + 0.1, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); continue; }   // (the deck on the station's roof, where its rope was lifted over the road)
+            if (dist < 600) { box(scen.get(x, z), x, y - 0.5, z, 14, hh + 0.5, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); exclPush(x, z, 10); } continue; }
           if (dist > 900) continue;
           const g = scen.get(x, z), a = Math.atan2(dz, dx);   // a pylon: a tapering steel mast, the cross-arm with the two rope saddles
           if (ch) { cyl(g, x, y - 0.4, z, 0.34, hh + 0.4, 6, steel, steel, 0.24); box(g, x, y + hh - 0.3, z, 0.4, 0.4, 5.2, a, steel, null, true);   // (a lift's: the tube, the cross-arm, the sheaves)
@@ -1348,6 +1361,7 @@
     const FAR = API.irFar ? API.irFar(L.far.wet || L.far.hz ? Object.assign((A, sl, q) => plFarCol(A, sl, q), { wet: L.far.wet, hz: L.far.hz }) : plFarCol) : null; if (FAR) { FAR.mesh.visible = false; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup);   // (the builder's houses: one material, the façade atlas)
     if (FAR && def.farDem.ice) plFarIce(FAR);   // (the glaciers on the horizon)
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: plAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: plAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
@@ -1357,6 +1371,7 @@
         const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - T.hy[i]; },
       skip: (i, side) => { const si = side > 0 ? 1 : 0; return !!(RN[si][i] || bk[si][i] || kn[si][i] || vp[si][i][2][1] < -2.6); } };
     out.stats = { trees: nTrees, plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), snow: nSnow, sheep: nSheep, pylons: nPyl, poles: nPole, lakes: P.lakes.length, pulls: pulls.length, sat: !!SAT };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats;
     return out;
   }
 
