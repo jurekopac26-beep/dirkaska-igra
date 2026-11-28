@@ -79,6 +79,8 @@ GRAVEL = [w[:2] for w in J['ways'] if len(w) > 7 and w[7] == 'gravel']   # ([fro
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, sponsors or the circuit
 # (CLAUDE.md, Pravna varnost): the real corners are named after firms, a shop, a tyre maker and people ----
 NAMES = [
+    ('Brv čez progo', 46, ['Under the footbridge and onto the gravel!', 'Under the bridge, the spectators right overhead!', 'Beneath the footbridge, flat out!']),
+    ('Tribuna', 72, ['Past the grandstand, the crowd on its feet!', 'Right in front of the grandstand!', 'The grandstand gets a close look at this one!']),
     ('Desni na makadamu', 100, ['Onto the gravel, right and right again!', 'Sliding round the gravel right!', 'The double right on the gravel!']),
     ('Hitri levi', 235, ['Back on the tarmac, quick through the left!', 'The fast left, flat out!', 'Through the fast left-hander!']),
     ('Južna ravnina', 380, ['Down the south straight!', 'Flat out along the south straight!', 'Along the straight, the hairpin ahead!']),
@@ -87,10 +89,22 @@ NAMES = [
     ('Levi na makadam', 619, ['Left, off the tarmac onto the gravel!', 'Onto the gravel through the left!', 'Left, and onto the loose stuff!']),
     ('Makadamska ravnina', 745, ['Flat out up the gravel straight!', 'Up the gravel, the stones flying!', 'Along the gravel straight!']),
     ('Severna lasnica', 900, ['The north hairpin, back onto the tarmac!', 'Right round the north hairpin!', 'Slow, slow, round the hairpin at the top!']),
+    ('Garaže boksov', 1023, ['Past the row of pit garages!', 'Along the pit garages, the crews watching from the doors!', 'The pit garages flash by on the right!']),
     ('Ciljna ravnina', 1060, ['Down the finish straight past the pits!', 'Flat out along the finish straight!', 'The finish straight, the lap is nearly done!']),
+    ('Stolp ob ciljni črti', 1167, ['Past the tower and over the line!', 'The tower by the line, another lap done!', 'Under the eyes of the race control tower!']),
 ]
 # the corners' apexes (TV towers, photographers, recovery: World.rbring): the gravel right (2), the fast left, the west hairpin, the sharp
 # right, the left onto the gravel, the right on the gravel straight, the north hairpin
+# the course flyover before a time trial (Render.pkFly: def.fly [m after the start line (-1 the finish), caption]): the places in NAMES
+FLY = [(0, 'START'), (46, 'Brv čez progo'), (100, 'Desni na makadamu'), (380, 'Južna ravnina'), (463, 'Zahodna lasnica'), (745, 'Makadamska ravnina'),
+       (900, 'Severna lasnica'), (1023, 'Garaže boksov'), (-1, 'CILJ')]
+# the commentator's own lines for a race on the lap (Game: def.comm, the keys intro and go instead of the shared ones)
+COMM = {
+    'intro': ['Welcome to {track}! {laps} laps of tarmac and gravel among the hedgerows of the plain, and you start {grid}.',
+              'Good day from {track}, out on the flat green fields west of Dublin. {cars} cars, {laps} laps, and you line up {grid}.',
+              'Here we are at {track}! A short lap, two hairpins and plenty of gravel. {laps} laps ahead, and you start {grid}.'],
+    'go': ['Lights out, and they charge for the gravel!', "And they're off, under the footbridge and into the double right!", 'Green light! Elbows out into the first gravel corner!'],
+}
 TURNS = [62, 125, 235, 463, 536, 619, 648, 900]
 
 DESC = ('Kratka proga za reli kros na dirkališču v grofiji Kildare na vzhodu Irske, zahodno od Dublina: 1,2 km asfalta in makadama v smeri '
@@ -249,9 +263,27 @@ def scenery():
         if is_stand(s, d, l, w): continue
         k = bkind(s, d, l, w, hgt); hh = hgt if hgt > 2 else 4.6 if k == 4 else 7.0 if l * w > 300 else 4.5 if l * w > 60 else 3.0
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), round(hh, 1), k]
+    # the hedgerows (def.sk.hedge, segments [x0, z0, x1, z1, ...]): OSM maps no field boundaries here (one hedge, 150 m and more off), so they
+    # follow the canopy height's rows of trees (10 m cells: the ash, sycamore and hawthorn standing in the hedges, Kildare's Hedgerow
+    # Appraisal Survey 2022), each tree cell joined to its neighbours in the row; not in a wood (a cell with 5 or more tree neighbours), not a
+    # lone tree, not within 10 m of the lap (the world leaves out the rest inside the circuit's barriers and by the buildings)
+    hedge = []
+    gc, ac = grid('chm'); tr = ac.astype(np.int16) >= 1; nzc, nxc = tr.shape
+    cx = lambda i: gc['x0'] + (i + 0.5) * gc['cell']; cz = lambda j: gc['z0'] + (j + 0.5) * gc['cell']
+    nb = lambda j, i: sum(tr[j + b, i + a] for a in (-1, 0, 1) for b in (-1, 0, 1) if (a or b) and 0 <= j + b < nzc and 0 <= i + a < nxc)
+    for j in range(nzc):
+        for i in range(nxc):
+            if not tr[j, i] or nb(j, i) >= 5: continue
+            for a, b in ((1, 0), (0, 1), (1, 1), (-1, 1)):
+                i2, j2 = i + a, j + b
+                if not (0 <= j2 < nzc and 0 <= i2 < nxc) or not tr[j2, i2] or nb(j2, i2) >= 5: continue
+                if a and b and (tr[j, i2] or tr[j2, i]): continue   # (a diagonal where the row already turns through a side: no triangle)
+                x0, z0, x1, z1 = cx(i), cz(j), cx(i2), cz(j2)
+                if min(sd(x0, z0)[2], sd(x1, z1)[2], sd((x0 + x1) / 2, (z0 + z1) / 2)[2]) < 10: continue
+                hedge += [round(x0, 1), round(z0, 1), round(x1, 1), round(z1, 1)]
     X = extra()
     pw = [p for p in X['power'] if min(sd(p[1][k], p[1][k + 1])[2] for k in range(0, len(p[1]), 3)) < 700]   # (the power lines with a pylon within 700 m)
-    return D, LC, dict(bld=bld, power=pw, race=X['race'], foot=X['foot'])
+    return D, LC, dict(bld=bld, hedge=hedge, power=pw, race=X['race'], foot=X['foot'])
 
 # ---- the horizon (def.far for Riverside's rsFar, js/world-riverside.js): the highest ground in rings round the circuit ----
 FAR_R = [1500, 2000, 2700, 3500, 4500, 5600, 7000, 8500, 10000, 11500]   # the rings' outer distances (m from the circuit's middle; the far grid reaches ~12 km)
@@ -342,7 +374,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the road's surfaces (Core: def.surf, m after the start line): gravel (makadam) where OSM's raceways are gravel, the rallycross's own: the
     // double right after the start and the gravel straight up the west side; asphalt elsewhere
     surf: %(surf)s,
-    // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
+    // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions and what stands within 60 m of the road by
+    // OpenStreetMap (the footbridge, the grandstand, the pit garages, the tower by the line), in their order round the lap
     names: [
 %(names)s
     ],
@@ -352,6 +385,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
     walls: %(walls)s,   // the pit wall 1.2 m past the road's edge, the pit lane behind it; the tight bends' insides, none folding back
     maxRivals: 25,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the shortest circuit, its flying start's column (4/5 of a lap at most) would stand car on car with more (26 already do, the formula cars)
     sectors: %(sectors)s,   // the three sectors of the timing screens: the gravel right and the south straight, the hairpin and the link, the gravel straight and the finish straight
+    alt: [90, 90],   // the start's and the finish's height above the sea (the start line on the lap: Copernicus DEM GLO-30, docs/proge/kildare-raziskava.md)
+    fly: %(fly)s,   // the course flyover before a time trial (Render.pkFly): the places of names, m after the start line
+    // the commentator's own lines for a race on the lap (Game: ownLine, the keys intro and go): the plain, its hedgerows, the gravel
+    comm: %(comm)s,
     dem: %(dem)s,
     lc: %(lc)s,
     sk: %(sk)s,
@@ -363,7 +400,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), start='[%s, %s]' % tuple(f1(v + 0.0) for v in at(0)), kh=kh, laps=LAPS, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM,
            surf=json.dumps(surf), names='\n'.join(names), turns=turns, stands=js(stands).replace(',', ', '), walls=json.dumps(walls), sectors=json.dumps([sn(s) for s in SECTORS]), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR),
-           nfar=len(FAR_R), rfar='%g' % (FAR_R[-1] / 1000), pts=pts)
+           fly=json.dumps([[a if a < 0 else sn(a), b] for a, b in FLY], ensure_ascii=False), comm=json.dumps(COMM, ensure_ascii=False), nfar=len(FAR_R), rfar='%g' % (FAR_R[-1] / 1000), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'kildare.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights; dem', D['nx'], 'x', D['nz'], '; lc', LC['nx'], 'x', LC['nz'],
           len(LC['rle']), 'chars; buildings', len(SK['bld']) // 7, '; power', len(SK['power']), '; raceways', len(SK['race']), '; surf', surf)

@@ -34,10 +34,10 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
 // line (the west hairpin), the nearest legs of the lap apart; the corners' apexes (def.turns) in their order
 {
   const want = { 'Desni na makadamu': [-1, 100], 'Hitri levi': [1, 25], 'Zahodna lasnica': [-1, 100], 'Ostri desni': [-1, 60], 'Levi na makadam': [1, 45], 'Severna lasnica': [-1, 100] };
-  const order = ['Desni na makadamu', 'Hitri levi', 'Južna ravnina', 'Zahodna lasnica', 'Ostri desni', 'Levi na makadam', 'Makadamska ravnina', 'Severna lasnica', 'Ciljna ravnina'];
+  const order = ['Brv čez progo', 'Tribuna', 'Desni na makadamu', 'Hitri levi', 'Južna ravnina', 'Zahodna lasnica', 'Ostri desni', 'Levi na makadam', 'Makadamska ravnina', 'Severna lasnica', 'Garaže boksov', 'Ciljna ravnina', 'Stolp ob ciljni črti'];
   const turn = (s) => { let a = 0; for (let d = -50; d <= 50; d += T.ds) a += T.k[T.idx(s + d)] * T.ds; return -a * 180 / Math.PI; };   // (Track.k > 0: a right-hander; here + left)
   const at = def.names.map(([nm, x, z]) => { const q = near(x, z); return { nm, d: q.d, off: q.off, deg: turn(q.i * T.ds) }; });
-  check('corners: the 9 named places in their order round the lap (the double right on the gravel ... the finish straight), each on the road, the commentator\'s lines for each',
+  check('corners: the 13 named places in their order round the lap (the footbridge, the grandstand, the double right on the gravel ... the pit garages, the finish straight, the tower), each on the road, the commentator\'s lines for each',
     at.map(c => c.nm).join('|') === order.join('|') && at.every((c, k) => c.off < 6 && (k === 0 || c.d > at[k - 1].d)) && def.names.every(c => Array.isArray(c[3]) && c[3].length >= 2),
     at.map(c => `${c.nm} ${Math.round(c.d)} m`).join(', '));
   const cs = at.filter(c => want[c.nm]);
@@ -48,6 +48,15 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
   check('track: no bend under a 9 m radius (the west hairpin the tightest); the legs of the lap at least 40 m apart', 1 / kmax >= 9 && legs >= 40, `tightest radius ${(1 / kmax).toFixed(1)} m, nearest legs ${legs.toFixed(1)} m`);
   check('track: the 8 corners\' apexes (def.turns: the TV towers, the photographers and the recovery by them) each on the road, in their order round the lap',
     def.turns.length === 8 && def.turns.map(([x, z]) => near(x, z)).every((q, k, a) => q.off < 6 && (k === 0 || q.d > a[k - 1].d)));
+}
+// 2b. the facts and the commentator (docs/proge/kildare-raziskava.md): 90 m above the sea, the flyover over the named places in their
+// order, the race's own intro and start lines with the shared placeholders only
+{
+  const nm = def.names.map(n => n[0]), F = def.fly || [], C = def.comm || {};
+  check('facts: alt 90 m; the flyover from START to CILJ over named places, in order; comm.intro and comm.go of their own ({track} {laps} {cars} {grid} only)',
+    def.alt && def.alt[0] === 90 && F[0][1] === 'START' && F[F.length - 1][0] === -1 && F.slice(1, -1).every((f, k, a) => nm.includes(f[1]) && (k === 0 || f[0] > a[k - 1][0]))
+    && ['intro', 'go'].every(k => Array.isArray(C[k]) && C[k].length >= 3 && C[k].every(l => (l.match(/\{\w+\}/g) || []).every(p => ['{track}', '{laps}', '{cars}', '{grid}'].includes(p)))),
+    `${F.length} flyover captions, ${(C.intro || []).length} intro, ${(C.go || []).length} go lines`);
 }
 // 3. the heights: the plain of Kildare, almost flat: within 5 m all round, the steepest grade under 4 %
 {
