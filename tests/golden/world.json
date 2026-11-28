@@ -428,22 +428,22 @@
   }
  },
  "balea": {
-  "meshes": 1342,
-  "verts": 763375,
-  "instances": 31970,
+  "meshes": 1347,
+  "verts": 798922,
+  "instances": 31957,
   "props": 53,
   "crowd": 123,
-  "world": "51c7f0d1",
+  "world": "5c8409a6",
   "propsHash": "bfa2e11d",
   "floor": "6872273c/8792",
   "groups": {
-   "-:MeshLambertMaterial": "a516737c",
+   "-:MeshLambertMaterial": "d0fec9cf",
    "-:MeshPhongMaterial": "fd4c9d",
    "-:MeshBasicMaterial": "31a057ac",
-   "rob:MeshLambertMaterial": "8970ffd3",
+   "rob:MeshLambertMaterial": "6067ab8f",
    "irFar:MeshLambertMaterial": "558fca68",
    "crowd:MeshLambertMaterial": "d8cd96da",
-   "ao:MeshBasicMaterial": "8bf68cb2",
+   "ao:MeshBasicMaterial": "eb2212fb",
    "tyremarks:MeshBasicMaterial": "dedc83a6",
    "roadwear:MeshLambertMaterial": "4bee83f9"
   }

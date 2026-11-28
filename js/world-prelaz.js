@@ -40,23 +40,8 @@
       roofs: [[0.28, 0.29, 0.31], [0.36, 0.35, 0.34], [0.24, 0.25, 0.27], [0.4, 0.3, 0.22]],   // (grey stone slabs and metal, a few of old larch)
       sheep: 1, portal: 0, far: { lo: [0.38, 0.46, 0.27], hi: [0.52, 0.51, 0.48], dw: [0.18, 0.26, 0.16], snow: 2950 },
     },
-    // Bâlea (the Făgăraș Mountains, Romania): the glacial valley of the Bâlea under the cirque, green alpine pasture on the slopes with mats of
-    // dwarf pine and juniper, grey-brown crystalline schist in crags, slabs and scree under the walls, snow lying on into the summer in the shady
-    // gullies high up; the lake in the cirque with the huts and the stalls by it, the cable car up the valley, the tunnel's portal at the end
-    balea: {
-      seed: 4100, board: 'LACUL BÂLEA', sub: 'FĂGĂRAȘ', banner: ['TRANSFĂGĂRĂȘAN', '6 SERPENTINE · LACUL BÂLEA'],
-      grass: [0.4, 0.5, 0.24], grassDry: [0.55, 0.55, 0.32], grassLush: [0.33, 0.48, 0.2], shrub: [0.17, 0.27, 0.14],
-      rock: [0.5, 0.48, 0.45], rockWarm: [0.56, 0.5, 0.44], lichen: [0.34, 0.34, 0.3], scree: [0.62, 0.6, 0.56],
-      sat: 0.5, satV: 1.35, snowLine: 2120, snowC: [1.0, 1.02, 1.06],
-      rockCols: [[0.47, 0.47, 0.46], [0.53, 0.52, 0.5], [0.41, 0.41, 0.41], [0.57, 0.56, 0.54], [0.46, 0.44, 0.42], [0.44, 0.45, 0.42]],   // (the schist: grey, a little brown, lichened)
-      centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line: dashed 3 m / 6 m, solid through the hairpins)
-      // edgeL: the left edge line's colour when it is not white (a divided road's median edge: yellow in the Emirates; Jebel Hafeet)
-      chev: ['#d8261c', '#ffffff'], warn: 'tri', rail: 'steel', shoulder: [0.5, 0.51, 0.49],
-      fans: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.12, 0.24, 0.62], [0.98, 0.82, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
-      cars: [[0.85, 0.85, 0.83], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.5, 0.52, 0.55], [0.72, 0.7, 0.66]],
-      roofs: [[0.32, 0.18, 0.12], [0.26, 0.27, 0.28], [0.44, 0.2, 0.14], [0.2, 0.24, 0.22]],
-      sheep: 1, portal: 1, far: { lo: [0.36, 0.44, 0.26], hi: [0.5, 0.49, 0.45], dw: [0.18, 0.26, 0.16], snow: 2250 },
-    },
+    // Bâlea: its look is in js/world-balea.js, the track's own world (its dodelava)
+    // edgeL: the left edge line's colour when it is not white (a divided road's median edge: yellow in the Emirates; Jebel Hafeet)
     // Izoard (the Hautes-Alpes, France): the north side of the col above Le Laus: an open forest of larch with Swiss stone pine on a grassy floor,
     // the trees lower and sparser towards the treeline (~2250 m); above it dry alpine pasture with juniper and rhododendron, pale grey and ochre
     // limestone and dolomite in crags and in wide scree slopes under the col, hardly any snow left in summer; the refuge by the road, the stalls at
@@ -267,7 +252,7 @@
     far: { lo: [0.43, 0.47, 0.27], hi: [0.47, 0.45, 0.42], dw: [0.23, 0.3, 0.17], snow: 3350, tree: [1900, 1650], fc: [0.19, 0.27, 0.15], rk: [2700, 3100], dwb: [1900, 2100, 2500, 2300] },
   };
 
-  let L = PL_LOOK.balea;   // (the look of the build under way)
+  let L = PL_LOOK.furka;   // (the look of the build under way)
   const PLCOL = [0, 0, 0], PLBANK = [0.5, 0.47, 0.36];   // (PLBANK: the banks' earth, unless the look has its own: L.bank)
   let SAT = null;          // the satellite colours on the terrain grid (def.col), RGB, NaN outside the rows near the road
   function plPrep() {   // the satellite colours (def.col: RGB 5-6-5 in each row's span of the 32 m grid, as the terrain's residuals)

@@ -42,12 +42,20 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1d3f7a', text: '#f4f6f0' }, escTo: 'Do jezera',   // (and the results of an escape: 'Do jezera v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Serpentina 3 · 1.823 m", "d":271, "say": ["Hairpin three! Look at the road snaking up the valley ahead!", "Hairpin three, the cable car is right above you!"]},
-      {"n": "Valea Bâlii", "d":648, "say": ["Up the glacial valley of the Bâlea, green pasture and grey rock all around!", "The Bâlea valley! The ridge of the Făgăraș is ahead!"]},
+      {"n": "Serpentina 3 · 1.823 m", "d":271, "say": ["Hairpin three! Look at the road snaking up the valley ahead!", "Hairpin three, the cable car is right above you!", "Snow fences up on the slope: the snow lies here into the summer!"]},
+      {"n": "Valea Bâlii", "d":648, "say": ["Up the glacial valley of the Bâlea, green pasture and grey rock all around!", "The Bâlea valley! The ridge of the Făgăraș is ahead!", "Bridge after bridge over the streams of the valley!"]},
       {"n": "Serpentina 4 · 1.878 m", "d":1161, "say": ["Hairpin four, halfway up!"]},
+      {"n": "Netedu · 2.351 m", "d":1250, "say": ["Netedu up on the ridge, two thousand three hundred and fifty metres!"]},
+      {"n": "Căldarea Văiugii", "d":1560, "say": ["The cirque of the Văiuga opens up beside the road!", "Dwarf pine and juniper all over the slopes now, no more forest!"]},
+      {"n": "Piscul Bâlii", "d":1900, "say": ["Piscul Bâlii over the valley, grey schist and scree!"]},
       {"n": "Serpentina 5 · 1.947 m", "d":2224, "say": ["Hairpin five, the cirque opens up above you!", "Hairpin five! The last snow is still lying in the gullies up there!"]},
+      {"n": "Văiuga · 2.443 m", "d":2650, "say": ["Văiuga ahead, two thousand four hundred and forty-three metres!"]},
       {"n": "Serpentina 6 · 1.984 m", "d":2885, "say": ["The sixth and last hairpin! Flat out to the lake!", "Last hairpin, the lake is just over the rise!"]},
-      {"n": "Lacul Bâlea · 2.034 m", "d":3518, "say": ["At Bâlea Lake, two thousand and thirty-four metres!", "The top! The glacial lake under the ridge of the Făgăraș!", "Bâlea Lake! The end of the climb!"]},
+      {"n": "Șaua Caprei", "d":3010, "say": ["The saddle of the Capra up on the ridge, the path to Capra lake goes over it!"]},
+      {"n": "Panoramă Transfăgărășan", "d":3175, "say": ["The viewpoint over the whole road down the valley!", "The cable car from the waterfall ends just ahead, its top station by the road!"]},
+      {"n": "Fereastra Bâlei · 2.286 m", "d":3300, "say": ["Fereastra Bâlei, the notch in the ridge over the lake!"]},
+      {"n": "Paltinu · 2.399 m", "d":3420, "say": ["Paltinu over the lake, two thousand four hundred metres!"]},
+      {"n": "Lacul Bâlea · 2.034 m", "d":3518, "say": ["At Bâlea Lake, two thousand and thirty-four metres!", "The top! The glacial lake under the ridge of the Făgăraș!", "Bâlea Lake! The end of the climb!", "The weather station by the lake, two thousand and seventy metres up!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
