@@ -33,6 +33,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Silkeborg, Denmark', desc: "A short, twisty circuit on the sandy heath by Silkeborg in Jutland: 2.3 km, 16 corners and hardly a straight. The double left at the end of the finish straight, the hard left by the grandstands, the double right and the esses in the infield, the long left along the pine woods, the corner by the prehistoric burial mound and the fast last corner. Sand, heather and pines by the track, the pits along the finish straight (drive in and the mechanics fix your car)." },
     start: [0, 0], runoff: 1.1, inner: 4, side: 7, gradeForce: true, elevSmooth: 10, realKm: 2.3,
     elev: SK_H.map((h, i) => [i / SK_H.length, h / 10]),
+    // the commentator's own lines for the start (Comm: def.comm, js/game.js ownLine; docs/proge/silkeborg-raziskava.md): the heath, the plantations, the burial mounds
+    comm: {
+      intro: ["Welcome to {track}, out on the sandy heath of Jutland! {laps} laps, {cars} cars, and you line up {grid}.", "Here we are at {track}. A short, twisty lap between the pines and the heather, {laps} times round, and you start {grid}.", "Welcome to {track}! Two point three kilometres, sixteen corners and hardly a straight. {laps} laps, and you start {grid}."],
+      go: ["Lights out, and they charge for the double left!", "And they're off, down to the double left!", "Green light! {cars} cars into the first corner on the heath!"],
+    },
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
       ["Dvojni levi", -197, -85.1, ["Into the double left, hard on the brakes!", "The double left, two bites at it!", "Round the double left!"]],
