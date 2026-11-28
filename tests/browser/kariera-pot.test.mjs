@@ -70,8 +70,8 @@ try {
     b.v === 1 && canon(b.pot) === canon({ stopnja: 2, pokali: { 's1-krog': 2, 'r-mali': 2 }, cilji: { 'mali-zmaga': true }, prve: ['hiva'], km: { mali: 99.9 } }) && b.disk === JSON.stringify(dmg),
     JSON.stringify({ v: b.v, pot: b.pot, disk: b.disk }));
   const vb = b.view, gm = (id) => ((cupIn(vb, 'r-mali') || {}).cilji || []).find(x => x.id === id) || {};
-  T.check('its view: stage 2 open (kept, though only 4★ of the 9), its events open, stage 3 locked (21★); the cups won (2nd); Športni avti locked (no sports car now); the class goals (the win done, the km 99 of 100); one first win',
-    !!vb && vb.stopnja === 2 && vb.stopnje[1].odprta && ev1(vb, 2).every(c => c.stanje === 'odprt') && !vb.stopnje[2].odprta && vb.napredek.done === 4 && vb.napredek.need === 21
+  T.check('its view: stage 2 open (kept, though only 4★ of the 9), its events open, stage 3 locked (21★ of 132, scaled to the path\'s stars); the cups won (2nd); Športni avti locked (no sports car now); the class goals (the win done, the km 99 of 100); one first win',
+    !!vb && vb.stopnja === 2 && vb.stopnje[1].odprta && ev1(vb, 2).every(c => c.stanje === 'odprt') && !vb.stopnje[2].odprta && vb.napredek.done === 4 && vb.napredek.need === Math.round(21 * vb.atlas.max / 132)
     && cupIn(vb, 's1-krog').stanje === 'osvojen' && cupIn(vb, 's1-krog').best === 2 && cupIn(vb, 's1-cesta-1').stanje === 'odprt' && cupIn(vb, 'r-mali').stanje === 'osvojen' && cupIn(vb, 'r-mali').best === 2
     && cupIn(vb, 'r-sportni').stanje === 'zaklenjen' && gm('mali-zmaga').done === true && gm('mali-medalja').done === false && gm('mali-km').done === false && gm('mali-km').progress === 99 && vb.prve === 1 && vb.money === 1000, views(vb));
 
