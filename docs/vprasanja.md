@@ -116,6 +116,14 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-103`
+
+Kamera za avtom, skupina 103 (`js/world-chase-bt103.js`): Batangas (prvi prehod: ob ograjah temnejše in svetlejše zaplate pokošene trate, od ~12 m šopi bujne trave, lise rdeče prsti, od ~30 m visoki rumenkasto zeleni šopi trsa, grmi, v gajih listje in podrast do ~60 m; +8 klicev; s spojenim #1088 285 od 300, 850 od 900 tisoč oglišč) in Río Hondo (od ~16 m od roba stoječi slamnati šopi, nizko trnato grmičje, lise gole zemlje, na poljih strnišče, nič ob jezeru; +9 klicev; s spojenim #1088 288 od 300, 851 od 900 tisoč). Redko, ker sta obe progi tik pod mejo telefona; sprememba je zato majhna. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Samo Batangas, Río Hondo brez dodatka.
+3. Ne, odstrani skupino 103.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
