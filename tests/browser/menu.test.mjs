@@ -76,10 +76,10 @@ try {
     await click(page, 'single');
     const m = await ev(page, 'return [...root.querySelectorAll(".t-sub .mode b")].map(e => e.textContent);');
     T.check('Single race: the eight modes (Elimination, Pursuit and Drag race: Zabava, docs/zabava.md; Endless traffic: docs/neskoncna-voznja.md; Drag race: docs/drag-dirka.md)', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel","Elimination","Pursuit","Endless traffic","Drag race"]', JSON.stringify(m));
-    // Endless traffic: Bathurst its only track (Core.EN.tracks), the clock at the start (the game's level, Srednja: 30 s) in the row's last cell (the new menu's row: flag, best, length, climb, then this)
+    // Endless traffic: its four tracks (Core.EN.tracks: Bathurst and three open roads with normal traffic), the clock at the start (the game's level, Srednja: 12 s) in the row's last cell (the new menu's row: flag, best, length, climb, then this)
     await click(page, 'mode:endless');
     const en = await page.evaluate(() => { const root = document.getElementById('menu-host').shadowRoot, c = root.querySelector('.trow > div:last-child'); return { list: Menu.debug().list, cell: c ? [c.querySelector('small').textContent, c.querySelector('b').textContent] : null }; });
-    T.check('Endless traffic: Bathurst only; the last cell Clock 30 s', JSON.stringify(en.list) === '["bathurst"]' && JSON.stringify(en.cell) === '["Clock","30 s"]', JSON.stringify(en));
+    T.check('Endless traffic: Bathurst, Chapman\'s Peak, Caracoles and Bălea; the last cell Clock 12 s', JSON.stringify([...en.list].sort()) === '["balea","bathurst","caracoles","chapman"]' && JSON.stringify(en.cell) === '["Clock","12 s"]', JSON.stringify(en));
     await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
 
     // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest; equal lengths by id), every track
@@ -1066,7 +1066,7 @@ try {
 
 
   // 5a2. the row's mode and difficulty (the user, 16. 11. 2026): a tap the next one, no window (Chapman's Peak: Classic race, Street race,
-  //      Police chase, round again; Endless traffic, which it has not, skipped; Spa, a circuit: Classic race alone, a tap leaves it so); Easy,
+  //      Police chase, Endless traffic (its road too: Core.EN.tracks), round again; Kotor: Endless traffic, which it has not, skipped; Spa, a circuit: Classic race alone, a tap leaves it so); Easy,
   //      Medium, Hard, Super hard, round again. Police chase, Race!: the side first, in the race weekend's frame: the getaway chosen, the
   //      police's page grey; a tap on it chooses it, Back to the tracks, Race! again: the police remembered, Race! the pursuit (the player's
   //      patrol car, js/zabava/lov.js); on its side the pad's LB and RB the sides, Start the getaway's race in the police mode
@@ -1081,9 +1081,9 @@ try {
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     const seen = [await row(page)];
-    for (let k = 0; k < 3; k++) { await click(page, 'rmode-next'); seen.push(await row(page)); }
-    T.check('the row\'s mode, a tap: the next one the track has, no window (Chapman\'s Peak: Classic race, Street race, Police chase, Classic race again; Endless traffic skipped)',
-      JSON.stringify(seen.map(r => r.md)) === '["Classicrace","Streetrace","Policechase","Classicrace"]' && JSON.stringify(seen.map(r => r.mode)) === '["race","duel","chase","race"]' &&
+    for (let k = 0; k < 4; k++) { await click(page, 'rmode-next'); seen.push(await row(page)); }
+    T.check('the row\'s mode, a tap: the next one the track has, no window (Chapman\'s Peak: Classic race, Street race, Police chase, Endless traffic, Classic race again)',
+      JSON.stringify(seen.map(r => r.md)) === '["Classicrace","Streetrace","Policechase","Endlesstraffic","Classicrace"]' && JSON.stringify(seen.map(r => r.mode)) === '["race","duel","chase","endless","race"]' &&
       seen.every(r => !r.sheet && !r.popup && r.at === 'chapman'), JSON.stringify(seen));
     const ds = [];
     for (let k = 0; k < 4; k++) { await click(page, 'diff-next'); ds.push(await row(page)); }
@@ -1123,6 +1123,18 @@ try {
     T.check('Spa (a circuit, Classic race alone): a tap on the mode leaves it, no window', m0[2] === 'spa' && m0[0] === 'Classicrace' && m1[0] === 'Classicrace' && m1[1] === 'race' && !m1[2], JSON.stringify({ m0, m1 }));
     await ctx.close();
     T.check('no page errors on Spa\'s row', !real(errors).length, real(errors).join(' | '));
+  }
+  {   // (Kotor, a road without Endless traffic: the tap after Police chase skips it, Classic race again)
+    const { ctx, page, errors } = await open({ intro: 0, track: 'kotor', mode: 'race', lastTrack: 'kotor' }, { width: 360, height: 640 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const md = () => ev(page, 'return [root.querySelector(".trow .md").textContent, Menu.debug().mode, Menu.debug().list[Menu.debug().trackIdx], !!root.querySelector(".sheet, .intro")];');
+    const seen = [await md()];
+    for (let k = 0; k < 3; k++) { await click(page, 'rmode-next'); seen.push(await md()); }
+    T.check('Kotor (a road without Endless traffic): Classic race, Street race, Police chase, Classic race again; Endless traffic, which it has not, skipped, no window',
+      JSON.stringify(seen.map(r => r[0])) === '["Classicrace","Streetrace","Policechase","Classicrace"]' && JSON.stringify(seen.map(r => r[1])) === '["race","duel","chase","race"]' && seen.every(r => r[2] === 'kotor' && !r[3]), JSON.stringify(seen));
+    await ctx.close();
+    T.check('no page errors on Kotor\'s row', !real(errors).length, real(errors).join(' | '));
   }
   {
     const { ctx, page, errors } = await open({ intro: 0, track: 'chapman', mode: 'police', lastTrack: 'chapman' }, { width: 640, height: 360 });
