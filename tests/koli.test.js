@@ -14,5 +14,10 @@ const { def, T, check } = G;
   check('winter: the world of Koli is snowy in every season', /snow:\s*'all'/.test(src));
   check('winter: no lines on the ploughed road', /line:\s*'none'/.test(src));
   check('winter: the medals have their winter times', !!(def.medals && def.medals.winter && def.medals.winter.cs));
+  // packed snow on 10-20 % of the road only (the user's choice, 28. 11.), and the snowfall over the same span
+  const L = T.finishS - T.startS, snow = (def.surf || []).filter(p => p[2] === 'makadam'), on = snow.reduce((a, p) => a + Math.max(0, Math.min(p[1], L) - Math.max(p[0], 0)), 0);
+  check('winter: packed snow on 10-20 % of the road (' + Math.round(on / L * 100) + ' %)', on >= 0.1 * L && on <= 0.2 * L);
+  const m = /SNOW = \[(\d+), (\d+)\]/.exec(src);
+  check('winter: it snows where the packed snow lies', !!m && snow.some(p => p[0] === +m[1] && p[1] === +m[2]));
 }
 G.done();
