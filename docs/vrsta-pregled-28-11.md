@@ -28,6 +28,8 @@ Stanje ni preverjeno (ni med odprtimi niti prvimi 1000 zaprtimi): #480, #608, #6
 
 ## B. Odprti PR #1137–#1171, kandidati za zaprtje
 
+**Zaprto 28. 11. po odločitvi O-28-45** (veje ostanejo): #1137–#1142, #1144–#1148, #1150–#1159, #1164–#1167, #1168. Preskočenih ni. Odprti ostanejo #1143, #1171, #1169, #1170.
+
 Vsi so osnutki. #1160–#1163 (kanali) se ne omenjajo.
 
 | PR | Razlog |
