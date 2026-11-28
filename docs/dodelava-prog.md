@@ -46,33 +46,33 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Ghoufi, Alžirija (`ghoufi`) | Svet 215 vrstic, nobene zanimivosti. Manjkajo kanjon, palmovi gaji in stare vasi ob robu. | 4 | — | biketraveler |
 | Aguascalientes, Mehika (`aguascalientes`) | Svet 233 vrstic, brez komentatorja, 6 zanimivosti brez vrstic. Ni sušnega rastja ne mesta za stezo, ni `alt`. | 4 | #1060, #1139 | |
 | Ujarrás, Kostarika (`ujarras`) | Svet 136 + obcestje 442 vrstic, nobene zanimivosti. Manjkajo ruševine, dolina z jezerom in kavni nasadi. | 4 | #1060, #1159 | |
-| Nürburg, Nemčija (`nring`) | Svet 515 vrstic, brez komentatorja, 32 zanimivosti brez vrstic, opis 6 vrstic. V pasu ob progi je gozd, v igri trava; od 61 stavb ob progi jih je v igri 19 (`realizem.md`). | 4 | #1060, #1052, #763, #678 | |
-| Livorno, Italija (`livorno`) | Mestna proga brez `look` in DEM, brez komentatorja, 19 zanimivosti brez vrstic. Stavbe so škatle, manjkajo svetilke in borovci (`realizem.md`). | 4 | #1125, #1052, #1016, #763, #657 | |
+| Nürburg, Nemčija (`nring`) | Svet 515 vrstic, brez komentatorja, 32 zanimivosti brez vrstic, opis 6 vrstic. V pasu ob progi je gozd, v igri trava; od 61 stavb ob progi jih je v igri 19 (`realizem.md`). | 4 | #1060, #1052, #763, #678 | biketraveler |
+| Livorno, Italija (`livorno`) | Mestna proga brez `look` in DEM, brez komentatorja, 19 zanimivosti brez vrstic. Stavbe so škatle, manjkajo svetilke in borovci (`realizem.md`). | 4 | #1125, #1052, #1016, #763, #657 | biketraveler |
 | Hiva, Uzbekistan (`hiva`) | Svet 405 vrstic, brez DEM, komentatorja in vrstic ob 8 zanimivostih. Manjkata obzidje in minareti ob cesti v pravem razmerju. | 4 | #1171, #1079, #1016 | |
 | Buriram, Tajska (`buriram`) | Svet 320 vrstic, brez obcestja in komentatorja, 14 zanimivosti brez vrstic. Manjkajo riževa polja okoli in stavbe po obrisih. | 4 | #1141 | biketraveler |
 | Sakhir, Bahrajn (`sakhir`) | Svet 385 vrstic, brez komentatorja, 16 zanimivosti brez vrstic. Puščava in svetloba nočne dirke nista po kraju. | 4 | #1155 | biketraveler |
 | Batangas, Filipini (`batangas`) | Svet 146 + obcestje 222 vrstic, brez komentatorja, 11 zanimivosti brez vrstic. Manjkajo morje, griči in nasadi. | 4 | #1088, #1143 | |
-| Kågeröd, Švedska (`kagerod`) | Svet 174 + obcestje 276 vrstic, brez komentatorja, 12 zanimivosti brez vrstic. Manjkajo gozd in polja Skanije. | 4 | #1087, #1060, #1152, #1147 | |
-| Pembrey, Wales (`pembrey`) | Svet 143 + obcestje 326 vrstic, brez komentatorja, 10 zanimivosti brez vrstic. Manjkajo sipine in gozd ob obali. | 4 | #1132, #1146 | |
-| Termas de Río Hondo, Argentina (`riohondo`) | Svet 181 + obcestje 290 vrstic, brez komentatorja, 16 zanimivosti brez vrstic. Manjka jezero in grmičje ob stezi. | 4 | #1088, #1143, #1133 | |
-| Kildare, Irska (`kildare`) | Svet 223 + obcestje 252 vrstic, brez komentatorja, 9 zanimivosti brez vrstic. Manjkajo žive meje in barje. | 4 | #1125, #1123, #1120, #1081, #1142 | |
+| Kågeröd, Švedska (`kagerod`) | Svet 174 + obcestje 276 vrstic, brez komentatorja, 12 zanimivosti brez vrstic. Manjkajo gozd in polja Skanije. | 4 | #1087, #1060, #1152, #1147 | biketraveler |
+| Pembrey, Wales (`pembrey`) | Svet 143 + obcestje 326 vrstic, brez komentatorja, 10 zanimivosti brez vrstic. Manjkajo sipine in gozd ob obali. | 4 | #1132, #1146 | biketraveler |
+| Termas de Río Hondo, Argentina (`riohondo`) | Svet 181 + obcestje 290 vrstic, brez komentatorja, 16 zanimivosti brez vrstic. Manjka jezero in grmičje ob stezi. | 4 | #1088, #1143, #1133 | biketraveler |
+| Kildare, Irska (`kildare`) | Svet 223 + obcestje 252 vrstic, brez komentatorja, 9 zanimivosti brez vrstic. Manjkajo žive meje in barje. | 4 | #1125, #1123, #1120, #1081, #1142 | biketraveler |
 | Zandvoort, Nizozemska (`zandvoort`) | Svet 267 + obcestje 406 vrstic, brez komentatorja, 13 zanimivosti brez vrstic. Sipine in morje niso dodelani. | 4 | #1138 | biketraveler |
-| Sosnová, Češka (`sosnova`) | Svet 288 + obcestje 482 vrstic, brez komentatorja, 14 zanimivosti brez vrstic, brez `alt`. | 4 | #1081, #1013, #982, #1144 | |
+| Sosnová, Češka (`sosnova`) | Svet 288 + obcestje 482 vrstic, brez komentatorja, 14 zanimivosti brez vrstic, brez `alt`. | 4 | #1081, #1013, #982, #1144 | biketraveler |
 | Lombok, Indonezija (`lombok`) | Svet 292 vrstic, brez komentatorja, 17 zanimivosti brez vrstic. Manjkajo obala in ognjenik v ozadju. | 4 | #1100, #1156 | croatiadata |
 | Tuzla, Turčija (`tuzla`) | Svet 299 vrstic, brez komentatorja, 16 zanimivosti brez vrstic. Manjkajo morje in mesto v ozadju. | 4 | #1099 | croatiadata |
 | Isuna, Butan (`isuna`) | Svet 67 + obcestje 540 vrstic, 4 zanimivosti. Manjkajo samostani, molilne zastavice in terase po kraju. | 3 | #1157 | |
-| Cusco, Peru (`cusco`) | Svet 146 + obcestje 592 vrstic, 3 zanimivosti. Manjkata zidovi iz inkovskih časov in dolina pod mestom. | 3 | #1016, #1152 | |
-| Biķernieki, Latvija (`bikernieki`) | Obcestje 764 vrstic, svet 166, brez komentatorja, 17 zanimivosti brez vrstic. Manjka borov gozd okoli steze. | 3 | #1085, #1140 | |
-| Lusail, Katar (`lusail`) | Obcestje 614 vrstic, svet 230, brez komentatorja, 17 zanimivosti brez vrstic. Nočna svetloba ni po kraju. | 3 | #1013, #982, #1153 | |
-| Spa, Belgija (`spa`) | Svet 763 vrstic, brez komentatorja, 14 zanimivosti brez vrstic, opis 8 vrstic. Stavbe so škatle, manjka gozd ob progi (`realizem.md`). | 3 | #1132, #1130, #1128, #1124, #1121, #1052, #668 | |
-| Štajerska, Avstrija (`rbring`) | Velik svet (1529), brez komentatorja, 8 zanimivosti brez vrstic. Tribune in boksi niso na pravih obrisih (`realizem.md`). | 3 | #1052, #763, #1151 | |
-| Montréal, Kanada (`montreal`) | Svet 910 vrstic, brez komentatorja in DEM, 16 zanimivosti, le 2 z vrsticami. Paviljoni so poenostavljeni. | 3 | #1052, #763 | |
-| Katu-Jaryk, Rusija (`katu`) | Svet 944 vrstic, brez komentatorja. Macesni so povsod enako gosti (`realizem.md`). | 3 | #763 | |
+| Cusco, Peru (`cusco`) | Svet 146 + obcestje 592 vrstic, 3 zanimivosti. Manjkata zidovi iz inkovskih časov in dolina pod mestom. | 3 | #1016, #1152 | biketraveler |
+| Biķernieki, Latvija (`bikernieki`) | Obcestje 764 vrstic, svet 166, brez komentatorja, 17 zanimivosti brez vrstic. Manjka borov gozd okoli steze. | 3 | #1085, #1140 | biketraveler |
+| Lusail, Katar (`lusail`) | Obcestje 614 vrstic, svet 230, brez komentatorja, 17 zanimivosti brez vrstic. Nočna svetloba ni po kraju. | 3 | #1013, #982, #1153 | biketraveler |
+| Spa, Belgija (`spa`) | Svet 763 vrstic, brez komentatorja, 14 zanimivosti brez vrstic, opis 8 vrstic. Stavbe so škatle, manjka gozd ob progi (`realizem.md`). | 3 | #1132, #1130, #1128, #1124, #1121, #1052, #668 | biketraveler |
+| Štajerska, Avstrija (`rbring`) | Velik svet (1529), brez komentatorja, 8 zanimivosti brez vrstic. Tribune in boksi niso na pravih obrisih (`realizem.md`). | 3 | #1052, #763, #1151 | biketraveler |
+| Montréal, Kanada (`montreal`) | Svet 910 vrstic, brez komentatorja in DEM, 16 zanimivosti, le 2 z vrsticami. Paviljoni so poenostavljeni. | 3 | #1052, #763 | biketraveler |
+| Katu-Jaryk, Rusija (`katu`) | Svet 944 vrstic, brez komentatorja. Macesni so povsod enako gosti (`realizem.md`). | 3 | #763 | biketraveler |
 | El Jem, Tunizija (`eljem`) | Svet 413 + obcestje 658 vrstic, brez DEM in rastja. Amfiteater je glavna točka, mesto okoli je skopo. | 3 | #1158 | biketraveler |
 | Isalo, Madagaskar (`isalo`) | Svet 346 vrstic, brez DEM in rastja, 4 zanimivosti. Manjkajo peščenjaški grebeni in savana. | 3 | — | biketraveler |
 | Luanda, Angola (`luanda`) | Svet 466 + obcestje 402 vrstic, brez DEM. Manjkata zaliv z obalo in višina terena. | 3 | — | |
-| Mombasa, Kenija (`mombasa`) | Svet 477 + obcestje 452 vrstic, brez DEM. Manjkajo staro mesto in obala z otokom. | 3 | #1174, #1145 | |
-| Portobelo, Panama (`portobelo`) | Svet 476 vrstic, brez DEM in rastja. Manjkajo trdnjave ob zalivu in deževni gozd. | 3 | #1008 | |
+| Mombasa, Kenija (`mombasa`) | Svet 477 + obcestje 452 vrstic, brez DEM. Manjkajo staro mesto in obala z otokom. | 3 | #1174, #1145 | biketraveler |
+| Portobelo, Panama (`portobelo`) | Svet 476 vrstic, brez DEM in rastja. Manjkajo trdnjave ob zalivu in deževni gozd. | 3 | #1008 | biketraveler |
 | Seul, Južna Koreja (`seoul`) | Svet 557 vrstic, brez DEM. Manjkata gore za mestom in reka. | 3 | #1148 | biketraveler |
 | Bâlea, Romunija (`balea`) | Svet je skupni prelaz, 6 zanimivosti. Koče in postaja žičnice so preproste (`realizem.md`). | 3 | #1018, #763, #678, #1139 | |
 | Canaries, Sveta Lucija (`canaries`) | Svet je skupni prelaz, 4 zanimivosti. Manjkata tropski gozd in vas ob zalivu. | 3 | #1018, #1141 | |
