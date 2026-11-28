@@ -1625,22 +1625,22 @@
   }
  },
  "canaries": {
-  "meshes": 2154,
-  "verts": 1108025,
-  "instances": 58392,
+  "meshes": 2368,
+  "verts": 1507857,
+  "instances": 57353,
   "props": 101,
   "crowd": 249,
-  "world": "7bdf5615",
+  "world": "4dfeed0c",
   "propsHash": "de2ec1b5",
   "floor": "20c33ba7/10696",
   "groups": {
-   "-:MeshLambertMaterial": "58da16df",
-   "-:MeshPhongMaterial": "757b4505",
+   "-:MeshLambertMaterial": "33001eb7",
+   "-:MeshPhongMaterial": "cd9c0ea8",
    "-:MeshBasicMaterial": "efc0b23a",
    "rob:MeshLambertMaterial": "cc84064c",
    "irFar:MeshLambertMaterial": "992f168e",
    "crowd:MeshLambertMaterial": "863a683c",
-   "ao:MeshBasicMaterial": "214100bb",
+   "ao:MeshBasicMaterial": "def87c6b",
    "tyremarks:MeshBasicMaterial": "fcf55ec7",
    "roadwear:MeshLambertMaterial": "b34805b0"
   }

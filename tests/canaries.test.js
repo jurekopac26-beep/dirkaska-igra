@@ -40,7 +40,7 @@ check('track: no drop to fall into (falling over the edge is Killar\'s alone: th
   if (hp) { const a = T.idx(T.startS + hp.d - 40), b = T.idx(T.startS + hp.d + 40); for (let i = a; i < b; i++) turn += wrap(T.hd[i + 1] - T.hd[i]); }
   check('places: the hairpin is a left of 150 degrees and more', !!hp && turn < -2.6, `turn ${Math.round(turn * 57.3)} degrees`);
   const ns = T.names.map(q => q.n.split(' · ')[0]);
-  check('places: the HUD and the commentator know the hamlet, the ridge, the valley and the hairpin, in order', ns.join('|') === 'Anse La Verdue|Greben|Dolina|Serpentina' && T.names.every((q, k) => !k || q.d > T.names[k - 1].d),
+  check('places: the HUD and the commentator know the village, the hamlet, the rainforest, the ridge, the stream, the hamlet on the ridge, the valley and the hairpin, in order', ns.join('|') === 'Canaries|Anse La Verdue|Deževni gozd|Greben|Čez potok|Zaselek|Dolina|Serpentina' && T.names.every((q, k) => !k || q.d > T.names[k - 1].d),
     T.names.map(q => q.n).join(' | '));
   // up the ridge, down to the valley and up again, nowhere steeper than ~12.5 %
   let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, Math.abs(T.grade[i]));
