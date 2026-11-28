@@ -1,6 +1,6 @@
 # Silkeborg, Danska
 
-[← Vse proge](../../README.md#proge) · proga `silkeborg` (`js/tracks/silkeborg.js`, okolica `js/world-silkeborg.js` na skupnem graditelju `js/world-rbring.js`; načrt v [`docs/nove-proge-1-0.md`](../nove-proge-1-0.md), linija A1)
+[← Vse proge](../../README.md#proge) · proga `silkeborg` (`js/tracks/silkeborg.js`, okolica `js/world-silkeborg.js` na skupnem graditelju `js/world-rbring.js`; načrt v [`docs/nove-proge-1-0.md`](../nove-proge-1-0.md), linija A1; raziskava kraja za dodelavo: [`silkeborg-raziskava.md`](silkeborg-raziskava.md))
 
 Kratko, zavito dirkališče na peščeni resavi pri Skellerupu vzhodno od Silkeborga na Jutlandiji, v daljši postavitvi (od leta 2003) v pravem merilu: **2,3 km** (2.255 m na naši črti), v nasprotni smeri urinega kazalca, **6 krogov** proti 12 tekmecem z boksi. Start in cilj sta na ciljni ravnini ob boksih (OSM `raceway=start-finish`). Potek je iz OpenStreetMap, višine iz višinskega modela Copernicus GLO-30 (brez krošenj dreves in stavb): proga je skoraj ravna, najvišje ob startu (61,7 m), južna zanka 3,8 m nižje, strmine do 2,3 %. Med vožnjo se pod uro izpišejo opisna imena ovinkov (Dvojni levi, Hitri desni, Ovinek pri tribunah, Dvojni desni, S-zavoji, Gozdni ovinek, Dolgi levi, Ovinek pri gomili, Ovinek ob resavi, Zadnji ovinek, Ciljna ravnina), komentator ima za vsakega tri vrstice.
 
