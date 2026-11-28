@@ -198,9 +198,9 @@
  "gudauri": {
   "calls": 179,
   "maxCalls": 219,
-  "kverts": 515,
-  "maxKverts": 690,
-  "jsMs": 1.11
+  "kverts": 545,
+  "maxKverts": 720,
+  "jsMs": 1.59
  },
  "ngorongoro": {
   "calls": 161,
