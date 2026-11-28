@@ -25,6 +25,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xbfcfe0, sun: 0xfff2dc, sunI: 1.22, sky: 0xa8c6ee, gnd: 0x44523a, hemiI: 0.6, tint: [1.0, 1.0, 0.98], sat: 1.07, sunOff: [-88, 82, 44], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },   // Medeu: a clear late-summer afternoon in the Trans-Ili Alatau, the sun from the west-south-west over the spruce slopes
     say: 'Medeu',
+    cloudTh: 0.16,   // (a cloud over the gorge darkens a little less than the default 0.2: the clear dry air of the Trans-Ili Alatau)
     zivali: { a: ['horse', 'horseG', 'roe', 'ibex', 'fox', 'magpie'], t: ['picnic', 'signPost', 'logPile', 'fallenTree'], open: true },   // (the horses of the herders on the meadows, roe deer, ibex up on the crags)
     id: 'medeu', name: 'Medeu, Kazahstan', theme: 'medeu', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.0,
     maxRivals: 95,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line, as Bâlea's

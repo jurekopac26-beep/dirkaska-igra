@@ -206,6 +206,62 @@
         g.quadO(A, B, [B[0], y + 36.1, B[2]], [A[0], y + 36.1, A[2]], lamp, [x, y + 35, z]);   // (the lamps' face, towards the ice)
         st.masts++;
       }
+      // the rink's details (shapes only, no letters): the boards round the ice, the lanes painted on the 400 m oval, the railing round the
+      // deck where it looks over the square, the rows of seats on the stands' tops (docs/proge/medeu.md, Približki)
+      {
+        const off = (R, d) => {   // (the ring R moved d m inwards (d < 0: outwards), its corners mitred)
+          const sd = area(R) > 0 ? 1 : -1, n = R.length, nm = [];
+          for (let i = 0; i < n; i++) { const [ax, az] = R[i], [bx, bz] = R[(i + 1) % n], l = Math.hypot(bx - ax, bz - az) || 1; nm.push([-(bz - az) / l * sd, (bx - ax) / l * sd]); }
+          return R.map(([x, z], i) => { const a = nm[(i + n - 1) % n], b = nm[i], ml = Math.hypot(a[0] + b[0], a[1] + b[1]) || 1, mx = (a[0] + b[0]) / ml, mz = (a[1] + b[1]) / ml, k = d / Math.max(0.5, mx * b[0] + mz * b[1]); return [x + mx * k, z + mz * k]; });
+        };
+        const yI = yB + 12, oval = RINK.find(p => RINK_COL[p[3]] === '#89c9f0'), HOLE = ringOf(oval[5][0]), stands = RINK.filter(p => (p[0] === 18 || p[0] === 19) && !p[1]).map(p => ({ h: p[0], R: ringOf(p[4]) }));
+        const inStand = (x, z) => stands.some(q => inPoly(q.R, x, z));
+        // the boards: 1.1 m, white, a blue band along the top; round the outside of the oval and round the infield (both faces)
+        const white = [0.93, 0.94, 0.95], band = [0.16, 0.36, 0.7];
+        st.boards = 0;
+        for (const R of [ICE, HOLE]) for (let i = 0; i < R.length; i++) {
+          const [ax, az] = R[i], [bx, bz] = R[(i + 1) % R.length], l = Math.hypot(bx - ax, bz - az); if (l < 0.05) continue;
+          const g = scen.get((ax + bx) / 2, (az + bz) / 2), nx = -(bz - az) / l, nz = (bx - ax) / l;
+          for (const e of [-1, 1]) { const ins = [(ax + bx) / 2 + nx * e, yI + 0.5, (az + bz) / 2 + nz * e];
+            g.quadO([ax, yI, az], [bx, yI, bz], [bx, yI + 0.95, bz], [ax, yI + 0.95, az], white, ins);
+            g.quadO([ax, yI + 0.95, az], [bx, yI + 0.95, bz], [bx, yI + 1.1, bz], [ax, yI + 1.1, az], band, ins); }
+          st.boards++;
+        }
+        // the lanes (the map has none; a 400 m oval's: two lanes of 4 m from the outer boards, the warm-up lane inside them): a red line
+        // between the two lanes, a blue one along the inner lane's edge, 0.25 m wide, on the ice
+        st.lanes = 0;
+        for (const [d, col] of [[4, [0.78, 0.2, 0.2]], [8, [0.2, 0.36, 0.72]]]) {
+          const A = off(ICE, d - 0.125), B = off(ICE, d + 0.125);
+          for (let i = 0; i < A.length; i++) { const j = (i + 1) % A.length, g = scen.get(A[i][0], A[i][1]), y = yI + 0.02;
+            g.quadUp([A[i][0], y, A[i][1]], [A[j][0], y, A[j][1]], [B[j][0], y, B[j][1]], [B[i][0], y, B[i][1]], [col, col, col, col]); st.lanes++; }
+        }
+        // the deck's railing, where the deck's edge looks over the square (not where a stand rises behind it): steel posts every ~4 m, two rails
+        const steelR = [0.62, 0.64, 0.66], DR = off(D, 0.3);
+        st.rails = 0;
+        for (let i = 0; i < DR.length; i++) {
+          const [ax, az] = DR[i], [bx, bz] = DR[(i + 1) % DR.length], l = Math.hypot(bx - ax, bz - az); if (l < 0.5) continue;
+          const mx = (ax + bx) / 2, mz = (az + bz) / 2, ox = mx + (D[i][0] - DR[i][0]) * 5, oz = mz + (D[i][1] - DR[i][1]) * 5;   // (1.5 m outside the deck's edge)
+          if (inStand(ox, oz) || inPoly(ICE, mx, mz)) continue;
+          const g = scen.get(mx, mz), a = Math.atan2(bz - az, bx - ax), np = Math.max(1, Math.round(l / 4));
+          for (let q = 0; q <= np; q++) { const t = q / np; box(g, lerp(ax, bx, t), yI, lerp(az, bz, t), 0.07, 1.1, 0.07, a, steelR); }
+          for (const h of [0.5, 1.05]) { const ins = [mx - (ox - mx), yI, mz - (oz - mz)];
+            g.quadO([ax, yI + h, az], [bx, yI + h, bz], [bx, yI + h + 0.06, bz], [ax, yI + h + 0.06, az], steelR, ins);
+            g.quadO([ax, yI + h, az], [bx, yI + h, bz], [bx, yI + h + 0.06, bz], [ax, yI + h + 0.06, az], steelR, [ox, yI, oz]); }
+          st.rails++;
+        }
+        // the rows of seats on the stands' tops: rings round the oval every 0.9 m, a darker stripe where one runs over a stand
+        const seat = [0.42, 0.44, 0.47];
+        st.rows = 0;
+        for (let d = -2; d > -48; d -= 0.9) {
+          const A = off(ICE, d), B = off(ICE, d + 0.35);
+          for (let i = 0; i < A.length; i++) {
+            const j = (i + 1) % A.length, mx = (A[i][0] + A[j][0]) / 2, mz = (A[i][1] + A[j][1]) / 2;
+            const p = stands.find(q => inPoly(q.R, mx, mz)); if (!p || !inPoly(p.R, A[i][0], A[i][1]) || !inPoly(p.R, A[j][0], A[j][1])) continue;
+            const y = yB + p.h + 0.03, g = scen.get(mx, mz);
+            g.quadUp([A[i][0], y, A[i][1]], [A[j][0], y, A[j][1]], [B[j][0], y, B[j][1]], [B[i][0], y, B[i][1]], [seat, seat, seat, seat]); st.rows++;
+          }
+        }
+      }
       // the flagpole by the west stand: a white pole, the flag sky blue with a golden disc (a flag, not anyone's badge)
       { const [x, z] = FLAG, y = G(x, z), g = scen.get(x, z), sky = [0.0, 0.66, 0.78], sun = [0.98, 0.8, 0.12];
         cyl(g, x, y - 0.3, z, 0.12, 20.3, 6, [0.92, 0.92, 0.92], [0.92, 0.92, 0.92], 0.07);
