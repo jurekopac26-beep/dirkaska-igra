@@ -46,8 +46,10 @@ try {
   // 2. the way in: slowly, into the pit lane, standing in the queue; the bar; the crew; the exit's light; nothing else told
   const BAD = ['pressure', 'duel', 'gapBehind', 'gapAhead', 'gain', 'lose', 'chat'];
   let s = s1, vMax = 0, mono = true, prev = null, rp = null, queued = null, kinds = [], crews = new Set(), keys = [], noise = [], toldIn = [];
-  for (let k = 0; k < 330 && s.red === 'in'; k++) {
-    await sim(1); s = await st();
+  // (a second's steps on the way, a quarter's once slowing in the lane: standing in the queue lasts only until the last car behind is in
+  // (3 s here; on the CI the field came in in another order, shorter) and one step of a second went from the way in straight into the hold)
+  for (let k = 0; k < 400 && s.red === 'in'; k++) {
+    await sim(s.inPit && s.v < 10 ? 0.25 : 1); s = await st();
     if (!s.inPit && s.t > red0.t + 6) vMax = Math.max(vMax, s.v);
     const kind = s.label.replace(/[:\d].*$/, '').trim();
     if (kinds[kinds.length - 1] !== kind) kinds.push(kind); else if (prev && s.bar < prev.bar - 0.01) mono = false;

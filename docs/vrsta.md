@@ -137,6 +137,10 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 10.1 | #1069 | Grafika: zmogljivost v gneči 100 avtov (dim 15 m, test gneče) | jure.kopac26 | **prva prednost (Matej 27. 11., #1161)**: gneča; osnutek, »Ready for review« ob mestu med prvima dvema; pred združitvijo svež `main`, `test:related`. |
+| 10.2 | #1119 | Zatikanje na startu: testi in meritve | partyslo | **druga prednost (Matej 27. 11., #1161)**; osnutek, »Ready for review« ob mestu med prvima dvema; pred združitvijo svež `main`, `test:related`. |
+| 10.3 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: po #1069 in #1119) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
+| 10.4 | #1068 | Profil igralca: dosežki, statistika, izvoz, kopije, primerjava avtov, »ZA TO PROGO« | jure.kopac26 | osnutek; testi zeleni 27. 11. (`test:related` 26/26, `menu.test` 322/322, `stamp --check`); »Ready for review« ob mestu med prvima dvema, pred združitvijo svež `main`. |
 | 0 | #605 | Hitrejši tekmeci: super težka svoja raven, težka zmerno hitrejša, lahka in srednja ostaneta; stikalo »Tekmeci po moji liniji« ostane privzeto izklopljeno | jure.kopac26 (prevzel od biketravelerja 17. 11.) | **Prvi v vrsti za `main`, takoj ko so testi zeleni** (odločitev uporabnika 17. 11. 2026 ob ~03.20 prek Mateja, dobesedno: »1.0 kot izjema na main damo to prioritetno da sprobam«): izjema od pravila, da se vožnja tekmecev ne spreminja, gre v 1.0; pogoj 15. 11. (posnetki vseh prog) odpade; fizika igralčevega avta in avtopilot ostaneta enaka do številke |
 | 10.14 | #755 Meni: gumba načina in težavnosti brez okna; Police chase: izbira strani | partyslo | 24. 11.: svež main spojen, menu.test lokalno zelen (tudi 640 × 360); pripravljen, združi seja Združevanje (odločitev Mateja 24. 11.). |
 | 10.14 | #821 Zbirna grafika (chase) biketraveler | Kamera za avtom, tla ob cesti: #815 (9 prog), #820 (7 prog), #826 (5 prog), vse POTEM (odločitev uporabnika 20. 11.); #824 čaka končni »ok« | biketraveler | povezani testi zeleni (20. 11.); osnutek do vrste, združi seja Združevanje |
@@ -149,5 +153,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.18 | #1026 Zbirka obcestje 23. 11. b | grafika ob progi za 8 prog (Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro), odločitve uporabnika izvedene; predaja v opisu PR | partyslo | svež `main` (25. 11.), zlate vrednosti 8 prog; osnutek do vrste |
 | 10.18 | #1066 Orodje za predajo | `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje, test, kazalo, varčevanje (Matej, #382 7148056618, točka 10); orodje, ne proga | partyslo | osnutek, povezani testi zeleni; predaja za Združevanje partyslo |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
+| 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
