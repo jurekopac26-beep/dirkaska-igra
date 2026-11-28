@@ -36,11 +36,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
       {"n": "Zaliv Praia do Bispo", "d": 60, "say": ["Along the bay of Praia do Bispo!", "The bay on the left, the city ahead!"]},
       {"n": "Pod gričem", "d": 1000, "say": ["Up the street under the hill!", "Under the hill, the old fortress up above!"]},
-      {"n": "Obroč pod gričem", "d": 1545, "say": ["Round the end of the hill!", "Round the hill, and the bay opens up!"]},
+      {"n": "Chicala", "d": 1234, "say": ["Past Chicala, the sea just beyond the houses on the left!", "Chicala on the left, the hill on the right!"]},
+      {"n": "Obroč pod gričem", "d": 1545, "say": ["Round the end of the hill, the old cannons on the slope!", "Round the hill, and the bay opens up!"]},
       {"n": "Trdnjava", "d": 1977, "say": ["Past the old fortress on the hill!", "The fortress above, four centuries of it!"]},
-      {"n": "Ob zalivu", "d": 2300, "say": ["Onto the seafront, the bay on the left!", "Along the bay, flat out now!"]},
-      {"n": "Marginal", "d": 2900, "say": ["The long seafront road, the palms flash by!", "Down the Marginal to the finish!"]},
+      {"n": "Ob zalivu", "d": 2300, "say": ["Onto the seafront by the Largo do Baleizão, the bay on the left!", "Along the bay, flat out now!"]},
+      {"n": "Marginal", "d": 2900, "say": ["The long seafront road, the lawns and the bay on the left!", "Down the Marginal to the finish!"]},
     ],
+    // the course flyover before the lights (js/game.js pkFlyStart): [metres after the start line (-1: the finish), caption]
+    fly: [[0, 'START'], [60, 'Zaliv Praia do Bispo'], [1234, 'Chicala'], [1977, 'Trdnjava'], [2900, 'Marginal'], [-1, 'CILJ']],
     // the commentator's own lines on this road
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, the bay, the hill and the old fortress, and you start {grid}.", "Here we are by the bay of Praia do Bispo. A race round the hill and along the seafront, and you line up {grid}."],

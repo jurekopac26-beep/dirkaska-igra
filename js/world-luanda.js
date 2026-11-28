@@ -321,6 +321,19 @@
       }
     }
 
+    /* ---- the two old cannons on the slope under the fortress, by the road (OSM historic=cannon; LD.cannons): an iron barrel on a wooden
+       carriage with two wheels, on a low stone plinth, aimed away from the fortress (down the slope) ---- */
+    let nCan = 0;
+    for (const [x, z] of LD.cannons || []) {
+      const g = scen.get(x, z), y = nrGround(x, z), ang = FC ? Math.atan2(z - FC[1], x - FC[0]) : 0, ca = Math.cos(ang), sa = Math.sin(ang);
+      const wood = [0.4, 0.28, 0.18], woodT = [0.46, 0.33, 0.21], iron = [0.3, 0.31, 0.32];
+      box(g, x, y - 0.4, z, 2.8, 0.62, 1.6, ang, [0.8, 0.76, 0.68], [0.86, 0.82, 0.74], true);
+      box(g, x, y + 0.42, z, 1.6, 0.4, 0.8, ang, wood, woodT, true);
+      for (const sd of [-1, 1]) box(g, x - sa * 0.52 * sd, y + 0.22, z + ca * 0.52 * sd, 0.78, 0.78, 0.12, ang, wood, woodT, true);
+      box(g, x + ca * 0.35, y + 0.86, z + sa * 0.35, 2.4, 0.34, 0.34, ang, iron, iron, true);
+      box(g, x + ca * 1.5, y + 0.83, z + sa * 1.5, 0.16, 0.4, 0.4, ang, iron, iron, true);   // (the muzzle's ring)
+      exclPush(x, z, 3); CR.avoid(x, z, 1.8); nCan++;
+    }
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls; a banner at the finish too ---- */
     for (const s0 of [sStart, sFin]) {
       const [x, z, h, i] = atS(s0, 0), gy = T.hy[i], g = scen.get(x, z), span = Math.max(T.bl[i], T.br[i]) + 1.2, nx = T.nx[i], nz = T.nz[i];
@@ -491,7 +504,7 @@
     const rob = World.ext.luandaRob ? World.ext.luandaRob({ scen, excluded, seaD, inFort, root, out }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, cannons: nCan, rocks: out.rocks, rob };   // (read by the tests)
     return out;
   }
 

@@ -36,12 +36,17 @@ def widths():
 NAMES = [
     ('Zaliv Praia do Bispo', 60, ['Along the bay of Praia do Bispo!', 'The bay on the left, the city ahead!']),
     ('Pod gričem', 1000, ['Up the street under the hill!', 'Under the hill, the old fortress up above!']),
-    ('Obroč pod gričem', 1545, ['Round the end of the hill!', 'Round the hill, and the bay opens up!']),
+    ('Chicala', 1234, ['Past Chicala, the sea just beyond the houses on the left!', 'Chicala on the left, the hill on the right!']),
+    ('Obroč pod gričem', 1545, ['Round the end of the hill, the old cannons on the slope!', 'Round the hill, and the bay opens up!']),
     ('Trdnjava', 1977, ['Past the old fortress on the hill!', 'The fortress above, four centuries of it!']),
-    ('Ob zalivu', 2300, ['Onto the seafront, the bay on the left!', 'Along the bay, flat out now!']),
-    ('Marginal', 2900, ['The long seafront road, the palms flash by!', 'Down the Marginal to the finish!']),
+    ('Ob zalivu', 2300, ['Onto the seafront by the Largo do Baleizão, the bay on the left!', 'Along the bay, flat out now!']),
+    ('Marginal', 2900, ['The long seafront road, the lawns and the bay on the left!', 'Down the Marginal to the finish!']),
 ]
-EN_NAMES = {'Zaliv Praia do Bispo': 'Praia do Bispo Bay', 'Pod gričem': 'Under the Hill', 'Obroč pod gričem': 'Round the Hill', 'Trdnjava': 'The Fortress', 'Ob zalivu': 'Along the Bay'}
+EN_NAMES = {'Zaliv Praia do Bispo': 'Praia do Bispo Bay', 'Pod gričem': 'Under the Hill', 'Obroč pod gričem': 'Round the Hill', 'Trdnjava': 'The Fortress', 'Ob zalivu': 'Along the Bay', 'Chicala': 'Chicala', 'Marginal': 'Marginal'}   # (the game's own: js/lang.js)
+# the course flyover (def.fly; js/game.js pkFlyStart): captions at the famous places, d as in NAMES
+FLY = [(0, 'START'), (60, 'Zaliv Praia do Bispo'), (1234, 'Chicala'), (1977, 'Trdnjava'), (2900, 'Marginal'), (-1, 'CILJ')]
+# the two old cannons on the slope under the fortress, by the road (OSM historic=cannon, nodes 7246393405 and 7246393398; x, z in the frame of LINE)
+CANNONS = [[583.4, -1409.8], [561.8, -1425.9]]
 
 DESC = ('Mestna proga v Luandi, glavnem mestu Angole: ob zalivu Praia do Bispo, po ulici pod gričem in okoli njega, mimo stare portugalske trdnjave '
         'na griču iz 16. stoletja in po obalni cesti ob zalivu do konca nabrežja. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.')
@@ -99,6 +104,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
 %(names)s
     ],
+    // the course flyover before the lights (js/game.js pkFlyStart): [metres after the start line (-1: the finish), caption]
+    fly: %(fly)s,
     // the commentator's own lines on this road
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, the bay, the hill and the old fortress, and you start {grid}.", "Here we are by the bay of Praia do Bispo. A race round the hill and along the seafront, and you line up {grid}."],
@@ -117,7 +124,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
 })();
 ''' % dict(km='%.2f' % ((S1 - S0) / 1000), luh=luh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN), a0=int(round(H[sidx(S0)])), a1=int(round(H[sidx(S1)])),
            start=json.dumps(xz(S0)), finish=json.dumps(xz(S1)), cps=json.dumps(cps), widths=json.dumps(widths()), medals=json.dumps(MEDALS, separators=(',', ':')).replace('"', ''),
-           names='\n'.join(names), pts=pts)
+           names='\n'.join(names), pts=pts, fly='[' + ', '.join('[%d, %s]' % (d, json.dumps(t, ensure_ascii=False).replace('"', "'")) for d, t in FLY) + ']')
     path = os.path.join(ROOT, 'js', 'tracks', 'luanda.js'); open(path, 'w').write(src)
     print('wrote', path, len(src) // 1024, 'KB;', NP, 'points, the race', round(S1 - S0), 'm')
 
@@ -219,6 +226,7 @@ def build_world():
         'trees': [[t[0], t[1], t[2]] for t in J['trees']],
         'bridges': [[round(a_, 1), round(b_, 1)] for a_, b_ in J['bridges']],
         'onRoad': on_road(),
+        'cannons': CANNONS,
     }
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'luanda.js'); open(path, 'w').write(src)
