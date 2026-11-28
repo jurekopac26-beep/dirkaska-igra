@@ -160,6 +160,7 @@ try {
   const cnt = (id, z) => Z[id] ? Z[id].rows.filter(r => r[2] === z).length : 0, list = (z) => ids.filter(id => has(id, z));
   const sets = JSON.stringify({ krave: list('krave'), ovce: list('ovce'), mesto: list('mesto'), razglas: list('razglas') });
   T.check('Spa: its herds of cows by the road, the announcer by the stands; Red Bull Ring: cows', cnt('spa', 'krave') >= 3 && has('spa', 'razglas') && has('rbring', 'krave'), sets);
+  T.check('Ngorongoro: its own herds by the road (js/world-ngorongoro.js ngLife): the gnus, the zebras, the buffalo, the crowned cranes', cnt('ngorongoro', 'gnuji') >= 2 && cnt('ngorongoro', 'zebre') >= 2 && has('ngorongoro', 'bivoli') && has('ngorongoro', 'žerjavi'), JSON.stringify(Z.ngorongoro && Z.ngorongoro.rows.filter(r => /gnuji|zebre|bivoli|žerjavi/.test(r[2]))));
   T.check('Marrakesh: the town (its traffic, its pigeons) and the announcer; Bathurst: the announcer, no town', has('marrakesh', 'mesto') && has('marrakesh', 'razglas') && has('bathurst', 'razglas') && !has('bathurst', 'mesto'), sets);
   T.check('no announcer on an open road (Rio do Rastro), no herd at Medvode, no wind of ours at Pikes Peak (its own: js/sfx.js)', Z.rastro && !has('rastro', 'razglas') && !has('medvode', 'krave') && Z.pikes && !has('pikes', 'veter'), sets);
 

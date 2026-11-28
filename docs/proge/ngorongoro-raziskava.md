@@ -44,7 +44,14 @@ Karta rabe tal (ESA WorldCover 2021, celice 16 m) v pasu 8–60 m ob cesti:
 
 ## Zvok kraja (po opisih kraja)
 - Na robu piha veter skozi sedlo Windy Gap, v gozdnem pasu šumi listje.
-- Na dnu se oglašajo živali iz čred ob cesti: gnuji (godrnjanje), zebre (lajajoči klici), kronasti žerjavi (trobljenje) in bivoli. Te vrste so ob cesti že v igri (`ngLife`), zvok jim sledi.
+- Na dnu se oglašajo živali iz čred ob cesti. Te vrste so ob cesti že v igri (`ngLife`), zvok jim sledi:
+  - **gnuji**: nosno, »brenčeče« godrnjanje (»kwoink«), kratki klici v čredi (iNaturalist, opis klicev gnujev);
+  - **zebre**: visok lajajoč kontaktni klic »kwa-ha, kwa-ha, ha«, po katerem je ime *quagga*; ob njem prhanje (Xie in sod., Royal Society Open Science 2024);
+  - **kronasti žerjavi**: trobljenje v dveh tonih in bobnenje iz napihnjene grlene vreče;
+  - **bivoli**: nizko godrnjanje. Sloni (infrazvok), levi in drugi so v igri tihi.
+
+## Kaj je dodelano
+- Pas rastja pod robom (gostejši gozd s sivimi krošnjami, goščava, drevesa ob robu gozda), zvok živali in podnebja, kraja »Gozd pod robom« in »Vznožje stene«. Slike: `docs/slike/dodelava/ngorongoro-pred.webp`, `-po.webp` (600 m).
 
 ## Kaj dodelava ne spreminja
 - Tal ob strmih stenah, gruščev, zelenih kotanj in kamenja na bankini, ki jih dodaja odprti PR #1164 (`js/world-chase-bt114.js`), ta veja ne podvaja in ne spreminja.
@@ -60,4 +67,5 @@ Karta rabe tal (ESA WorldCover 2021, celice 16 m) v pasu 8–60 m ob cesti:
 - BirdLife International, IBA »Ngorongoro Conservation Area«: https://datazone.birdlife.org/site/factsheet/ngorongoro-conservation-area-iba-tanzania/text
 - »List of Ngorongoro Crater plants«: https://en.wikipedia.org/wiki/List_of_Ngorongoro_Crater_plants
 - African Birdlife, »Highland Highlights: Ngorongoro, Tanzania«: https://www.magzter.com/en/stories/Animals-and-Pets/African-Birdlife/Highland-Highlights-Ngorongoro-Tanzania
+- Klici živali: https://inaturalist.ala.org.au/posts/72062-two-species-of-brindled-gnu-differ-in-their-vocalisations-a-new-distinction-between-connochaetes-taurinus-and-connochaetes-mearnsi, https://doaj.org/article/f3b6749df7fb4f189fac587fc82ff045 (Xie in sod. 2024, podatki https://datadryad.org/dataset/doi:10.5061/dryad.v9s4mw73w), https://wildliferanchtexas.com/call-of-the-wild; zvoki so sintetizirani v igri, posnetkov ni.
 - Podnebje: https://safaribookings.com/ngorongoro/climate, https://climatestotravel.com/climate/tanzania/ngorongoro, https://www.discoverafrica.com/safaris/ngorongoro/weather-in-ngorongoro/, https://www.mountain-forecast.com/passes/Ngorongoro-Crater-Rim-Road-Summit/forecasts/2300

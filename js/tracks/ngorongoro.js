@@ -52,8 +52,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
       {"n": "Zapornica · 2.157 m", "d": 197.0, "say": ["The gate of the descent road, and from here it is one way, down into the crater!", "Past the gate! Only one way to go now, and that is down!"]},
       {"n": "Serpentina · 2.145 m", "d": 319.0, "say": ["The hairpin, the only one on the road, tight on the cobbles!", "Round the hairpin, and the whole crater opens up below!"]},
+      {"n": "Gozd pod robom · 2.114 m", "d": 600.0, "say": ["Into the forest under the rim, the trees grey with lichen in the mist!", "Through the strip of forest under the rim, and the crater floor shows between the trees!"]},
       {"n": "Stena kraterja · 2.055 m", "d": 1000.0, "say": ["Down the crater wall, seventeen per cent here!", "The steepest part of the wall, and the brakes are working hard!"]},
       {"n": "Polica · 1.984 m", "d": 1500.0, "say": ["A ledge half way down the wall, a breather before the next drop!", "Across the ledge, and the floor of the crater is coming up!"]},
+      {"n": "Vznožje stene · 1.932 m", "d": 2000.0, "say": ["The foot of the wall, the grass opens out, and there are the wildebeest!", "Off the wall at last, the herds grazing by the road!"]},
       {"n": "Dno kraterja · 1.831 m", "d": 2800.0, "say": ["Onto the crater floor, and the herds are all around!", "Down on the floor of the crater, the finish just ahead!"]},
     ],
     // the commentator's own lines on this road (Comm: a race down an open road, a descent against the clock: Katu-Jaryk's keys)

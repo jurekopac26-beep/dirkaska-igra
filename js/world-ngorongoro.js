@@ -950,7 +950,7 @@
        by the streams; none on the bare rock ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const tk = [0, 1, 2, 3, 4].map(k => new IChunks(ngTreeGeo(k), tMatT, 96));
-    let nTrees = 0, nShrubs = 0;
+    let nTrees = 0, nShrubs = 0, nRim = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(50000 * dens), RT = rng(4841), SP = 4 / Math.sqrt(dens), base = P.D.base;
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
@@ -959,17 +959,22 @@
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = vrDist(x, z); if (hd > LOD.radius(240)) continue;
-          const c = vrLC(x, z), sd = segD(ST, x, z), p = c === 1 ? 0.35 : c === 2 ? 0.26 : c === 0 ? (sd < 8 ? 0.2 : 0.06) : c >= 5 ? 0.12 : c === 3 ? 0.03 : 0.006;
+          // the rim's band (docs/proge/ngorongoro-raziskava.md): under the rim, 2060-2180 m, the misty montane forest the map has as a strip by the
+          // road (Cassipourea, Nuxia, Albizia, crotons), denser and with a thicket under it and along its edges; above and below it the dry wall
+          const c = vrLC(x, z), sd = segD(ST, x, z), y0 = caGround(x, z) + base, rim = y0 > 2060 && y0 < 2180 ? sstep(2060, 2085, y0) : 0;
+          const edge = rim && c === 2 ? vrLCf(x, z, 1) : 0;
+          const p = c === 1 ? 0.35 + 0.25 * rim : c === 2 ? 0.26 + 0.16 * rim + 0.3 * edge : c === 0 ? (sd < 8 ? 0.2 : 0.06) : c >= 5 ? 0.12 : c === 3 ? 0.03 : 0.006;
           if (r1 > p) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.4) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.3) continue;
           if (excluded(x, z) || segD(PA, x, z) < 1.2) continue;
           const sl = caSlope(x, z); if (sl > 1.25 || (sl > 0.7 && r2 < (sl - 0.7) / 0.55)) continue;
           const y = caGround(x, z), low = y + base < 1950;
-          const sp = c === 1 ? (r3 < 0.75 ? 0 : r3 < 0.9 ? 3 : 1) : c === 2 ? (r3 < 0.6 ? 3 : r3 < 0.75 ? 2 : r3 < 0.85 && low ? 1 : 4)
+          const sp = c === 1 ? (rim ? (r3 < 0.66 ? 0 : 3) : r3 < 0.75 ? 0 : r3 < 0.9 ? 3 : 1)
+            : c === 2 ? (edge > 0.05 && r3 < 0.18 + 0.4 * edge ? 0 : rim && r3 < 0.75 ? 3 : r3 < 0.6 ? 3 : r3 < 0.75 ? 2 : r3 < 0.85 && low ? 1 : 4)
             : c === 0 ? (r3 < 0.72 ? 4 : r3 < 0.86 ? 3 : sl > 0.45 ? 2 : low && r3 > 0.97 ? 1 : 4) : (r3 < 0.7 ? 4 : 3);
           if (sp === 4 && hd > LOD.radius(70)) continue;
           let hgt, wid, col;
-          if (sp === 0) { hgt = 8 + r4 * 6; wid = hgt * 0.9; col = [0.95 + r2 * 0.1, 1, 0.95]; }
+          if (sp === 0) { hgt = (c === 2 ? 5 : 8) + r4 * 6; wid = hgt * 0.9; col = rim ? [0.97 + r2 * 0.08, 1, 0.97 + r2 * 0.06] : [0.95 + r2 * 0.1, 1, 0.95]; if (rim) nRim++; }   // (in the mist belt the crowns a touch greyer: the lichens on them)
           else if (sp === 1) { hgt = 5 + r4 * 4; wid = hgt * 1.35; col = [0.94 + r2 * 0.12, 1, 0.94]; }
           else if (sp === 2) { hgt = 3.5 + r4 * 3; wid = hgt * 0.75; col = [0.95 + r2 * 0.1, 1, 0.95]; nShrubs++; }
           else if (sp === 3) { hgt = 1.0 + r4 * 1.3; wid = 1.0 + r2 * 1.3; col = [0.92 + r3 * 0.16, 0.95 + r4 * 0.1, 0.9]; nShrubs++; }
@@ -1036,7 +1041,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: ngAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: ngAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), lay: !!lay, far: !!FAR,
+    out.stats = { trees: nTrees, shrubs: nShrubs, rimTrees: nRim, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), lay: !!lay, far: !!FAR,
       herds: FAR ? FAR.herds : 0, specks: FAR ? FAR.specks : 0, animals: life.animals, groups: life.groups, species: life.species, crossers: life.crossers };   // (read by the tests)
     out.life = life.L;   // (the animals' state: the tests drive it)
     return out;
