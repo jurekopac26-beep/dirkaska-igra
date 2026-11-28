@@ -50,6 +50,7 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
 # its viewpoints (CLAUDE.md, Pravna varnost); 11 turns (8 right, 3 left), numbered in the lines as we number them ----
 NAMES = [
     ('Desni na koncu ravnine', 415, ['Hard on the brakes for the right of Turn 1!', 'The first right at the end of the main straight!', 'Down the gears into Turn 1!']),
+    ('Pogled na ognjenik', 520, ['The San Salvador volcano straight ahead, nearly two thousand metres high!', 'Heading south-east, the volcano fills the windscreen!', 'Out of Turn 1 towards the volcano!']),
     ('Dva desna', 620, ['Right and right again, Turns 2 and 3!', 'The two rights, one after the other!', 'Keep it tidy through the rights!']),
     ('Desni pred levimi', 880, ['The right of Turn 4!', 'Through Turn 4, the lefts are next!', 'Turn 4, then the long left!']),
     ('Dolgi levi pri tribuni', 1040, ['Round the long left past the grandstand!', 'The long left of Turn 5, the fans close by!', 'Patience on the throttle through the long left!']),
@@ -58,8 +59,11 @@ NAMES = [
     ('Ravnina ob lavi', 1580, ['Flat out along the old lava flow!', 'Black rock beyond the fence, foot down!', 'The run past the lava field!']),
     ('Dolgi lasnični', 1800, ['All the way round the long hairpin of Turn 9!', 'Round the hairpin, Turn 9!', 'The long hairpin right!']),
     ('Levi lasnični', 2260, ['The hairpin left of Turn 10!', 'Swing left round Turn 10!', 'The only hairpin to the left!']),
+    ('Razgledna točka', 2420, ['Past the viewpoint, the fans up on the bank!', 'The open stand by the viewpoint!', 'Fans on the bank, the volcano behind them!']),
     ('Zadnji lasnični', 2845, ['Hard on the brakes for the last hairpin!', 'The hairpin onto the main straight!', 'Turn 11, the last corner!']),
+    ('Uvoz v bokse', 2985, ['The pit lane opens on the right!', 'Anyone coming in? The pit lane is on the right!', 'Past the pit entry!']),
     ('Ciljna ravnina', 3100, ['Down the main straight past the pits!', 'Flat out past the grandstand!', 'The main straight, the line ahead!']),
+    ('Glavna tribuna', 3200, ['Under the roof of the main grandstand!', 'The main grandstand on its feet!', 'Past the covered grandstand to the line!']),
 ]
 # the apexes of Turns 1-11 (their number boards): the right at the end of the main straight, the two rights, the right before the lefts,
 # the long left, the left and the right, the tight right, the long hairpin right, the hairpin left and the last hairpin
@@ -73,7 +77,7 @@ DESC_EN = ('A circuit on the lava plain at the foot of the San Salvador volcano 
            'turns (8 right, 3 left) about 500 m above the sea. The main straight past the pits and the grandstand, four rights, the long left by '
            'the grandstand, a left and a right, the tight right, the straight along the old lava flow, the long hairpin, the hairpin left and '
            'the last hairpin onto the main straight. Tropical green, black lava beyond the fence, the volcano on the horizon, grandstands by the '
-           'track and the pits (drive in and the mechanics fix the car).')
+           'track and the pits (drive in and the mechanics fix your car).')
 
 # ---- the pits (Core.Track.pitAt): the lane on the right of the main straight (OSM's pit lane, 12-14 m from the centre line), from the
 # main straight's start to before Turn 1; the 13 crews' boxes along the pit building (OSM: 140 m long, 18-31 m to the right of the centre
@@ -94,6 +98,17 @@ SECTORS = [1000, 1950]
 # straight to Turn 1
 DRS = [[8, -100, 60, 9], [11, -150, 60, 1]]
 REAL_KM = 3.21
+# the commentator's own lines (game.js ownLine: comm.intro, go, rain) and the flyover's places (render.js def.fly: [metres after the start,
+# caption]). The volcano: San Salvador, El Picacho 1 960 m, the Boqueron crater ~1 890 m (USGS, Smithsonian GVP); its last eruption 1917
+# (GVP: the lava from a fissure on the north flank cut the railway south-west of Quezaltepeque); the rain: the wet season May to October
+COMM = {
+    'intro': ["Welcome to {track}, on the lava plain below the San Salvador volcano! {laps} laps, {cars} cars, and you start {grid}.",
+              "Tropical heat at {track}: {laps} laps of eleven corners, {cars} cars, you line up {grid}.",
+              "The volcano watches over {track} today. {laps} laps, {cars} cars, {grid} on the grid for you."],
+    'go': ["Lights out, and away they go towards the volcano!", "Green light, the field charges down to Turn 1!", "They are off, on the old lava plain!"],
+    'rain': ["A tropical downpour on the lava plain!", "The wet season arrives, the track is soaked!", "Rain off the volcano, careful on the black tarmac!"],
+}
+FLY = [[0, 'START'], [520, 'Pogled na ognjenik'], [1040, 'Dolgi levi pri tribuni'], [1580, 'Ravnina ob lavi'], [2420, 'Razgledna točka'], [-1, 'CILJ']]
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 
@@ -174,9 +189,9 @@ def scenery():
 
 # ---- the horizon (def.far for Riverside's rsFar): the highest ground in rings round the circuit (the San Salvador volcano to the south-east, the hills and the ranges round the valley) ----
 FAR_R = [1500, 2000, 2700, 3500, 4500, 5600, 7000, 8500, 10000, 11500]   # the rings' outer distances (m from the circuit's middle; the far grid reaches ~12 km)
-def far_rings(na=180, step=2):
+def far_rings(na=180):
     g, a = grid('far'); A = a.astype(np.float64) / 10 - 100   # (m above the sea; the sea 0)
-    cx, cz = float(P[:, 0].mean()), float(P[:, 1].mean()); out = bytearray()
+    cx, cz = float(P[:, 0].mean()), float(P[:, 1].mean()); M = []
     for k, r1 in enumerate(FAR_R):
         r0 = FAR_R[k - 1] if k else 1100
         for q in range(na):
@@ -186,8 +201,12 @@ def far_rings(na=180, step=2):
                 for r in np.arange(r0, r1 + 1, 40):
                     i = int((cx + math.sin(az) * r - g['x0']) / g['cell']); j = int((cz - math.cos(az) * r - g['z0']) / g['cell'])   # (az clockwise from north: x east, z south)
                     if 0 <= i < g['nx'] and 0 <= j < g['nz']: m = max(m, A[j, i])
-            out.append(int(min(255, max(0, round(m / step)))))
-    return dict(x=round(cx, 1), z=round(cz, 1), base=round(H0, 1), na=na, r=FAR_R, lo=0, step=step, b64=base64.b64encode(bytes(out)).decode())
+            M.append(m)
+    # (lo and step from the rings' own heights: with lo 0 and step 2 a byte reached only 510 m a.s.l., under the circuit's 518 m, and the whole
+    # horizon, the volcano's 1 960 m with it, was cut flat; now the valley's floor to the volcano's top fit the 255 steps)
+    lo = int(min(M) // 10 * 10); step = max(2, math.ceil((max(M) - lo) / 255))
+    out = bytes(int(min(255, max(0, round((m - lo) / step)))) for m in M)
+    return dict(x=round(cx, 1), z=round(cz, 1), base=round(H0, 1), na=na, r=FAR_R, lo=lo, step=step, b64=base64.b64encode(out).decode())
 
 def svc_iter(a):
     k = 0
@@ -249,6 +268,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
 %(names)s
     ],
+    comm: %(comm)s,   // the commentator's own lines: the start, the green light, the rain
+    fly: %(fly)s,   // the flyover's places
     turns: %(turns)s,   // the apexes of Turns 1-11 (their number boards): the right, the three rights, the long left, the left and the right, the tight right, the long hairpin, the hairpin left, the last hairpin
     pit: %(pit)s,   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the finish line)
     pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.quezaltepeque.pitBox)
@@ -267,7 +288,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   });
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), lbh=lbh, h0='%.1f' % H0, hmin='%.0f' % H.min(), hmax='%.0f' % H.max(), desc=json.dumps(DESC, ensure_ascii=False),
-           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), comm=json.dumps(COMM, ensure_ascii=False), fly=json.dumps(FLY, ensure_ascii=False), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), drs=json.dumps(DRS),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'quezaltepeque.js'); open(path, 'w').write(src)
