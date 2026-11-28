@@ -788,6 +788,32 @@
         }
       }
     }
+    /* ---- the tea gardens (OSM crop=tea, land cover class 6; all 250-650 m from the road, on the slopes across the gap from the first
+       hairpin): clipped bushes in hedge rows along the contours, a row every ~0.8 m of height, the paths between them showing the ground;
+       here and there a grevillea, the gardens' shade tree. Out to 430 m (the near ground's edge), thinner on the lower tiers ---- */
+    let nTea = 0;
+    if (def.lc) {
+      const hb = new AB(), top = [0.34, 0.5, 0.15], sd = [0.21, 0.33, 0.1], pr = [[-0.5, 0, sd, -1, 0], [-0.52, 0.55, sd, -1, 0.3], [-0.3, 1, top, -0.4, 1], [0.3, 1, top, 0.4, 1], [0.52, 0.55, sd, 1, 0.3], [0.5, 0, sd, 1, 0]];
+      const ix = [-1.7, 1.7].map(x => pr.map(([z, y, c, nz, ny]) => hb.v(x, y, z, 0, ny, nz, c)));   // (a hedge 3.4 m long, 1 m wide, 1 m high: 12 vertices)
+      for (let k = 0; k < 5; k++) { const a = ix[0][k], b = ix[0][k + 1], c = ix[1][k], d = ix[1][k + 1]; hb.t(a, b, d, [0, 0.4, 0]); hb.t(a, d, c, [0, 0.4, 0]); }
+      for (const e of ix) for (let k = 1; k < 5; k++) hb.t(e[0], e[k], e[k + 1], [0, 0.4, 0]);
+      const tea = new IChunks(hb.geometry(), tMatT, 96), L = def.lc, RT = rng(5861), dv = 0.8, step = 2.2 / Math.sqrt(Math.min(1, dens)), maxTea = Math.round(9000 * Math.min(1, dens));
+      cells: for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) {
+        const cx = L.x0 + (i + 0.5) * L.cell, cz = L.z0 + (j + 0.5) * L.cell; if (vrLC(cx, cz) !== 6 || vrDist(cx, cz) > LOD.radius(430)) continue;
+        for (let zz = cz - L.cell / 2; zz < cz + L.cell / 2; zz += step) for (let xx = cx - L.cell / 2; xx < cx + L.cell / 2; xx += step) {
+          let x = xx + (RT() - 0.5) * step * 0.6, z = zz + (RT() - 0.5) * step * 0.6; const r1 = RT(), r2 = RT();
+          const h = caGround(x, z), gx = (caGround(x + 1, z) - caGround(x - 1, z)) / 2, gz = (caGround(x, z + 1) - caGround(x, z - 1)) / 2, g2 = gx * gx + gz * gz;
+          if (g2 > 1.0 || r1 > 0.55) continue;
+          if (g2 > 0.01) { const dh = Math.round(h / dv) * dv - h; x += gx / g2 * dh; z += gz / g2 * dh; }   // (onto the row: the bushes follow the contour)
+          if (vrLC(x, z) !== 6 || excluded(x, z)) continue;
+          const g = Math.sqrt(g2) || 1, yaw = g2 > 0.01 ? Math.atan2(-gx / g, -gz / g) : r2 * 3;   // (the hedge's length along the contour, (-gz, gx))
+          if (r2 < 0.012) { const ht = 14 + r1 * 8; tk[1].add(x, caGround(x, z) - 0.12, z, r1 * 70, ht * 0.6, ht, [0.95 + r2 * 4, 1, 0.95]); continue; }
+          tea.add(x, caGround(x, z) - 0.3, z, yaw, 0.85 + r2 * 0.25, 0.85 + r1 * 0.3, [0.92 + r1 * 0.18, 0.96 + r2 * 0.12, 0.9]);
+          if (++nTea >= maxTea) break cells;
+        }
+      }
+      tea.addTo(root, false);
+    }
     tk.forEach((t, k) => t.addTo(root, LOD.tier > 0 || k < 4));   // (NIZKA: the shrubs and the tufts cast no shadow)
 
     /* ---- the stones: grey gneiss boulders at the foot of the cuts and in the forest, crags where the slope is steep ---- */
@@ -819,7 +845,7 @@
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: eAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'ella', { gH: caGround, slope: caSlope, bad: (x, z) => stNear(x, z).d < 4 });   // (the roadside ground for the chase camera: js/world-chase-bt12.js)
-    out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, water: nWater,
+    out.stats = { trees: nTrees, shrubs: nShrubs, tea: nTea, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, water: nWater,
       culverts: culv.length, bridges: P.gul.length, stops: nStops, stalls: nStalls, views: views.length, parks: parks.length, lanes: nLane, steps: nStep, footbridges: nFoot, zebras: nCross, far: !!FAR };   // (read by the tests)
     return out;
   }

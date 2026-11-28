@@ -463,6 +463,7 @@
     'Urni stolp': 'Clock Tower', 'Parlamentarni trg': 'Parliament Square',   // (London: Whitehall stays as it is)
     'Severna lasnica': 'North Hairpin', 'Levi pri depoju': 'Paddock Left', 'Desni na vzhodu': 'East Right', 'Dolga ravnina': 'Long Straight', 'Desni ob gozdu': 'Woods Right',   // (Pembrey: its corners by plain descriptions)
     'Desni na makadamu': 'Gravel Right', 'Južna ravnina': 'South Straight', 'Ostri desni': 'Sharp Right', 'Levi na makadam': 'Left onto the Gravel', 'Makadamska ravnina': 'Gravel Straight',   // (Kildare: its corners by plain descriptions, the gravel among them)
+    'Gozd Meegollegama': 'Meegollegama Forest', 'Stojnica ob cesti': 'Roadside Stall', 'Polja v soteski': 'Fields in the Gap', 'Svetišče ob cesti': 'Roadside Shrine',   // (Ella: the HUD; Razgledišče and Most čez potok are shared)
     'Na prelaz': 'To the pass',   // (Izoard: the results of an escape; its places are French names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Desni pregib': 'Right Kink', 'Levi za lasnico': 'Left after the Hairpin', 'Vzpon skozi gozd': 'Climb through the Woods', 'Desni v gozdu': 'Right in the Woods',
     'Spust k jezeru': 'Down to the Lake', 'Levi ob jezeru': 'Lakeside Left', 'Klanec od jezera': 'Climb from the Lake', 'Zahodni ovinek': 'West Corner', 'Gozdna ravnina': 'Forest Straight',
