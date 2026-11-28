@@ -8,7 +8,7 @@
 // place in the atlas inside the texture; one material for the walls with the style's one atlas, and nothing the map has not: no
 // railings, balconies or yards); the houses show from the chase camera (the picture changes with them and only with them); every
 // country's kit builds the same footprints (each style's atlas draws, the finishes and the roofs are the kit's), and on them the rule of
-// the ground holds (the floor level over the ground's high side with a plinth down to the low side, a shed at most 0.6 m in the ground;
+// the ground holds (the house on the ground: the floor a step over it, at most 0.9 m over the low side, no pedestal; a shed at most 0.6 m in the ground;
 // a small building that runs into a larger one stands square against its wall; a door only where the ground is at the floor or steps
 // reach it); what a track may ask for (yards, balconies, a fence of the map) adds to the plain houses, the railings in their own cut-out
 // material with the same atlas; a track not in PROGE is built as before (Jezero), and Spa built again is the same to the vertex; on
@@ -125,9 +125,11 @@ try {
       let moved = 0, doors = 0, steps = 0;
       bld.forEach((b, i) => { const q = rec[i], sm = b[2] * b[3] < 45, at = q.at; if (!at || !isFinite(q.y0 + q.base)) { out.bad.push('no record: ' + c + ' ' + i); return; }
         const ca = Math.cos(at[4]), sa = Math.sin(at[4]); let lo = 1e9, hi = -1e9;
-        for (const [u, w] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) { const y = A.nrGround(at[0] + u * at[2] / 2 * ca - w * at[3] / 2 * sa, at[1] + u * at[2] / 2 * sa + w * at[3] / 2 * ca); if (y < lo) lo = y; if (y > hi) hi = y; }
-        // (the floor over the ground: a house's over the high side, a shed's at most 0.6 m under it; the plinth down to the low side)
-        if (q.y0 < (sm ? Math.max(lo + 0.1, hi - 0.6) : hi + 0.15) - 1e-6 || q.y0 - q.base > lo + 1e-6) out.bad.push('floor: ' + c + ' ' + i + ' ' + [q.y0, q.base, lo, hi].map(n => n.toFixed(2)).join(' '));
+        { const nx = Math.max(1, Math.ceil(at[2] / 3)), nz = Math.max(1, Math.ceil(at[3] / 3)); for (let u = 0; u <= nx; u++) for (let w = 0; w <= nz; w++) { const lx = (u / nx - 0.5) * at[2], lz = (w / nz - 0.5) * at[3], y = A.nrGround(at[0] + lx * ca - lz * sa, at[1] + lx * sa + lz * ca); if (y < lo) lo = y; if (y > hi) hi = y; } }
+        // (the house on the ground: the floor a step over level ground; on a slope at most 0.9 m over the low side and up to 1.2 m in the bank, past that
+        //  the lower wall in the walls' own finish; a shed at most 0.5 m over the low side, up to 0.6 m in the ground. No pedestal: the walls reach the low side)
+        const want = sm ? Math.min(Math.max(lo + 0.1, hi - 0.6), lo + 0.5) : Math.min(hi + 0.15, Math.max(lo + 0.9, hi - 1.2));
+        if (Math.abs(q.y0 - want) > 1e-6 || Math.abs(q.y0 - q.base - lo) > 1e-6) out.bad.push('floor: ' + c + ' ' + i + ' ' + [q.y0, q.base, lo, hi].map(n => n.toFixed(2)).join(' '));
         // (a door: the ground a metre before it at the floor, or steps down to it; never a door high over the ground)
         if (q.door && !q.noDoor) { doors++; if (q.steps > 0) steps++; const drop = q.y0 - A.nrGround(q.door[0] + q.n[0], q.door[1] + q.n[1]);
           if (drop > (q.steps > 0 ? 1.2 : sm ? 0.35 : 0.22) + 1e-6 || q.steps > 7 || (sm && q.steps > 0)) out.bad.push('door: ' + c + ' ' + i + ' ' + drop.toFixed(2) + ' ' + q.steps); }
@@ -159,7 +161,7 @@ try {
   });
   T.check('every country\'s kit builds the same footprints: the kit\'s style and its one atlas (drawn, of many tones), every house counted, only the kit\'s finishes and roofs, the count is what is built, every vertex a number inside the atlas',
     kits.n >= 60 && !kits.bad.filter(e => !/^(floor|door|moved|ground|no record)/.test(e)).length && kits.styles.length >= 5, JSON.stringify(kits));
-  T.check('the rule of the ground on every house of every kit: the floor level over the ground\'s high side (a shed at most 0.6 m in it) with the plinth down to the low side, a moved small building square against a larger one\'s wall, a door only where the ground is at the floor or steps reach it (no door high over the ground)',
+  T.check('the rule of the ground on every house of every kit: the house stands on the ground (the floor a step over level ground, on a slope at most 0.9 m over the low side and up to 1.2 m in the bank, a shed at most 0.6 m in it; no pedestal, the walls reach the low side), a moved small building square against a larger one\'s wall, a door only where the ground is at the floor or steps reach it (no door high over the ground or into the bank)',
     !kits.bad.filter(e => /^(floor|door|moved|ground|no record)/.test(e)).length && kits.moved >= 1 && kits.doors >= 40, JSON.stringify({ bad: kits.bad.slice(0, 6), moved: kits.moved, doors: kits.doors, steps: kits.steps }));
 
   // what a track may ask for (the map's own, where it has them): yards and balconies at its houses, a fence of the map. Each adds to the plain

@@ -282,3 +282,41 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #713. Graditelj je skupni `js
   - **Druga dirkališča s tribunami** (vsako potrebuje svojo analizo OSM in svoj `standWalk`, ni v tem PR): Aguascalientes, Batangas, Bathurst, Biķernieki, Buriram, Kågeröd, Kildare, Lombok, Lusail, Montreal, Pembrey, Quezaltepeque, Termas de Río Hondo, Sakhir, Sepang, Silkeborg, Sosnová, Tuzla, Zandvoort. Zamrznjene proge ostanejo.
 - Obremenitev (24. 11., s prehodi po `standWalk`; `PERF_ONLY=rbring`): 208 klicev in 507 tisoč oglišč, na najbolj obremenjenem mestu 246 / 682 (meja ~300 / 900; brez prehodov 208 / 246 klicev in 503 / 675 tisoč oglišč; v zagonu vseh prog zapored 216 / 258 klicev in 501 / 682 tisoč; `tests/golden/perf.json`).
 - `tests/browser/ljudje.test.mjs`: sprehajalec sredi stopnice, višje od 0,3 m (na prehodih tribun so do 0,53 m, tudi prej do 0,47 m), na svoji poti nad stopnico pred njo ni »v zraku«; prej je test uspel samo zato, ker v izbranem trenutku nihče ni bil sredi take stopnice.
+
+## S5: Chapman's Peak in Rio do Rastro (veja `realizem/stavbe-2411`, nad #713; 24. 11. 2026)
+
+Naloga koordinacije partyslo (24. 11. 2026): naslednja skupina stavb, ki še ni nikjer narejena. Obe progi imata v `PROGE` raven 3 (`d2` 34, `d1` 64); kompleta Južne Afrike (slog `cape`) in Brazilije (slog `les`) sta že v graditelju. Novih podatkov ni: tlorisi so obstoječi iz OSM (`def.bld`), tla iz višinskega modela proge.
+
+**Chapman's Peak (`js/world-chapman.js`):**
+- 177 hiš in lop gradi skupni graditelj na tlorisih iz podatkov: beljene stene, strešniki in slama (118 dvokapnic, 59 štirikapnic). Lopa (`kind` 3) in tloris pod 25 m² sta mala stavba; nadstropja kot prej (višina nad 6,5 m ali tloris nad 260 m² = 2), višina iz podatkov, kjer je.
+- Izbor tlorisov ostane progin (skrajšani na 40 × 24 m; brez tistih z vogalom manj kot 2 m od ceste ali v morju), zato pri tlorisih 9–12 m od ceste (554 in 590 m po startu) hiše ni ne prej ne potem. Ovire (`CR.block`) so na istih mestih.
+- 6 hiš je v pasu ob cesti, 76 dlje od 64 m; 26 tisoč oglišč. `rise` do 17,7 m (hiše na strmem pobočju nad zalivom; enaki podstavki kot prej).
+- Obremenitev: 152 klicev in 399 tisoč oglišč, na najbolj obremenjenem mestu 196 / 447 (enako kot prej).
+
+**Rio do Rastro (`js/world-rastro.js`):**
+- 59 hiš gradi skupni graditelj: barvane deske in bel omet, opečni strešniki in siva pločevina (33 dvokapnic, 26 štirikapnic). Tloris pod 25 m² je mala stavba; nadstropja kot prej.
+- Izbor ostane progin (skrajšani na 40 × 22 m; brez vogalov manj kot 1,5 m od ceste in brez tistih na ribnikih).
+- 4 hiše so v pasu ob cesti, 30 dlje od 64 m; 8 tisoč oglišč. `rise` do 28 m: dva tlorisa 8 × 8 m stojita čez rob planote pri razgledišču (105 in 124 m od ceste, za ciljem); enak podstavek kot prej.
+- Obremenitev: 183 klicev in 398 tisoč oglišč, na najbolj obremenjenem mestu 226 / 532 (prej 227).
+
+**S kamere za avtom:** hiše so v kadru samo na Chapman's Peaku pri ~1690 in ~2880 m ter na Rio do Rastru pri ~3160–3190 m po startu; drugod so dlje od ~25 m od ceste in zunaj kadra (vidne so sence).
+
+### Hiša na terenu: brez sivega podstavka (24. 11. 2026, odločitev uporabnika)
+
+Uporabnik: »pri vseh progah odstrani siv podstavek pod hišo, naj bo tako kot v resnici.« Velja za vseh osem prog s skupnim graditeljem (Spa, Nürburg, Livorno, Montréal, Bâlea, Los Caracoles, Chapman's Peak, Rio do Rastro); nadomešča »pravilo tal« iz Predaje 3 in opombe »enaki podstavki kot prej« zgoraj.
+
+**Od kod podstavek:** staro pravilo v `put()` je tla hiše postavilo 0,15 m nad najvišjo točko terena pod tlorisom in do najnižje zgradilo siv kvader. Na pobočju (Rio do Rastro pri 3190 m: tloris 18 × 15 m, padec ~5 m) je bil to ~5 m visok siv blok.
+
+**Novo, dva dela:**
+1. **Parcela v terenu** (`World.stavbe.parcele`, `parceleVR` za mreže 5 m, `parceleNR` za mreže 8 m): teren pod vsakim tlorisom je poravnan, kot ga pri gradnji poravnajo v resnici. Višina parcele je povprečje 9 točk pod tlorisom z večjo težo točk ob cesti; rob ene celice mreže, nato prehod v pobočje (`2,2 × izkop`, najmanj 1,4 celice, največ 26 m). Sosednje hiše (razmik pod 2 celici) si delijo teraso (razlika največ 0,3 × razmik), a se zaradi soseda nobena ne premakne za več kot 2,5 m (`TMAX`).
+2. **Varovalo ceste:** do diagonale ene celice od ograje (`G0 = 1,42 × celica`) se teren ne spremeni, od tam naprej največ 0,7 m na meter (`SLOPE`): nasip ali usek, ne stena zemlje ob cesti. Proga, višine ceste in fizika vožnje so nespremenjene (teren je samo slika).
+3. **Pravilo graditelja** (`put()`): tla hiše so stopnico (0,15 m) nad ravno parcelo. Kjer parcele ni bilo mogoče poravnati (tik ob cesti, skalna stena), so tla največ 0,9 m nad nižjo stranjo in do 1,2 m v bregu; šele čez to se spodnja stena nadaljuje navzdol **v obdelavi fasade** (omet: temnejši podzidek), brez sivega kvadra. Lopa: največ 0,5 m nad nižjo stranjo, do 0,6 m v tleh. Vrat v breg ni (`flight()`).
+
+**Izmerjeno (hiše brez lop; padec terena pod tlorisom nad 1,5 m, prej → potem):** Rio do Rastro 35 → 3 od 49, Chapman's Peak 125 od 172 → 2 od 167, Spa 28 → 0, Nürburg 51 → 1, Livorno 148 → 18 od 700, Bâlea 9 → 1, Los Caracoles 48 → 0. Spodnja stena nad 1,5 m ostane pri 1 hiši na Bâlei (4 m), 1 v Nürburgu (1,9 m) in 5 v Livornu (do 2,3 m): strma mesta tik ob cesti, stena je v barvi fasade. Teren znotraj ograj je enak (razlika 0,00 m do 2 m od ograje na vseh progah).
+
+**Chapman's Peak, hribi (fizika):** `def.hills` (višine, po katerih avto zapelje na hrib; `tools/chapman-hribi.mjs`) se berejo s terena do 6 m za ograjo in za mejo stranskih cest, zato je tam varovalo širše: `HG = 6 m + diagonala celice = 13,6 m` od ograje **in** od meje stranskih cest (`API.VR.sdd`); znotraj tega pasu se teren ne spremeni, `def.hills` je nedotaknjen (`node tools/chapman-hribi.mjs --check`: OK). Mreže proti kamenju se določijo s terena brez parcel (`chGround0`), da jih terasa hiše ne premakne. Hiša, pod katero teren v tem pasu še pada za več kot 4,2 m (strma brežina igre ob stranski cesti, ne teren kraja), se ne postavi: 5 od 177 (tri za startom ob stari cesti, po ena pri ~1700 in ~2890 m). Najvišja spodnja stena na progi: 0,94 m (prej podstavek do 17,8 m).
+
+**Montréal:** teren se ne spremeni; izgine samo 15 cm siv pas (kvader) ob tleh hiš, zato nova referenca sveta (`mtBuildings`, `ao`).
+
+**Test:** `tests/browser/stavbe.test.mjs` preverja novo pravilo na vsaki hiši vsakega kompleta (tla po pravilu, stene do nižje strani, brez podstavka).
+

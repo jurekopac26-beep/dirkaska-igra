@@ -39,6 +39,7 @@
       if (dd > 1.5 && f > hr) h = Math.max(h, Math.min(f, hr + 1.7 * (dd - 1.5)));   // (uphill: the road cut into the rock, a steep face behind it)
       else if (dd > 2 && f < hr) h = Math.min(h, Math.max(f, hr - 2.4 * (dd - 2))); }   // (downhill: the cliff under the road, falling steeply to the ground (the model blurs it to a gentle slope))
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the lay-bys, the start
+    { const V = API.VR; V.pdd = i >= 0 ? dd : 999; if (V.sdd) V.pdd = Math.min(V.pdd, V.sdd(x, z)); if (V.plots) h = V.plots(x, z, h, V.pdd); }   // the houses' plots (World.stavbe.parcele; sdd: metres beyond a side road's limit)
     if (i >= 0) h = Math.min(h, n.env);
     if (API.STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     return h;
@@ -52,6 +53,13 @@
     const G = API.VR.G, gx = clamp((x - G.x0) / VRC, 0, G.nx - 1.001), gz = clamp((z - G.z0) / VRC, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;
     if (u + v <= 1) { const a = chGH(i, j); return a + u * (chGH(i + 1, j) - a) + v * (chGH(i, j + 1) - a); }
     const d = chGH(i + 1, j + 1); return d + (1 - u) * (chGH(i, j + 1) - d) + (1 - v) * (chGH(i + 1, j) - d);
+  }
+  function chGround0(x, z) {   // the same surface without the houses' plots (the rockfall nets stand where the mountain rises, not by a house's terrace)
+    const V = API.VR, G = V.G, pl = V.plots, M = V.g0 || (V.g0 = new Map()); if (!pl) return chGround(x, z);
+    const gx = clamp((x - G.x0) / VRC, 0, G.nx - 1.001), gz = clamp((z - G.z0) / VRC, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;
+    const gh = (i, j) => { const k = j * G.nx + i; let h = M.get(k); if (h === undefined) { V.plots = null; h = chH(G.x0 + i * VRC, G.z0 + j * VRC); V.plots = pl; M.set(k, h); } return h; };
+    if (u + v <= 1) { const a = gh(i, j); return a + u * (gh(i + 1, j) - a) + v * (gh(i, j + 1) - a); }
+    const d = gh(i + 1, j + 1); return d + (1 - u) * (gh(i, j + 1) - d) + (1 - v) * (gh(i + 1, j) - d);
   }
   function chSlope(x, z) { const a = chGround(x - 2.5, z), b = chGround(x + 2.5, z), c = chGround(x, z - 2.5), d = chGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   function chCol(x, z, h, ny, dd) {   // ground colour (times the grey grit map): the fynbos as a mosaic (lc 1): grey-green shrubland, dark olive thickets, rusty
@@ -206,6 +214,20 @@
       for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 2) || vrDem(px, pz) + base < 3) { ok = false; break; } }
       if (ok) blds.push({ x, z, L: Math.min(L, 40), W: Math.min(W, 24), ang, hgt, kind });
     }
+    // the houses' plots levelled in the ground, but not where a car can drive up the hill (def.hills, tools/chapman-hribi.mjs: the heights a car
+    // drives on are the ground's to 6 m beyond the barrier line and beyond the side roads' limits, off the 5 m mesh: HG = 6 m and a cell's
+    // diagonal, so no triangle that reaches into that band has a changed vertex and the hills' ground stays the one written, to the millimetre;
+    // sdd: metres beyond the nearest side road's limit). A house nearer than that stands on the ground as it is, its lower wall down to it;
+    // one whose ground there still rises more than a storey and a half under it (the game's steep bank beside a side road, not the place's
+    // ground) is left out: no house stands on a wall higher than itself
+    { const HG = 6 + 1.42 * VRC + 0.5, SS = (T.stubs || []).map(S => { const r = []; for (let j = 0; j < S.n; j++) r.push(T.stubHw(S, j * 2) + S.lim); return { S, r, b: S.bb }; });
+      API.VR.sdd = SS.length ? (x, z) => { let d = 999; for (const { S, r, b } of SS) { if (x < b[0] - HG || x > b[2] + HG || z < b[1] - HG || z > b[3] + HG) continue;
+        for (let j = 0; j < S.n; j++) { const e = Math.hypot(x - S.x[j], z - S.z[j]) - r[j]; if (e < d) d = e; } } return d; } : null;
+      const pv = () => World.stavbe ? World.stavbe.parceleVR(T, blds.map(b => [b.x, b.z, b.L, b.W, b.ang]), chH, HG) : null;
+      if (pv()) { const n0 = blds.length; for (let k = n0 - 1; k >= 0; k--) { const b = blds[k], c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
+        for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { const u = i * b.L / 4, v = j * b.W / 4, y = chH(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
+        if (hi - lo > 4.2) blds.splice(k, 1); }
+        if (blds.length < n0) pv(); } }
     // the view points' lay-bys (def.views [metres after the start line, side]): a level plot beside the road; the start's (the road closed behind it)
     const padBeside = (s, sd, r) => { const i = T.idx(s), o = (sd > 0 ? T.br[i] : T.bl[i]) + r - 1.5; return { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, r, b: 10, h: T.hy[i] - 0.2, sd, i }; };
     const views = (def.views || []).map(([d, sd]) => { const p = padBeside(sStart + d, sd, 9); P.pads.push(p); return p; });
@@ -378,12 +400,17 @@
 
     /* ---- the houses of Hout Bay: white and cream plastered walls, grey, slate and terracotta roofs ---- */
     let nBld = 0;
+    // (Realizem S: the houses are the builder's, js/world-stavbe.js, with South Africa's kit on the map's footprints; without it as before)
+    const HS = World.stavbe ? World.stavbe.setup({ Chunks, list: blds.map(b => [b.x, b.z, b.L, b.W, b.ang, b.hgt, b.kind]), T, near: vrNear, gH: chGround }) : null;
     {
       const RB = rng(3021), walls = [[0.96, 0.95, 0.92], [0.94, 0.9, 0.8], [0.9, 0.9, 0.88], [0.92, 0.86, 0.74], [0.97, 0.96, 0.94]], roofs = [[0.36, 0.38, 0.4], [0.62, 0.3, 0.2], [0.24, 0.26, 0.3], [0.52, 0.5, 0.48], [0.66, 0.36, 0.24]], woods = [[0.42, 0.3, 0.2], [0.56, 0.42, 0.28]];
       for (const b of blds) {
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = chGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
-        if (b.kind === 3) { const mc = vary([0.8, 0.78, 0.74], RB, 0.1); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.8, b.W, b.ang, mc, null, true); }
+        if (HS) {   // (the storeys as below; a shed, kind 3, and a footprint under 25 m2 a small building; the height the map's where it has one)
+          const sm = b.kind === 3 || b.L * b.W < 25, fl = sm ? 1 : b.hgt > 6.5 || b.L * b.W > 260 ? 2 : 1;
+          HS.put({ x: b.x, z: b.z, L: b.L, W: b.W, ang: b.ang, y0: hi, hh: b.hgt > 0 ? b.hgt : sm ? 2.8 : [3.6, 6.2][fl - 1], fl, type: sm ? 'small' : 'house', id: blds.indexOf(b) });
+        } else if (b.kind === 3) { const mc = vary([0.8, 0.78, 0.74], RB, 0.1); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.8, b.W, b.ang, mc, null, true); }
         else { const fl = b.hgt > 6.5 || b.L * b.W > 260 ? 2 : 1;
           vrHouse(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall: walls[Math.floor(RB() * walls.length)], wood: woods[Math.floor(RB() * 2)], roof: vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1) }); }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
@@ -513,7 +540,7 @@
     {
       const nMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, transparent: true, alphaTest: 0.3, side: THREE.DoubleSide, depthWrite: false }), ng = new GB(true), steel = [0.42, 0.43, 0.46], nc = [0.5, 0.52, 0.55];
       const want = [new Uint8Array(N), new Uint8Array(N)];
-      for (let i = 0; i < N; i++) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i], at = (d) => { const o = side * (bar + d); return chGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]; };
+      for (let i = 0; i < N; i++) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i], at = (d) => { const o = side * (bar + d); return chGround0(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]; };
         if (at(12) > 6 && at(25) > 16) want[side > 0 ? 1 : 0][i] = 1; }   // (the slope rising steeply right behind the road)
       for (const side of [-1, 1]) {
         const nd = want[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl, i0 = T.idx(sStart + 120), i1 = T.idx(sFin - 40);
@@ -713,12 +740,14 @@
     /* ---- finish the meshes (the gulls over the sea: the render's flock, def.sea) ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup, (m) => ouCutMat(m, cut));   // (the builder's houses: one material, the façade atlas; they fade between the camera and the car, as the rest)
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: chAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: chAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'chapman', { gH: chGround, slope: chSlope, bad: (x, z) => sea(x, z) || vrLC(x, z) === 4 });   // (the roadside ground for the chase camera: js/world-chase-bt15.js)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, baboons: nBab, kelp: nKelp, boats: nBoat, overhangs: nOver, sideRoads: out.stubStats.n };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats;
     return out;
   }
 

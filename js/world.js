@@ -5222,7 +5222,7 @@ const World = (function () {
     Chunks, GB, GRASS_GLSL, HC, ICO1, ICO_F, ICO_V, IChunks, NRC, NRN, NRT, NR_A64, RB, TAU, WSKY, addShore, atS, atSf, box, brookMat, clamp,
     campLot, carParkMat, clearance, cone, crAt, crH, crowdAt, parkedCar, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
-    nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
+    nrFar, nrFir, nrGCol, nrGH, nrH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
     nrTileOn, nrTreeGeo, nringProps, ownRnd, parkOn, pikesProps, pitExcl, pitJunction, pitKerbs, pitLaneScenery, pitOpen, pitRoadAt, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
     shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, tyreStack, valueNoise2, vary, waterMat, waterline, wrapS
   };

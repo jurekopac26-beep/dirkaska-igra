@@ -92,6 +92,7 @@
       if (sd > 0) h = Math.min(h, SEA - 0.6 - Math.min(sd, 70) * 0.07);   // the sea's floor, deeper away from the shore
       for (const [bx, bz, r2] of BRC) if ((x - bx) ** 2 + (z - bz) ** 2 < r2) { if (underBridge(nrNear(x, z))) h = Math.min(h, Math.max(nrDem(x, z) - 0.5, SEA - 2)); break; }
       return h; };
+    if (World.stavbe) World.stavbe.parceleNR(T, LD.bld.filter(b => b[2] >= 2.2 && b[3] >= 2.2));   // (the buildings' plots levelled in the ground, over the sea's floor)
     // on a bridge the ground is its deck (between the parapets and 1.2 m past them): the boards, the cameras and whatever falls stand on it
     const deckH = (x, z) => { for (const [bx, bz, r2] of BRC) if ((x - bx) ** 2 + (z - bz) ** 2 < r2) { const n = nrNear(x, z); if (!underBridge(n)) return null; const i = n.i, lat = n.lat, hn = n.hn;
       return lat > -(T.bl[i] + 1.2) && lat < T.br[i] + 1.2 ? hn - 0.05 : null; } return null; };

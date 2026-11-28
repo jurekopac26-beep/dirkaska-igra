@@ -21,6 +21,7 @@
     const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], ownMarks: true };   // (ownMarks: the decals below paint the tyre marks)
     nrPrep();
     const P = API.NR, G = P.G;
+    if (World.stavbe) World.stavbe.parceleNR(T, def.bld || []);   // (the buildings' plots levelled in the ground)
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [], eh = new Map(), EHC = 64;   // tree exclusion circles (buildings, crowds, bridges), hashed
