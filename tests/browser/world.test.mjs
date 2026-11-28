@@ -88,7 +88,7 @@ try {
       // the ground under it, each leg's foot in the ground (not floating)
       const want = Tr.brakeBoards().reduce((a, z) => a + z.boards.length, 0), got = W.brakeBoards || [];
       const off = got.filter(b => b.feet.some((y, q) => y > Math.min(b.ground[q], b.road) - 0.1) || b.y0 < Math.max(b.road, ...b.ground) + 0.4);
-      const bb = { circuit: !Tr.open && !Tr.def.test && !Tr.def.rally && !Tr.def.descent, meshes: bbM, cast: bbCast, want, got: got.length, off: off.map(b => `${b.d} at ${b.x}, ${b.z}`) };
+      const bb = { circuit: !Tr.open && !Tr.def.test && !Tr.def.rally && !Tr.def.descent && Tr.def.brakeBoards !== false, meshes: bbM, cast: bbCast, want, got: got.length, off: off.map(b => `${b.d} at ${b.x}, ${b.z}`) };
       // the far view's lakes (def.farDem.lake, irFar): each wet node at its own height from the model or at the lake's level, never sunk into a pit
       // below all its neighbours (a tarn on the ridges set to the start's height: a dark funnel hundreds of metres deep in the mountains)
       const FD = Tr.def.farDem, FR = W.dyn && W.dyn.irFar; let lakes = null;
@@ -114,7 +114,7 @@ try {
     if (lakes && lakes.wet) T.check(`${id}: the far view's lakes at their own level (no wet node a pit below its neighbours)`, !lakes.pits.length,
       `${lakes.wet} wet nodes${lakes.pits.length ? '; pits at ' + lakes.pits.slice(0, 4).join('; ') : ''}`);
     if (fp.floor) T.check(`${id}: prop floor a number beside the road (0.1–12 m past its edge)`, !fnan, `NaN at ${fnan} of ${fp.floor.split('/')[1]} points`);
-    T.check(`${id}: braking boards ${bb.circuit ? 'before its braking zones, in one mesh without a shadow, standing on the ground' : 'none (not a circuit)'}`,
+    T.check(`${id}: braking boards ${bb.circuit ? 'before its braking zones, in one mesh without a shadow, standing on the ground' : 'none (not a circuit, or def.brakeBoards false)'}`,
       bb.circuit ? bb.want >= 3 && bb.got === bb.want && bb.meshes === 1 && !bb.cast && !bb.off.length : bb.want === 0 && bb.got === 0 && bb.meshes === 0,
       `${bb.got} boards (Track.brakeBoards ${bb.want}), ${bb.meshes} mesh${bb.cast ? ', casts a shadow' : ''}${bb.off.length ? '; off the ground: ' + bb.off.slice(0, 4).join('; ') : ''}`);
     out[id] = fp;

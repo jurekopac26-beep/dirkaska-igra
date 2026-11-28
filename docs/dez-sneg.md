@@ -66,6 +66,9 @@ Vožnje na avtopilotu (isti avto; brez stene in vračanja na cesto):
 
 Dirke v dežju na vseh 20 progah (`tests/races.test.js`): vsi avti pridejo do cilja brez vračanja na cesto, zmagovalec je 15–21 % počasnejši kot na suhem (makadam Pikes Peaka 27 %), prej 6–12 %.
 
+## Led (24. 11. 2026, Envalira, #791)
+- Proga z `ice: true` (prva: Envalira, Andora) ima v vsakem letnem času in vremenu oprijem in zavore ×0,2 suhega asfalta (`COLD.ice`, `Race.cold = { gk: 0.2, mk: 0, rk: 0 }`), v pasu 11–23 % spodaj (zgornji del: zimske gume na urejenem ledu); dež ne šteje (`rk` 0, kot sneg na snegu), avti imajo zimske gume (`dTy.winter`). Na drugih progah se nič ne spremeni. Dirka z AI na Envaliri je ~2,1-krat počasnejša kot na isti progi z asfaltom (`tests/envalira.test.js`).
+
 ## Resničnost in druge igre (deleži suhega asfalta)
 - Moker asfalt 67–77, steptan sneg 22–38, led 11–23; zavorna pot se podaljša v istem razmerju, kot pade oprijem.
 - Igra prej: moker asfalt 80 / zavore 91, zimski asfalt 94 / 97, makadam s snegom 59 / 82; zavore nikjer pod 55. Čas kroga v dežju +7 % (Bathurst, avtopilot), v resnici (F1) +10–21 %. Zdaj: moker asfalt 65 / 70, zimski asfalt 70 / 70, zasnežen asfalt 46 / 49, makadam s snegom 36 / 42 (0,45 svojega suhega makadama); krog v dežju +16 %.
