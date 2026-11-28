@@ -35,12 +35,12 @@
   }
  },
  "pikesg": {
-  "meshes": 797,
-  "verts": 2171851,
+  "meshes": 822,
+  "verts": 2192125,
   "instances": 459,
   "props": 352,
   "crowd": 413,
-  "world": "12615c06",
+  "world": "73bde6d6",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -63,7 +63,7 @@
    "pkSmoke:ShaderMaterial": "186acc3",
    "pkWaterTruck:MeshLambertMaterial": "6dcf2416",
    "pkSpray:ShaderMaterial": "63b596e6",
-   "rob:MeshLambertMaterial": "5406626f",
+   "rob:MeshLambertMaterial": "5587cfb4",
    "ao:MeshBasicMaterial": "9c8fe09f",
    "sceneThings:MeshLambertMaterial": "7ed2efb7",
    "people:MeshLambertMaterial": "14ba14b"
