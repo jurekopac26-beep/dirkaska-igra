@@ -289,3 +289,12 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 
 - Pravilo sej (vrstica »Največ 6 odprtih tem«), prej: »(od 18. 11.; 10 je zgornja meja, ne cilj; croatiadata do 20 do 22. 11.; jure.kopac26: Tabla)«.
 - Prej: **jure.kopac26**: do reseta brez sej s kodo; po resetu v nedeljo 22. 11. ob 10.00 **največ 2 seji, samo Trki #608** (Fable, max; zažene opravilo po urniku). Delo prevzeli: partyslo Združevanje in proge, biketraveler #569 pred Trki, grafika in fizika, croatiadata #679, #663, #688, #672, #657, #666.
+
+## Odločitve 28. 11. 2026 (Matej, klik v klepetu koordinacije jure.kopac26)
+
+- O-28-16: jure.kopac26 do 10 sej s kodo do sobote 28. 11. ob 10.00; dodelava 6 prog (quezaltepeque, kanaba, aguascalientes, ujarras, hiva, batangas).
+- O-28-17: biketraveler do 30 sej, vsaka proga v svoji seji (nadomesti »do 20«, O-27-21). O-28-18: croatiadata do 10 sej Opus. O-28-19: partyslo porabi Fable, reset klikne Matej, brez novih sej Opus.
+- O-28-22: gneča nadaljuje s popravki (samo tekmeci, O-27-7); Opus pripravi zdaj, Fable pregleda po resetu (nadomesti O-27-23 v delu »koda gneče samo Fable od 29. 11. 10.05«).
+- O-28-24: Giza, Egipt v6 potrjena (10,1 km). O-28-25: seja »Pospravljanje PR in vrste« ustavljena, O-27-22 se ne izvaja (ni PR brez lastnika, starejših od 7 dni).
+- O-28-26..32 (predlogi 1–5, 7, 9, 10): pravila v dnevni PR; `docs/dodelava-prog.md` (#1195) na `main`; Fable seje takoj po resetu jure.kopac26 (29. 11. 10.05); seja brez commita 2 h se ustavi; slike gneče pred in po za »ok«; `main` zelen pred resetom; slike menija z vsako novo progo.
+- Vpis 22. 11. »jure.kopac26 največ 2 seji, samo Trki #608« je pretekel (Trki #608 samo partyslo, O-27-11).
