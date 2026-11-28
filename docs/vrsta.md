@@ -146,5 +146,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.22 | #1242 | Dodelava: Los Caracoles, Čile (O-28-39/O-28-46: Matej potrdil brez slik; samo `js/tracks/caracoles.js`, `docs/proge/caracoles.md`, README »Zasluge«) | jure.kopac26 | »Ready for review«; pred #1243; pred združitvijo svež `main`, `test:related`. |
 | 10.23 | #1085 | Zbirka: realizem ostanki 25. 11. (#798, #811, #818, #809; `zbirna/realizem-ostanki`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
 | 10.24 | #1030 | Grafika: telefon, gumirana linija kroga v enem obsegu risanja (`grafika/telefon-oglisca`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
+| 10.25 | #1220 | Dodelava proge Livorno, Italija (`js/tracks/livorno.js`): raziskava kraja, komentator, živali, prelet | biketraveler | »ok« uporabnika 28. 11. (tudi komentatorske vrstice), premik v vrsto 28. 11. (»Da, premakni«); osnutek, osvetlitev počaka na reset Fable |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.

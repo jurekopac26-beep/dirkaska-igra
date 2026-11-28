@@ -41,23 +41,23 @@ def widths():
 
 # ---- names on the HUD ([label, s, the commentator's lines]): only places and plain descriptions (docs/proga-livorno.md, Pravna varnost) ----
 NAMES = [
-    ('Terasa ob morju', 175, ['Right at the seafront terrace, into the streets of Ardenza!', 'Off the seafront and into Ardenza!']),
+    ('Terasa ob morju', 175, ['Right at the seafront terrace, into the streets of Ardenza!', 'Off the seafront and into Ardenza!', 'Past the pines of the seafront park and into town!']),
     ('Ardenza Terra', 860, ['Ardenza Terra, right by the railway!', 'Through Ardenza Terra!']),
-    ('Pod železnico', 1120, ['Under the railway and up the hill!', 'Under the railway bridge, the climb begins!']),
-    ('Montenero', 3200, ['Montenero, left off the main road!', 'Up to Montenero, past the cemetery!']),
+    ('Pod železnico', 1120, ['Under the railway and up the hill!', 'Under the railway bridge, the climb begins!', 'Under the coast line, and the road tilts up!']),
+    ('Montenero', 3200, ['Montenero, left off the main road!', 'Up to Montenero, past the cemetery!', 'Montenero, the sanctuary up on the hill!']),
     ('Savolano', 4440, ['Savolano, and the hairpins are next!', 'Through Savolano!']),
-    ('Lasnice Savolano', 4560, ['Into the hairpins above Savolano!', 'Hairpin after hairpin above Savolano!']),
-    ('Stolp Castellaccio', 6700, ['Past the old tower on the ridge!', 'Up on the ridge by the tower!']),
-    ('Castellaccio', 7460, ['Castellaccio, the top of the lap!', 'Over the top at Castellaccio!']),
+    ('Lasnice Savolano', 4560, ['Into the hairpins above Savolano!', 'Hairpin after hairpin above Savolano!', 'Tight hairpins through the macchia above Savolano!']),
+    ('Stolp Castellaccio', 6700, ['Past the old tower on the ridge!', 'Up on the ridge by the tower!', 'The ridge at two hundred and eighty-seven metres, the sea far below!']),
+    ('Castellaccio', 7460, ['Castellaccio, the top of the lap!', 'Over the top at Castellaccio!', 'Castellaccio! Watch for boar on these hill roads!']),
     ('Vzhodna lasnica', 8470, ['The east hairpin, hard on the brakes!', 'Round the east hairpin!']),
     ('Le Piagge', 9276, ['Down through Le Piagge!', 'Le Piagge, flowing downhill now!']),
-    ('Pian della Pineta', 9956, ['Through the pines at Pian della Pineta!', 'Pian della Pineta, deep in the woods!']),
+    ('Pian della Pineta', 9956, ['Through the pines at Pian della Pineta!', 'Pian della Pineta, deep in the woods!', 'Under the umbrella pines at Pian della Pineta!']),
     ('Lasnici nad Romitom', 11040, ['Two hairpins down to the sea at Romito!', 'The Romito hairpins, mind the drop!']),
-    ('Romito', 11600, ['Romito! Onto the coast road!', 'Down to the sea at Romito!']),
-    ('Calafuria', 13937, ['Calafuria, past the old watchtower!', 'Over the bridge at Calafuria!']),
-    ('Boccale', 14639, ['Boccale, the castle on the rocks below!', 'Along the cliffs at Boccale!']),
+    ('Romito', 11600, ['Romito! Onto the coast road!', 'Down to the sea at Romito!', 'Romito, sandstone cliffs and the open sea!']),
+    ('Calafuria', 13937, ['Calafuria, past the old watchtower!', 'Over the bridge at Calafuria!', 'Calafuria, the old coastal watchtower on its rock!']),
+    ('Boccale', 14639, ['Boccale, the castle on the rocks below!', 'Along the cliffs at Boccale!', 'Boccale, the road high above the coves!']),
     ('Miramare', 15161, ['Miramare, the long straight to Antignano!', 'Flat out past Miramare!']),
-    ('Antignano', 16852, ['Into Antignano!', 'Antignano, the town by the sea!']),
+    ('Antignano', 16852, ['Into Antignano!', 'Antignano, the town by the sea!', 'Antignano, villas and the seafront!']),
     ('Grad Antignano', 17195, ['Left at the old castle in Antignano!', 'Round the castle corner!']),
     ('Ardenza', 18400, ['Along the sea to Ardenza and the line!', 'Back to Ardenza, the finish is near!']),
 ]
@@ -104,6 +104,16 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'livorno', name: 'Livorno, Italija', theme: 'livorno', laps: 1, halfWidth: 5.0,
     desc: %(desc)s,
     en: { name: 'Livorno, Italy', desc: %(desc_en)s },
+    // ---- its own (docs/proge/livorno.md, »Raziskava kraja«): alt [start, high point], the commentator, the life by the road, the flyover
+    alt: [4, 287],
+    // (Monti Livornesi: boar on the hill roads, fox; magpies; picnic spots and signposts in the park; Ardenza and Antignano are town)
+    zivali: { a: ['boar', 'fox', 'magpie'], t: ['picnic', 'signPost', 'logPile'], city: true },
+    comm: {
+      introPass: ["Welcome to {track}! {cars} cars, the old road course by the sea, and you start {grid}.", "Here we are on the seafront at {track}. Up through Montenero to the ridge, down through the pines and back along the cliffs, and you line up {grid}.", "Welcome to the hills above the Tuscan sea! {rivals} rivals on one long lap, and you start {grid}."],
+      goPass: ["And they're away along the seafront!", "And they're off! {cars} cars heading for the hills!", "The race is on! Next stop, the ridge at Castellaccio!"]
+    },
+    // the course flyover before a fresh start (Render.pkFly, as on Pikes Peak): its captions, [metres after the start line (-1: the finish), name]
+    fly: [[0, 'START'], [3200, 'Montenero'], [6700, 'Stolp Castellaccio'], [11040, 'Lasnici nad Romitom'], [13937, 'Calafuria'], [16852, 'Antignano'], [-1, 'CILJ']],
     start: [0, 0], runoff: 0.42, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, gradeForce: true, elevSmooth: 16, realKm: %(km)s,   // (an old road: no kerbs, no gravel traps)
     rivals: 20,   // a full field (Core: 20 rivals at least, the tests' races)
     raceRivals: 99, flyStart: true,   // the game's Circuit race here: 99 rivals (100 cars) from a flying start along the seafront, as at Nürburg (game.js newRace)
