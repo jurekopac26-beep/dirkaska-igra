@@ -1042,9 +1042,11 @@ const Core = (function () {
       return best;
     }
 
-    // real altitude (metres above sea level) for a road height y, if the track defines def.alt = [alt at start, alt at finish]; else null
+    // real altitude (metres above sea level) for a road height y, if the track defines def.alt = [alt at start, alt at finish]; else null.
+    // A lap (the same altitude at both ends, Aguascalientes): the start's plus the road's own rise and fall round it
     altAt(y) {
       const A = this.def.alt; if (!A) return null;
+      if (A[0] === A[1]) return A[0] + (y - this.hStart);
       const dh = this.hFinish - this.hStart;
       return A[0] + (dh ? (y - this.hStart) / dh : 0) * (A[1] - A[0]);
     }

@@ -30,17 +30,29 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zivali: { a: ['coyote', 'hare', 'horse'], t: ['windpump', 'waterTank'], open: true },
     id: 'aguascalientes', name: 'Aguascalientes, Mehika', theme: 'aguascalientes', laps: 5, halfWidth: 7,
     desc: "Oval na visoki planoti južno od mesta Aguascalientes v osrednji Mehiki: 1,34 km v nasprotni smeri urinega kazalca, štirje levi zavoji v dveh polkrogih, okoli 1860 m nad morjem. Bel betonski zid z rjavo lovilno mrežo, zavita glavna tribuna z ložami in dva stolpa ob ciljni ravnini, v notranjosti ovinkasta cesta z malim predorom in boksi za ograjo, kjer čakajo mehaniki. Suha trava, grmičevje in redka drevesa, polja in nizki griči na obzorju.",
-    en: { name: 'Aguascalientes, Mexico', desc: "An oval on the high plateau south of the city of Aguascalientes in central Mexico: 1.34 km, anticlockwise, four lefts in two half circles, about 1,860 m above the sea. A white concrete wall with a brown catch fence, the curved main grandstand with its suites and two towers by the front straight, a twisty road with a little tunnel in the infield and the pits behind a fence where the mechanics wait. Dry grass, scrub and a few trees, fields and low hills on the horizon." },
+    en: { name: 'Aguascalientes, Mexico', desc: "An oval on the high plateau south of the city of Aguascalientes in central Mexico: 1.34 km, counter-clockwise, four lefts in two half circles, about 1860 m above the sea. A white concrete wall with a brown catch fence, the curved main grandstand with its suites and two towers by the front straight, a twisty road with a little tunnel in the infield and the pits behind a fence where the mechanics wait. Dry grass, scrub and a few trees, fields and low hills on the horizon." },
     start: [0, 0], runoff: 1.1, inner: 4.2, side: 6, gradeForce: true, elevSmooth: 10, realKm: 1.41, runoffTarmac: true,
+    alt: [1859, 1859],   // the finish line's height above the sea (m; Copernicus DEM): a lap, so the start's and the finish's the same (Core's altAt: the road's own rise and fall round it)
+    // the commentator's own lines here (game.js ownLine): the welcome and the start of a race round the oval, the high plateau's thin air
+    comm: {
+      intro: ["Welcome to {track}! {laps} laps of the oval, {cars} cars, and you line up {grid} on the grid.", "Good day from the high plateau of central Mexico, almost nineteen hundred metres up. {laps} laps, four lefts each, and you start {grid}.", "Here we are at {track}! Thin air, a short oval and {cars} cars. {laps} laps, and you start {grid}."],
+      introOne: ["Welcome to {track}! One lap of the oval, four lefts, and you start {grid}.", "Here we are on the high plateau. One lap, a full field, and you line up {grid}."],
+      go: ["Lights out, and away they go towards Turn 1!", "And they're off! Four lefts and the dogleg, lap after lap!", "Green light! The pack charges past the grandstand!", "Go, go, go! The race is on, high on the plateau!"],
+    },
     elev: AG_H.map((h, i) => [i / AG_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
+      ["Glavna tribuna", 51.3, 30.9, ["Past the main grandstand and its suites!", "The big curved grandstand on the right!", "Right under the suites of the main grandstand!"]],
       ["Prvi levi", 306.5, 28.4, ["Into Turn 1, the first of the lefts!", "Down into Turn 1!", "Turn 1, keep it low on the line!"]],
       ["Drugi levi", 339.5, -81.9, ["Through Turn 2 onto the back straight!", "Out of Turn 2, foot down!", "Turn 2, the exit matters here!"]],
-      ["Zadnja ravnina", 215.6, -222.2, ["Flat out down the back straight!", "The back straight, look for the draft!", "Side by side down the back straight!"]],
-      ["Tretji levi", -3.3, -349.5, ["Into Turn 3!", "Brake and turn in for Turn 3!", "Turn 3, the far end of the oval!"]],
+      ["Notranja proga", 290.7, -156.2, ["The twisty road of the infield peels off on the left!", "Past the infield road, where the road course turns in!", "The infield road on the left, not for us today!"]],
+      ["Zadnja ravnina", 238.5, -202.8, ["Flat out down the back straight!", "The back straight, look for the draft!", "Side by side down the back straight!"]],
+      ["Predor", 177.4, -254.5, ["Over the little tunnel under the back straight!", "Right over the service tunnel!", "Down the back straight, over the tunnel!"]],
+      ["Tretji levi", -3.3, -349.5, ["Into Turn 3, past the tower in the infield!", "Brake and turn in for Turn 3!", "Turn 3, the far end of the oval!"]],
       ["Četrti levi", -88.5, -302, ["Turn 4, the last of the lefts!", "Through Turn 4 towards the line!", "Out of Turn 4 onto the front straight!"]],
-      ["Lomljena ravnina", -64.8, -74.5, ["Through the dogleg of the front straight!", "The kink in front of the grandstand!", "Flat through the dogleg!"]],
+      ["Vhod v bokse", -105.2, -186.4, ["The pit lane opens on the left!", "Past the way into the pits!", "The pit lane on the inside, the crews are waiting!"]],
+      ["Lomljena ravnina", -64.8, -74.5, ["Through the dogleg of the front straight!", "The kink in front of the little stand!", "Flat through the dogleg!"]],
+      ["Most nad progo", -50.5, -53.9, ["Under the gantry of the tower!", "Under the bridge, towards the line!", "Through under the tower's gantry!"]],
     ],
     turns: [[306.5,28.4],[339.5,-81.9],[-3.3,-349.5],[-88.5,-302]],   // the apexes of Turns 1-4 (their number boards): the two half circles at the ends of the oval
     pit: [-15, -230, 170, -45],   // pit lane on the left of the front straight, inside the oval: [centre offset (negative: left), from, to, the player's box] (metres from the finish line)
