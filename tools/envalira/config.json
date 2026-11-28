@@ -1,0 +1,100 @@
+{
+  "id": "envalira",
+  "about": "Envalira, Andora (id envalira): the ice ring under the pass Port d'Envalira (OSM highway=raceway, way 330829785, 0.73 km), one lap in the way's node order, on ice in winter (docs/proge-po-drzavah.md, Proge z ledom)",
+  "box": [
+    42.527,
+    1.7,
+    42.551,
+    1.742
+  ],
+  "closed": true,
+  "dist": {
+    "grid": 150
+  },
+  "route": [
+    [
+      42.539048,
+      1.720978,
+      null,
+      "start/finish (first node of the ice ring, OSM way 330829785)"
+    ],
+    [
+      42.5395008,
+      1.7221744,
+      null,
+      ""
+    ],
+    [
+      42.5391726,
+      1.7220769,
+      null,
+      ""
+    ],
+    [
+      42.5389163,
+      1.7214006,
+      null,
+      ""
+    ],
+    [
+      42.5383701,
+      1.7211926,
+      null,
+      ""
+    ],
+    [
+      42.5386935,
+      1.7207667,
+      null,
+      ""
+    ],
+    [
+      42.5383819,
+      1.7202791,
+      null,
+      ""
+    ],
+    [
+      42.5379437,
+      1.7202985,
+      null,
+      ""
+    ],
+    [
+      42.5378287,
+      1.7197816,
+      null,
+      ""
+    ],
+    [
+      42.5381066,
+      1.7194825,
+      null,
+      ""
+    ],
+    [
+      42.5386456,
+      1.7197426,
+      null,
+      ""
+    ]
+  ],
+  "prefer": [],
+  "allowWays": [
+    "w330829785"
+  ],
+  "geoRoads": [
+    "Carretera General 2",
+    "CG-2",
+    "Port d'Envalira"
+  ],
+  "geoWater": [],
+  "marks": [],
+  "places": [
+    [
+      "Envalira",
+      null,
+      0
+    ]
+  ]
+}

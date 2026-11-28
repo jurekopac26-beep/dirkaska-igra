@@ -143,5 +143,9 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.19 | #1067 Kratko prvenstvo | serija `kratko` v meniju Prvenstvo (5 pravih prog, točke 25–1; Matej, #382 7148224208) in pokal poti `s3-kratko` v karieri, zadnji v 3. stopnji pred Legendami (`kratko-prvenstvo-kariera` 1, #382 7164268738); zaslon kariere nespremenjen | partyslo | svež `main` spojen, povezani testi zeleni (25. 11.); osnutek do vrste, združi seja Združevanje |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
+| 10.21 | #1243 | Dodelava: Tianmen, Kitajska (gozd po WorldCover; `dodelava/tianmen`) | jure.kopac26 | osnutek, testi zeleni; po #1242; pred združitvijo svež `main`, `test:related`. |
+| 10.22 | #1242 | Dodelava: Los Caracoles, Čile (O-28-39/O-28-46: Matej potrdil brez slik; samo `js/tracks/caracoles.js`, `docs/proge/caracoles.md`, README »Zasluge«) | jure.kopac26 | »Ready for review«; pred #1243; pred združitvijo svež `main`, `test:related`. |
+| 10.23 | #1085 | Zbirka: realizem ostanki 25. 11. (#798, #811, #818, #809; `zbirna/realizem-ostanki`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
+| 10.24 | #1030 | Grafika: telefon, gumirana linija kroga v enem obsegu risanja (`grafika/telefon-oglisca`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
