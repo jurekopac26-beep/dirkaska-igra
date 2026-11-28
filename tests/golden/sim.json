@@ -7336,16 +7336,16 @@
   }
  },
  "envalira/car/cs": {
-  "digest": "6ac01f473c725a218a4c8d37",
-  "lead": 689.6,
+  "digest": "0920e963e0dea12a2486dd1a",
+  "lead": 676.3,
   "car0": [
-   -112.88,
-   118.65
+   -83.04,
+   141.07
   ],
   "cover": {
-   "dmg": 0.29,
+   "dmg": 0.48,
    "loose": 1,
-   "rescues": 0,
+   "rescues": 1,
    "repairs": 0
   }
  }
