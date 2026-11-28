@@ -24,6 +24,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Rio do Rastro, Brazilija | `rastro` | odprta cesta | 4,2 km | 912 | 35 % | 9 | +324 m |
 | Kotor, Črna gora | `kotor` | odprta cesta | 5,0 km | 899 | 31 % | 13 | +253 m |
 | Irishtown, Jamajka | `irishtown` | odprta cesta | 4,2 km | 883 | 23 % | 4 | +116 m |
+| Trebević, Bosna in Hercegovina | `trebevic` | odprta cesta | 4,3 km | 823 | 36 % | 6 | +301 m |
 | Llogara, Albanija | `llogara` | odprta cesta | 4,0 km | 818 | 34 % | 7 | +11 m |
 | Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
 | Canaries, Sveta Lucija | `canaries` | odprta cesta | 5,0 km | 716 | 35 % | 3 | +134 m |
@@ -42,8 +43,6 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
-| Hải Vân, Vietnam | `haivan` | odprta cesta | 2,0 km | 522 | 38 % | 1 | +91 m |
-| Mã Pí Lèng, Vietnam | `mapileng` | odprta cesta | 1,0 km | 963 | 24 % | 3 | +61 m |
 | Tatev, Armenija | `tatev` | odprta cesta | 7,2 km | 673 | 51 % | 19 | +225 m |
 | Furka, Švica | `furka` | odprta cesta | 5,0 km | 519 | 45 % | 7 | +371 m |
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
@@ -126,6 +125,7 @@ Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, 
 - **Isuna, Butan** (`isuna`, asfalt): Dolinska cesta ~9 m asfalta (`halfWidth` 4,6 m), levi promet, bele črte; Na eni strani reka Paro Chhu pod cesto, na drugi pobočje z gozdom modrega bora; Stari železni verižni most čez reko z dvema belima kamnitima stražnima hišama (~41 m od ceste pri ~46 %); Posamezne hiše in kmetije, krave na pašnikih, nevidna ograja prepreči izlet
 - **Katu-Jaryk, Rusija** (`katu`, makadam): Makadam iz zdrobljenega rjavega skrilavca z dvema kolesnicama; za avtom se dviga prah; Nizek betonski parapet (bel s črnimi progami) ob padajočem terenu in lasnicah; drugje smerniki; Sedem lasnic in strmo prečenje nad kanjonom; brežine, useki in nasipi ob cesti; Macesni, cedre in breze; sončna pobočja stepa z grmovjem, strma pobočja skalnata (skrilavec); Vrh: kioski, parkirišči s kombiji, razgledišča na robu kanjona; pred lasnicami znaki za ovinek; Dolina: reka z brzicami, kamp z jurtami in brunaricami, viseča brv, šotori turistov. Dlje: Kanjon in dolina reke Čulišman 559 m niže.
 - **Krásna Hôrka, Slovaška** (`krasnahorka`, asfalt in makadam): Cesta II/549 s severa navzdol v dolino in dovozna cesta na grajski hrib (3,4 km), zadnjih ~90 m pred ciljem makadam (OSM), ovinki navzdol in vzpon do gradu, nevidna ograja; Travnata pobočja z listnatim drevjem in grmovjem; Grad tik ob cilju: obzidje na kamnitem podstavku, bela krila s temnimi strehami, glavni stolp, kapela z apsido, trije okrogli bastioni in vhodni stolp (cel, kot pred požarom 2012, brez napisov); malo gledalcev
+- **Trebević, Bosna in Hercegovina** (`trebevic`, asfalt): Ozka cesta od Dolovov skozi bukov gozd na goro (4,3 km), šest lasnic med ~940 in ~1060 m; jeklene ograje, bela prekinjena sredinska črta; ostanki stare betonske bob steze ob cesti (~1,6 in ~2,1 km), brv čez cesto, razgledišče Vidikovac z zidcem nad mestom (~2,9 km), stari kamnolom in ruševine utrdbe Draguljac (~3,2 km); vrv žičnice nad gozdom; hiše po obrisih iz OSM; srne in lisice.
 - **Koli, Finska** (`koli`, asfalt pod zbitim snegom): Zgrnjen sneg ob obeh robovih, jeklene ograje 3,4 m od asfalta, oranžni snežni količki; gost gozd smrek in borov do ceste; v zgornjem delu vas Ylä-Koli (21 stavb, dve parkirišči, stranska cesta), tri žičnice in smučarske proge z varovalnimi mrežami, kjer se proga približa cesti, smučarji; dve lasnici in ostra levica s pogledom čez gozd.
 - **Koror, Palau** (`koror`, asfalt): Jeklene varnostne ograje, kjer teren pada; rumena prekinjena sredinska črta (pred nepreglednimi ovinki neprekinjena), od sonca in soli zbledel asfalt s krpami; Na mostu in nasipih ob laguni nizek zid in jeklena ograja, takoj za njima morje; Vlažen tropski gozd na griču, palme, grmovje in trava ob cesti; ~60 hiš s strehami iz valovite pločevine (obrisi iz OSM, brez imen in napisov), gostejše na robu mesta; Pogled na laguno, otoke in Babeldaob; promet.
 - **Vaoala, Samoa** (`vaoala`, asfalt): Jeklene varnostne ograje, kjer teren pada; bela prekinjena sredinska črta (pred nepreglednimi ovinki neprekinjena), rdečkastorjav prah na robovih in krpe; Gost tropski deževni gozd na slemenu, palme in grmovje ob vaseh; ~530 hiš s strehami iz valovite pločevine (obrisi iz OSM, brez imen in napisov) v Letavi in Vaoali; 12 potokov pod cesto; pogled na sleme Upolu in obalo pri Apii; promet.
