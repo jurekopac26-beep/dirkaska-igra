@@ -13,3 +13,41 @@ Kratka cesta iz Cusca v hrib nad mestom, mimo inkovskih zidov Sacsayhuamána, v 
 - **Pravno**: samo zemljepisna imena (Cusco, Sacsayhuamán). Kipa na hribu nad mestom v igri ni; cesta in ovinki nimajo imen po osebah.
 
 Vire glej v `README.md` pod »Zasluge«.
+
+## Raziskava za dodelavo (`dodelava/cusco`, 28. 11. 2026)
+
+Dodelava na raven Pikes Peaka (O-28-6, O-28-7, O-28-17; merila `docs/dodelava-prog.md`). Viri: OpenStreetMap (API `map` za okvir 13,5130–13,5035° J, 71,9875–71,9790° Z, prenos 28. 11. 2026; © OpenStreetMap contributors, ODbL 1.0), Copernicus GLO-30 in ESA WorldCover 2021 (že v uvozu proge). Spletni opisi (Wikipedija, UNESCO) v tej seji niso bili dosegljivi: dejstva od tam so označena »za preverbo« in v igri niso uporabljena kot številke.
+
+**Kraj, podnebje, višina.** Cesta se iz zgornjega roba Cusca (3.531 m) vzpne na pobočje nad mestom (3.592 m); najnižja točka terena v okviru proge je 3.413 m (dno mesta proti jugovzhodu, GLO-30). Zgodovinsko središče Cusca je na seznamu svetovne dediščine (za preverbo: UNESCO 1983, št. 273). Podnebje visokogorsko subtropsko (za preverbo: Köppen Cwb): suha doba približno od maja do oktobra z jasnim nebom in mrzlimi nočmi, deževna od decembra do marca s popoldanskimi nevihtami; sneg na tej višini redek, toča pogosta.
+
+**Rastje, kamen, tla** (WorldCover 2021, celice 16 m): v okviru proge 78 % travišče in grmovje, 20 % drevesa, 1 % grmišča, 0,2 % pozidano; v pasu 20–40 m od ceste 90 % trava in 10 % drevje. OSM ob cesti: gozd (listavci) pri 426 m in 696 m dirke, gozdiček pri 200 m. Drevje so nasadi evkaliptov (za preverbo: uvedeni v 19. stoletju); trava je puna z ichujem (šopasta trava, že na progi iz #1152). Zidovi Sacsayhuamána: veliki poligonalni bloki brez malte (za preverbo: večinoma apnenec, finejši deli andezit); OSM pri 83 m od ceste beleži golo skalo (`natural=bare_rock`).
+
+**Gradnja ob cesti** (OSM): cesta terciarna, asfalt, 4 pasovi, omejitev 45 km/h; ob 411 m vsek v pobočje na desni (`cutting=right`). Pri vhodu v arheološki park: prodaja vstopnic (561 m, 5 m od ceste), parkirni pas ob cesti (616 m), zapornica in čuvajnica (631 m, 8 m), stranišče (19 m); druga čuvajnica pri 356 m (36 m), zaklenjena vrata pri 706 m (9 m). Za ciljem žive meje, ograja, pregledna tabla s topografsko karto (1016 m), stanovanjske hiše (`landuse=residential`, 17 m pri 1071 m). Stavbe: hiše iz zidakov in ometa z opečnatimi strehami (za preverbo, splošni opis kraja).
+
+**Zanimivosti do 60 m** (razdalja od starta · od ceste, OSM):
+
+| m dirke | Kaj | Od ceste | OSM |
+|---|---|---|---|
+| 200 | evkaliptov gozdiček | 19 m | `natural=wood` 640965436 |
+| 270–275 | Murallas de Sacsayhuamán, prvi in drugi zid | 30 m, 51 m | 431479257, 431479258 |
+| 356 | čuvajnica parka | 36 m | 709383929 |
+| 411 | vsek v pobočje | 1 m | 1184931693 |
+| 426 | evkaliptov gozd | 4 m | 83127651 |
+| 471 | meja arheološkega parka Sacsayhuamán | 1 m | 83130621 |
+| 540 | serpentina 1 (3.572 m) | — | uvoz |
+| 561 | vhod v park, vstopnice | 5 m | vozlišče 4523568190 |
+| 616 | parkirni pas ob cesti | 2 m | 709383928 |
+| 631 | zapornica, čuvajnica | 5–8 m | 6668272936, 648585583 |
+| 674 | serpentina 2 (3.577 m) | — | uvoz |
+| 696–706 | evkaliptov gozd, zaklenjena vrata | 0–9 m | 83127653, 1120930471 |
+| 706 | tretji zid Sacsayhuamána | 67 m | 689230841 |
+| 896 | ruševine obzidja | 38 m | 480271264 |
+| cilj + 24–134 | žive meje, pregledna tabla, ruševine (26 m), hiše | 6–48 m | 1039912186, 13673060468, 480271265 |
+
+Dlje od 60 m (samo v opisu, ne kot zanimivost): stolp Muyuqmarka (113 m), razgledišče nad mestom (69 m), ravnica med zidovi (70 m). **Ne uporabljamo**: ime ceste (po osebi), planetarij, kamp in šolo (ustanove in podjetja).
+
+**Dolina pod mestom** (vrzel iz `docs/dodelava-prog.md`): z obeh serpentin in z razgleda pri 78,8 / −99,2 se vidi Cusco v kotlini proti jugovzhodu (GLO-30: 120–180 m niže). Strehe mesta niso v uvozu (samo 23 stavb ob cesti); za dodelavo jih je treba dobiti iz OSM `building=*` v pasu 300–1.200 m od ceste.
+
+**Živali**: na travnikih Sacsayhuamána se pasejo lame in alpake (za preverbo, splošni opis kraja; OSM jih ne beleži).
+
+**Ne spreminjamo** (odprti PR drugih): stranske ceste, `sideClosed`, `sideRoads` (#1016); šopi trave, kamenje in zaplate zemlje 6–42 m za ograjo (moj #1152).
