@@ -9,7 +9,7 @@ Raziskava je po virih: OpenStreetMap, višinski model Copernicus DEM GLO-30, kar
 - Kaldera se je pred ~2,5 milijona let udrla, ko se je izpraznilo magmatsko ognjišče velikega ognjenika. Premer je 16–19 km, stene so visoke v povprečju ~610 m, dno leži na ~1.700–1.800 m. V najnižjem delu dna je alkalno (sodno) jezero Magadi (Britannica; IUGS Geoheritage).
 
 ## Podnebje
-- Ob ekvatorju, a visoko. Sušna doba traja od junija do oktobra, kratko deževje novembra in decembra, dolgo deževje od marca do maja, ko dežuje v nevihtnih nalivih (SafariBookings; Climates to Travel).
+- Ob ekvatorju, a visoko. Sušna doba traja od junija do oktobra, kratko deževje novembra in decembra, dolgo deževje od marca do maja, ko dežuje v nevihtnih nalivih.
 - Rob je zjutraj pogosto v megli in oblakih, dno je sončno. Na dnu je čez dan ~23 °C, na robu je ponoči 6–10 °C, včasih slana (Discover Africa; Mountain Forecast, Crater Rim Road).
 - Vzhodni pasati prinašajo vlago na vzhodno in južno pobočje, zato je tam gozd. Na zahodni strani, kjer je proga, je padavin precej manj in stena je travnata (Key Biodiversity Areas, »Ngorongoro Conservation Area«). Ime Windy Gap pove, da je sedlo na robu vetrovno.
 
@@ -68,4 +68,4 @@ Karta rabe tal (ESA WorldCover 2021, celice 16 m) v pasu 8–60 m ob cesti:
 - »List of Ngorongoro Crater plants«: https://en.wikipedia.org/wiki/List_of_Ngorongoro_Crater_plants
 - African Birdlife, »Highland Highlights: Ngorongoro, Tanzania«: https://www.magzter.com/en/stories/Animals-and-Pets/African-Birdlife/Highland-Highlights-Ngorongoro-Tanzania
 - Klici živali: https://inaturalist.ala.org.au/posts/72062-two-species-of-brindled-gnu-differ-in-their-vocalisations-a-new-distinction-between-connochaetes-taurinus-and-connochaetes-mearnsi, https://doaj.org/article/f3b6749df7fb4f189fac587fc82ff045 (Xie in sod. 2024, podatki https://datadryad.org/dataset/doi:10.5061/dryad.v9s4mw73w), https://wildliferanchtexas.com/call-of-the-wild; zvoki so sintetizirani v igri, posnetkov ni.
-- Podnebje: https://safaribookings.com/ngorongoro/climate, https://climatestotravel.com/climate/tanzania/ngorongoro, https://www.discoverafrica.com/safaris/ngorongoro/weather-in-ngorongoro/, https://www.mountain-forecast.com/passes/Ngorongoro-Crater-Rim-Road-Summit/forecasts/2300
+- Podnebje: https://www.discoverafrica.com/safaris/ngorongoro/weather-in-ngorongoro/, https://www.mountain-forecast.com/passes/Ngorongoro-Crater-Rim-Road-Summit/forecasts/2300
