@@ -3406,7 +3406,7 @@ const Render = (function () {
       crackWarm = new THREE.Mesh(g, matCrack); crackWarm.frustumCulled = false; crackWarm.onAfterRender = () => { crackWarm.userData.drawn = true; }; }
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
-    glows = new Glows(10 * 16 + 240 + 96); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars; the pits' lamps)
+    glows = new Glows(10 * 16 + 240 + 96 + 160); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars, its reversing, fog and bus-window lamps; the pits' lamps)
     skids = new Skids(8000); scene.add(skids.mesh);
     rain = new Rain(3200); scene.add(rain.mesh);
     streaks = new Streaks(420); scene.add(streaks.mesh); splash = new Splashes(360); scene.add(splash.mesh);   // (the wet road: the lights' reflections, the drops' splashes)
@@ -6793,6 +6793,9 @@ const Render = (function () {
   function updateRoad(dt) {
     const Q = road, R = curRace; if (!Q || !R || !R.tf) return;
     const tf = R.tf, T = R.track, cx = cam.vcx || 0, cz = cam.vcz || 0, far = 250 * 250, near2 = 150 * 150, dusk = atmos.tod !== 'day', rl = atmos.tod === 'night' ? 1.5 : 1.25;
+    // (the fog lights' fog: a misty run (Big Sur's marine layer), the cloud on Pikes Peak, the dawn's mist in the valleys under its top; the
+    // rear fog lamp on the driver's side: the road's middle, the right with def.leftHand)
+    const fgR = Math.max(curRace && curRace.opts && curRace.opts.mist ? 1 : 0, world && world.dyn.pkWx ? world.dyn.pkWx.mist || 0 : 0), fgTop = dawn && vfog ? vfog.top : -1e9, fgSd = T.def && T.def.leftHand ? 1 : -1;
     // the vehicles
     const V = Q.V, cnt = new Map(); let nv = 0, nyl = 0, nind = 0; const cg = new Map();
     const put = (im, v, col, roll, lift) => { const i = cnt.get(im) || 0; if (i >= im.instanceMatrix.count) return false; cnt.set(im, i + 1);
@@ -6820,6 +6823,16 @@ const Render = (function () {
           if (v.brake || dusk || haz) { const [x, z] = at(-hl, sd * hw); glows.add(x, hy + 0.1, z, v.brake ? 1.6 : 0.9, 1.0, 0.15, 0.08, v.brake ? 0.85 : 0.28 * rl); }
           if (haz) for (const e of [hl, -hl]) { const [x, z] = at(e, sd * (hw + 0.1)); glows.add(x, hy, z, 1.3, 1.0, 0.55, 0.08, 0.9); }
         }
+        // reversing: white at the back while it moves backwards (backing off after a knock, rolling back loose); in fog: two low lamps at the front
+        // (warm white, a yellow tint on a third), one red at the back; a bus's windows lit warm inside at dusk and at night (not a truck's)
+        const fwd = v.st === 0 ? v.v : (v.vx || 0) * ch + (v.vz || 0) * sh;
+        if (fwd < -0.4 && K < 3) for (const sd of [-1, 1]) { const [x, z] = at(-hl - 0.02, sd * hw * 0.55); glows.add(x, hy + 0.04, z, 1.05, 1.0, 0.97, 0.9, 0.75); }
+        const fg = Math.max(fgR, v.y < fgTop ? 1 : 0);
+        if (fg > 0.15 && v.st === 0 && K < 3) { const yel = u > 0.67, a = Math.min(1, fg) * (dusk ? 0.55 : 0.4);
+          for (const sd of [-1, 1]) { const [x, z] = at(hl + 0.02, sd * (v.wid * 0.4)); glows.add(x, v.y + 0.38, z, 1.0, 1.0, yel ? 0.82 : 0.95, yel ? 0.35 : 0.82, a); }
+          const [x, z] = at(-hl - 0.02, fgSd * hw); glows.add(x, hy + 0.02, z, 1.25, 1.0, 0.1, 0.06, Math.min(1, fg) * 0.7); }
+        if (dusk && K === 2 && v.p !== 5 && d2 < 90 * 90) { const wy = v.y + 2.15, wa = 0.16 * rl;
+          for (const sd of [-1, 1]) for (let j = 0; j < 4; j++) { const [x, z] = at(-4.6 + j * 2.9, sd * (v.wid / 2 + 0.04)); glows.add(x, wy, z, 2.2, 1.0, 0.8, 0.5, wa); } }
         if (v.ind && v.st === 0) { nind++; if ((time + v.id * 0.137) % 0.7 < 0.38) { const sd = v.ind * v.dir, lw = K === 3 ? 0.14 : v.wid / 2 + 0.04; for (const e of [hl + 0.03, -hl - 0.03]) { const [x, z] = at(e, sd * lw); glows.add(x, hy + 0.06, z, 1.1, 1.0, 0.6, 0.0, 1.0); } } } }
     }
     for (const im of [...V.car, V.van, V.bus, V.truck, V.moto, V.bike]) { im.count = cnt.get(im) || 0; if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; } }
