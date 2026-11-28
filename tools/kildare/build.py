@@ -263,9 +263,27 @@ def scenery():
         if is_stand(s, d, l, w): continue
         k = bkind(s, d, l, w, hgt); hh = hgt if hgt > 2 else 4.6 if k == 4 else 7.0 if l * w > 300 else 4.5 if l * w > 60 else 3.0
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), round(hh, 1), k]
+    # the hedgerows (def.sk.hedge, segments [x0, z0, x1, z1, ...]): OSM maps no field boundaries here (one hedge, 150 m and more off), so they
+    # follow the canopy height's rows of trees (10 m cells: the ash, sycamore and hawthorn standing in the hedges, Kildare's Hedgerow
+    # Appraisal Survey 2022), each tree cell joined to its neighbours in the row; not in a wood (a cell with 5 or more tree neighbours), not a
+    # lone tree, not within 10 m of the lap (the world leaves out the rest inside the circuit's barriers and by the buildings)
+    hedge = []
+    gc, ac = grid('chm'); tr = ac.astype(np.int16) >= 1; nzc, nxc = tr.shape
+    cx = lambda i: gc['x0'] + (i + 0.5) * gc['cell']; cz = lambda j: gc['z0'] + (j + 0.5) * gc['cell']
+    nb = lambda j, i: sum(tr[j + b, i + a] for a in (-1, 0, 1) for b in (-1, 0, 1) if (a or b) and 0 <= j + b < nzc and 0 <= i + a < nxc)
+    for j in range(nzc):
+        for i in range(nxc):
+            if not tr[j, i] or nb(j, i) >= 5: continue
+            for a, b in ((1, 0), (0, 1), (1, 1), (-1, 1)):
+                i2, j2 = i + a, j + b
+                if not (0 <= j2 < nzc and 0 <= i2 < nxc) or not tr[j2, i2] or nb(j2, i2) >= 5: continue
+                if a and b and (tr[j, i2] or tr[j2, i]): continue   # (a diagonal where the row already turns through a side: no triangle)
+                x0, z0, x1, z1 = cx(i), cz(j), cx(i2), cz(j2)
+                if min(sd(x0, z0)[2], sd(x1, z1)[2], sd((x0 + x1) / 2, (z0 + z1) / 2)[2]) < 10: continue
+                hedge += [round(x0, 1), round(z0, 1), round(x1, 1), round(z1, 1)]
     X = extra()
     pw = [p for p in X['power'] if min(sd(p[1][k], p[1][k + 1])[2] for k in range(0, len(p[1]), 3)) < 700]   # (the power lines with a pylon within 700 m)
-    return D, LC, dict(bld=bld, power=pw, race=X['race'], foot=X['foot'])
+    return D, LC, dict(bld=bld, hedge=hedge, power=pw, race=X['race'], foot=X['foot'])
 
 # ---- the horizon (def.far for Riverside's rsFar, js/world-riverside.js): the highest ground in rings round the circuit ----
 FAR_R = [1500, 2000, 2700, 3500, 4500, 5600, 7000, 8500, 10000, 11500]   # the rings' outer distances (m from the circuit's middle; the far grid reaches ~12 km)

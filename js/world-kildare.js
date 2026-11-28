@@ -3,8 +3,8 @@
    the hedgerows of the plain, its own parts on the shared builder of js/world-rbring.js (World.ext.rbring), loaded before it (index.html).
    Its look (RB_LOOK.kildare) goes on API.rbLook; World.ext.kildare builds it with World.ext.rbring. Plan: docs/nove-proge-1-0.md (A5), the
    track: docs/proge/kildare.md.
-   Its own parts (the builder's hooks LK.woods, LK.extra, LK.fl): the hedgerows' ash and sycamore (js/world.js's beech), Sitka spruce planted
-   in blocks (js/world-harju.js's spruce); the road's gravel (def.surf: the builder draws it); the circuit's other raceways round the lap,
+   Its own parts (the builder's hooks LK.woods, LK.extra, LK.fl): the hedgerows' ash and sycamore (js/world.js's beech) over a band of
+   hawthorn and elder along the canopy height's rows of trees (def.sk.hedge), Sitka spruce planted in blocks (js/world-harju.js's spruce); the road's gravel (def.surf: the builder draws it); the circuit's other raceways round the lap,
    the layouts this lap leaves out (def.sk.race: OpenStreetMap), out past the barriers: the pit lane behind the pit wall along the finish
    straight, the old tarmac corners beside the gravel, the gravel crossing the south straight; the footbridge over the lap after the start
    (def.sk.foot), the pit garages along the finish straight, the race-control tower by the line, the paddock's buildings and halls
@@ -182,6 +182,33 @@
     CA.addTo(root, aMat, false, true); CG.addTo(root, gMat, false, true);
   }
 
+  // the hedgerows (def.sk.hedge: the canopy height's rows of trees by the fields, tools/kildare/build.py): a lumpy band of hawthorn (in 88 %
+  // of the county's hedges) with elder in lighter stretches (42 %), 1.6-2.6 m tall and about 2 m wide, the ash and sycamore over it the
+  // woods' own (LK.woods); not inside the circuit's barriers, not across the buildings and the raceways (excluded)
+  function kdHedge({ scen, excluded }, st) {
+    const H = (API.T.def.sk || {}).hedge || [], R = rng(7351), HAW = [0.25, 0.37, 0.16], ELD = [0.33, 0.45, 0.2];
+    const S = [[-1, 0], [-1, 0.5], [-0.55, 0.92], [0.55, 0.92], [1, 0.5], [1, 0]];
+    for (let k = 0; k + 3 < H.length; k += 4) {
+      const ax = H[k], az = H[k + 1], bx = H[k + 2], bz = H[k + 3], len = Math.hypot(bx - ax, bz - az); if (len < 1) continue;
+      const tx = (bx - ax) / len, tz = (bz - az) / len, nx = -tz, nz = tx, n = Math.max(1, Math.round(len / 3));
+      let h0 = 1.6 + R(), w0 = 0.9 + R() * 0.3, c0 = (R() < 0.3 ? ELD : HAW).map(v => v * (0.88 + R() * 0.24));
+      for (let m = 0; m < n; m++) {
+        const x0 = ax + tx * len * m / n, z0 = az + tz * len * m / n, x1 = ax + tx * len * (m + 1) / n, z1 = az + tz * len * (m + 1) / n;
+        const h1 = 1.6 + R(), w1 = 0.9 + R() * 0.3, c1 = (R() < 0.3 ? ELD : HAW).map(v => v * (0.88 + R() * 0.24));
+        const mx = (x0 + x1) / 2, mz = (z0 + z1) / 2, q = nrNear(mx, mz);
+        if (!excluded(mx, mz) && !(q.i >= 0 && q.dd < 0.25)) {
+          const y0 = nrGround(x0, z0), y1 = nrGround(x1, z1), g = scen.get(mx, mz), dk = (c) => c.map(v => v * 0.72);
+          const Q = (x, z, y, h, w, p) => [x + nx * p[0] * w, y - 0.1 + h * p[1], z + nz * p[0] * w];
+          for (let f = 0; f + 1 < S.length; f++) { const lo = f === 0 || f === S.length - 2;
+            g.quadO(Q(x0, z0, y0, h0, w0, S[f]), Q(x1, z1, y1, h1, w1, S[f]), Q(x1, z1, y1, h1, w1, S[f + 1]), Q(x0, z0, y0, h0, w0, S[f + 1]), c0, [mx, (y0 + y1) / 2 + 0.3, mz], null,
+              [lo ? dk(c0) : c0, lo ? dk(c1) : c1, c1, c0]); }
+          st.hedge++;
+        }
+        h0 = h1; w0 = w1; c0 = c1;
+      }
+    }
+  }
+
   // the horizon (def.far, Riverside's rsFar): the plain's pasture, the darker woods and the hills' moorland, in the haze
   const kdFarCol = (h, d) => {
     const c = h < 110 ? [0.3, 0.43, 0.24] : h < 170 ? [0.29, 0.39, 0.23] : [0.37, 0.37, 0.27], f = (1 - Math.exp(-d / 22000)) * 0.85;
@@ -191,8 +218,8 @@
   // LK.extra: the buildings, the footbridge, the other raceways, the power lines, the horizon; before the crowds and the trees, which keep
   // clear of them
   function kdExtra(o) {
-    const T = API.T, st = { buildings: 0, garages: 0, tower: 0, bridge: 0, race: 0, pylons: 0, spans: 0, far: 0 };
-    kdBuildings(o, st); kdBridge(o, st); kdRace(o, st);
+    const T = API.T, st = { hedge: 0, buildings: 0, garages: 0, tower: 0, bridge: 0, race: 0, pylons: 0, spans: 0, far: 0 };
+    kdBuildings(o, st); kdBridge(o, st); kdRace(o, st); kdHedge(o, st);
     if (API.soPower) API.soPower(o, st, KD_POLE);
     if (T.def.far && API.rsFar) { o.out.dyn.far = API.rsFar(o.root, T.def.far, 'summer', 6, kdFarCol); st.far = 1; }   // (World.update: no car, back where it was built)
     return st;
