@@ -144,3 +144,41 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
+
+## Fable po resetu 29.–30. 11.
+Odločitev O-28-20 (Matej): takoj po resetu Fable pregleda in dopolni, kar je naredil Opus (O-28-7, O-28-14). Vrstni red: gneča, trki, grafika, proge; samo PR tega računa. Reset: jure.kopac26 ned 29. 11. ob 10.00, croatiadata ned ob 23.00, biketraveler pon 30. 11. ob 0.00 (partyslo ima Fable že zdaj). Merilo prog: `docs/dodelava-prog.md` (veja `dodelava/analiza`, #1195). Fizika vožnje se ne spreminja (samo trki).
+
+### jure.kopac26 (ned 29. 11. ob 10.00)
+| # | PR | Kaj naj Fable naredi |
+|---|---|---|
+| 1 | #1192 gneča | Pregleda meritve pri 1/8/16/24 vozilih in predlog popravkov; osnova za temo gneča (O-27-7, O-27-23), gradi na #1180. |
+| 2 | #1180 gneča | Dokonča korak 3 (priprava risanja, koraki na sličico) po odgovorih na kartice; pazi na proračun klicev. |
+| 3 | #1205 Kanaba | Dokonča dodelavo do ravni Pikes Peaka (svet, zanimivosti); meje proti #1018 (stranske ceste). |
+| 4 | #1206 Quezaltepeque | Dokonča svet in zanimivosti; ne podvaja #1080 (stolp) in #1060 (ptice). |
+| 5 | #1204 Ujarrás | Opravi raziskavo OSM, svet z jezerom Cachí in ruševinami, zanimivosti in komentatorja; ne podvaja #1060 in #1159. |
+| 6 | #1117, #1070 | Samo dokumenta (pravila): preglej skladnost z `docs/odlocitve.md`, brez kode. |
+
+### croatiadata (ned 29. 11. ob 23.00)
+| # | PR | Kaj naj Fable naredi |
+|---|---|---|
+| 1 | #1089 orodje | `tools/prekrivanje.mjs`: preveri orodje, ko dobi mesto v vrsti, nato Ready. |
+| 2 | #1077 avti | Začne po »ok« za kolibri-480-slike in #480 na `main`; 30 avtov na raven KOLIBRIJA. |
+| 3 | #1200 Koli | Napiše lasten graditelj (kvarcit, tykky smreke, tajga), imena ovinkov, komentatorja, slike pred/po, `tools/obremenitev.mjs koli`. |
+| 4 | #1199 Isuna | Dokonča graditelj kraja (butanske hiše iz OSM, čorten, lhakang). |
+| 5 | #1203 Medeu | Dokonča stopnišče jezu (837 stopnic), počivališča, zidove, terasne poti. |
+| 6 | #1196 Luanda | Začetna faza: zaliv z obalo in višina terena po `docs/dodelava-prog.md`. |
+| 7 | #1099 Tuzla | Pogleda sliko, uveljavi ok ali popravke; vse točke so narejene. |
+| 8 | #1100 Lombok | Doda drevje po podatkih, stavbe iz OSM, svetlobo, obalo; zlata vrstica skupaj z #1063. |
+
+### biketraveler (pon 30. 11. ob 0.00)
+| # | PR | Kaj naj Fable naredi |
+|---|---|---|
+| 1 | #1176 gneča | Preveri LOD.k2 8 → 4 (101 avtov, oddaljeni tekmeci 30 Hz) in `tests/lod.test.js` na Spa. |
+| 2 | #1083 trki | Po #608 ponovi točke 1–3 (`checker().done()`, trki, stene hw>0). |
+| 3 | #1190, #1174, #1133 | Zbirna grafika in chase: celoten perf v enem teku, preveri slike, odločitev o #1016/#1088, nato predaja Združevanju. |
+| 4 | #1194, #1112 | Zbirna menija: `smoke.test.mjs` posebej, osveži `main`, preglej slike; #1112 po #1012. |
+| 5 | #1175, #1171, #1087 | Analiza kroga (prenos z `i12-analiza-kroga`); Hakone po #1079; zima na severu (spor v `tools/shot.mjs`). |
+| 6 | #1137–#1167 chase | Skupine z »ok«: samo preveri perf in slike, pred združitvijo svež `main`; #1143 in #1151 po #1088. |
+| 7 | #1195, #1193 | Preveri merilo in vrstni red dodelave ter popis 70 prog. |
+| 8 | #1197, #1198, #1201, #1202 | Ghoufi (videz po virih), Sakhir (nočna luč), Sepang (oglišča, tribune), Silkeborg (ribniki, normale). |
+| 9 | #1090–#1097 | Proge Tatev, Trebević, Šipka, Meteora, Kudowa, Stavrovouni, Chamarel, El Castaño: svež `main`, `--kratek`, zelen CI. |
