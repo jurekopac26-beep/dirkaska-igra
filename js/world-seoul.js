@@ -553,7 +553,11 @@
       const FOG = new THREE.Color(0xc8d0d4), S = { x: 1e9, y: 0, z: 0, f: 0, fr: -1, fg: -1, fb: -1 }, fd = new THREE.Vector3();
       vm.onBeforeRender = (r, sc) => { if (sc && sc.fog) FOG.copy(sc.fog.color); };
       out.dyn.ext = (t, car, cam) => {
-        if (!cam) return; const c = cam.position;
+        if (!cam || !car) {   // (no car to follow, World.update(W, 0, null): the shell as built, as the world test takes it, whatever the camera did before)
+          vm.visible = true; S.x = 1e9; g.attributes.position.array.set(P0); g.attributes.color.array.set(C0);
+          g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true; return;
+        }
+        const c = cam.position;
         cam.getWorldDirection(fd); vm.visible = cam.far > 250 && Math.asin(clamp(fd.y, -1, 1)) + (cam.fov || 50) * Math.PI / 360 * 1.15 > -0.7; if (!vm.visible) return;   // (a thick fog, or the camera looking down so steeply that not even the land below the hill reaches the picture: the chase camera's top edge is some 13° below the horizon, the valley under Namsan lower still)
         if (Math.abs(c.x - S.x) + Math.abs(c.y - S.y) + Math.abs(c.z - S.z) < 2 && cam.far === S.f && FOG.r === S.fr && FOG.g === S.fg && FOG.b === S.fb) return;
         S.x = c.x; S.y = c.y; S.z = c.z; S.f = cam.far; S.fr = FOG.r; S.fg = FOG.g; S.fb = FOG.b;
