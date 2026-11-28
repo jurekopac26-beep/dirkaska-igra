@@ -36,4 +36,15 @@ Stranske ulice in dovozi, ki se priključijo na glavno cesto (`js/world-savusavu
 - **Odprto vprašanje**: (a) vseh 14 poti kot makadam (`savusavu-177m-po.webp`) ali (b) samo 7 z oznako `unpaved` (`savusavu-177m-b-samo-oznacene.webp`).
 - **Zmogljivost**: makadam je v mreži bankine glavne ceste, brežine ob robovih v kosih okolice: brez lastnih klicev risanja. Na telefonu 171 klicev na sliko (največ 210, prej 170 in 209), 405 tisoč oglišč (največ 493 tisoč, prej 398 in 491 tisoč).
 
+## Dodelava (lastni svet)
+
+Lasten graditelj `js/world-savusavu.js` (ovije `L.extra` skupnega sveta prelaza, ki ostane za druge proge nespremenjen); slike prej in potem `docs/slike/savusavu/dodelava-<m>m-{pred,po}.webp` (400, 1615, 2150, 2420 m).
+
+- **Zanimivosti**: 8 namesto 4 (`js/tracks/savusavu.js`, imena tudi v `js/lang.js`), samo zemljepisna imena.
+- **Tropsko rastje ob cesti**: kokosove palme (ukrivljeno, tanjšajoče se deblo, del suhih listov), drevesne praproti, bananovci, kruhovci, afriški tulipanovci s cvetovi, hibiskus; v vasi več palm in hibiskusa, v gozdu praproti in bananovci. Delež in razmik po rabi tal ESA WorldCover in naklonu, lega po zgoščevanju, ne po resničnih drevesih.
+- **Mangrove**: dve vrsti na robu otočka Nawi po OpenStreetMap (`natural=wetland`, `wetland=mangrove`, 1184782367), nizke krošnje na koreninah. Drugo območje (1184782368, 515 m od ceste) ni narisano. Ob ribnikih trstičje.
+- **Daljava**: mokri pas v pogledu v daljavo je modrozelen (zaliv).
+- **Predpostavke**: vrste in deleži dreves po splošnem poznavanju obale Vanua Levu (ni fotografij z istih mest); višina mangrov 4–5 m; mangrove in morje s kamero za avtom niso vidni na slikah (313 m od ceste).
+- **Zmogljivost**: vse v obstoječih kosih okolice, brez novih mrež: na sliko največ 232 klicev (prej 226), 665 tisoč oglišč (prej 610 tisoč), meja 300 in 900 tisoč.
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py savusavu --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.

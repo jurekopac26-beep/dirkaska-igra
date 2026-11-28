@@ -35,7 +35,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     !!sl && Math.abs(sl.d - ts) < 40 && Math.abs(+sl.n.match(/(\d+) m$/)[1] - T.altAt(top)) < 2 && !(def.curves || []).length && gmax < 0.125 && T.hFinish - T.hStart < 15 && top - T.hStart > 60,
     `top ${T.altAt(top).toFixed(1)} m at ${Math.round(ts)} m, steepest ${(gmax * 100).toFixed(1)} %`);
   check('names: the HUD and the commentator know the plateau, the ridge, the bay and the town at the finish',
-    T.names.length === 4 && T.names[0].n === 'Planota pri letališču' && T.names.some(q => q.n === 'Nad zalivom Savusavu' && q.say) && T.names[3].n === 'Savusavu' && T.names[3].d > T.raceLen - 30,
+    T.names.length === 8 && T.names[0].n === 'Planota pri letališču' && T.names.some(q => q.n === 'Nad zalivom Savusavu' && q.say) && T.names.some(q => q.n === 'Mangrove pri otoku Nawi' && q.say) && T.names[7].n === 'Savusavu' && T.names[7].d > T.raceLen - 30 && T.names.every((q, k) => !k || q.d > T.names[k - 1].d),
     T.names.map(q => q.n).join(' | '));
 }
 
