@@ -1688,23 +1688,25 @@
   }
  },
  "vaoala": {
-  "meshes": 1373,
-  "verts": 549782,
-  "instances": 33631,
+  "meshes": 1376,
+  "verts": 554548,
+  "instances": 33601,
   "props": 61,
   "crowd": 140,
-  "world": "128a2930",
+  "world": "78bb3d4b",
   "propsHash": "eb9d0e5a",
   "floor": "129d9b8e/4508",
   "groups": {
-   "-:MeshLambertMaterial": "9f5f7b49",
+   "-:MeshLambertMaterial": "5ec855e",
    "-:MeshPhongMaterial": "3ff42de6",
    "-:MeshBasicMaterial": "2075e6b0",
    "irFar:MeshLambertMaterial": "164c345e",
    "crowd:MeshLambertMaterial": "398263f1",
-   "ao:MeshBasicMaterial": "9f043cf1",
+   "ao:MeshBasicMaterial": "2f4c8a45",
    "tyremarks:MeshBasicMaterial": "f878fee6",
-   "roadwear:MeshLambertMaterial": "af9e14b8"
+   "roadwear:MeshLambertMaterial": "af9e14b8",
+   "life:MeshLambertMaterial": "ae823743",
+   "life:MeshBasicMaterial": "994825db"
   }
  },
  "krasnahorka": {
