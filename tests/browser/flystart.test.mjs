@@ -51,7 +51,7 @@ try {
   // online) and the flying start's (only the countdown: flyThree, flyTwo, flyOne, flyGo; no lights in them): every line of the pools, the game's
   // own and every road's, with a field of 22 and of 100: filled in, no gaps, a capital after a full stop
   const lines = await page.evaluate(() => {
-    Comm.setEnabled(true); Comm.setSpeech(true); const out = [], flyOut = [], r0 = Math.random, own = ['introPass', 'goPass'];
+    Comm.setEnabled(true); Comm.setSpeech(true); const out = [], flyOut = [], r0 = Math.random, own = ['introPass', 'goPass', 'intro', 'introOne', 'go'];   // (a circuit's own: intro, introOne, go)
     for (const d of Core.TRACKS) if (d.comm) for (const k of own) if (d.comm[k]) Comm.addLines(k + '@' + d.id, d.comm[k]);
     const fly = ['flyThree', 'flyTwo', 'flyOne', 'flyGo'], keys = ['intro', 'introOne', 'introPass', 'goPass'].concat(fly, Core.TRACKS.filter(d => d.comm).flatMap(d => own.filter(k => d.comm[k]).map(k => k + '@' + d.id)));
     for (const n of [22, 100]) for (const key of keys) {

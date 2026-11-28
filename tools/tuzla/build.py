@@ -56,6 +56,18 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
     d = np.hypot(P[:, 0] - x, P[:, 1] - z); i = int(d.argmin()); j = (i + 1) % NP; tx, tz = P[j] - P[i]; tl = math.hypot(tx, tz)
     return float(CUM[i]), float(((x - P[i, 0]) * -tz + (z - P[i, 1]) * tx) / tl)
 
+# ---- the commentator's own lines for a race here (def.comm; Game: ownLine for 'intro', 'introOne' and 'go', the generic ones elsewhere): the
+# place by its geography only (the hills above Tuzla, the Asian side of Istanbul, the Sea of Marmara below), the lap anticlockwise, Turn 8's
+# four apexes ----
+COMM = {
+    'intro': ['Welcome to {track}, on the hills above the Sea of Marmara! {laps} laps, {cars} cars, and you line up {grid} on the grid.',
+              'Good day from the Asian side of Istanbul! {laps} laps anticlockwise round {track}, and you start {grid}.',
+              'Here we are at {track}. Fourteen turns, the hills and the long left of Turn 8. {laps} laps, and you start {grid}.'],
+    'introOne': ['Welcome to {track}, on the hills above the Sea of Marmara! One lap, {cars} cars, and you start {grid}.',
+                 'One lap of {track}, anticlockwise over the hills. You line up {grid} on the grid.'],
+    'go': ['Lights out, and away they go, down the hill into Turn 1!', "And they're off! The field plunges towards the first left!",
+           'Green light! The race on the hills above the Marmara is on!'],
+}
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races or the circuit
 # (CLAUDE.md, Pravna varnost); the turns by their numbers in the lines, as the circuit numbers them ----
 NAMES = [
@@ -231,13 +243,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
   const TZ_H = [%(tzh)s];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
-    look: { fog: 0xd3d9e1, sun: 0xfff0d2, sunI: 1.1, sky: 0xa9c5e8, gnd: 0x7c7448, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 0.98, sunOff: [-58, 74, 66], split: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]] },   // Istanbul in late summer: a strong afternoon sun from the south-west, a warm haze over the hills, the grass gone gold
+    look: { fog: 0xd9d6cf, sun: 0xffdcaa, sunI: 1.45, sky: 0xa6c1ea, gnd: 0x7c7448, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, haze: 0.1, hazeCol: [1, 0.82, 0.58], sunOff: [-108, 54, 32], split: [[0.96, 0.99, 1.05], [1.05, 1.0, 0.93]] },   // Istanbul in early September at five in the afternoon: the sun 26 degrees up in the west-south-west (its place worked out for the circuit's latitude and the date), long shadows across the track, a warm haze over the hills, the grass gone gold
     say: 'Tuzla',
     grassNat: 0.55, lawn: [1.03, 1.0, 0.86],
     zivali: { a: ['fox', 'hare', 'stork'], t: ['signPost', 'waterTank'], open: true },
     id: 'tuzla', name: 'Tuzla, Turčija', theme: 'tuzla', laps: 2, halfWidth: 6.5,
     desc: %(desc)s,
     en: { name: 'Tuzla, Turkey', desc: %(desc_en)s },
+    // the commentator's own lines for a race here (Comm, Game's ownLine): the place by its geography only
+    comm: %(comm)s,
     start: [0, 0], runoff: 1.1, inner: 4.2, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s, runoffTarmac: true,
     elev: TZ_H.map((h, i) => [i / TZ_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
@@ -260,7 +274,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     points: [%(pts)s]
   });
 })();
-''' % dict(km='%.2f' % (LEN / 1000), tzh=tzh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+''' % dict(km='%.2f' % (LEN / 1000), tzh=tzh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), comm=json.dumps(COMM, ensure_ascii=False), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), drs=json.dumps(DRS),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'tuzla.js'); open(path, 'w').write(src)
