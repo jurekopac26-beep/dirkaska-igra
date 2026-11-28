@@ -236,6 +236,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Sepang',
     grassNat: 0.75, lawn: [0.93, 1.02, 0.86],
     zivali: { a: ['macaque', 'egret', 'buffalo'], t: ['waterTank', 'signPost'] },
+    // the commentator's own lines for a race here (Comm: intro, go and rain; js/game.js ownLine), by docs/proge/sepang.md: the oil palm estates
+    // of the Selangor lowland, the heat and the damp of the tropics, the afternoon thunderstorms of the inter-monsoon months
+    comm: {
+      intro: ["Welcome to {track}! {laps} laps among the oil palms of Selangor, {cars} cars, and you start {grid}.", "Good afternoon from {track}, hot and humid as ever down here in the tropics. {laps} laps, and you line up {grid}.", "Here we are at {track}, between the palm estates and the airport. {cars} cars, {laps} laps, and you start {grid}."],
+      go: ["Lights out, and away they go into the heat!", "And they're off, down the wide main straight towards Turn 1!", "Green light! The pack charges down to the tightening right!"],
+      rain: ["And here comes the tropical rain! A thunderstorm over the palms, the track is soaking.", "The afternoon storm has arrived! Standing water on a slippery track.", "It's pouring down! Typical for the tropics: the clouds build up over the afternoon, and then the heavens open."],
+    },
     id: 'sepang', name: 'Sepang, Malezija', theme: 'sepang', laps: 2, halfWidth: 7.5,
     desc: %(desc)s,
     en: { name: 'Sepang, Malaysia', desc: %(desc_en)s },
