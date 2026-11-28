@@ -43,7 +43,9 @@ NAMES = [
     ('Desni v gozdu', 940, ['The right in the woods!', 'Right, deep in the forest!', 'Round the right among the pines!']),
     ('Spust k jezeru', 1230, ['Down towards the lake!', 'Over the crest and down to the water!', 'Dropping down to the lake!']),
     ('Levi ob jezeru', 1335, ['The left by the lake!', 'Hard left, the lake beside us!', 'Round the left by the water!']),
+    ('Jezero Linezers', 1480, ['The lake on the left, reeds along the shore!', 'Past the lake, benches and picnic tables by the water!', 'Calm water beside us, no time to look!']),
     ('Klanec od jezera', 1640, ['Up the hill from the lake!', 'The steep climb away from the water!', 'Climbing hard up the dunes!']),
+    ('Peščene sipine', 1760, ['Up on the sand dunes, the tall pines all round!', 'The top of the dunes, the highest part of the lap!', 'Over the old sand dunes!']),
     ('Zahodni ovinek', 1920, ['The west corner, a long right!', 'Right round the west corner!', 'Holding it through the west corner!']),
     ('Gozdna ravnina', 2150, ['Flat out down the forest straight!', 'The long straight through the woods!', 'Pines on both sides, flat out!']),
     ('Severni ovinek', 2390, ['The north corner, right and long!', 'Right round the north corner!', 'Through the north corner, the far end of the lap!']),
@@ -82,6 +84,15 @@ STANDS = [[-394, -314, -1, 5, 0, 2, 0, 'MEŽCIEMS'], [-290, -132, -1, 8, 1, 3, 0
           [262, 370, -1, 5, 0, 2, 0, 'RĪGA'], [380, 460, -1, 5, 0, 1, 0, 'LATVIJA'], [472, 540, -1, 5, 0, 1, 0, 'VIDZEME']]
 SECTORS = [1230, 2400]
 REAL_KM = 3.65
+# the course flyover (render.js pkFly, before the lights; one lap from the start line): [metres after the start line (-1: back at the line), caption]
+FLY = [[0, 'START'], [560, 'Lasnica'], [940, 'Borov gozd'], [1480, 'Jezero Linezers'], [1760, 'Peščene sipine'], [2390, 'Severni ovinek'], [2960, 'Spust s sipin'], [-1, 'CILJ']]
+# the commentator's own lines for the race (Comm: {track}, {cars}, {grid}, {rivals})
+COMM = {
+    'introPass': ['Welcome to {track}! {cars} cars in the pine woods on the edge of Riga, and you start {grid}.',
+                  'Here we are at {track}: the lake, the sand dunes and the pines, and you line up {grid}.',
+                  'Welcome to the forest park! {rivals} rivals round the dunes, and you start {grid}.'],
+    'goPass': ['And away they go, down the main straight to the hairpin!', 'And they\'re off! {cars} cars into the pines!', 'The race is on, the hairpin first!'],
+}
 
 # the reedbeds on the lake's shore (OSM natural=wetland, wetland=reedbed: ways 688089979 and 688089993; [x, z, ...], 0.5 m)
 REEDS = [[-349.5, -163.5, -349.0, -159.0, -352.5, -138.5, -354.0, -137.0, -353.0, -122.5, -353.0, -110.0, -347.0, -121.5, -345.0, -129.0, -344.5, -160.5, -347.5, -171.5, -350.5, -178.0],
@@ -223,6 +234,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: %(desc)s,
     en: { name: 'Biķernieki, Latvia', desc: %(desc_en)s },
     start: [0, 0], runoff: 0.9, inner: 3.5, side: 5.5, gradeForce: true, elevSmooth: 10, realKm: %(real)s,
+    // the commentator's own lines for the race (Comm), the course flyover's places (render.js pkFly: one lap from the start line)
+    comm: %(comm)s,
+    fly: %(fly)s,
     elev: BK_H.map((h, i) => [i / BK_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
@@ -242,7 +256,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     points: [%(pts)s]
   });
 })();
-''' % dict(km='%.2f' % (LEN / 1000), bkh=bkh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+''' % dict(km='%.2f' % (LEN / 1000), bkh=bkh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, comm=json.dumps(COMM, ensure_ascii=False), fly=json.dumps(FLY, ensure_ascii=False), names='\n'.join(names), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), stands=js(STANDS).replace(',', ', '),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'bikernieki.js'); open(path, 'w').write(src)
