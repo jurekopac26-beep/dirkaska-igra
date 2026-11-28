@@ -257,6 +257,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: %(desc)s,
     en: { name: 'Sosnová, Czechia', desc: %(desc_en)s },
     start: %(start)s, runoff: 0.9, inner: 3.5, side: 5.5, gradeForce: true, elevSmooth: 10, realKm: %(real)s,
+    alt: [253, 256],   // metres a.s.l., the lowest and the highest of the lap (SO_H from the start line's 255.6 m: the west hairpin, the last hairpin)
+    // the commentator's own welcome and start (game.js ownLine; docs/proge/sosnova-raziskava.md: the meadows south of Česká Lípa by the I/9,
+    // the pine and birch woods, the power lines over the circuit, the sandstone country of the Peklo gorge)
+    comm: {
+      intro: ["Welcome to {track}! {cars} cars on the meadows south of Česká Lípa, {run} of this short, flat little circuit, and you line up {grid}.", "Good day from {track}, in the north of Bohemia! Four hairpins, a tight chicane, {run} ahead, and you start {grid}.", "Here we are at {track}, on the meadows by the village, the pines all round and the power lines overhead. {cars} cars, {run}, and you're {grid}."],
+      go: ["And they're away across the meadows!", "Green light! Into the left at the end of the straight!", "They're off! There's no room to breathe on a lap this short!"],
+      introTT: ["Welcome to {track}! Just you and the clock on the meadows south of Česká Lípa.", "Here we are at {track}. One flat, twisting lap of the meadows, and the clock is waiting."],
+      goTT: ["Green light! Attack every hairpin!", "Go! Hard on the brakes for the first left!"],
+    },
     elev: SO_H.map((h, i) => [i / SO_H.length, h / 10]),
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the shortest circuit, its flying start's column (4/5 of a lap at most) would stand car on car with more (67 already do, the formula cars)
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
