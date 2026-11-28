@@ -1708,23 +1708,26 @@
   }
  },
  "krasnahorka": {
-  "meshes": 426,
-  "verts": 371949,
+  "meshes": 491,
+  "verts": 406694,
   "instances": 3827,
   "props": 154,
   "crowd": 12,
-  "world": "964654e4",
+  "world": "84e5209e",
   "propsHash": "89028a26",
   "floor": "436e5379/7364",
   "groups": {
-   "-:MeshLambertMaterial": "428ae687",
+   "-:MeshLambertMaterial": "a95418f1",
    "-:MeshPhongMaterial": "f177a5c0",
    "-:MeshBasicMaterial": "53339fdc",
    "crowd:MeshLambertMaterial": "fb825c43",
    "flags:MeshLambertMaterial": "303dbfda",
-   "ao:MeshBasicMaterial": "4ba83a39",
+   "ao:MeshBasicMaterial": "2a8c29b1",
    "tyremarks:MeshBasicMaterial": "394556b2",
-   "roadwear:MeshLambertMaterial": "c1369259"
+   "roadwear:MeshLambertMaterial": "c1369259",
+   "life:MeshLambertMaterial": "f6c383a3",
+   "lifeShadow:MeshBasicMaterial": "82130dbd",
+   "life:MeshBasicMaterial": "3832c2e"
   }
  },
  "chamarel": {
