@@ -24,8 +24,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xcfdcdc, sun: 0xfff0d6, sunI: 1.25, sky: 0x86bde6, gnd: 0x3f6a2c, hemiI: 0.68, tint: [0.99, 1.02, 0.99], sat: 1.1, sunOff: [70, 100, 30], split: [[0.97, 1.0, 1.04], [1.04, 1.01, 0.95]] },   // Canaries: a bright Caribbean afternoon, the sea haze in the west, the deep green of the rainforest
     say: 'the Canaries coast road',
     id: 'canaries', name: 'Canaries, Sveta Lucija', theme: 'canaries', open: true, leftHand: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.5,
-    desc: 'Obalna cesta od vasi Canaries na zahodni obali Svete Lucije proti severu: od 44 m nad zalivom mimo zaselka Anse La Verdue po gozdnatem grebenu do 177 m, v dolino (82 m) in po serpentini spet gor do 178 m. Cesta gor in dol, ozka in ovinkasta ves čas, spodaj Karibsko morje. Vozi se po levi. Gost tropski gozd, bananovci in palme, pisane hiše s pločevinastimi strehami. Dirka s tekmeci, vožnja na čas, dvoboj v prometu in beg pred policijo.',
-    en: { name: 'Canaries, Saint Lucia', desc: 'The coast road north from the village of Canaries on the west coast of Saint Lucia: from 44 m above the bay past the hamlet of Anse La Verdue along the forested ridge to 177 m, down into the valley (82 m) and up a hairpin again to 178 m. A road up and down, narrow and winding all the way, the Caribbean Sea below. Drive on the left. Dense tropical forest, banana plants and palms, colourful houses with tin roofs. A race against rivals, a time trial, a duel in the traffic and a run from the police.', escTo: 'To Anse La Raye' },
+    desc: 'Obalna cesta od vasi Canaries na zahodni obali Svete Lucije proti severu: od 44 m nad zalivom mimo zaselka Anse La Verdue po gozdnatem grebenu do 177 m, v dolino (82 m) in po serpentini spet gor do 178 m. Cesta gor in dol, ozka in ovinkasta ves čas, spodaj Karibsko morje. Vozi se po levi. Start v vasi Canaries ob zalivu (pisane lesene hiše na stebrih, verande, pločevinaste strehe, pirogi na plaži), nato deževni gozd z drevesi do 28 m, čez potok v grapi, mimo zaselka na grebenu z bananovci in palmami. Dirka s tekmeci, vožnja na čas, dvoboj v prometu in beg pred policijo.',
+    en: { name: 'Canaries, Saint Lucia', desc: 'The coast road north from the village of Canaries on the west coast of Saint Lucia: from 44 m above the bay past the hamlet of Anse La Verdue along the forested ridge to 177 m, down into the valley (82 m) and up a hairpin again to 178 m. A road up and down, narrow and winding all the way, the Caribbean Sea below. Drive on the left. The start in the village of Canaries on the bay (colourful wooden houses on piers, verandas, tin roofs, pirogues on the beach), then the rainforest with trees up to 28 m, across a stream in a gully, past a hamlet on the ridge with banana plants and palms. A race against rivals, a time trial, a duel in the traffic and a run from the police.', escTo: 'To Anse La Raye' },
     maxRivals: 85,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~190 m of road past the line
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: CANARIES_H.map((h, i) => [i / (CANARIES_H.length - 1), h / 10]),
@@ -39,10 +39,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1d2f5e', text: '#f4f6f0' }, escTo: 'Do Anse La Raye',   // (and the results of an escape: 'Do Anse La Raye v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Anse La Verdue", "d": 575.0, "say": ["Through Anse La Verdue, mind the houses!", "Past the hamlet, and up to the ridge!"]},
-      {"n": "Greben · 177 m", "d": 1780.0, "say": ["Up on the ridge, the sea down on the left!", "Over the top of the ridge, and into the forest!"]},
-      {"n": "Dolina · 82 m", "d": 4040.0},
-      {"n": "Serpentina", "d": 4200.0, "say": ["The hairpin! Hard on the brakes!", "Round the hairpin, and climb to the line!"]},
+      {"n": "Canaries", "d": 60.0, "say": ["Out of Canaries, the bay right below us!", "Past the painted houses of Canaries, and the climb begins!", "Tin roofs, boats on the beach, and up we go out of the village!"]},
+      {"n": "Anse La Verdue", "d": 575.0, "say": ["Through Anse La Verdue, mind the houses!", "Past the hamlet, and up to the ridge!", "A last look at the cove, and into the trees!"]},
+      {"n": "Deževni gozd", "d": 950.0, "say": ["Into the rainforest! Trees twenty metres tall either side!", "Deep in the forest now, the light comes through in patches!", "Green walls on both sides, and the road is damp in the shade!"]},
+      {"n": "Greben · 177 m", "d": 1780.0, "say": ["Up on the ridge, the sea down on the left!", "Over the top of the ridge, and into the forest!", "The highest point of the ridge, and the sea glitters below!"]},
+      {"n": "Čez potok", "d": 2259.0, "say": ["Across the stream, it can be slippery here!", "Over the little stream in the gully, and climbing again!"]},
+      {"n": "Zaselek", "d": 2700.0, "say": ["Houses on the ridge, keep it tidy through here!", "Past the hamlet on the ridge, bananas in the gardens!"]},
+      {"n": "Dolina · 82 m", "d": 4040.0, "say": ["Down into the valley, the lowest point since the bay!", "The bottom of the valley, a stream under the road!", "Down in the valley, and the hairpin is coming!"]},
+      {"n": "Serpentina", "d": 4200.0, "say": ["The hairpin! Hard on the brakes!", "Round the hairpin, and climb to the line!", "Tight hairpin, full lock, and power out!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
