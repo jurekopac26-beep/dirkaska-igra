@@ -18,7 +18,7 @@ const OTHERS = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-gap', 'h-map', 'h-pro
 
 // the run on the autopilot for `sec` seconds of game time, a frame drawn after every 0.2 s (a caption stays 1.5 s at least): what the
 // co-driver showed, frame by frame (o.long: the words of the next two calls for this run, Track.paceNotes' own, as the game reads them;
-// o.stop: done once no caption is on after so many shown, so many grades on the sign, a caption so long). With his voice heard (the
+// o.stop: done once no caption is on after so many shown, so many gone, so many grades on the sign, a caption so long). With his voice heard (the
 // game's cdTalk) the game time kept to the clock, as in the game: a call waits for the one before on the clock (Comm.noteFree), so a run
 // ahead of it held the next one back for more of the road, late or none on a fast machine (docs/nestabilni-testi.md, 6); the race on
 // the autopilot in the game's own frames (autoDrive), topped up to the clock by sim where the frames fall behind
@@ -38,7 +38,7 @@ const drive = (page, sec, opt = {}) => page.evaluate(async ([OTHERS, sec, long, 
   if (clock) g.autoDrive = true;
   for (let i = 0; (clock ? g.race.time - g0 < sec : i < sec * 5) && g.phase === 'racing'; i++) {
     if (!clock) g.sim(0.2, true);
-    else { const lag = (performance.now() - t0) / 1000 - (g.race.time - g0); if (lag > 0) g.sim(Math.min(lag, 0.2), true); }
+    else { const lag = (performance.now() - t0) / 1000 - (g.race.time - g0); if (lag > 0) g.sim(Math.min(lag, 0.3), true); }   // (0.3 s: the game's own frames catch up 4 steps at most since #1115)
     await fr();
     const cap = g.codrv.cap, b = box(el);
     if (cap) {
@@ -52,7 +52,7 @@ const drive = (page, sec, opt = {}) => page.evaluate(async ([OTHERS, sec, long, 
     } else if (was) o.gone++;
     if (/\bshow\b/.test(note.className)) { if (num.textContent) o.nums.add(num.textContent); o.pos[cap ? 'cap' : 'free'].add(note.offsetLeft + ',' + note.offsetTop); }
     was = cap;
-    if (st && !cap && o.shown.length >= (st.shown || 0) && o.nums.size >= (st.nums || 0) && (!st.long || o.shown.some(x => x.length >= st.long))) break;
+    if (st && !cap && o.shown.length >= (st.shown || 0) && o.gone >= (st.gone || 0) && o.nums.size >= (st.nums || 0) && (!st.long || o.shown.some(x => x.length >= st.long))) break;
   }
   g.autoDrive = false;
   for (const [c, t] of keep) c.toks = t;
@@ -75,7 +75,7 @@ try {
       T.check('the switch in the settings: Sovoznik off, the captions, the voice and the captions', row === '0:Izklop | 2:Napis | 1:Glas in napis', row);
     }
     await startTrack(page, 'rastro', 'tt');
-    const r = await drive(page, lang === 'sl' ? 40 : 30, { stop: { shown: 4, nums: 2 } });
+    const r = await drive(page, lang === 'sl' ? 40 : 30, { stop: { shown: 4, nums: 2, gone: 2 } });   // (gone 2: with the voice on the clock the next call can take a caption's place, the calls in a row, docs/nestabilni-testi.md, 6)
     // (ahead of the bend: heard, by the call's length, 60-260 m, later only when the call before is still being said; the captions alone,
     // 2.4 s at the speed and 30 m, 55-170 m)
     const heard = lang === 'sl', lead = r.d.slice(1).every(d => heard ? d >= 20 && d <= 262 : d >= 40 && d <= 175), keep = r.pos.cap.every(p => r.pos.free.includes(p));
