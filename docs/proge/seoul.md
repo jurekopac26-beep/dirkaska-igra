@@ -18,3 +18,18 @@ Mestna proga čez hrib Namsan sredi Seula, ceste zaprte za dirko (odločitev upo
 - **Viri:** © OpenStreetMap (ODbL 1.0, prek API OpenStreetMap), Copernicus DEM GLO-30, ESA WorldCover 2021, višina krošenj Meta in WRI (glej »Zasluge« v `README.md`). Orodji: `tools/proga-podatki.py` (nastavitve `tools/seoul/config.json`) in `tools/seoul/build.py` (proga in podatki okolice).
 - **Meni:** maketa terena `assets/tracks/seoul.webp` in `seoul-rain.webp`, video dvojnega desnega iz drona (`assets/maps/corner-seoul.*`, kamera v `tools/menu-corners.json`), zastava `assets/flags/south-korea.svg`, kraj in obris države na globusu (`tools/menu-globe.mjs`).
 - **Test:** `tests/seoul.test.js` (ime, načini, dolžina, višine in strmine, ovinki, kraji na HUD-u, širine in ograje, stavbe, stolpnice, obzidje, opisne oznake znamenitosti, prehodi in postajališča, promet, startna mreža, cela dirka, dvoboj v prometu, medalje).
+
+## Raziskava za dodelavo (28. 11. 2026, merilo Pikes Peak)
+
+Iz `docs/dodelava-prog.md` (vrstica `seoul`): svet ima svoj gradnik, a **manjkata gore za mestom in reka**. Tla ob cesti (iglice, listje, podrast, veje, kamni ob robniku) že rišejo osnutki za kamero za avtom (`js/world-realizem-bt.js`, `js/world-chase-bt*.js`, odprti PR #1148), zato jih ta dodelava ne podvaja.
+
+- **Kraj:** Namsan je osamel hrib sredi Seula, ~262–270 m (viri se razlikujejo; v modelu GLO-30 brez krošenj ~240 m ob cesti pod vrhom). Mesto leži v kotlini, ki jo obdaja **venec granitnih gora**: na severu Bukhansan (~836 m) in Dobongsan (~740 m), na severovzhodu Suraksan (~638 m), na vzhodu Achasan (~295 m), na jugovzhodu Namhansan (~480 m), na jugu Gwanaksan (~632 m) in Cheonggyesan (~618 m), na severozahodu bližnja Inwangsan (~338 m) in Bugaksan (~342 m). Višine in lega so iz Copernicus GLO-30 (javni višinski model), imena gora so zemljepisna.
+- **Reka Han:** teče ~2–3 km južno od proge od vzhoda proti zahodu, široka ~0,8–1,2 km, z nizkimi nabrežji in otoki (Yeouido na zahodu). Obris vode je iz ESA WorldCover 2021 (razred »voda«).
+- **Kamnina in tla:** Namsan, Inwangsan in Bukhansan so iz jurskega granita (svetlo sive kupole, golo skalovje na grebenih Bukhansana); prst je tanka, peščena.
+- **Podnebje:** vlažno celinsko z monsunom (Köppen Dwa): ~1400 mm padavin na leto, več kot polovica julija in avgusta (julij ~400 mm, januar ~17 mm); januar ~−2 °C, avgust ~26 °C. Zima je suha in jasna, poletje soparno z meglico nad mestom.
+- **Rastje:** na Namsanu gozd rdečega bora in hrastov (mongolski, korejski), akacija, češnje ob cestah; jeseni rdeči javorji. Gore v vencu so gozdnate do grebenov, na Bukhansanu gol granit.
+- **Živali:** v parku srake (najpogostejša ptica v mestu), golobi; ob reki čaplje.
+- **Stavbe ob cesti do 60 m:** že v svetu (obzidje, paviljon, razgledišča, postajališča, stanovanjski bloki v Huam-dongu iz OSM).
+- **Načrt dodelave:** (1) **venec gora** 4–22 km od proge iz GLO-30 kot ena poceni mreža (en klic risanja, nekaj tisoč oglišč) za mestom; (2) **reka Han** iz WorldCover na ~50 m namesto sedanjih 200 m celic; (3) srake v parku (`zivali`, mestna različica); (4) številke ovinkov in podatki kot pri Pikes Peak, kjer manjkajo. Fizika vožnje, senčilniki in svetloba ostanejo, kot so.
+
+Viri raziskave: OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30 (© DLR e.V. 2010–2014 in © Airbus 2017–2018, pod licenco ESA), ESA WorldCover 2021 (CC BY 4.0); javni opisi: Wikipedija (Namsan, Bukhansan, Climate of Seoul; CC BY-SA 4.0), korejska vremenska služba (normale 1991–2020).

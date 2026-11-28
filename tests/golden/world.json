@@ -928,20 +928,23 @@
   }
  },
  "seoul": {
-  "meshes": 474,
-  "verts": 565142,
+  "meshes": 496,
+  "verts": 592209,
   "instances": 27765,
   "props": 0,
   "crowd": 3,
-  "world": "63c35611",
+  "world": "465ba345",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "de13ad14",
+   "-:MeshLambertMaterial": "70067fc0",
+   "seoulView:MeshBasicMaterial": "aa37ad9d",
    "crowd:MeshLambertMaterial": "998832b5",
    "ao:MeshBasicMaterial": "cdefbc19",
    "tyremarks:MeshBasicMaterial": "a337b480",
-   "roadwear:MeshLambertMaterial": "90b2ad82"
+   "roadwear:MeshLambertMaterial": "90b2ad82",
+   "life:MeshLambertMaterial": "17b055bc",
+   "life:MeshBasicMaterial": "91a2e78a"
   }
  },
  "tuzla": {
