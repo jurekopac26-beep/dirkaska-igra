@@ -49,7 +49,7 @@ check('track: an open road, a descent (def.descent) with three ways to drive it 
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('ngorongoro'));
 
 // 2. the hairpin: one, a real bend of the line the way its sign says (135 degrees and more within 120 m of road, near its sign), its sign's
-// altitude the road's own, no bend under a 10 m radius; flatter round its tip than down the wall. The places on the HUD (the gate, the hairpin,
+// altitude the road's own, no bend under a 10 m radius; flatter round its tip than down the wall. The places on the HUD (the gate, the hairpin, the forest below the rim, the foot of the wall,
 // the wall, the ledge half way down, the floor) at the road's own altitudes, in order, each with the commentator's lines
 {
   const turnAt = (c, h) => { const a = T.idx(c - h), b = T.idx(c + h); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); return s; };
@@ -62,9 +62,9 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     cv.length === 1 && Math.abs(turn[0]) > 2.35 && Math.sign(turn[0]) === cv[0][2] && Math.abs(cv[0][1] - alt[0]) < 3 && 1 / kmax >= 10 && gin / nin < 0.92 * gout / nout,
     `turn ${Math.round(turn[0] * 57.3)} deg, sign ${cv[0][1]} m / road ${Math.round(alt[0])} m, tightest radius ${(1 / kmax).toFixed(1)} m, grade round the tip ${(gin / nin * 100).toFixed(1)} %, down the wall ${(gout / nout * 100).toFixed(1)} %`);
   const L = T.names, num = (q) => +q.n.match(/(\d)\.(\d{3}) m$/).slice(1).join(''), at = (q) => T.altAt(T.hy[T.idx(T.startS + q.d)]);
-  const want = [/^Zapornica · /, /^Serpentina · /, /^Stena kraterja · /, /^Polica · /, /^Dno kraterja · /];
-  check('places: the gate, the hairpin (at its sign), the crater wall, the ledge and the crater floor, in order down the road, each at the road\'s altitude, each with the commentator\'s lines',
-    L.length === 5 && L.every((q, k) => want[k].test(q.n) && /· \d\.\d{3} m$/.test(q.n) && Math.abs(num(q) - at(q)) < 2 && q.say && q.say.length >= 2 && (!k || q.d > L[k - 1].d)) && Math.abs(L[1].d - cv[0][0]) < 1,
+  const want = [/^Zapornica · /, /^Serpentina · /, /^Gozd pod robom · /, /^Stena kraterja · /, /^Polica · /, /^Vznožje stene · /, /^Dno kraterja · /];
+  check('places: the gate, the hairpin (at its sign), the forest below the rim, the crater wall, the ledge, the foot of the wall and the crater floor, in order down the road, each at the road\'s altitude, each with the commentator\'s lines',
+    L.length === 7 && L.every((q, k) => want[k].test(q.n) && /· \d\.\d{3} m$/.test(q.n) && Math.abs(num(q) - at(q)) < 2 && q.say && q.say.length >= 2 && (!k || q.d > L[k - 1].d)) && Math.abs(L[1].d - cv[0][0]) < 1,
     L.map(q => `${q.n} @${Math.round(q.d)} (${Math.round(at(q))} m)`).join(' | '));
 }
 
@@ -185,8 +185,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'lang.js'), 'utf8'), ctx);
   ctx.Lang.set('en');
   const en = T.names.map(q => ctx.Lang.place(q.n));
-  check('names: the HUD\'s places in English (The Gate · 2,157 m, Hairpin · 2,145 m, Crater Wall · 2,055 m, The Ledge · 1,984 m, Crater Floor · 1,831 m)',
-    en.join(' | ') === 'The Gate · 2,157 m | Hairpin · 2,145 m | Crater Wall · 2,055 m | The Ledge · 1,984 m | Crater Floor · 1,831 m', en.join(' | '));
+  check('names: the HUD\'s places in English (The Gate · 2,157 m, Hairpin · 2,145 m, Forest below the Rim · 2,114 m, Crater Wall · 2,055 m, The Ledge · 1,984 m, Foot of the Wall · 1,932 m, Crater Floor · 1,831 m)',
+    en.join(' | ') === 'The Gate · 2,157 m | Hairpin · 2,145 m | Forest below the Rim · 2,114 m | Crater Wall · 2,055 m | The Ledge · 1,984 m | Foot of the Wall · 1,932 m | Crater Floor · 1,831 m', en.join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

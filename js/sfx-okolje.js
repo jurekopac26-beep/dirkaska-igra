@@ -26,7 +26,7 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608], ngorongoro: [-3.16, 2177] };   // (Ghoufi, Isalo, Ngorongoro: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0; Ngorongoro: y = 0's, the start 2,169 m)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
@@ -120,6 +120,11 @@
     const LS = o.lifeStats;
     if (LS && LS.at) for (const a of LS.at) { const kd = /^cow/.test(a[3]) ? 'cow' : a[3] === 'sheep' ? 'sheep' : null; if (!kd) continue;
       const s = sOf(a[0]), i = T.idx(clamp(s, 0, len - 0.01)), bar = (a[1] > 0 ? T.br : T.bl) || null; Z.herds.push([s, a[1], (bar ? bar[i] : 5) + a[2] + 3, kd]); }
+    // Ngorongoro's own herds (js/world-ngorongoro.js ngLife, its groups: the track's s, the side, the spot): the gnus' nasal grunts, the
+    // buffalo's lower ones, the zebras' barks (kwa-ha), the crowned cranes' honks (docs/proge/ngorongoro-raziskava.md); the others silent
+    const NL = def.theme === 'ngorongoro' && o.life && o.life.groups ? o.life : null;
+    if (NL) for (const g of NL.groups) { const a = NL.A[g.a0], kd = a && NG_CALL[a.sp]; if (!kd) continue;
+      Z.herds.push([g.s, g.side, Math.max(4, Math.hypot(g.x - T.px[g.i], g.z - T.pz[g.i])), kd]); }
     Z.city = !!(def.zivali && def.zivali.city);   // (a town round the road: its far traffic, its pigeons)
     Z.pa = loop && !!(o.crowdPts && o.crowdPts.length);   // (a circuit with its stands: the announcer, the people's shouts)
     // the climate; the wind: up a real climb the higher the more, the altitude, the open land (trees shelter), by the sea a breeze
@@ -277,7 +282,7 @@
     runs('vas', k => Z.vas[k] >= 0.45 ? 3 : 0);
     runs('veter', k => Z.wind[k] >= 0.3 ? 3 : 0);
     for (const b of Z.bells) { let d = b[0] - Z.s0; if (!Z.open) d = ((d % Z.len) + Z.len) % Z.len; rows.push([Math.round(d), Math.round(d), 'zvon', b[1] < 0 ? 'L' : 'D']); }
-    for (const h of Z.herds) { let d = h[0] - Z.s0; if (!Z.open) d = ((d % Z.len) + Z.len) % Z.len; rows.push([Math.round(d), Math.round(d), h[3] === 'cow' ? 'krave' : 'ovce', h[1] < 0 ? 'L' : 'D']); }
+    for (const h of Z.herds) { let d = h[0] - Z.s0; if (!Z.open) d = ((d % Z.len) + Z.len) % Z.len; rows.push([Math.round(d), Math.round(d), HERD_NAME[h[3]] || 'ovce', h[1] < 0 ? 'L' : 'D']); }
     const all = Z.open ? Math.round(Z.s1 - Z.s0) : Math.round(Z.len);
     if (Z.city) rows.push([0, all, 'mesto', 'LD']);
     if (Z.pa) rows.push([0, all, 'razglas', 'LD']);
@@ -400,6 +405,30 @@
       u => 850 + 150 * sstep(0.08, 0.45, u), u => sstep(0, 0.15, u) * (1 - sstep(0.72, 1, u)), null);
     return peakTo(g, 0.65);
   }
+  const NG_CALL = { gnu: 'gnu', buffalo: 'buffalo', zebra: 'zebra', crane: 'crane' };
+  // the herds' calls: each kind its buffer, its gap between calls (s: from, + up to), its rate (from, + up to), its count (the tests)
+  const CALLS = { cow: ['moo', 12, 22, 0.92, 0.16, 'moos'], sheep: ['baa', 1.5, 3.5, 0.9, 0.2, 'bleats'], gnu: ['gnu', 1.2, 3, 0.92, 0.16, 'grunts'],
+    buffalo: ['gnu', 7, 12, 0.58, 0.08, 'grunts'], zebra: ['zebra', 4, 9, 0.94, 0.12, 'barks'], crane: ['crane', 3, 7, 0.95, 0.1, 'honks'] };
+  const HERD_NAME = { cow: 'krave', sheep: 'ovce', gnu: 'gnuji', buffalo: 'bivoli', zebra: 'zebre', crane: 'žerjavi' };
+  const mixAt = (parts) => { let N = 0; for (const [t, d] of parts) N = Math.max(N, Math.round(t * SR2) + d.length); const o = new Float32Array(N);
+    for (const [t, d, g] of parts) { const k0 = Math.round(t * SR2); for (let i = 0; i < d.length; i++) o[k0 + i] += g * d[i]; } return o; };
+  function* gnuGen(R) {   // (a gnu's grunt, ~0.35 s: nasal, twangy, kwoink; the pitch falling, the nose's formant high)
+    const fb = 140 + 30 * R(), g = yield* voiced(0.32 + 0.08 * R(), u => fb * (1.15 - 0.3 * u), u => 420 + 180 * sstep(0, 0.3, u), u => 1250 - 200 * u,
+      u => sstep(0, 0.05, u) * (1 - sstep(0.45, 1, u)), [32 + 6 * R(), 0.25]);
+    return peakTo(g, 0.7);
+  }
+  function* zebraGen(R) {   // (a zebra's bark: kwa-HA, kwa-HA, ha; high, its syllables rising and falling, ~1 s)
+    const fb = 420 + 80 * R(), parts = []; let t = 0;
+    for (let k = 0; k < 5; k++) { const hi = k % 2 === 1, d = hi ? 0.17 : 0.11, f = fb * (hi ? 1.25 : 0.9) * (1 - 0.06 * k);
+      parts.push([t, yield* voiced(d, u => f * (1 + 0.15 * Math.sin(Math.PI * u)), u => 750 + 250 * sstep(0, 0.4, u), () => 1800, u => sstep(0, 0.12, u) * (1 - sstep(0.55, 1, u)), null), hi ? 1 : 0.7]);
+      t += d + (hi ? 0.1 : 0.03); }
+    return peakTo(mixAt(parts), 0.75);
+  }
+  function* craneGen(R) {   // (a crowned crane's honk: o-WAHNG, two notes, the second higher and longer, through the throat's pouch)
+    const fb = 300 + 50 * R(), a = yield* voiced(0.16, u => fb * (1 - 0.05 * u), () => 520, () => 1100, u => sstep(0, 0.2, u) * (1 - sstep(0.6, 1, u)), null),
+      b = yield* voiced(0.42, u => fb * 1.3 * (1 + 0.06 * Math.sin(Math.PI * u) - 0.1 * u), u => 650 + 150 * sstep(0, 0.3, u), () => 1350, u => sstep(0, 0.08, u) * (1 - sstep(0.5, 1, u)), [9, 0.2]);
+    return peakTo(mixAt([[0, a, 0.6], [0.2, b, 1]]), 0.7);
+  }
   function* baaGen(R) {   // (~0.6-0.85 s: baa-aa-aa, its quaver ~17-20 times a second)
     const fb = 270 + 60 * R(), g = yield* voiced(0.6 + 0.25 * R(), u => fb * (1 + 0.05 * sstep(0, 0.2, u) - 0.08 * u), u => 650 + 250 * sstep(0.05, 0.25, u), () => 1500,
       u => sstep(0, 0.06, u) * (1 - sstep(0.6, 1, u)), [17 + 3 * R(), 0.55]);
@@ -436,7 +465,7 @@
   const opts = { bellP: 0.6, bellGap: 180, paGap: 75, paP: 0.25, shoutGap: 25, shoutP: 0.4, cooP: 0.12, birdP: 1, all: false };
   const S = { lvl: 1, sound: true, saver: () => false };
   let A = null;   // (the sounds now, of one audio context; null: nothing made)
-  const N0 = () => ({ birds: 0, bells: 0, gulls: 0, coos: 0, herds: 0, strikes: 0, moos: 0, bleats: 0 });   // (how many of each so far: the tests)
+  const N0 = () => ({ birds: 0, bells: 0, gulls: 0, coos: 0, herds: 0, strikes: 0, moos: 0, bleats: 0, grunts: 0, barks: 0, honks: 0 });   // (how many of each so far: the tests)
   const atmosOf = () => (typeof Render !== 'undefined' && Render.atmos) || { season: 'summer', tod: 'day' };
   const climate = (Z) => { const lat = Math.abs(Z.clim.lat), alt = Z.clim.alt; return { cr: sstep(64, 50, lat) * (1 - sstep(1800, 2600, alt)), ci: sstep(47, 38, lat) * (1 - sstep(800, 1600, alt)) }; };
   function tgt(p, v, o, key, tc, at) {   // (a param to v, only when it moves more than 1 %)
@@ -452,13 +481,14 @@
     kr(A.out.gain); A.out.gain.value = 0; A.out.connect(bus);
   }
   function needs(Z, at) {
-    if (opts.all) return { birds: true, brook: true, river: true, bells: true, crickets: true, cicadas: true, cows: true, sheep: true, coos: true };
+    if (opts.all) return { birds: true, brook: true, river: true, bells: true, crickets: true, cicadas: true, cows: true, sheep: true, coos: true, gnu: true, zebra: true, crane: true };
     let F = 0; const kinds = new Set();
     for (let k = 0; k < Z.n; k++) { F = Math.max(F, Z.fL[k], Z.fR[k]); if (Z.wL[k] > 0.02) kinds.add(Z.kL[k]); if (Z.wR[k] > 0.02) kinds.add(Z.kR[k]); }
     const cl = climate(Z), summer = at.season === 'summer';
     return { birds: F > 0.1 && (TOD_B[at.tod] ?? 1) > 0, brook: kinds.has(BROOK), river: kinds.has(RIVER), bells: Z.ring.length > 0 && at.tod !== 'night',
       crickets: summer && cl.cr > 0.05 && at.tod !== 'day', cicadas: summer && cl.ci > 0.05 && at.tod === 'day',
-      cows: Z.herds.some(h => h[3] === 'cow'), sheep: Z.herds.some(h => h[3] === 'sheep'), coos: Z.city && at.tod !== 'night' };
+      cows: Z.herds.some(h => h[3] === 'cow'), sheep: Z.herds.some(h => h[3] === 'sheep'), gnu: Z.herds.some(h => h[3] === 'gnu' || h[3] === 'buffalo'),
+      zebra: Z.herds.some(h => h[3] === 'zebra'), crane: Z.herds.some(h => h[3] === 'crane'), coos: Z.city && at.tod !== 'night' };
   }
   function* prepGen(o, T, at) {   // the zones (once per world), then the voices the race needs
     let Z = cache.get(o); if (!Z) { Z = yield* zonesGen(o, T, false); cache.set(o, Z); }
@@ -476,6 +506,9 @@
     if (need.bells) A.bells = [mk(yield* bellGen(392, R), SR2), mk(yield* bellGen(330, R), SR2)];
     if (need.cows) { A.cowb = []; for (const f of [480, 600, 730]) A.cowb.push(mk(yield* cowbellGen(f * (0.95 + 0.1 * R()), R), SR2)); A.buf.moo = mk(yield* mooGen(R), SR2); }
     if (need.sheep) A.buf.baa = mk(yield* baaGen(R), SR2);
+    if (need.gnu) A.buf.gnu = mk(yield* gnuGen(R), SR2);
+    if (need.zebra) A.buf.zebra = mk(yield* zebraGen(R), SR2);
+    if (need.crane) A.buf.crane = mk(yield* craneGen(R), SR2);
     if (need.coos) { A.coos = []; for (const n of COOS) A.coos.push(mk(yield* cooGen(n, 380 + 80 * R()), SR2)); }
     A.Z = Z;
   }
@@ -580,9 +613,9 @@
       play(A.cowb[R() * A.cowb.length | 0], H.next, 0.97 + 0.06 * R()); A.n.strikes++;
       if (H.burst > 0) { H.burst--; H.next += 0.12 + 0.18 * R(); } else { H.burst = R() < 0.5 ? 0 : 1 + (R() * 2 | 0); H.next += 0.35 + 1.8 * R(); }
     }
-    if (now > H.call && H.live.length < 3 && A.nodes < MAXN) { const b = cow ? A.buf.moo : A.buf.baa;
-      if (b) { play(b, now + 0.05, cow ? 0.92 + 0.16 * R() : 0.9 + 0.2 * R()); if (cow) A.n.moos++; else A.n.bleats++; }
-      H.call = now + (cow ? 12 + 22 * R() : 1.5 + 3.5 * R()); }
+    if (now > H.call && H.live.length < 3 && A.nodes < MAXN) { const C = CALLS[h[3]] || CALLS.sheep, b = A.buf[C[0]];
+      if (b) { play(b, now + 0.05, C[3] + C[4] * R()); A.n[C[5]]++; }
+      H.call = now + C[1] + C[2] * R(); }
   }
   function coo(cs, now) {   // a pigeon 5-35 m off the road, either side
     if (!A.coos || !A.coos.length || A.nodes + 4 > MAXN) return;
