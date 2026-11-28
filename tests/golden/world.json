@@ -1607,21 +1607,21 @@
   }
  },
  "tapini": {
-  "meshes": 106,
-  "verts": 59265,
-  "instances": 2708,
+  "meshes": 111,
+  "verts": 118205,
+  "instances": 3660,
   "props": 0,
   "crowd": 46,
-  "world": "8ee5f5a5",
+  "world": "630ec8fd",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "f7c52a1",
-   "-:MeshPhongMaterial": "71841734",
+   "-:MeshLambertMaterial": "a19bb3cc",
+   "-:MeshPhongMaterial": "1bc8c5f8",
    "-:MeshBasicMaterial": "5e4531fb",
    "crowd:MeshLambertMaterial": "b023b004",
    "flags:MeshLambertMaterial": "2c3879b7",
-   "ao:MeshBasicMaterial": "3d198164"
+   "ao:MeshBasicMaterial": "4a860b07"
   }
  },
  "canaries": {
