@@ -30,7 +30,23 @@
   const KTC = 5, KTT = 20, KTHC = 32;          // terrain cell (m), tile size (cells), road-sample hash cell (m)
   let KT = null;                               // per-build data: sample hash, the terrain, the land cover, the distance to the road, the river, pads, terrain height grid
   const KTN = { i: -1, d: 1e9, dd: 1e9, lat: 0, h: 0, hn: 0, cap: 1e9 };   // ktNear: nearest sample, its distance and lateral offset, distance beyond the barrier, blended and exact road height, the highest the ground may be there
-  const KTCOL = [0, 0, 0];                     // (ktCol's colour)
+  const KTCOL = [0, 0, 0, 0, 0];               // (ktCol's colour; then how much of it is the open ground's grass, how much stone)
+  /* Realizem G (docs/realizem/paket-g.md, docs/proge/katu.md): the plants and the ground as measured. In the band 8-60 m from the road ESA WorldCover has trees on
+     1.3 % of the ground and grass on 91 % (def.lc: forest on 6.4 %, from 8 m of the road; the real one starts 35-55 m out). So def.lc's forest stays where it is
+     farthest from the road, by 50 m section and side as much of it as measured (KTWC), and comes back whole 60-100 m out; the scattered larches of the open slopes
+     are thinned (KTFL, KTFAR); a grove stands where the measurement has trees and def.lc none; the open ground's grass, the stone and the trees' foliage take the hues of
+     Sentinel-2 (World.rastje: its strength MOC, the brightness kept). None of it without World.rastje and its measurement (KTR null: the game's own colours and
+     woods, to the number). The terrain's heights, the road and the buildings are as they were */
+  if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.katu) {
+    World.rastje.MERITVE.katu = { podnebje: 'Dfc', lat: 50.90951, lon: 88.209976, delez: { drevesa: 0.013, trava: 0.910, pozidano: 0.003, golo: 0.073, mah: 0.001 },
+      barva: { drevesa: 0x505045, trava: 0x5c594f, golo: 0x64605a }, drevesa: ['macesen', 'sibirski bor', 'breza', 'topol', 'vrba', 'karagana', 'brin'] };
+  }
+  const KTWC = { n: 103, t: [[1, 0, 4.2], [2, 0, 13.2], [3, 0, 8.8], [24, 0, 34.1], [25, 0, 15.3], [40, 0, 12.8], [48, 0, 16.7], [51, 0, 14.1], [52, 0, 1.3], [57, 3.8, 0], [60, 0, 8.6],
+    [61, 0, 37.8], [62, 0, 1.1], [69, 1.6, 0], [79, 0.8, 0], [83, 0.9, 0], [89, 1.4, 0]] };   // WorldCover's trees, % of the band's cells in each of the n sections of the line (from its first point): [section, left, right of travel]; the others: none
+  const KTPF = 0.9, KTPT = 0.34 * 0.28;        // trees per spot of the woods' lattice: in def.lc's forest, on its shrub slopes (the scattered larches and birches)
+  const KTFL = 0.2, KTFAR = 0.34;              // the share of the scattered trees that stays: in the band where the measurement has no trees (WorldCover does not see single trees: ~7 a hectare stay), beyond the band (3.6 % trees there on def.lc's open ground)
+  let KTR = null;                              // Realizem G of this build: { tla, golo: hue multipliers; n, sl: the sections and their length; D, K: [left, right] by section } (null: without it)
+  const KTRN = { i: -1, d: 1e9, side: 0, D: 0, K: 1 };   // ktRNear, ktRq: the nearest sample, its distance, the side (1: right of travel), there the distance def.lc's forest starts at and the scattered trees' share
   function ktPrep() {
     const def = T.def, N = T.N, M = 460; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
     for (let i = 0; i < N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
@@ -89,6 +105,33 @@
     const L = KT.L, lc = KT.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
     const at = (a, b) => (a < 0 || b < 0 || a >= L.nx || b >= L.nz ? 0 : lc[b * L.nx + a] === c ? 1 : 0);
     return (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - v) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * v;
+  }
+  function ktRNear(x, z) {   // the nearest road sample (of every 2nd: ktPrep's hash) within ~130 m of (x, z): its index, its distance, the side (1: right of travel, 0: left)
+    const P = KT, cx = Math.floor(x / KTHC) - P.cx0, cz = Math.floor(z / KTHC) - P.cz0; let bi = -1, bd = 1e18;
+    for (let w = 2; w <= 4; w += 2) {   // (every sample within w cells' width is in the window of ±w cells: one found that near is the nearest)
+      for (let b = Math.max(0, cz - w); b <= Math.min(P.ncz - 1, cz + w); b++) for (let a = Math.max(0, cx - w); a <= Math.min(P.ncx - 1, cx + w); a++) { const L = P.cells[b * P.ncx + a]; if (!L) continue;
+        for (let q = 0; q < L.length; q++) { const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } } }
+      if (bd <= w * w * KTHC * KTHC) break;
+    }
+    KTRN.i = bi; KTRN.d = Math.sqrt(bd); KTRN.side = bi >= 0 && (x - T.px[bi]) * T.nx[bi] + (z - T.pz[bi]) * T.nz[bi] > 0 ? 1 : 0;
+    return KTRN;
+  }
+  function ktRq(x, z) {   // Realizem G at (x, z): KTRN.d from the road; KTRN.D, KTRN.K: the sections' values there (linear along the road between the sections' middles)
+    const Q = KTR, N = ktRNear(x, z);
+    if (N.i < 0 || N.d > 128) { N.D = 0; N.K = KTFAR; N.d = Math.max(N.d, 128); return N; }
+    const f = clamp(N.i * T.ds / Q.sl - 0.5, 0, Q.n - 1.001), q = Math.floor(f), u = f - q, a = Q.D[N.side], b = Q.K[N.side];
+    N.D = a[q] + (a[q + 1] - a[q]) * u; N.K = b[q] + (b[q + 1] - b[q]) * u;
+    return N;
+  }
+  function ktKf(x, z) {   // how much of def.lc's forest stays at (x, z): 1 all of it, 0 none (the measurement has no trees there), between them its ragged edge
+    if (ktDist(x, z) > 124) return 1;
+    const N = ktRq(x, z), d = N.d; if (d >= 100 || N.D < 1) return 1;
+    return Math.max(sstep(N.D - 5, N.D + 5, d + (KT.n2(x, z) - 0.5) * 24), sstep(60, 100, d));
+  }
+  function ktKo(x, z) {   // the scattered trees of the open ground at (x, z): times as many as the game's own
+    if (ktDist(x, z) > 124) return KTFAR;
+    const N = ktRq(x, z);
+    return lerp(N.K, KTFAR, sstep(60, 100, N.d));
   }
   function ktDem(x, z) {   // the real terrain (bilinear on the 32 m grid)
     const P = KT, D = P.D, gx = clamp((x - D.x0) / D.cell, 0, D.nx - 1.001), gz = clamp((z - D.z0) / D.cell, 0, D.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, W = D.nx, a = P.dem;
@@ -234,7 +277,8 @@
     // down on the valley floor), the darker olive of the shrub slopes, needles and moss under the larches, trampled grass in the camps, brown-grey
     // schist on the cliffs and every steep face, the river's pale gravel bars, a trodden verge
     const P = KT, m = P.n3(x, z), q = P.n4(x, z), A = h + P.D.base, low = sstep(820, 700, A);
-    const fo = ktLCf(x, z, 1), sh = ktLCf(x, z, 2), cp = ktLCf(x, z, 3), rk = ktLCf(x, z, 4), wa = ktLCf(x, z, 5);
+    let fo = ktLCf(x, z, 1), sh = ktLCf(x, z, 2); const cp = ktLCf(x, z, 3), rk = ktLCf(x, z, 4), wa = ktLCf(x, z, 5), Q = KTR;
+    if (Q && fo > 0) { const k = ktKf(x, z); sh += fo * (1 - k); fo *= k; }   // (Realizem G: def.lc's forest that the measurement does not have by the road: the ground of the shrub steppe)
     let r = 0.7 + (m - 0.5) * 0.12 + (q - 0.5) * 0.08, g = 0.62 + (m - 0.5) * 0.1 + (q - 0.5) * 0.06, b = 0.37 + (m - 0.5) * 0.05;
     const gr = Math.max(sstep(0.48, 0.78, P.n2(x, z)) * 0.45, low * 0.75); r = lerp(r, 0.44, gr); g = lerp(g, 0.53, gr); b = lerp(b, 0.26, gr);
     r = lerp(r, 0.52 + m * 0.06, sh * 0.4); g = lerp(g, 0.51 + m * 0.05, sh * 0.4); b = lerp(b, 0.3, sh * 0.4);
@@ -244,7 +288,9 @@
     r = lerp(r, 0.6 + m * 0.08, st); g = lerp(g, 0.55 + m * 0.07, st); b = lerp(b, 0.49 + m * 0.06, st);
     r = lerp(r, 0.74, wa * 0.7); g = lerp(g, 0.72, wa * 0.7); b = lerp(b, 0.67, wa * 0.7);
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.4; r = lerp(r, 0.6, t); g = lerp(g, 0.52, t); b = lerp(b, 0.38, t); }
-    KTCOL[0] = r; KTCOL[1] = g; KTCOL[2] = b; return KTCOL;
+    const ws = st * (1 - wa * 0.7), wo = (1 - fo) * (1 - cp * 0.45) * (1 - st) * (1 - wa * 0.7);   // (how much of it is stone, how much the open ground's grass)
+    if (Q) { const a = Q.tla, c = Q.golo; r *= 1 + wo * (a[0] - 1) + ws * (c[0] - 1); g *= 1 + wo * (a[1] - 1) + ws * (c[1] - 1); b *= 1 + wo * (a[2] - 1) + ws * (c[2] - 1); }   // (Realizem G: the measured hues of the grass and of the stone)
+    KTCOL[0] = r; KTCOL[1] = g; KTCOL[2] = b; KTCOL[3] = wo; KTCOL[4] = ws; return KTCOL;
   }
   function ktGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in ktTileGeo)
     const G = KT.G, gx = clamp((x - G.x0) / KTC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / KTC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
@@ -252,6 +298,45 @@
       const nx = (ktGH(ii + 1, jj) - ktGH(ii - 1, jj)) / (2 * KTC), nz = (ktGH(ii, jj + 1) - ktGH(ii, jj - 1)) / (2 * KTC), c = ktCol(G.x0 + ii * KTC, G.z0 + jj * KTC, h, 1 / Math.hypot(nx, 1, nz), G.dd[jj * G.nx + ii]);
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
+  }
+  function ktRastje(def) {   // Realizem G: the measurement brought to this build (before anything is coloured); null without it. Draws no random numbers
+    const W = World.rastje; if (!W || !W.aktivna || !W.aktivna(def)) return null;
+    const P = KT, G = P.G, M = W.MERITVE[def.id], len = (T.N - 1) * T.ds, n = Math.max(1, Math.round(len / 50)); if (n !== KTWC.n) return null;   // (another line than the measured one)
+    const sl = len / n, NB = 13, cnt = new Float64Array(2 * n), fh = new Float64Array(2 * n * NB), sum = [[0, 0, 0, 0], [0, 0, 0, 0]];
+    const h0 = G.h.slice(), d0 = G.dd.slice(), kn = Object.assign({}, KTN);
+    // the band 8-60 m from the road on a 4 m lattice: its cells and def.lc's forest by distance (4 m steps), by section and side; every 8 m the terrain's own colour (at the nearest vertex of its grid) where it is grass and where it is stone
+    for (let z = P.bz0 - 64, jz = 0; z <= P.bz1 + 64; z += 4, jz++) for (let x = P.bx0 - 64, jx = 0; x <= P.bx1 + 64; x += 4, jx++) {
+      if (ktDist(x, z) > 84) continue;
+      const N = ktRNear(x, z), d = N.d; if (N.i < 0 || d < 8 || d > 60) continue;
+      const q = N.side * n + Math.min(n - 1, Math.floor(N.i * T.ds / sl)), c = ktLC(x, z);
+      cnt[q]++; if (c === 1) fh[q * NB + Math.min(NB - 1, Math.floor((d - 8) / 4))]++;
+      if ((jx | jz) & 1) continue;
+      const ii = clamp(Math.round((x - G.x0) / KTC), 1, G.nx - 2), jj = clamp(Math.round((z - G.z0) / KTC), 1, G.nz - 2), h = ktGH(ii, jj);
+      const sx = (ktGH(ii + 1, jj) - ktGH(ii - 1, jj)) / (2 * KTC), sz = (ktGH(ii, jj + 1) - ktGH(ii, jj - 1)) / (2 * KTC), g = ktCol(G.x0 + ii * KTC, G.z0 + jj * KTC, h, 1 / Math.hypot(sx, 1, sz), G.dd[jj * G.nx + ii]);
+      const k = g[3] > 0.8 ? 0 : g[4] > 0.6 ? 1 : -1; if (k < 0) continue;
+      const S = sum[k]; S[0] += g[0]; S[1] += g[1]; S[2] += g[2]; S[3]++;
+    }
+    G.h.set(h0); G.dd.set(d0); Object.assign(KTN, kn);   // (the heights asked for: as they were, the strips along the road mark the grid first)
+    const wc = [new Float32Array(n), new Float32Array(n)]; for (const [q, l, r] of KTWC.t) { wc[0][q] = l / 100; wc[1][q] = r / 100; }
+    const D = [new Float32Array(n), new Float32Array(n)], K = [new Float32Array(n).fill(KTFL), new Float32Array(n).fill(KTFL)], has = [new Uint8Array(n), new Uint8Array(n)];
+    for (let s = 0; s < 2; s++) for (let q = 0; q < n; q++) {
+      const o = s * n + q, c = cnt[o]; if (!c) continue; has[s][q] = 1;
+      let f = 0; for (let k = 0; k < NB; k++) f += fh[o * NB + k];
+      const t = wc[s][q], g = f / c;
+      if (t <= 0) D[s][q] = 100;   // (no trees measured: none of def.lc's forest in the band)
+      else if (t < g) {            // more forest than measured: the part of it farthest from the road stays
+        let need = t * c, k = NB - 1; while (k > 0 && fh[o * NB + k] < need) { need -= fh[o * NB + k]; k--; }
+        D[s][q] = 8 + 4 * (k + 1) - 4 * Math.min(1, need / Math.max(1, fh[o * NB + k]));
+      }
+      if (g < 1) K[s][q] = Math.max(KTFL, (t - g) / (1 - g) * KTPF / KTPT);   // (the measured trees def.lc's forest does not hold: on its open ground)
+    }
+    for (let s = 0; s < 2; s++) {   // a section with no cell of the band on a side (another leg of the road is nearer there): as the last one before it with cells (the first ones: as the first with cells)
+      let last = -1, first = -1;
+      for (let q = 0; q < n; q++) { if (has[s][q]) { if (first < 0) first = q; last = q; } else if (last >= 0) { D[s][q] = D[s][last]; K[s][q] = K[s][last]; } }
+      for (let q = 0; q < first; q++) { D[s][q] = D[s][first]; K[s][q] = K[s][first]; }
+    }
+    const mul = (S, h) => (S[3] ? W.mnozilnik([S[0] / S[3], S[1] / S[3], S[2] / S[3]], [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255], W.MOC) : [1, 1, 1]);
+    return { tla: mul(sum[0], M.barva.trava), golo: mul(sum[1], M.barva.golo), n, sl, D, K };
   }
   function ktTileOn(ti, tj) {   // 0: none, 1: full tile (5 m cells), 2: coarse outer ring (10 m cells, in the haze)
     const G = KT.G, L = KTC * KTT, d = ktDist(G.x0 + (ti + 0.5) * L, G.z0 + (tj + 0.5) * L);
@@ -418,6 +503,7 @@
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const p of parks) exclPush(p.x, p.z, p.r + 3);
     out.marks = {};   // (where the landmarks stand: the tests look for them)
+    KTR = null; KTR = ktRastje(def);   // (Realizem G: before anything is coloured)
 
     /* ---- the strips of terrain along both sides of the road (KTSW; on the ladder across to the other leg): their cross-sections from the verge's edge
        out (exact: ktHx), each point's normal (from its neighbours across and along) and colour; the grid's vertices under them marked (G.sm: pushed
@@ -556,7 +642,7 @@
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           if (k === 0) return shC;
           if (k === 4) { const X = sX[si][i]; return X ? [X[0][7], X[0][8], X[0][9]] : ktGCol(x, z); }   // (as the strip's own first point)
-          const sl = k === 2 ? ktSlope(x, z) : 0; return ktCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
+          const sl = k === 2 ? ktSlope(x, z) : 0; return ktCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(0, 3); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
         const gr = new GB(true), gv = new GB(true);
@@ -859,8 +945,14 @@
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = ktDist(x, z); if (hd > 250) continue;
           if (hd > LOD.radius(90) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // farther out every other spot (bigger trees: a closed canopy from above)
-          const c = ktLC(x, z), p = c === 1 ? 0.9 : c === 2 ? 0.34 : c === 0 ? 0.08 : c === 3 ? 0.05 : c === 4 ? 0.05 : 0;
-          if (r1 > p) continue;
+          let c = ktLC(x, z), grove = false;
+          if (KTR && c === 1 && crH(xx, zz, 3.7) >= ktKf(x, z)) c = 2;   // (Realizem G: def.lc's forest that the measurement does not have by the road: the shrub steppe around it)
+          const p = c === 1 ? 0.9 : c === 2 ? 0.34 : c === 0 ? 0.08 : c === 3 ? 0.05 : c === 4 ? 0.05 : 0;
+          if (r1 > p) {   // (no plant here; where the measurement has more trees than def.lc: a tree of a grove, in clumps)
+            if (!KTR || (c !== 0 && c !== 2)) continue;
+            const k = ktKo(x, z); if (!(k > 1) || crH(xx, zz, 5.3) >= (k - 1) * KTPT / (1 - p) * 2 * sstep(0.35, 0.65, P.n7(x, z))) continue;
+            grove = true;
+          } else if (KTR && (c === 2 ? r3 >= 0.72 : c === 0 && r3 >= 0.5) && crH(xx, zz, 6.1) >= ktKo(x, z)) continue;   // (the scattered trees of the open slopes: as many as measured)
           if (ktRiv(x, z) > -3) continue;
           const nn = ktNear(x, z); if (nn.i >= 0 && nn.dd < 2.2) continue; if (nn.i >= 0 && nn.dd < 5 && r2 < 0.18) continue;
           if (excluded(x, z)) continue;
@@ -870,6 +962,7 @@
           else if (c === 2) sp = r3 < 0.72 ? (sl > 0.7 && r4 < 0.5 ? 5 : 4) : r3 < 0.9 ? 0 : 2;
           else if (c === 4) sp = r3 < 0.7 ? 5 : 4;
           else sp = r3 < 0.5 ? 4 : r3 < 0.85 ? 0 : 2;
+          if (grove) sp = r3 < 0.68 ? 0 : r3 < 0.92 ? 1 : 2;   // (a grove's trees: the forest's mix)
           if (low > 0.5 && (sp === 0 || sp === 2) && r4 < 0.6) sp = r4 < 0.35 ? 3 : 2;   // (down by the river: poplars, willows and birches)
           const far = hd > 90 ? 1.15 : 1;
           let hgt, wid, col;
@@ -884,6 +977,7 @@
         }
       }
     }
+    const lt = KTR ? World.rastje.listje(def, tk.slice(0, 4)) : null;   // (Realizem G: the trees' foliage in the measured hue; the caragana and the juniper keep theirs: WorldCover has no shrub cells here)
     for (const t of tk) t.addTo(root, true);
 
     /* ---- the rock: crags along the cliffs (OpenStreetMap) and where the slope is steep beside the road, boulders fallen onto the verges; clumps of the
@@ -902,7 +996,8 @@
       for (let s = 3; s < T.len - 3; s += 2.2) for (const side of [-1, 1]) {
         if (crH(s, side, 5) < 0.18) continue;   // (gaps)
         const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 1.6 + Math.pow(crH(s, side, 6), 1.6) * 7, x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
-        const c = ktLC(x, z); if ((c !== 0 && c !== 2) || excluded(x, z) || ktRiv(x, z) > -3) continue;
+        let c = ktLC(x, z); if (KTR && c === 1 && ktKf(x, z) < 0.5) c = 2;   // (Realizem G: grass where def.lc's forest by the road is gone)
+        if ((c !== 0 && c !== 2) || excluded(x, z) || ktRiv(x, z) > -3) continue;
         const sl = ktSlope(x, z); if (sl > 0.9) continue;
         const y = ktGround(x, z) - 0.02, u = crH(x, z, 7), gc = ktCol(x, z, y, 1 / Math.hypot(sl, 1), o - bar), m = API.pkGMean * (0.95 + 0.2 * crH(x, z, 8));
         tu.add(x, y, z, u * 26, 0.8 + 0.7 * crH(x, z, 9), 0.4 + 0.35 * crH(x, z, 10), [gc[0] * m, gc[1] * m, gc[2] * m]);
@@ -934,10 +1029,11 @@
     crowdFinish(CR, root, out);
     if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'katu', { gH: ktGround, slope: ktSlope, lc: ktLC, near: ktNear, bad: (x, z) => ktRiv(x, z) > -4 });   // (the roadside ground for the chase camera: js/world-chase-bt14.js)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), foam: nFoam, sideRoads: out.stubStats.n };   // (read by the tests)
+    if (KTR) out.rastje = { moc: World.rastje.MOC, tla: KTR.tla, golo: KTR.golo, drevesa: lt };   // (Realizem G: the hue multipliers of this build)
     return out;
   }
 
   Object.defineProperties(API, { KT: { get: () => KT, set: (v) => { KT = v; } } });
   World.keep('KT', 'katu');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
-  World.ext.katu = (scene, tex, opts) => buildKatu(scene, tex, opts);
+  World.ext.katu = (scene, tex, opts) => { try { return buildKatu(scene, tex, opts); } finally { KTR = null; } };   // (Realizem G's data: only while it builds)
 })();

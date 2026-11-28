@@ -19,3 +19,14 @@ Dirkališče v Spielbergu na avstrijskem Štajerskem v pravem merilu: en krog je
 - **Navijači**: ko pelješ mimo tribun in navijačev na travi, se slišijo množica, bobni in trobente. Ob startu, ko koga prehitiš, in v cilju zagrmi glasneje.
 - **Prelet letal in TV helikopter**: pred startom kamera s tal pokaže tri letala, ki z rdeče-belo-rdečim dimom (avstrijska zastava) preletijo ciljno ravnino. Med dirko TV helikopter samo enkrat, ko drugič pripelješ na ciljno ravnino, nizko preleti progo pred tabo in odleti, da ne moti vožnje.
 - **Zmagovalni oder**: po cilju kamera za 8 s pokaže oder na strehi stavbe boksov: prve tri v barvah njihovih avtov (imena so na zaslonu), pokal, avstrijske zastave, šampanjec in oranžen dim. V dirki s prijateljem odra ni.
+
+## Realizem G: rastje po meritvah
+
+Odtenek rastja po meritvah (vzorec `docs/realizem/paket-g.md`, moč 0,35 iz `World.rastje.MOC`); nobeno drevo, oglišče ali klic risanja več.
+
+- **Meritev** pasu 8–60 m od ceste (`tools/proga-podatki.py`, `build_cover`: ESA WorldCover 2021 in letni mozaik Sentinel-2; 86 odsekov po 50 m; `tools/rbring/meritev.py`, izid `tools/rbring/cover.json`): pozidano 48,4 % (`66635c`; izletne cone, boksi, parkirišča), trava 42,2 % (`525344`), drevesa 6,7 % (`353a2d`), njive 2,7 %. Vpisana je v `World.rastje.MERITVE.rbring` na vrhu `js/world-rbring.js` (podnebje Dfb; vrsti, ki ju graditelj že riše: smreka, bukev). Drugih tem istega graditelja (Bathurst, Rio, Crystal Palace) ne spremeni.
+- **Okvir** je okvir `js/geo.js` (rot 0,14°): gozd v `def.lc` se z drevesi WorldCover po odsekih in straneh ujema s korelacijo **0,99**, brez zamika (zamenjani strani 0,81); gozda je v pasu v igri 7,0 %, po meritvi 6,7 %.
+- **Tla:** množilnik (×1,07 / 0,97 / 1,29) na materialu tal (trava, gozdna tla); **listje:** množilnik (×1,16 / 0,97 / 1,13) na zelenih ogliščih dreves (`World.rastje.listje`), debla ostanejo. Smreke so manj modrozelene, trava malo bolj olivna.
+- **Svetloba:** z vpisom v `MERITVE` dobi proga tudi svetlobo po zemljepisni širini (`World.rastje.look`, 47,2° s.g.): sonce je za ~0,9 % šibkejše in malo toplejše, nebo in megla ostaneta.
+- **Obrisi tribun in boksov** (S4, #713) niso prizadeti: drevo ni nobeno dodano ali premaknjeno.
+- **Obremenitev** (`PERF_ONLY=rbring node tests/browser/perf.test.mjs`): prej in potem 208 klicev (najbolj obremenjeno 249), 483 tisoč oglišč (669 tisoč).

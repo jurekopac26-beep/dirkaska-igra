@@ -70,6 +70,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Realizem E · Cesta in predmeti (`docs/realizem.md`), 15 prog v skupinah, ~23 sej | po tedenskem načrtu | **na `main` prvi** med realizmi, E → S → G (`js/world.js`) |
 | Realizem S · Stavbe, ~21 sej | po tedenskem načrtu | za E; Medvode po #494 |
 | Realizem G · Rastje in teren, ~16 sej | po tedenskem načrtu | za S |
+| Zbirna Realizem G (#763, `zbirna/realizem-g`; s #760 Katu-Jaryk): rastje in tla po meritvah na 12 pravih progah | partyslo (odločitev uporabnika 21. 11. ob 23.50) | slike potrjene 21. 11.; osnutek, v vrsto ga premakne Združevanje (E → S → G) |
 | Realizem P · Poškodbe skupaj s Trki (#608), ~16 sej | biketraveler | takoj po #480, 30 avtih in #569 + #494; na `main` ~7. 12. |
 | Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo, croatiadata | potrjene 13. 11. (glej zgoraj); brez izletne cone se ne začnejo, razen 4 prog s prepadom (ograja na strani prepada) |
 | Vreme med dirko (`docs/vreme-med-dirko.md`) | partyslo | po kodi za Dež in sneg, #284 + #296, #390 |

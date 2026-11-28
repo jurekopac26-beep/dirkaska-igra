@@ -50,6 +50,15 @@
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
 
+  /* Realizem G (docs/realizem/paket-g.md, docs/proge/livorno.md): the band 8-60 m from the road as tools/proga-podatki.py `cover` measured it
+     (ESA WorldCover 2021, 5 m cells, 382 sections of 50 m; the frame of tools/livorno/livorno.json, whose def.lc's forest lies on WorldCover's
+     trees with a correlation of 0.95 by section and side, its settlement on the built-up 0.93, no shift). Shrubs 3.0 %, bare 1.7 %, water 2.6 %
+     and crops 0.1 % besides these three. Only the hue of the plants moves (World.rastje.MOC); the builder draws no tree more. */
+  if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.livorno) {
+    World.rastje.MERITVE.livorno = { podnebje: 'Csa', lat: 43.51202, lon: 10.3188882, delez: { drevesa: 0.554, trava: 0.104, pozidano: 0.268 },
+      barva: { drevesa: 0x3a4236, trava: 0x545548, pozidano: 0x675c52 }, drevesa: ['pinija', 'primorski bor', 'crnika', 'cipresa', 'makija'] };
+  }
+
   function buildLivorno(scene, tex, opts) {
     const R = rng(1922), N = T.N, ds = T.ds, sStart = T.startS, def = T.def, L = T.len, LD = LV_DATA;
     if (!def.dem) { def.dem = LD.dem; def.lc = LD.lc; }   // (nrPrep reads the corridor's terrain and land cover from the track)
@@ -99,7 +108,8 @@
     out.groundH = groundH; out.camFloor = (x, z) => Math.max(groundH(x, z), SEA);
     // the ground's colours (the dry Tuscan coast): straw and olive in patches, the macchia, the woods' dark canopy farther out and the needles
     // under the trees near the road, the dust of the towns, the sandstone rocks by the sea and on the steep banks, the sand of the beaches
-    P.colFn = (x, z, ny, dd, cov, o) => {
+    let VG = null;
+    P.colFn = (x, z, ny, dd, cov, o, plants) => {
       const m = P.n3(x, z), q = P.n4(x, z), fo = nrLCf(x, z, 1), sc = nrLCf(x, z, 2), se = nrLCf(x, z, 3), sd = seaD(x, z), h = nrDem(x, z);
       let r = 0.84 + (m - 0.5) * 0.22, g = 0.86 + (m - 0.5) * 0.14 + (q - 0.5) * 0.08, b = 0.52 + (q - 0.5) * 0.08;
       const gr = sstep(0.55, 0.85, P.n2(x, z)) * 0.5; r -= gr * 0.18; g -= gr * 0.02; b -= gr * 0.06;   // (greener patches)
@@ -107,6 +117,8 @@
       const cv = clamp(cov, 0, 1), can = fo * (1 - cv);
       r = lerp(r, 0.34 + m * 0.06, can * 0.92); g = lerp(g, 0.45 + m * 0.05, can * 0.92); b = lerp(b, 0.27, can * 0.92);
       r = lerp(r, 0.6, cv * 0.85); g = lerp(g, 0.53, cv * 0.85); b = lerp(b, 0.4, cv * 0.85);
+      if (plants) { o[0] = r; o[1] = g; o[2] = b; return o; }
+      if (VG) { r *= VG[0]; g *= VG[1]; b *= VG[2]; }   // (Realizem G: the measured hue on the plants' colours, not on the towns, rocks and sand)
       const k = 0.96 + (q - 0.5) * 0.12; r = lerp(r, 0.95 * k, se * 0.6); g = lerp(g, 0.92 * k, se * 0.6); b = lerp(b, 0.84 * k, se * 0.6);
       const rk = Math.max(sstep(-40, -6, sd) * (h > 1.5 ? 1 : 0.35), sstep(0.9, 0.66, ny) * 0.95);
       r = lerp(r, 0.8 + q * 0.08, rk); g = lerp(g, 0.68 + q * 0.06, rk); b = lerp(b, 0.54 + q * 0.04, rk);
@@ -114,6 +126,11 @@
       if (dd < 4) { const t = sstep(4, 0.5, dd); r = lerp(r, 0.86, t); g = lerp(g, 0.82, t); b = lerp(b, 0.72, t); }
       o[0] = r; o[1] = g; o[2] = b; return o; };
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(lvGroundTex()), vertexColors: true });
+    // Realizem G: the ground's multiplier from the plants' colours on the open land (the grass picture's base tone 196 / 192 / 182), before any
+    // tile asks for a colour; the leaves' below, before the trees go in
+    const Lg = NRC * 32, PL = [0, 0, 0];
+    VG = World.rastje ? World.rastje.tla(def, { lc: nrLC, dist: nrDist, gcol: (x, z) => P.colFn(x, z, 1, 99, 0, PL, true).slice(), avg: [196, 192, 182],
+      x0: G.x0, z0: G.z0, x1: G.x0 + G.ntx * Lg, z1: G.z0 + G.ntz * Lg }) : null;
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
@@ -376,7 +393,9 @@
         plant(sp, x, z, hgt, wid, [0.95, 1, 0.95]);
       }
     }
+    const LT = World.rastje ? World.rastje.listje(def, TK) : null;   // (Realizem G: the leaves' measured hue, js/world-rastje.js)
     for (const t of TK) t.addTo(root, true);
+    if (VG || LT) out.rastje = { moc: World.rastje.MOC, tla: VG, drevesa: LT };
 
     /* ---- the stone walls and hedges of OSM by the road (within 30 m): a low wall or a hedge along each line ---- */
     for (const [k, fl] of LD.walls) {

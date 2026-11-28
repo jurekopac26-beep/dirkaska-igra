@@ -129,15 +129,19 @@
   }
   function pkSlope(x, z) { const a = pkGround(x - 2.5, z), b = pkGround(x + 2.5, z), c = pkGround(x, z - 2.5), d = pkGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   function pkTreeline(x, z) { return 186 + 34 * (PK.n1(x * 1.7, z * 1.7) - 0.5); }   // ~45 % of the climb, ragged
-  function pkCol(x, z, h, ny, dd) {   // ground colour: forest floor (rust needle litter in patches), then pinkish granite gravel with olive grass and green-brown tundra, bare granite on steep slopes,
+  function pkCol(x, z, h, ny, dd, plants) {   // ground colour: forest floor (rust needle litter in patches), then pinkish granite gravel with olive grass and green-brown tundra, bare granite on steep slopes,
     // snow fields near the top (old snow lying on in the hollows, dirty wind-packed edges)
     const P = PK, m = P.n3(x, z), tl = pkTreeline(x, z), tun = sstep(tl - 14, tl + 22, h), n5 = P.n5 || (P.n5 = valueNoise2(9431, 9)), n6 = P.n6 || (P.n6 = valueNoise2(9432, 34)), q = n5(x, z), q2 = n6(x, z);
     let r = 0.15 + m * 0.07, g = 0.21 + m * 0.07, b = 0.11 + m * 0.035;
+    if (PKVG) { r *= PKVG[0]; g *= PKVG[1]; b *= PKVG[2]; }   // (Realizem G: the forest floor's plants, their measured hue)
     const nl = sstep(0.52, 0.78, q) * 0.55; r = lerp(r, 0.26 + m * 0.05, nl); g = lerp(g, 0.2 + m * 0.04, nl); b = lerp(b, 0.12, nl);   // needle litter
     const gs = sstep(0.42, 0.75, P.n4(x, z)) * (1 - sstep(300, 420, h)) * 0.85, pk = (q2 - 0.5) * 0.12;   // (pk: pinker or greyer gravel)
-    let ar = lerp(0.62 + m * 0.08 + pk, 0.5, gs), ag = lerp(0.43 + m * 0.05 - pk * 0.25, 0.47, gs), ab = lerp(0.33 + m * 0.03 + pk * 0.2, 0.27, gs);
+    const V = PKVG || PKV1, gr = 0.5 * V[0], gg = 0.47 * V[1], gb = 0.27 * V[2];   // the olive grass (Realizem G: in its measured hue)
+    let ar = lerp(0.62 + m * 0.08 + pk, gr, gs), ag = lerp(0.43 + m * 0.05 - pk * 0.25, gg, gs), ab = lerp(0.33 + m * 0.03 + pk * 0.2, gb, gs);
     const tu = sstep(0.56, 0.76, n6(x * 0.6 + 40, z * 0.6)) * sstep(tl - 5, tl + 20, h) * (1 - sstep(290, 350, h)) * 0.6, tq = q - 0.5;   // tundra: mottled green-brown
-    ar = lerp(ar, 0.45 + tq * 0.12, tu); ag = lerp(ag, 0.41 - tq * 0.04, tu); ab = lerp(ab, 0.27, tu);
+    const tr = (0.45 + tq * 0.12) * V[0], tg = (0.41 - tq * 0.04) * V[1], tb = 0.27 * V[2];
+    if (plants) { const t = gs + tu > 1e-3 ? tu / (gs + tu) : 0.5; PKCOL[0] = lerp(gr, tr, t); PKCOL[1] = lerp(gg, tg, t); PKCOL[2] = lerp(gb, tb, t); return PKCOL; }   // (the plants alone: Realizem G's measure)
+    ar = lerp(ar, tr, tu); ag = lerp(ag, tg, tu); ab = lerp(ab, tb, tu);
     r = lerp(r, ar, tun); g = lerp(g, ag, tun); b = lerp(b, ab, tun);
     const sc = sstep(0.95, 0.8, ny) * tun * (0.5 + 0.5 * sstep(0.3, 0.7, q2)) * 0.85, sq = (q - 0.5) * 0.1;   // scree: loose grey-pink rubble on the middling slopes above the trees (paler, greyer than the gravel)
     r = lerp(r, 0.57 + m * 0.08 + sq, sc); g = lerp(g, 0.51 + m * 0.06 + sq, sc); b = lerp(b, 0.47 + m * 0.05 + sq * 0.8, sc);
@@ -347,11 +351,11 @@
   }
   function pkForest(scen, R, dens, excluded, flat) {   // conifer forest below the treeline, on a jittered grid over the corridor tiles; far from the road (flat(x, z): a GB that casts no shadow) simpler
     const G = PK.G, P = PK, step = 6.6 / Math.sqrt(dens), L = PKT * PKC, maxT = Math.round(15500 * dens);
-    const pineCs = [[0.09, 0.2, 0.11], [0.11, 0.24, 0.12], [0.08, 0.18, 0.1], [0.13, 0.26, 0.14], [0.1, 0.22, 0.14]];
+    const pineCs = [[0.09, 0.2, 0.11], [0.11, 0.24, 0.12], [0.08, 0.18, 0.1], [0.13, 0.26, 0.14], [0.1, 0.22, 0.14]].map(pkLT);   // (pkLT: Realizem G)
     // species on their own stream (R keeps its sequence, so every tree stands where it did): quaking aspen groves low down, bristlecone pines at the treeline
     const A = rng(9404), grove = valueNoise2(9405, 170), S = rng(9421);   // (S: the conifer species, heights of the young ones)
-    const aspC = [[0.4, 0.54, 0.2], [0.36, 0.5, 0.17], [0.46, 0.57, 0.23]], gold = [0.82, 0.64, 0.16], barkA = [0.84, 0.84, 0.78], knotA = [0.3, 0.29, 0.27];
-    const barkB = [0.74, 0.7, 0.64], footB = [0.46, 0.4, 0.34], snagB = [0.8, 0.78, 0.74], needB = [[0.11, 0.19, 0.16], [0.13, 0.22, 0.17], [0.1, 0.17, 0.15]];
+    const aspC = [[0.4, 0.54, 0.2], [0.36, 0.5, 0.17], [0.46, 0.57, 0.23]].map(pkLT), gold = [0.82, 0.64, 0.16], barkA = [0.84, 0.84, 0.78], knotA = [0.3, 0.29, 0.27];
+    const barkB = [0.74, 0.7, 0.64], footB = [0.46, 0.4, 0.34], snagB = [0.8, 0.78, 0.74], needB = [[0.11, 0.19, 0.16], [0.13, 0.22, 0.17], [0.1, 0.17, 0.15]].map(pkLT);
     const sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
     const seg = (g, b, rb, t, rt, a0, a1, cb, ct) => {   // 3-sided trunk piece from ring b to ring t (a1 - a0: twist)
       const inn = [(b[0] + t[0]) / 2, (b[1] + t[1]) / 2, (b[2] + t[2]) / 2];
@@ -476,7 +480,7 @@
       for (const q of [-0.66, 0.66]) { const [pu, pv] = P(0, q); bx(F, pu, pv, y + 0.42, 2.0, 0.05, 0.3, c, null, a); }
       for (const p of [-0.72, 0.72]) { let [pu, pv] = P(p, 0); bx(F, pu, pv, y + 0.34, 0.08, 0.07, 1.62, woodD, null, a); for (const q of [-0.36, 0.36]) { [pu, pv] = P(p, q); bx(F, pu, pv, y, 0.08, 0.72, 0.09, woodD, null, a); } }
     };
-    const pine = (F, u, v, h) => { const [x, z] = F.at(u, v); pkPine(scen.get(x, z), x, gy(x, z), z, h, vary([0.1, 0.22, 0.12], R, 0.14), R); };
+    const pine = (F, u, v, h) => { const [x, z] = F.at(u, v); pkPine(scen.get(x, z), x, gy(x, z), z, h, vary(pkLT([0.1, 0.22, 0.12]), R, 0.14), R); };
 
     /* Halfway Picnic Grounds (in the pines, on the flatter side): the entry sign, a gravel pull-out with parked cars, picnic tables and grills, an open shelter */
     {
@@ -1022,7 +1026,7 @@
       for (const o of [-W * 0.38, W * 0.38]) { const px = x + fz * o, pz = z - fx * o; box(g, px - fx * 0.08, y - 0.3, pz - fz * 0.08, 0.14, h0 + 0.3, 0.14, Math.atan2(fz, fx), pc, null, true); box(g, px - fx * lx, y - 0.3, pz - fz * lx, 0.14, h0 + H * Math.cos(tl) + 0.36, 0.14, Math.atan2(fz, fx), pc, null, true); }
       tq(x, y + h0, z, fx, fz, W, H, r, tl); ex(x, z, W / 2 + 1.5);
     };
-    const pine = (x, z, h) => pkPine(scen.get(x, z), x, gy(x, z), z, h, vary([0.1, 0.22, 0.12], R, 0.14), R);
+    const pine = (x, z, h) => pkPine(scen.get(x, z), x, gy(x, z), z, h, vary(pkLT([0.1, 0.22, 0.12]), R, 0.14), R);
     const guy = (x, z, a) => K.putPerson(x, z, a, K.fans[Math.floor(R() * K.fans.length)]);   // a visitor facing yaw a (0: +z)
     const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);   // the yaw that faces (tx, tz)
 
@@ -2632,7 +2636,8 @@
     base.setAttribute('aQ', new THREE.Float32BufferAttribute(aQ, 4)); base.setAttribute('aB', new THREE.Float32BufferAttribute(aB, 4)); base.setAttribute('aN', new THREE.Float32BufferAttribute(aN, 3));
     // where they grow: along the road, 1.8-42 m beyond the barriers, not in the snow zone, not on the crags; meadows (thin forest; grass and tundra patches above the trees) denser
     const L = [], tl0 = (x, z) => pkTreeline(x, z), add = (x, y, z, rot, sp, h, w, kind, c, a) => L.push(x, y, z, rot, sp, h, w, kind + R() * 0.98, c[0], c[1], c[2], a[0], a[1], a[2]);
-    const grassB = [0.3, 0.4, 0.16], grassA = [0.44, 0.45, 0.23], strawB = [0.68, 0.56, 0.3], strawA = [0.62, 0.47, 0.3], shrubB = [0.17, 0.3, 0.12], willow = [0.3, 0.38, 0.19];
+    const pkVG = (c) => PKVG ? [c[0] * PKVG[0], c[1] * PKVG[1], c[2] * PKVG[2]] : c;   // (Realizem G: the grass in its measured hue, the shrubs in the leaves')
+    const grassB = pkVG([0.3, 0.4, 0.16]), grassA = pkVG([0.44, 0.45, 0.23]), strawB = [0.68, 0.56, 0.3], strawA = [0.62, 0.47, 0.3], shrubB = pkLT([0.17, 0.3, 0.12]), willow = pkLT([0.3, 0.38, 0.19]);
     const shrubAut = [[0.64, 0.26, 0.1], [0.74, 0.5, 0.13], [0.55, 0.2, 0.12]], aspS = [0.27, 0.41, 0.14], aspA = [[0.93, 0.72, 0.13], [0.95, 0.62, 0.1], [0.88, 0.76, 0.2]];
     const petals = [[0.58, 0.32, 0.8], [0.97, 0.8, 0.14], [0.96, 0.96, 0.92], [0.92, 0.46, 0.66], [0.38, 0.52, 0.92]], flStem = [0.28, 0.4, 0.17];
     const nK = [0, 0, 0, 0, 0];
@@ -3997,6 +4002,30 @@
     mv.pg.attributes.position.needsUpdate = true; mv.pg.attributes.aK.needsUpdate = true;
   }
 
+  /* ---- Realizem G: the plants and the ground in the hues measured along the real road (docs/realizem/paket-g.md, docs/proge/pikes.md) ----
+     ESA WorldCover 2021 (10 m) and Sentinel-2 L2A (summer median) in the band 8–60 m either side of the real Pikes Peak Highway (OSM, 19.2 km
+     from the toll gate to the summit, tools/pikes/meri.py → tools/pikes/cover.json): trees 49.0 %, grass 24.5 %, bare 24.3 %, moss 1.7 %,
+     built 0.4 %. The game's road is the real one scaled to 6.3 km (js/geo.js), so there is no cell-to-cell match with the game's ground:
+     the shares and the colours count for the whole road. Only the hue moves (World.rastje.MOC), the brightness stays; the rock, gravel,
+     scree and snow keep their own colours. Still no draw call and no vertex more; the physics does not see colours. */
+  const PKV1 = [1, 1, 1];
+  let PKVG = null, PKLT = null;   // the ground's plants' multiplier, the needles' and leaves' (null: the game's own colours)
+  const pkLT = (c) => PKLT ? [c[0] * PKLT[0], c[1] * PKLT[1], c[2] * PKLT[2]] : c;
+  function pkRastje(def) {   // called in buildPikes once the flat pads are set: the multipliers for this build (none on a track that is not measured)
+    PKVG = PKLT = null;
+    const W = World.rastje; if (!W || !W.MERITVE) return null;
+    for (const id of ['pikes', 'pikesg']) if (!W.MERITVE[id]) W.MERITVE[id] = { podnebje: 'Dfc', lat: 38.9138597, lon: -105.0367843,
+      delez: { drevesa: 0.490, trava: 0.245, pozidano: 0.004 }, barva: { drevesa: 0x4b493e, trava: 0x7b6b5e, pozidano: 0x74675a },
+      drevesa: ['smreka', 'duglazija', 'bor', 'trepetlika', 'dolgoživi bor'] };
+    if (!W.aktivna(def)) return null;
+    const G = PK.G, L = PKT * PKC, h0 = G.h.slice(), d0 = G.dd.slice();   // (the height cache as it was: the build asks its heights in its own order, as before)
+    PKVG = W.tla(def, { lc: (x, z) => pkGround(x, z) > pkTreeline(x, z) ? 0 : 1, dist: (x, z) => pkTG(PK.td, x, z),
+      gcol: (x, z) => pkCol(x, z, pkGround(x, z), 1, 99, true).slice(), x0: G.x0, z0: G.z0, x1: G.x0 + G.ntx * L, z1: G.z0 + G.ntz * L });
+    G.h.set(h0); G.dd.set(d0);
+    const t = W.MERITVE[def.id].barva.drevesa, pc = [[0.09, 0.2, 0.11], [0.11, 0.24, 0.12], [0.08, 0.18, 0.1], [0.13, 0.26, 0.14], [0.1, 0.22, 0.14]];
+    PKLT = W.mnozilnik([0, 1, 2].map(k => pc.reduce((a, c) => a + c[k], 0) / pc.length), [(t >> 16 & 255) / 255, (t >> 8 & 255) / 255, (t & 255) / 255], W.MOC);
+    return { moc: W.MOC, tla: PKVG, drevesa: PKLT };
+  }
   function buildPikes(scene, tex, opts) {
     const R = rng(7311), N = T.N, w = T.w, dens = opts.density || 1;
     const root = new THREE.Group(); scene.add(root);
@@ -4007,6 +4036,7 @@
     P.pads.push({ x: T.px[0] - T.tx[0] * 18, z: T.pz[0] - T.tz[0] * 18, r: 30, h: T.hy[0] - 0.3 });
     const padE = { x: T.px[iE] + T.tx[iE] * 30, z: T.pz[iE] + T.tz[iE] * 30, r: 28, b: 36, h: T.hy[iE] - 0.3 }; P.pads.push(padE);
     const padH = (() => { const i = T.idx(sFin + 44), lat = -(T.bl[i] + 4 + 7.5); return { i, lat, x: T.px[i] + T.nx[i] * lat, z: T.pz[i] + T.nz[i] * lat, r: 19, h: T.hy[i] - 0.3 }; })(); P.pads.push(padH);   // the summit house, left of the road after the line
+    const rastje = pkRastje(T.def);   // (Realizem G: after the flat pads, before any ground colour or height is asked)
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [];   // tree exclusion circles (landmarks, crowds)
@@ -4601,6 +4631,7 @@
 
     pkMoving(K);
 
+    if (rastje) out.rastje = rastje;   // (Realizem G: read by the tests and the docs)
     if (World.ext && World.ext.goreRob && World.ext.goreRob.pkLC) World.ext.goreRob({ excluded, root, out }, 'pikes', { gH: pkGround, slope: pkSlope, lc: World.ext.goreRob.pkLC(pkGround, pkSlope, pkTreeline), near: pkNear });   // (the roadside ground for the chase camera: js/world-chase-bt16.js)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;

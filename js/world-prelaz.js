@@ -267,6 +267,15 @@
     far: { lo: [0.43, 0.47, 0.27], hi: [0.47, 0.45, 0.42], dw: [0.23, 0.3, 0.17], snow: 3350, tree: [1900, 1650], fc: [0.19, 0.27, 0.15], rk: [2700, 3100], dwb: [1900, 2100, 2500, 2300] },
   };
 
+  /* ---- Realizem G (docs/proge/balea.md, »Realizem G«): Bâlea's land cover measured in the band 8–60 m from the road (ESA WorldCover 2021 and its
+     Sentinel-2 composite, tools/proga-podatki.py's cover step): alpine grass 88.9 %, trees 4.7 %, built-up 2.6 % (bare 1.7, moss 1.6, water 0.4);
+     the median colours of each. Only Bâlea has them: every other pass is built as before, to the number (World.rastje.aktivna) ---- */
+  if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.balea) {
+    World.rastje.MERITVE.balea = { podnebje: 'ET', lat: 45.6107785, lon: 24.6144425, delez: { drevesa: 0.047, trava: 0.889, pozidano: 0.026 },
+      barva: { drevesa: 0x353e37, trava: 0x4f5b4d, pozidano: 0x737169 }, drevesa: ['smreka', 'rusje', 'brin'] };
+  }
+  let PLT = null;   // the measured hue's multiplier for what grows on the ground (World.rastje.tla); null: the game's own colours, to the number
+
   let L = PL_LOOK.balea;   // (the look of the build under way)
   const PLCOL = [0, 0, 0], PLBANK = [0.5, 0.47, 0.36];   // (PLBANK: the banks' earth, unless the look has its own: L.bank)
   let SAT = null;          // the satellite colours on the terrain grid (def.col), RGB, NaN outside the rows near the road
@@ -300,6 +309,7 @@
     const s = plSat(x, z); if (s) { const k = L.sat, m3 = (s[0] + s[1] + s[2]) / 3, sv = L.satV || 1.3; R = lerp(R, m3 + (s[0] - m3) * sv, k); G = lerp(G, m3 + (s[1] - m3) * sv, k); B = lerp(B, m3 + (s[2] - m3) * sv, k); }
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.06;
     R = lerp(R, L.shrub[0], sh * 0.75); G = lerp(G, L.shrub[1], sh * 0.75); B = lerp(B, L.shrub[2], sh * 0.75);
+    if (PLT) { R *= PLT[0]; G *= PLT[1]; B *= PLT[2]; }   // (Realizem G: the pasture and the dwarf pine's mats; not the huts' ground, the scree, the rock or the snow)
     R = lerp(R, 0.55, vi * 0.5); G = lerp(G, 0.52, vi * 0.5); B = lerp(B, 0.46, vi * 0.5);
     if (sc > 0) { const k = sc * (0.7 + 0.3 * P.n3(x, z)); R = lerp(R, L.scree[0], k); G = lerp(G, L.scree[1], k); B = lerp(B, L.scree[2], k); }
     // the rock: the faces of the land cover and the steepest ground away from the road; the steep banks between the hairpins' legs and by the road stay
@@ -578,6 +588,9 @@
         const o = (dx * T.nx[i] + dz * T.nz[i]) * side; if (o < b.p[0][0] - 6 || o > b.o1) continue;
         if (b.hl - 0.35 < h) h = b.hl - 0.35; }
       return h; } };
+
+    PLT = null;   // (Realizem G: the game's own colours first, measured on the open land 8–60 m from the road, then the ground's vertex colours take the measured hue)
+    if (World.rastje) PLT = World.rastje.tla(def, { lc: vrLC, dist: vrDist, gcol: plGCol, x0: P.G.x0, z0: P.G.z0, x1: P.G.x0 + P.G.ntx * VRC * VRT, z1: P.G.z0 + P.G.ntz * VRC * VRT });
 
     /* ---- terrain tiles; the lakes (def.lakes: OpenStreetMap's shores, the water a little below them) ---- */
     let nFar = 0;
@@ -1234,6 +1247,7 @@
         else clump.add(x, yy, z, r1 * 70, 3.6 + r2 * 2.8, 2.0 + r4 * 1.8, [0.86 + r3 * 0.26, 0.9 + r4 * 0.18, 0.88 + r2 * 0.14]);
         nTrees++; }
       clump.addTo(root, true); }
+    const lt = World.rastje ? World.rastje.listje(def, tk) : null;   // (Realizem G: the measured hue on the spruce's and the mats' green vertices)
     for (const t of tk) t.addTo(root, true);
 
     /* ---- the pasture's plants (instanced per 96 m chunk): tufts of grass, cushions of flowers, boulders; stones on the scree and by the road ---- */
@@ -1281,6 +1295,9 @@
         if (++nS >= maxS) break edge;
       }
     }
+    if (PLT) { const ca = pk[0].base.attributes.color, q = ca.array;   // (Realizem G: the tufts take the ground's hue: their green vertices; the unit tuft is this build's own)
+      for (let k = 0; k < q.length; k += ca.itemSize) if (q[k + 1] > q[k]) { q[k] *= PLT[0]; q[k + 1] *= PLT[1]; q[k + 2] *= PLT[2]; } ca.needsUpdate = true; }
+    if (PLT || lt) out.rastje = { moc: World.rastje.MOC, tla: PLT, drevesa: lt };
     for (const t of pk) t.addTo(root, false);
 
     /* ---- the slopes: blocks at the foot of the cuts, crags and slabs where the slope rises steep beside the road, old snow in the shady gullies high up ---- */
