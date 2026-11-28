@@ -1007,11 +1007,11 @@
  },
  "lombok": {
   "meshes": 1284,
-  "verts": 1145724,
+  "verts": 1149706,
   "instances": 38637,
   "props": 51,
   "crowd": 19,
-  "world": "e9296fad",
+  "world": "af6246ca",
   "propsHash": "b21d4ce1",
   "floor": "1feaa0d3/8596",
   "groups": {
@@ -1022,7 +1022,7 @@
    "lombok tussocks:MeshLambertMaterial": "25f76337",
    "lombok sea:MeshPhongMaterial": "e0562dd5",
    "-:MeshPhongMaterial": "a0e351b",
-   "rsFar:MeshBasicMaterial": "24a38444",
+   "rsFar:MeshBasicMaterial": "dc6c7bd3",
    "rob:MeshLambertMaterial": "f2beaec8",
    "crowd:MeshLambertMaterial": "5443521",
    "jet smoke:MeshBasicMaterial": "684b759b",
