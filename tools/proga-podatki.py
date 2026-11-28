@@ -201,6 +201,8 @@ def dem_urls(la0, lo0, la1, lo1):   # Copernicus DEM GLO-30, 1 x 1 degree tiles 
         for lo in range(math.floor(lo0), math.floor(lo1 - 1e-9) + 1):
             n = 'Copernicus_DSM_COG_10_%s_00_%s_00_DEM' % (_ns(la, 2), _ew(lo, 3)); out.append('https://copernicus-dem-30m.s3.amazonaws.com/%s/%s.tif' % (n, n))
     return out
+def glo90(u):   # the Copernicus DEM GLO-90 tile over the same square as a GLO-30 one (u itself when u is not a GLO-30 tile)
+    return u.replace('copernicus-dem-30m', 'copernicus-dem-90m').replace('_COG_10_', '_COG_30_') if 'copernicus-dem-30m' in u else u
 def wc_urls(la0, lo0, la1, lo1):    # ESA WorldCover 2021, 3 x 3 degree tiles
     out = []
     for la in range(math.floor(la0 / 3) * 3, math.floor((la1 - 1e-9) / 3) * 3 + 1, 3):
@@ -240,7 +242,11 @@ def read_mosaic(urls, lat0, lon0, lat1, lon1, out_shape=None, resampling='neares
     for u in urls:
         try:
             with rasterio.open('/vsicurl/' + u): have.append(u)
-        except Exception: print('  (no tile: %s)' % u.rsplit('/', 1)[-1])
+        except Exception:
+            g = glo90(u)   # GLO-30 is not public over some countries (Armenia): the GLO-90 tile instead
+            try:
+                with rasterio.open('/vsicurl/' + g): have.append(g); print('  (GLO-90: %s)' % g.rsplit('/', 1)[-1])
+            except Exception: print('  (no tile: %s)' % u.rsplit('/', 1)[-1])
     if not have: raise RuntimeError('no tile over the box')
     if len(have) == 1: return read_window(have[0], lat0, lon0, lat1, lon1, out_shape, resampling)
     from rasterio.merge import merge
