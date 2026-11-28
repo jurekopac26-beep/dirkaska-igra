@@ -239,6 +239,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Batangas',
     grassNat: 0.25, lawn: [0.96, 1.04, 0.9],
     zivali: { a: ['buffalo', 'egret'], t: ['palmHut'], open: true },
+    // the commentator's own lines for a race here (Comm: intro, go and rain; js/game.js ownLine), by docs/proge/batangas.md: the plateau of
+    // Batangas above the sea, the sugar cane and the coconut palms round it, the heat, the afternoon storms of the wet season (June to November)
+    comm: {
+      intro: ["Welcome to {track}! {laps} laps on the green plateau of Batangas, {cars} cars, and you start {grid}.", "Good afternoon from {track}, warm and humid among the cane fields and the coconut palms. {laps} laps, and you line up {grid}.", "Here we are at {track}, on the high ground of southern Luzon. {cars} cars, {laps} laps, and you start {grid}."],
+      go: ["Lights out, and away they go down the main straight!", "And they're off, flat out towards the hairpin of Turn 1!", "Green light! The pack charges down to the first right!"],
+      rain: ["And here comes the rain! A tropical downpour over the plateau, the track is soaking.", "The afternoon storm has arrived! Standing water in the braking zones.", "It's pouring down! In the wet season the clouds build up over the hills, and then the heavens open."],
+    },
     id: 'batangas', name: 'Batangas, Filipini', theme: 'batangas', laps: 3, halfWidth: 6,
     desc: %(desc)s,
     en: { name: 'Batangas, Philippines', desc: %(desc_en)s },
