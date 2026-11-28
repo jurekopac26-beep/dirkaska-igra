@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500">
+  <title>Armenia</title>
+  <!-- Ratio 1:2. Three equal horizontal bands: red, blue, orange (Law on the National Flag of the Republic of Armenia).
+       Red #D90012, blue #0033A0, orange #F2A800. -->
+  <rect width="1000" height="500" fill="#F2A800"/>
+  <rect width="1000" height="333.3" fill="#0033A0"/>
+  <rect width="1000" height="166.7" fill="#D90012"/>
+</svg>
