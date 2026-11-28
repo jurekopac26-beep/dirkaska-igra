@@ -1,0 +1,30 @@
+{
+  "id": "trebevic",
+  "about": "Trebević, Bosna in Hercegovina (id trebevic): the narrow asphalt road from Dolovi at the edge of Sarajevo up Trebević past the viewpoint Vidikovac, the old bobsleigh track and the medieval fort Draguljac, to the junction with the road round Trebević, point to point (docs/proge-po-drzavah.md, Bosna in Hercegovina: Trebević)",
+  "box": [43.815, 18.42, 43.865, 18.5],
+  "closed": false,
+  "dist": {"grid": 160},
+  "route": [
+    [43.85007, 18.44543, "Dolovi", "start: Dolovi at the edge of Sarajevo (815 m)"],
+    [43.84295, 18.4399, null, "the hairpins above the town"],
+    [43.84105, 18.45135, null, "the viewpoint Vidikovac (1138 m)"],
+    [43.8393, 18.4635, null, "the bend east of Vidikovac"],
+    [43.8369, 18.4622, null, "finish: above the junction with the road round Trebević"]
+  ],
+  "prefer": ["Dolovi"],
+  "geoRoads": ["Dolovi"],
+  "geoWater": [],
+  "marks": [
+    ["Stara bob steza (start)", "Old bobsleigh track (start)", "landmark", ["w33884012"]],
+    ["Stara bob steza (dvojni zavoj)", "Old bobsleigh track (double bend)", "landmark", ["w33884014"]],
+    ["Stara bob steza (cilj)", "Old bobsleigh track (finish)", "landmark", ["w750719261"]],
+    ["Utvrda Draguljac", "Draguljac fort", "landmark", ["w305847665"]],
+    ["Stari kamnolom", "Old quarry", "landmark", ["w567044640"]]
+  ],
+  "places": [
+    ["Dolovi", null, 0],
+    ["Trebević", null, 1500],
+    ["Vidikovac", null, 2785],
+    ["Draguljac", null, 3080]
+  ]
+}

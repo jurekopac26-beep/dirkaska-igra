@@ -14,13 +14,13 @@ const K = require('../js/kariera.js');
 
 let n = 0, bad = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
-const J = JSON.stringify, N = K.NAGRADE, S = K.STOPNJE;
+const J = JSON.stringify, S = K.STOPNJE;
 const byId = new Map(C.TRACKS.map(d => [d.id, d]));
-const P = K.pot(C.TRACKS, C.CATS);
+const P = K.pot(C.TRACKS, C.CATS), N = P.nagrade;   // (proge3-kariera: the rewards scaled to the path's length)
 const cupIn = (Q, id) => Q.vse.find(c => c.id === id);
 const rim = (k) => ['', '', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII'][k];
 // an event's coins by the place of its 3, 2, 1 stars (a single event: its own table, 1★ … 3★)
-const tabela = (c) => c.vrsta === 'razred' ? N.razred : c.vrsta === 'finale' ? N.finale : K.VRSTE_POS.includes(c.kind) ? N.posamezna[c.stopnja].slice().reverse() : N.pokal[c.stopnja];
+const tabela = (c, N = P.nagrade) => c.vrsta === 'razred' ? N.razred : c.vrsta === 'finale' ? N.finale : K.VRSTE_POS.includes(c.kind) ? N.posamezna[c.stopnja].slice().reverse() : N.pokal[c.stopnja];
 const freeze = (o) => { if (o && typeof o === 'object' && !ArrayBuffer.isView(o) && !Object.isFrozen(o)) { Object.freeze(o); for (const k of Object.keys(o)) freeze(o[k]); } return o; };
 const rnd = (seed) => () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const shuffle = (a, r) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -36,14 +36,19 @@ function pravilo(Q, tracks, cats) {
   // every real track in one cup exactly (the final aside); nothing else on the path; the ids unique
   const cnt = new Map();
   for (const c of Q.pokali) if (c.vrsta !== 'finale') for (const id of c.tracks) cnt.set(id, (cnt.get(id) || 0) + 1);
-  for (const d of T) if (cnt.get(d.id) !== 1) err.push(d.id + ' in ' + (cnt.get(d.id) || 0) + ' cups');
+  for (const d of T) if ((cnt.get(d.id) || 0) !== (d.ice ? 0 : 1)) err.push(d.id + ' in ' + (cnt.get(d.id) || 0) + ' cups');
+  // an ice track (def.ice; the decision kariera-envalira-791): in no cup, stage 3's single race (its first event)
+  for (const d of T.filter(d => d.ice)) {
+    const e = (Q.posamezne || []).filter(x => x.tracks.includes(d.id));
+    if (e.length !== 1 || e[0].stopnja !== 3 || e[0].kind !== 'dirka' || e[0].id !== 'e3-dirka-' + d.id) err.push(d.id + ': not stage 3\'s single race ' + e.map(x => x.id));
+  }
   for (const c of Q.vse) for (const id of c.tracks) if (!D.has(id)) err.push(c.id + ': ' + id + ' not a real track');
   if (new Set(Q.vse.map(c => c.id)).size !== Q.vse.length) err.push('ids not unique');
   // a group (a stage and a kind; the long tracks; the time trials): its tracks by length (km, then id), split evenly into parts of at
   // most NAJVEC (the longer parts first), the ids and names numbered (the first part plain, then II, III …), the stage's difficulty
   const grupe = [];
   for (let s = 1; s <= 3; s++) for (const v of ['krog', 'cesta']) {
-    grupe.push({ key: 's' + s + '-' + v, s, v, cups: Q.pokali.filter(c => c.stopnja === s && c.vrsta === v), want: T.filter(d => !leg(d.id) && K.vrsta(d) === v && K.stopnjaProge(d) === s),
+    grupe.push({ key: 's' + s + '-' + v, s, v, cups: Q.pokali.filter(c => c.stopnja === s && c.vrsta === v), want: T.filter(d => !leg(d.id) && !d.ice && K.vrsta(d) === v && K.stopnjaProge(d) === s),
       name: (k, m) => (v === 'krog' ? 'Pokal dirkališč' : 'Pokal cest') + (m > 1 ? rim(k) : '') + ' · ' + S[s - 1].name,
       en: (k, m) => (v === 'krog' ? 'Circuit Cup' : 'Road Cup') + (m > 1 ? rim(k) : '') + ' · ' + S[s - 1].en });
   }
@@ -68,7 +73,7 @@ function pravilo(Q, tracks, cats) {
     && lg[0].name === 'Legende' && lg[0].en.name === 'Legends') : lg.length) err.push('the Legends');
   // the final: FINALE_N circuits shorter than DOLGA (or all of them), each continent's longest first, the continents evenly (a continent
   // with fewer than one less than the most only when it has no more)
-  const fin = Q.pokali.filter(c => c.vrsta === 'finale'), kr = T.filter(d => K.vrsta(d) === 'krog' && L.get(d.id) < K.DOLGA);
+  const fin = Q.pokali.filter(c => c.vrsta === 'finale'), kr = T.filter(d => K.vrsta(d) === 'krog' && !d.ice && L.get(d.id) < K.DOLGA);   // (an ice track: none of the final's)
   if (kr.length ? !(fin.length === 1 && fin[0].id === 's4-finale' && fin[0].stopnja === 5 && fin[0].kind === 'finale' && fin[0].diff === 3 && fin[0].tracks.length === Math.min(K.FINALE_N, kr.length)
     && new Set(fin[0].tracks).size === fin[0].tracks.length && fin[0].tracks.every(id => kr.some(d => d.id === id))
     && fin[0].name === 'Finale · Veliko prvenstvo' && fin[0].en.name === 'Final · Grand Championship') : fin.length) err.push('the final');
@@ -113,7 +118,7 @@ function pravilo(Q, tracks, cats) {
     const want = [], a = mine.slice(), b = cups.slice();
     while (a.length || b.length) { if (a.length) want.push(a.shift()); if (b.length) want.push(b.shift()); }
     if (st.dogodki.join() !== want.concat(cls).map(x => x.id).join()) err.push('stage ' + s + ': its events ' + st.dogodki);
-    if (mine.length > Math.max(0, K.VELIKOST[i] - cups.length - cls.length)) err.push('stage ' + s + ': ' + mine.length + ' single events');
+    if (mine.length > Math.max(K.VRSTE_POS.length, K.VELIKOST[i] - cups.length - cls.length)) err.push('stage ' + s + ': ' + mine.length + ' single events');
     if (new Set(mine.map(e => e.tracks[0])).size !== mine.length) err.push('stage ' + s + ': a track twice');
     for (const e of mine) {
       const t = D.get(e.tracks[0]), ts = t ? K.stopnjaProge(t) : 0;
@@ -126,7 +131,7 @@ function pravilo(Q, tracks, cats) {
   // the stars: 3 an event; the thresholds the plan's share of them (of 132: 44 events), at most the stars of the stages before without
   // their class cups (every stage can open without a car of a class)
   const zv = Q.stopnje.map((st, i) => 3 * (Q.pokali.filter(c => c.stopnja === i + 1).length + pos.filter(e => e.stopnja === i + 1).length));
-  const prag = K.PRAG.map((x, i) => Math.min(Math.round(x * Q.max / 132), zv.slice(0, i).reduce((a, b) => a + b, 0)));
+  const prag = K.PRAG.map((x, i) => Math.min(i === 1 ? x : Math.round(x * Q.max / 132), zv.slice(0, i).reduce((a, b) => a + b, 0)));
   if (Q.max !== 3 * Q.vse.length || JSON.stringify(Q.pragovi) !== JSON.stringify(prag)) err.push('the thresholds ' + JSON.stringify(Q.pragovi) + ', not ' + JSON.stringify(prag));
   if (Q.pokali.length !== grupe.reduce((s, g) => s + g.cups.length, 0) + lg.length + fin.length) err.push('a cup of no kind');
   return err;
@@ -141,7 +146,7 @@ function igraj(Q, cats) {
     igral++;
     if (K.stanje(car.pot, c, Q, cats).stanje === 'zaklenjen') zaklenjeni.push(c.id);
     const r = K.poPokalu(car, c.id, 1, Q, cats);
-    car = r.career; tabele += tabela(c)[0];
+    car = r.career; tabele += tabela(c, Q.nagrade)[0];
     for (const x of r.nagrade) if (x.id.startsWith('stopnja:')) darila[x.id] = (darila[x.id] || 0) + 1; else if (x.id === 'pokal:' + c.id) dobil += x.amount;
   };
   for (const st of Q.stopnje) for (const id of st.dogodki) { const c = cupIn(Q, id); if (c.vrsta !== 'razred' || (c.tracks.length && cats.includes(c.cat))) en(c); }
@@ -177,7 +182,8 @@ const darilaOk = (g) => { const want = []; for (let s = g.igral ? 2 : g.o0 + 1; 
   check('the difficulties: the stages ' + S.map(s => s.diff).join('/') + ', the final 3 (stage 5), the class cups 1, two a stage', J(S.map(s => s.diff)) === '[0,1,2,2,3]' && cupIn(P, 's4-finale').diff === 3
     && cupIn(P, 's4-finale').stopnja === 5 && P.razredi.every(r => r.diff === 1) && S.every(st => P.razredi.filter(r => r.stopnja === st.n).length === 2));
   check('Atlas on the real path: ' + P.stopnje.map(st => st.dogodki.length).join('/') + ' events (' + P.vse.length + '; ' + P.posamezne.length + ' single, ' + P.pokali.length + ' cups, ' + P.razredi.length
-    + ' class cups), ' + P.max + '★, the thresholds ' + P.pragovi.join('/'), J(P.stopnje.map(st => st.dogodki.length)) === J(K.VELIKOST) && P.vse.length === 44 && P.max === 132 && J(P.pragovi) === '[0,9,21,36,54]');
+    + ' class cups), ' + P.max + '★, the thresholds ' + P.pragovi.join('/'), P.stopnje.every((st, i) => st.dogodki.length === Math.max(K.VELIKOST[i], st.pokali.length + P.razredi.filter(r => r.stopnja === st.n).length + K.VRSTE_POS.length))
+    && P.max === 3 * P.vse.length && J(P.pragovi) === J(K.PRAG.map((x, i) => i === 1 ? x : Math.round(x * P.max / 132))));
   check('the numbering (the plan\'s »Pokal cest · Klub«): a first part plain, a second » II«, never » I« (fixed: it began at » II«)',
     P.pokali.some(c => c.name === 'Pokal cest · Klub' && c.en.name === 'Road Cup · Club') && !P.vse.some(c => / I( ·|$)/.test(c.name) || / I( ·|$)/.test(c.en.name)), P.pokali.map(c => c.name).join(', '));
   check('the class cups: an English name for every class of Core; a new class keeps its own name', P.razredi.every((r, i) => r.en.name !== 'Class Cup · ' + C.CATS[i].name)
@@ -286,7 +292,7 @@ const darilaOk = (g) => { const want = []; for (let s = g.igral ? 2 : g.o0 + 1; 
 {
   const dir = (track, o, car) => K.poDirki(car || K.novo({ on: true }), Object.assign({ track, pos: 1, cat: 'mali', km: 3 }, o), P);
   const prva = (r) => r.nagrade.filter(x => x.id.startsWith('prva:')), ids = (r) => r.nagrade.map(x => x.id).sort();
-  const own = (id) => P.pokali.find(c => c.vrsta !== 'finale' && c.tracks.includes(id)).stopnja;
+  const own = (id) => (P.pokali.find(c => c.vrsta !== 'finale' && c.tracks.includes(id)) || P.posamezne.find(e => e.tracks.includes(id))).stopnja;   // (an ice track: its single race's)
   const tt = cupIn(P, 's4-tt').tracks[0];
   const firsts = P.stopnje.map(st => cupIn(P, st.pokali[0]).tracks[0]).concat(['spa', cupIn(P, 's4-dolge').tracks[0], tt]);
   const badF = firsts.filter(id => { const r = prva(dir(id)); return r.length !== 1 || r[0].id !== 'prva:' + id || r[0].amount !== N.prva[own(id)] || r[0].name !== 'Prva zmaga na progi' || r[0].en !== 'First win on the track'; });

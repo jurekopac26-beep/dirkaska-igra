@@ -16,7 +16,7 @@ const { DT, seeded } = require('./lib/sim.js');
 const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
-const K = C.CSK, circuit = (d) => !d.open && !d.test && !d.rally && !d.descent;
+const K = C.CSK, circuit = (d) => !d.open && !d.test && !d.rally && !d.descent && d.brakeBoards !== false;   // (def.brakeBoards false: a circuit without boards, Envalira's ice between snow banks)
 const kmh = (v) => Math.round(v * 3.6);
 
 // 1. no boards where there is no circuit

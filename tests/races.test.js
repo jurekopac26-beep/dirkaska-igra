@@ -6,6 +6,7 @@
 // and the final state of every car, as a digest) must be the same. When it is not, the other values show how big the
 // change is: spins (at most 2 more than the reference), wall contacts, rescues and the winner's time (within +-3 %).
 // A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (15-21 % on most tracks: the wet road grips a third less, docs/dez-sneg.md).
+// Not on a track on ice (def.ice, Envalira): the rain does not count for its grip there.
 //   node tests/races.test.js [--update] [--only=gozd,cs] [--only=spa,rain]
 'use strict';
 const fs = require('fs');
@@ -56,7 +57,7 @@ for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 
   const rain = v === 'rain' ? 1 : 0, key = `${tid}/${phys}` + (v ? '/' + v : '');
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
   const r = race(tid, phys, rain, v === 'formula' || v === 'lm' ? model(v) : v === 'car' ? model(NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) : null); out[key] = r;
-  const g = ref[key], why = [], dry = rain && (out[`${tid}/${phys}`] || ref[`${tid}/${phys}`]);
+  const g = ref[key], why = [], dry = rain && !C.TRACKS.find(d => d.id === tid).ice && (out[`${tid}/${phys}`] || ref[`${tid}/${phys}`]);   // (a track on ice: the rain does not count for its grip, core.js COLD.ice)
   if (r.nan) why.push('NaN in car state');
   if (r.finished !== r.cars) why.push(`only ${r.finished}/${r.cars} finished`);
   if (dry && dry.winner && r.winner && !(r.winner / dry.winner > 1.005 && r.winner / dry.winner < 1.3)) why.push(`winner in the rain ${r.winner} s, dry ${dry.winner} s: not 0.5-30 % slower`);
