@@ -27,4 +27,14 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Približki**: drevesa, grmovje, rastline, skale in gledalci so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah. Koče so generične, stojnice lesene s ponjavo. Drogovi daljnovoda, ki bi stali na cesti v igri (širši od prave), so premaknjeni za ograjo ali izpuščeni. Oprema ob cesti: lega iz OpenStreetMap, oblika in barve splošne (kažipoti in tabla brez napisov); kar je v OpenStreetMap v ožjem pasu ob pravi cesti (stojalo na prelazu, mizi za piknik), je zaradi širše ceste v igri premaknjeno za ograjo (mizi ~14 m dlje od ceste kot v resnici).
 - **Pravno**: cesta je znana s kolesarskih dirk; v igri in opisih ni nobene omembe dirk, kolesarjev, zavetišča po imenu ali oseb, ki se jih spominjajo spomeniki ob cesti in na prelazu. Samo zemljepisna imena (Izoard, Col d'Izoard, Le Laus, Ravin d'Izoard, Ravin du Col d'Izoard, Hautes-Alpes, Briançonnais, Queyras). Pri opremi ob cesti brez imen (zavetišče, upravljavec kažipotov, cilji na kažipotih, ime table) in brez fotografij.
 
+## Raziskava kraja (dodelava, november 2026)
+
+- **Lega**: Hautes-Alpes, severna stran prelaza Izoard na cesti D902 med Briançonnaisom (dolina Cerveyrette, sever) in Queyrasom (dolina Arvieux, jug); greben Crête de Coste Belle vzhodno nad prelazom, Pic de Rochebrune zahodno (OpenStreetMap).
+- **Podnebje**: suho notranjealpsko, eno najbolj sončnih območij Alp; poleti jasna popoldneva, sneg na prelazu od novembra do maja (cesta pozimi zaprta).
+- **Višina**: 1.973–2.360 m; gozdna meja ~2.250 m (Copernicus DEM, ESA WorldCover).
+- **Rastje**: macesen in cemprin do gozdne meje, nad njo suhi pašniki z brinom; na južni strani pod vrhom skoraj golo melišče (WorldCover razred »gola tla«).
+- **Kamnina**: apnenec, dolomit in rumenkasta celičasta breča (cargneule); na južni strani pod prelazom (**Casse Déserte**, ~1 km jugovzhodno od vrha) melišča, iz katerih štrlijo stolpiči in igle iz te kamnine (OSM: `natural=scree`, `bare_rock`, `cliff`).
+- **Ob cesti**: kamniti podporni zidovi, jeklene ograje, smerni stebrički, zavetišče pod prelazom, obelisk na prelazu.
+- **Zvok**: nad gozdno mejo pašniki s svizci (alpski svizec živi na visokih pašnikih Queyrasa in Briançonnaisa); svarilni žvižg je kratek, visok in padajoč.
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py izoard --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
