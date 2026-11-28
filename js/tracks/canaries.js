@@ -29,6 +29,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     maxRivals: 85,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~190 m of road past the line
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: CANARIES_H.map((h, i) => [i / (CANARIES_H.length - 1), h / 10]),
+    sea: { y: 0 },   // the Caribbean Sea west of the village (js/world-prelaz.js the sea plane; the gulls and the surf by def.sea)
     // medal times of the time trial (s), dry and in the rain, in summer and in winter (winter: the cold tarmac, docs/dez-sneg.md): the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
     medals: {cs:[165,174,187],wet:{cs:[200,210,225]},winter:{cs:[194,203,218],wet:{cs:[239,250,269]}}},
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
