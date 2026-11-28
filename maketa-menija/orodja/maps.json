@@ -1022,5 +1022,56 @@
    "wet": true,
    "skirt": false
   }
+ ],
+ [
+  "hiva",
+  "top",
+  "top-hiva",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "krasnahorka",
+  "top",
+  "top-krasnahorka",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "mapileng",
+  "top",
+  "top-mapileng",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "tapini",
+  "top",
+  "top-tapini",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "vaoala",
+  "top",
+  "top-vaoala",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]
