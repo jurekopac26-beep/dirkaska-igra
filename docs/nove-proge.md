@@ -143,4 +143,4 @@ Od 7. 11. 2026 proge s čakanja delajo seje po `docs/nove-proge-1-0.md` (ena sej
 | 6A, 6B | Yungas, Bolivija | izdelava, dodelava | 14–18 | ne začni (brez izletne cone, 5. 11. 2026) |
 | 7A, 7B | Pau, Francija | izdelava, dodelava | 18–24 | ne začni (brez izletne cone, 5. 11. 2026) |
 | 8A, 8B | Ngorongoro, Tanzanija | izdelava z živalmi, dodelava | 20–28 | končano v PR #533 (osnutek; A9, skupina N5 v `docs/nove-proge-1-0.md`; enosmerni tlakovani spust 3 km namesto makadama, opis v `docs/proge/ngorongoro.md`) |
-| 9 | vseh 8 | meni: zemljevid od zgoraj, globus, prelet, glasba | 4–6 | čaka |
+| 9 | vseh 8 | meni: zemljevid od zgoraj, globus, prelet, glasba | 4–6 | v delu: PR #1122 (uvod `js/intro-data.js`; zemljevid od zgoraj in prelet menija v #754; globus v meniju na `main`; potovanje po globusu in prelet s helikopterjem po #754, z odobritvijo slik; glasba: čaka vir) |
