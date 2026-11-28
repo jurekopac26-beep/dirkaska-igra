@@ -106,7 +106,7 @@ try {
   //    field) and drives the race's cars; the race after it has the same field
   await act('to-title'); await page.waitForTimeout(200);
   await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'titan'); });
-  await startTrack(page, 'rbring');
+  await startTrack(page, 'rbring', 'race');   // (the race: the way chosen last, Pikes Peak's time trial, is the circuit's too, Kronometer na vseh progah)
   const f0 = await state();
   const rf = await qualiLap();
   await act('quali-go'); await page.waitForTimeout(400);

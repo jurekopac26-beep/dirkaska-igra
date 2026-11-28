@@ -94,7 +94,7 @@ try {
       return { kind: map ? 'map' : top && top.querySelector('img') ? 'model' : 'none', files: top ? [...top.querySelectorAll('img, image')].map(e => e.getAttribute('src') || e.getAttribute('href')) : [] };`;
     // a mode's tracks in the menu's order: the real ones; behind NEUPORABNO (nu) the hidden ones, those awaiting the user's choice first, then the test tracks
     const expList = ([gm, nu]) => {
-      const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes(gm) && !!(d.test || d.pending) === nu);
+      const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && Core.ways(d).includes(gm) && !!(d.test || d.pending) === nu);   // (Core.ways: a circuit's time trial too, Kronometer na vseh progah)
       const rk = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real ones, the ones awaiting the user's choice, the test tracks)
       ds.sort((a, b) => (rk(a) - rk(b)) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
       return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent && !d.vehicle).length, lens: ds.every(d => L[d.id] > 0) };
@@ -969,7 +969,7 @@ try {
     await click(page, 'single'); await click(page, 'mode:trial');
     const n0 = await page.evaluate(() => Menu.debug().list.length);
     for (let k = 0; k < n0; k++) { const n = await ev(page, 'return root.querySelector(".where .w2").textContent;'); if (n === 'Harju') break; await click(page, 'track:1'); }
-    const info = await ev(page, 'return { name: root.querySelector(".where .w2").textContent, gold: /^Gold time\\d+:\\d\\d\\.\\d\\d$/.test(root.querySelector(".trow .gt").textContent), opp: !!root.querySelector(".trow .opp") };');
+    const info = await ev(page, 'const tr = root.querySelector(".trow"); return { name: root.querySelector(".where .w2").textContent, gold: /^Gold time\\d+:\\d\\d\\.\\d\\d$/.test(tr.querySelector(".gt").textContent), opp: !!tr.querySelector(".opp") };');   // (Harju's own row, the first: the neighbour's, a circuit's time trial with no medal times, has its opponents, Kronometer na vseh progah)
     T.check('Time trial: Harju, its Gold time first in the row (no opponents)', info.name === 'Harju' && info.gold && !info.opp, JSON.stringify(info));
     await click(page, 'race-single');
     await raceOn(page, 'harju').catch(() => null);

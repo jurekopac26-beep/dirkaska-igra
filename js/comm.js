@@ -200,6 +200,16 @@ const Comm = (() => {
     cpFast: ['Checkpoint {cp}, {delta} seconds up on your best!', 'Green split at checkpoint {cp}! {delta} seconds faster!', 'Checkpoint {cp}. You are {delta} seconds ahead of your record pace!'],
     cpEven: ['Checkpoint {cp}, dead level with your best split!', 'Checkpoint {cp}. Right on your record pace, not a hair in it!'],
     cpSlow: ['Checkpoint {cp}, {delta} seconds down on your best.', 'Split {cp}: {delta} seconds slower. Push on!', 'Checkpoint {cp}. Down by {delta}, find that time!'],
+    // a circuit's time trial (any circuit, Kronometer): alone on the track, laps against the clock
+    introLapTT: ['Welcome to {track}! No rivals today, just you, the clock and an empty track.', 'An empty circuit at {track}. Every lap counts against the clock.', 'Time trial at {track}! Clean laps, and let the clock do the talking.'],
+    goLapTT: ['Green light! The clock is running!', 'And away you go! The track is all yours.', 'Go! Lap one is under way!'],
+    lapFirstTT: ['Lap {cp} done in {time}.', 'That is lap {cp}, {time}. Keep it clean!', 'Lap {cp} in the books, {time}.'],
+    lapFastTT: ['End of lap {cp}, {delta} seconds up on your best run!', 'Lap {cp}. You are {delta} seconds ahead of your record pace!'],
+    lapEvenTT: ['End of lap {cp}, dead level with your best run!', 'Lap {cp}. Right on your record pace!'],
+    lapSlowTT: ['End of lap {cp}, {delta} seconds down on your best run.', 'Lap {cp}. Down by {delta}, find that time!'],
+    lapTTRecord: ['Across the line! A new personal best, {time}!', 'Record run at {track}! {time}!', 'What a drive! New personal best, {time}!'],
+    lapTTEven: ['Across the line in {time}. That is your record to the thousandth!', '{time}, dead level with your best!'],
+    lapTTEnd: ['Across the line in {time}, {delta} seconds off your best.', 'That is the finish. {time}, just {delta} short of the record.', 'Chequered flag. {time}. {delta} seconds to find next time.'],
     summitRecord: ['At the summit! A new personal best, {time}!', 'Record run! {time} to the top of {track}!', 'What a climb! New personal best, {time}!'],
     summitEven: ['At the summit in {time}. That is your record to the thousandth!', '{time} at the top, dead level with your best!'],
     // Pikes Peak: the TV helicopter (its fly-over after Glen Cove, and the escort to the finish)

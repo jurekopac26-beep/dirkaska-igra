@@ -1274,7 +1274,7 @@
     const oppN = (k) => '<small class="vh">Opponents</small><b>' + k + '</b>' + GRID;
     let last;
     if (mode === 'chase') last = cell('Police', 'On you', 'pol');
-    else if (mode === 'trial') { const gold = G.medals(d); last = gold ? cell('Gold time', clock(gold[0]), 'gt') : '<div class="opp">' + oppN(0) + '</div>'; }
+    else if (mode === 'trial') { const gold = G.medals(d); last = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Gold time', '—', 'gt'); }
     else if (mode === 'endless') { const E = typeof Core !== 'undefined' && Core.EN; last = cell('Clock', (E ? E.clock[Math.max(0, Math.min(3, G.S.difficulty | 0))] : 30) + ' s', 'clk'); }   // (the clock's start at the game's level, js/core.js EN.clock; the row's last cell, as the police's)
     else if (mode === 'race' && rivOf(d)) { const k = G.rivals(d); last = '<div class="opp' + twOn('riv') + '">' + twB('riv', 'Opponents: ' + k + '. Choose how many', oppN(k)) + '</div>'; }
     else last = '<div class="opp">' + oppN(mode === 'duel' || mode === 'pursuit' || mode === 'drag' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21) + '</div>';   // (Elimination: at least 5, js/zabava/elim.js E.min)
