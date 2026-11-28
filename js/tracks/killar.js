@@ -151,10 +151,16 @@ var TRACK_DEFS = TRACK_DEFS || [];
       }
       return (T.turnList = out);
     },
+    // the intro's flyover (Render pkFly: [metres after the start line (-1: the finish), caption]), the places named above
+    fly: [[0, 'START'], [740, 'Kmetije'], [1790, 'Ostri ovinek'], [2200, 'Dolgi vsek'], [4036, 'Hangrung Nala'], [-1, 'CILJ']],
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n":"Killar","d":10.0,"say":["Off we go from Killar, deep in the Pangi Valley!","Leaving Killar behind, onto the cliff road!","Out of the village of Killar, and the drop starts right away!"]},
+      {"n":"Kmetije","d":740,"say":["Past the farmhouses above the road, the last houses for a while!","A handful of farms, then it is cliff all the way!","The farmhouses go by, keep it tight past the rock!"]},
       {"n":"Reka Chenab","d":900.0,"say":["The Chenab River, far down on the left! No guard rails here!","Look at the Chenab down below. Do not look for long!","The river is a long way down on the left, keep it on the shelf!"]},
+      {"n":"Ostri ovinek","d":1790,"say":["Tight one against the rock here, turn sixteen!","Hard round the rock face, and do not run wide!","The sharpest bend on the shelf, slow in!"]},
+      {"n":"Dolgi vsek","d":2200,"say":["Into the long cut, rock on the right and the drop on the left!","Half a kilometre of rock wall now, listen to that engine!","The road is cut right into the cliff here!"]},
+      {"n":"Dolina Hangrung Nale","d":3830,"say":["Turning in towards the Hangrung Nala, the side valley!","Into the side valley, the bridge is coming!","Away from the Chenab for a moment, in along the stream!"]},
       {"n":"Hangrung Nala","d":4035.6,"say":["Over the bridge across the Hangrung Nala!","Across the stream, deep in the side valley!","The bridge over the Hangrung Nala, and back out along the cliff!"]},
       {"n":"Cilj · 2.412 m","d":4361,"say":["Made it along the cliff road! What a drive!","That is the road out of Killar done, all four wheels still on it!","Across the line, high above the Chenab!"]},
     ],
