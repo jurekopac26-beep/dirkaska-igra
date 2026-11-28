@@ -493,7 +493,7 @@
     'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)
     'Do El Palmita': 'To El Palmito',   // (Espinazo del Diablo: the results of an escape; Espinazo del Diablo, La Tolva and El Palmito stay as they are, Razgledišče, Lasnica and the heights by the rules of Lang.place)
     'Nad zalivom Lăng Cô': 'Above Lăng Cô Bay', 'Serpentina': 'Hairpin', 'Đỉnh đèo Hải Vân': 'Hải Vân summit', 'Do sedla': 'To the saddle',   // (Hải Vân)
-    'Kotanja': 'The Dip', 'Prelaz Kanaba': 'Kanaba Gap', 'Razgledišče na Virunge': 'Virunga Viewpoint',   // (Kanaba: the HUD; Serpentina N and the heights by the rules of Lang.place)
+    'Kotanja': 'The Dip', 'Prelaz Kanaba': 'Kanaba Gap', 'Razgledišče na Virunge': 'Virunga Viewpoint', 'Gozd Echuya': 'Echuya Forest', 'Vas Kanaba': 'Kanaba Village',   // (Kanaba: the HUD; Serpentina N and the heights by the rules of Lang.place)
     'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau', 'Do Red Lighta': 'To Red Light',   // (Sogeri: the HUD, the results of an escape; Irishtown: the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Greben': 'Ridge', // (Canaries: the HUD; the heights by the rules of Lang.place)
     'Planota pri letališču': 'Airfield Plateau', 'Sleme': 'Ridge', 'Nad zalivom Savusavu': 'Above Savusavu Bay', 'Do Savusavuja': 'To Savusavu',   // (Savusavu: the HUD, the results of an escape; the heights by the rules of Lang.place)

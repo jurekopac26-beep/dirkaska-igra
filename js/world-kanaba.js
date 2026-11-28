@@ -10,8 +10,10 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api || !World.api.PL_LOOK || !World.api.PL_LOOK.kanaba) return;
   const API = World.api;
-  const { TAU, rng, vary } = API;
+  const { TAU, box, caGround, rng, vary, vrNear } = API;
   const LOOK = API.PL_LOOK.kanaba;
+  let T;   // (World's track, for the build under way)
+  API.sync.push(() => { ({ T } = API); });
 
   /* ---- the Echuya reserve near the road (OpenStreetMap way 711261246, boundary=protected_area, simplified; game metres: x east, z south from
      the start line; to the east, beyond the world's edge, closed by a box): the track's points 0..523 lie in it ---- */
@@ -75,7 +77,39 @@
   }
 
   let PP = null, st = null;   // (the build's terrain (its noise) and what it planted: the tests)
-  LOOK.pre = ({ P }) => { PP = P; st = { eucalyptus: 0, wattle: 0, hagenia: 0, rapanea: 0, bamboo: 0 }; };
+  /* ---- the kiosks of Kanaba village at the gap: OpenStreetMap's roadside shops there (amenity convenience, mobile money: nodes 8273273215,
+     -216, -217, -219; ~1-21 m off the road, d ~2400-2450), each a small painted kiosk of planks and iron sheet, its open front to the road, a
+     lean-to roof over it, a counter with goods in heaps; no names, letters or signs, none of the lodge or the camp site (no names of the
+     lodges, the shops) ---- */
+  const KIOSKS = [[-1507, -867], [-1526, -854], [-1527, -849], [-1567, -869]];
+  const kiosks = [];
+  function kioskPlan(exclPush) {
+    kiosks.length = 0;
+    for (const [x0, z0] of KIOSKS) {
+      const n = vrNear(x0, z0); if (!n || n.i < 0) continue;
+      const i = n.i, sd = (x0 - T.px[i]) * T.nx[i] + (z0 - T.pz[i]) * T.nz[i] > 0 ? 1 : -1, bar = sd > 0 ? T.br[i] : T.bl[i];
+      const o = sd * (bar + 3.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;   // (at the road's edge, beyond the barrier: its front to the road)
+      if (kiosks.some(k => Math.hypot(k.x - x, k.z - z) < 4.2)) { const s2 = (i + 5) % T.px.length, o2 = sd * ((sd > 0 ? T.br[s2] : T.bl[s2]) + 3.4); kiosks.push({ x: T.px[s2] + T.nx[s2] * o2, z: T.pz[s2] + T.nz[s2] * o2, i: s2, sd }); }
+      else kiosks.push({ x, z, i, sd });
+      const k = kiosks[kiosks.length - 1]; exclPush(k.x, k.z, 3.6);
+    }
+  }
+  function kioskBuild(scen) {
+    const R = rng(LOOK.seed + 97), walls = [[0.86, 0.72, 0.5], [0.72, 0.8, 0.86], [0.9, 0.86, 0.74], [0.78, 0.52, 0.38], [0.74, 0.84, 0.68]];
+    const iron = [[0.56, 0.57, 0.58], [0.6, 0.42, 0.3], [0.5, 0.52, 0.54]], goods = [[0.94, 0.78, 0.16], [0.36, 0.56, 0.16], [0.8, 0.22, 0.14], [0.96, 0.92, 0.84], [0.88, 0.56, 0.2]];
+    for (const k of kiosks) {
+      const { x, z, i, sd } = k, g = scen.get(x, z), hd = T.hd[i], ox = T.nx[i] * sd, oz = T.nz[i] * sd, y = caGround(x, z);
+      const col = vary(walls[Math.floor(R() * walls.length)], R, 0.05), rf = vary(iron[Math.floor(R() * iron.length)], R, 0.06);
+      box(g, x + ox * 1.0, y - 0.4, z + oz * 1.0, 3.0, 3.0, 2.2, hd, col, rf);   // the kiosk: planks painted, its iron roof
+      box(g, x - ox * 0.12, y + 0.6, z - oz * 0.12, 2.2, 1.4, 0.06, hd, [0.16, 0.13, 0.11], null, true);   // (its open front, dark)
+      box(g, x - ox * 0.9, y + 2.5, z - oz * 0.9, 3.4, 0.08, 1.8, hd, rf, rf);   // the lean-to roof over the front, on two poles
+      for (const u of [-1.5, 1.5]) box(g, x + T.tx[i] * u - ox * 1.7, y - 0.2, z + T.tz[i] * u - oz * 1.7, 0.1, 2.7, 0.1, hd, [0.42, 0.32, 0.22]);
+      box(g, x - ox * 0.7, y, z - oz * 0.7, 2.2, 0.85, 0.7, hd, [0.44, 0.31, 0.2], [0.5, 0.36, 0.24]);   // the counter, the goods on it in heaps
+      for (let q = 0; q < 5; q++) { const u = -0.8 + q * 0.4; box(g, x - ox * 0.7 + T.tx[i] * u, y + 0.85, z - oz * 0.7 + T.tz[i] * u, 0.32, 0.14 + R() * 0.12, 0.5, hd, vary(goods[(q + kiosks.indexOf(k)) % goods.length], R, 0.08)); }
+      st.kiosks++;
+    }
+  }
+  LOOK.pre = ({ P, exclPush }) => { PP = P; st = { eucalyptus: 0, wattle: 0, hagenia: 0, rapanea: 0, bamboo: 0, kiosks: 0 }; if (T && exclPush) kioskPlan(exclPush); };
   LOOK.treeGeo = () => [eucGeo(), broadGeo(), bambooGeo()];   // (the kinds own, own + 1, own + 2 of LOOK.tree)
 
   /* ---- each tree the shared builder plants (its place by the land cover, its random numbers r2..r4: none of our own): in the reserve the
@@ -102,5 +136,5 @@
     }
     return [sp, hgt, wid, col];
   };
-  LOOK.extra = ({ out }) => { out.kanaba = st; };   // (what was planted: the tests)
+  LOOK.extra = ({ scen, out }) => { if (T) kioskBuild(scen); out.kanaba = st; };   // (what was planted: the tests)
 })();
