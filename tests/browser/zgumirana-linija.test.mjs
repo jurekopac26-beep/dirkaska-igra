@@ -40,7 +40,7 @@ try {
       for (let i = 0; i < N; i++) { ex[i] = Tk.px[i] + Tk.nx[i] * L[i]; ez[i] = Tk.pz[i] + Tk.nz[i] * L[i]; }
       let rows = 0, far = 0, worst = 0, wide = 0, wsum = 0, out = 0, apart = 0, tri = 0;
       for (const m of Z.meshes(ln)) {
-        const p = m.geometry.attributes.position, a = p.array; tri += m.geometry.index.count / 3;
+        const p = m.geometry.attributes.position, a = p.array; tri += (m.userData.lapIdx || m.geometry.index.count) / 3;   // (a circuit's lap: its index holds the lap twice, js/render.js rubberArc)
         for (let r = 0; r < p.count / nc; r++) {
           let x = 0, z = 0;
           if (mid >= 0) { x = a[(r * nc + mid) * 3]; z = a[(r * nc + mid) * 3 + 2]; } else { for (let v = 0; v < nc; v++) { x += a[(r * nc + v) * 3] / nc; z += a[(r * nc + v) * 3 + 2] / nc; } }
