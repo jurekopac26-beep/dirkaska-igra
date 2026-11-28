@@ -276,3 +276,15 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - Orodje za napake (`js/napake.js`): samo slovenščina, sklopa 0 in 8 odložena; slik in seznamov napak ne shranjuj.
 - `docs/kazalo.md`: samo »Na kratko«, ostalo z grepom; velikih datotek ne beri v celoti. O progah `docs/proge-pregled.md`. Orodje za napake: `docs/orodje-za-napake.md`.
 - Žetoni: odločitve enkrat v docs; slike samo za vprašanja in ob koncu (≤300 KB); opis PR do ~20 vrstic. V `docs/vrsta.md` celica do ~2 stavka, starejše v `docs/arhiv/vrsta-zgodovina.md`.
+
+## Odločitve 28. 11. 2026 (O-28-1 do O-28-49, kanali #1160–#1163; dopolnitev k #1177)
+
+- **O-28-1:** ikona igre je »Svet z robom« (cesta okoli Zemlje, veja `slike/ikone`); predlogi iz #1183 odpadejo. Ostale slike (iskre, zavetrje, barve) kasneje.
+- **O-28-2:** kariera: 5 dirk v pokalih na stopnjah (44 dogodkov, 132 zvezdic ostane); izvede partyslo (`docs/kariera-1-0.md`). **O-28-3:** skupina Proge ok (#1095, obcestje ostalih prog, nedeljski pregled 70 prog); **po 15. 12. samo proge in popravki**. **O-28-4:** trki in proces ok.
+- **O-28-5, 8, 10, 15, 24 (Giza, Egipt):** izjema od 1–5 km po izbiri uporabnika: **5–10 km**, začetek ob sfingi, vzpon, planota s piramidami, nato ovinkasta pot po mestnih ulicah (ne ravnina); v6 potrjena (10,1 km, mesto 4,6 km).
+- **O-28-6, 7, 9, 17 (dodelava prog do ravni Pikes Peak):** vsaka prava proga svoja seja z lastnim graditeljem in raziskavo kraja (lega, podnebje, višina, rastje, kamnina); brez skupne predloge; fizika ostane, meje `tests/golden/perf.json`, samo OSM in javni višinski modeli. Račun izbere proge in jih vpiše v stolpec »Račun« v `docs/dodelava-prog.md`. Do reseta se dodelava dokonča, po resetu pregled grafike. Slike pred/po enkrat na skupino na stran Odločitve (O-28-41 C, O-28-49).
+- **O-28-11..14:** croatiadata prevzame dodelavo prog, ki jih biketraveler ni vpisal (izbor in 10 sej na O-28-36, O-28-49); Hot lap #1191 po priporočilih seje; Tuzla #1099 in Lombok #1100 dokonča seja pred resetom, po resetu pregled; #783 čaka #955.
+- **O-28-20, 21, 23:** vrsta dela po resetih v `docs/vrsta.md` (#1210); Združevanje združi zelene PR pred resetom; grafi porabe ob branjih na #1160.
+- **O-28-36, 37, 49:** croatiadata do 10 sej in biketraveler do 30 sej, ena proga na sejo; pred zagonom preveri odprte PR in veje teme, ob podvajanju ne začne in javi.
+- **O-28-38, 40, 48:** partyslo brez novih sej, ostane Trki #608 po »Reset for free«. Združevanje #1096, #791, #788 vodi jure.kopac26; ob dosegu meje porabe preda vrsto (#1096, #791, #788, #1243, #1242, dodelave #1204–#1211) Združevanju partyslo; prevzem potrdi na #1161.
+- **O-28-41:** biketraveler do 6 sej na eni zbirni veji dodelave z enim pregledom; 12 PR do zelenih testov, brez novih sprememb prog. Rio do Rastro (#1257): gozd počaka na pregled po resetu. **O-28-45:** zeleni osnutki v vrsto (#1266).
