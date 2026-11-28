@@ -58,10 +58,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Delgadim · 652 m", "d": 261.0, "say": ["The Delgadim saddle, and the ridge falls away on both sides!", "Over the knife-edge of Delgadim, the valleys far below!"]},
+      {"n": "Skalna stena · 677 m", "d": 475.0, "say": ["The rock wall right beside the road, a dozen metres off!", "Past the cliff on the ridge, the stone almost touching the cobbles!"]},
       {"n": "Vrh grebena · 710 m", "d": 746.0, "say": ["The top of the ridge, and it is downhill all the way to the sea now!", "Over the top! Down towards Ribeira Grande!"]},
       {"n": "Serpentina 1 · 680 m", "d": 1011.0, "say": ["Hairpin one, and the descent begins!", "Into the first hairpin, the cobbles rattling!"]},
       {"n": "Serpentina 2 · 655 m", "d": 1231.0, "say": ["Hairpin two, tight as they come!", "Hairpin two! Right round on the cobbles!"]},
       {"n": "Serpentina 3 · 631 m", "d": 1612.0, "say": ["Hairpin three, and back along the ridge!", "Hairpin three! Look at the drop beside it!"]},
+      {"n": "Gola skala · 524 m", "d": 2529.0, "say": ["Bare rock beside the road, nothing grows on it!", "Past the bare volcanic rock, the cobbles winding on down!"]},
+      {"n": "Po grebenu · 490 m", "d": 3074.0, "say": ["Right on the crest of the spur now, a drop on either side!", "Along the crest! The road is the top of the ridge here!"]},
       {"n": "Serpentina 4 · 462 m", "d": 3694.0, "say": ["Hairpin four, the sea in sight!", "Hairpin four! Halfway down the spur!"]},
       {"n": "Serpentina 5 · 405 m", "d": 4279.0, "say": ["Hairpin five, the last ladder of the road!", "Hairpin five! Two more to go!"]},
       {"n": "Serpentina 6 · 374 m", "d": 4616.0, "say": ["Hairpin six, the last one!", "The sixth and last hairpin! The finish is close!"]},
