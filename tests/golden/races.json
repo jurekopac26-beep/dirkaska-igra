@@ -3752,32 +3752,32 @@
  "envalira/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 116.15,
+  "winner": 116.54,
   "spins": 0,
-  "walls": 4,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "9c374d0a3c5258a658c83406"
+  "digest": "118224b45ef23327140ffa14"
  },
  "envalira/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 116.15,
+  "winner": 116.54,
   "spins": 0,
-  "walls": 4,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "da768a42f4705618f1aac7fc"
+  "digest": "ea1759b9b269059e40b0170a"
  },
  "envalira/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 111.39,
+  "winner": 111.38,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "575e475f6f4800c3303ad7da"
+  "digest": "66ab5c80c31e1a182dacb969"
  },
  "envalira/cs/lm": {
   "finished": 13,
@@ -3794,9 +3794,9 @@
   "cars": 13,
   "winner": 117.37,
   "spins": 0,
-  "walls": 2,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "611306c6a2da92247466632a"
+  "digest": "832060058dddd4156803991a"
  }
 }

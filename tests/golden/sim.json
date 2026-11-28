@@ -7364,7 +7364,7 @@
   }
  },
  "envalira/demo/cs": {
-  "digest": "1b2268607fdc7b4a2b2d8066",
+  "digest": "353f94da61cb6b60e7ef62fb",
   "lead": 715.9,
   "car0": [
    -6.8,
@@ -7392,39 +7392,39 @@
   }
  },
  "envalira/crash/cs": {
-  "digest": "afd8730ab5ecd3497cd93199",
-  "lead": 692.4,
+  "digest": "505dc27ff5f93a30f4e567f6",
+  "lead": 691.4,
   "car0": [
-   -121.7,
-   107.35
+   -113.64,
+   126.1
   ],
   "cover": {
-   "dmg": 0.28,
+   "dmg": 0.26,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "envalira/formula/cs": {
-  "digest": "22bed9097b5543cb9453e9f8",
-  "lead": 754.5,
+  "digest": "188a9ed806124cca1ff258fd",
+  "lead": 746.1,
   "car0": [
-   -117.71,
-   69.17
+   -123.6,
+   85.81
   ],
   "cover": {
-   "dmg": 0.28,
-   "loose": 1,
+   "dmg": 0.4,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
  "envalira/lm/cs": {
-  "digest": "94bfbbaf0dce7152ff5b2f1e",
+  "digest": "60cd695ac9d694dff130c309",
   "lead": 731.7,
   "car0": [
-   -122.43,
-   114.83
+   -115.06,
+   124.01
   ],
   "cover": {
    "dmg": 0.23,
@@ -7434,14 +7434,14 @@
   }
  },
  "envalira/car/cs": {
-  "digest": "6ac01f473c725a218a4c8d37",
-  "lead": 689.6,
+  "digest": "6d1e91f8aecbd68035f317e1",
+  "lead": 693.2,
   "car0": [
-   -112.88,
-   118.65
+   -116.78,
+   115.8
   ],
   "cover": {
-   "dmg": 0.29,
+   "dmg": 0.28,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
