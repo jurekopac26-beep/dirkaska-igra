@@ -104,6 +104,16 @@
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
 
+  /* ---- the forest of the national park (the shared builder's trees, buildPrelaz's L.tree): black pine (Pinus nigra) the most of it, the
+     Bulgarian fir (Abies borisii-regis) among it in the narrow cone the shared builder draws its spruce in (about a third); the lone tall trees
+     of the open grass all black pines. The pine as tall as the roadside ones (13-24 m), its crown 0.55-0.75 of its height ---- */
+  LOOK.treeGeo = () => [pineGeo()];
+  LOOK.tree = (x, z, c, sp, hgt, wid, col, r2, r3, r4, own) => {
+    if (sp !== 0 || (c === 1 && r2 >= 0.66)) return [sp, hgt, wid, col];
+    const h = (c === 1 ? 13 : 9) + r4 * (c === 1 ? 11 : 8);
+    return [own, h, h * (0.55 + 0.2 * clamp(r3 / 0.7, 0, 1)), [0.88 + r2 * 0.22, 0.92 + r4 * 0.16, 0.9 + r3 * 0.14]];
+  };
+
   /* ---- the landmarks and the pines, after the rest of the pass is built ---- */
   LOOK.extra = function ({ scen, root, out, P, excluded, matV }) {
     const RL = rng(LOOK.seed + 71), G = (x, z) => caGround(x, z), sStart = T.startS, sFin = T.finishS;

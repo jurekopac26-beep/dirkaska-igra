@@ -224,11 +224,11 @@
   "jsMs": 1.34
  },
  "llogara": {
-  "calls": 168,
-  "maxCalls": 180,
-  "kverts": 476,
-  "maxKverts": 590,
-  "jsMs": 1.29
+  "calls": 177,
+  "maxCalls": 194,
+  "kverts": 536,
+  "maxKverts": 633,
+  "jsMs": 1.68
  },
  "portomoniz": {
   "calls": 245,
