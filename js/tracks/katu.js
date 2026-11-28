@@ -25,6 +25,16 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc9d5dd, sun: 0xfff0d4, sunI: 1.2, sky: 0xc9dcf3, gnd: 0x6b6040, hemiI: 0.58, tint: [1.03, 1.0, 0.96], sat: 1.12, sunOff: [96, 76, 18] },   // Katu-Jaryk: a clear Altai summer morning, the sun in the east over the canyon (the hairpins' shadows falling down the slope), a light blue haze
     say: 'the Katu-Yaryk pass',
+    // the commentator's own lines for this descent (Comm, game.js ownLine; the other descents keep the shared introDescTT ...): facts from
+    // docs/proge/katu.md (the edge ~1200 m where the steppe meets the forest, ~3.9 km and ~530 m down, the road built 1989-1991, the Chulyshman)
+    comm: {
+      introDescTT: ['Welcome to {track}! The edge of the Ulagan plateau, twelve hundred metres up, and a gravel road down the canyon wall to the Chulyshman.', 'Here we are on the plateau, where the steppe meets the larch forest. Below us, {track}: seven hairpins and over five hundred metres down.', 'Welcome to {track}, the only road into the Chulyshman valley! {cps} checkpoints, loose gravel, and a long way down.'],
+      goDescTT: ['Go! Over the edge of the plateau!', 'Green light! Down the canyon wall we go!', "And you're away, down towards the Chulyshman!"],
+      cpFirstDesc: ['Checkpoint {cp}, {time}.', 'Through checkpoint {cp}, the river still far below!', 'Checkpoint {cp}. Mind the gravel on the hairpins!'],
+      descRecord: ['Down on the floor of the Chulyshman valley! A new personal best, {time}!', 'Record run down {track}! {time}!', 'What a descent from the plateau! New personal best, {time}!'],
+      descEven: ['At the river in {time}. That is your record to the thousandth!', '{time} on the valley floor, dead level with your best!'],
+      descEnd: ['Down at the Chulyshman in {time}, {delta} seconds off your best.', 'Across the line on the valley floor. {time}, {delta} short of the record.', "That's the canyon wall done. {time}. {delta} seconds to find next time."],
+    },
     cloudTh: 0.18,
     zivali: { a: ['yak', 'horse', 'ibex', 'elk'], t: ['cabin', 'logPile'], open: true },
     id: 'katu', name: 'Katu-Jaryk, Rusija', theme: 'katu', open: true, timeTrial: true, descent: true, laps: 1, halfWidth: 5.5,
@@ -52,6 +62,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; spoken in English: Katu-Yaryk, Chulyshman)
     names: [
       {"n":"Prelaz Katu-Jaryk · 1.206 m","d":500,"say":["Over the edge at Katu-Yaryk! Five hundred metres down to the river!","The Katu-Yaryk pass, and the road drops into the canyon!","Past the viewpoints at the top of Katu-Yaryk. Now hold on!"]},
+      {"n":"Skalna stena","d":650,"say":["The rock wall on the left, right against the road!","Tight past the rock face on the left, the drop on the right!"]},   // (OpenStreetMap natural=cliff, 17 m from the road)
       {"n":"Serpentina 1 · 1.173 m","d":1120,"say":["The first hairpin! Brake early, the road is steep!","Hairpin one, seven of them down the face!"]},
       {"n":"Serpentina 2 · 1.133 m","d":1458},
       {"n":"Serpentina 3 · 1.079 m","d":1884,"say":["Hairpin three, loose gravel on the inside!","Hairpin three, halfway down the ladder!"]},
@@ -60,6 +71,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n":"Serpentina 6 · 947 m","d":2686},
       {"n":"Serpentina 7 · 927 m","d":2810,"say":["The last hairpin! Now the long run down the face!","Hairpin seven, the last one. Down the traverse now!"]},
       {"n":"Prečka nad Čulišmanom","d":3260,"say":["Down the long traverse, the Chulyshman far below on the right!","Over twenty per cent here, the steepest part of the descent!","The long traverse, keep it off the edge!"]},
+      {"n":"Pečine nad Čulišmanom","d":4200,"say":["Cliffs on both sides now, the river right below!","Between the cliffs, the Chulyshman roaring down on the right!"]},   // (OpenStreetMap natural=cliff: 52 m right at 4140 m, 39 m left at 4260 m)
       {"n":"Dolina Čulišmana · 684 m","d":4480,"say":["Down in the Chulyshman valley! Flat out to the finish!","At the bottom at last, the valley floor!","Into the Chulyshman valley, the camps on the right!"]},
     ],
     // the side roads (OpenStreetMap via Overture Maps, © OpenStreetMap contributors, ODbL 1.0: the streets, service roads, driveways and tracks that

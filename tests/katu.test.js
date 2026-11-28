@@ -83,8 +83,8 @@ const run = (rain, winter) => {
   check('medals: gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0], `dry ${M.cs}, wet ${M.wet.cs}`);
   const Z = M.winter; check('winter medals: gold < silver < bronze, in winter and in the snow (on the snowy gravel the rain adds nothing); slower than the summer\'s', !!Z && asc(Z.cs) && asc(Z.wet.cs) && Z.cs[0] > M.cs[0] && Z.wet.cs[0] >= Z.cs[0] && Z.wet.cs[0] > M.wet.cs[0], Z ? `winter ${Z.cs}, snow ${Z.wet.cs}` : 'no winter medals');
   const L = T.names;
-  check('places: the pass, the seven hairpins, the traverse and the valley, in order along the run, the commentator\'s lines for the pass and the valley',
-    L.length === 10 && /^Prelaz Katu-Jaryk/.test(L[0].n) && L.filter(p => /^Serpentina \d/.test(p.n)).length === 7 && /^Dolina Čulišmana/.test(L[9].n) && L.every((p, k) => k === 0 || p.d > L[k - 1].d) && !!L[0].say && !!L[9].say,
+  check('places: the pass, the rock wall, the seven hairpins, the traverse, the cliffs and the valley, in order along the run, the commentator\'s lines for the pass and the valley',
+    L.length === 12 && /^Prelaz Katu-Jaryk/.test(L[0].n) && L.some(p => p.n === 'Skalna stena') && L.some(p => p.n === 'Pečine nad Čulišmanom') && L.filter(p => /^Serpentina \d/.test(p.n)).length === 7 && /^Dolina Čulišmana/.test(L[11].n) && L.every((p, k) => k === 0 || p.d > L[k - 1].d) && !!L[0].say && !!L[11].say,
     L.map(p => `${p.n} @${Math.round(p.d)}`).join(' | '));
 }
 
