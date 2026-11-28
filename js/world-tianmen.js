@@ -45,6 +45,7 @@
   }
   function tmSlope(x, z) { const a = tmGround(x - 2.5, z), b = tmGround(x + 2.5, z), c = tmGround(x, z - 2.5), d = tmGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   const TMCOL = [0, 0, 0];
+  let TMT = null;   // the measured hue's multiplier for what grows on the ground (World.rastje.tla, Realizem G); null: the game's own colours, to the number
   function tmCol(x, z, h, ny, dd, sx, sz) {   // ground colour (times the grey grit map): the dark forest floor (lc 0), greener scrub and grass (lc 1), the
     // limestone on the steep faces (pale grey, streaked dark down the fall line where the rain runs, rusty stains, moss in the cracks), bare
     // rock (lc 2), concrete where it is built up (lc 3), a trodden verge of grit by the road
@@ -55,7 +56,19 @@
     R = lerp(R, 0.47, fld * 0.7); G = lerp(G, 0.5, fld * 0.7); B = lerp(B, 0.27, fld * 0.7);
     const lit = sstep(0.55, 0.85, m) * 0.6; R = lerp(R, 0.34, lit * 0.5); G = lerp(G, 0.37, lit * 0.5); B = lerp(B, 0.19, lit * 0.5);   // (the litter of leaves, browner)
     R += (f - 0.5) * 0.07; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
-    const st = Math.max(sstep(0.78, 0.5, ny), bare * 0.8);   // the rock: the steep faces, the bare ground
+    const fo = vrLCf(x, z, 0), ou = sstep(3, 10, dd), cl = sstep(0.78, 0.5, ny);   // (cl: the steep faces) the forest (Realizem G: in WorldCover it is dense right down to the road, 85 % of the 8-60 m band; the trees
+    if (fo > 0) {   // by the road are thinned, World.js THIN): beyond the barrier its ground reads as the crowns seen from the road (dark, mottled, the gaps darker
+      // still); inside the barrier, on the shoulder, as the shaded undergrowth under them (ferns and shrubs, flecks of sun), the grit thinner
+      const cr = sstep(0.3, 0.72, P.c6(x + (h || 0) * 0.8 * cl, z - (h || 0) * 0.6 * cl))   // (on a steep face the crowns follow the height, not squeezed)
+         * (0.75 + 0.25 * f), cf = fo * (0.85 * ou + 0.8 * (1 - ou));
+      const r = lerp(lerp(0.14, 0.21, cr), lerp(0.12, 0.21, cr), ou), g = lerp(lerp(0.2, 0.28, cr), lerp(0.17, 0.29, cr), ou), b = lerp(lerp(0.1, 0.14, cr), lerp(0.11, 0.17, cr), ou);
+      R = lerp(R, r, cf); G = lerp(G, g, cf); B = lerp(B, b, cf);
+    }
+    if (TMT) { R *= TMT[0]; G *= TMT[1]; B *= TMT[2]; }   // (the measured hue: what grows, not the rock, the concrete and the grit below)
+    // the rock: the bare ground, and the steep faces. Measured (Realizem G, teren): WorldCover has 1.2 % bare rock 8-60 m from the road, the
+    // steep faces between the legs are 48 % of that band, so where it grows (forest, scrub) a steep face keeps its plants and only the
+    // near-vertical walls show the limestone, in patches (c4) where the trees cannot hold; the game's own look (TMT null) rocks every steep face
+    const st = Math.max(cl * (TMT ? lerp(1, sstep(0.32, 0.14, ny) * sstep(0.45, 0.62, P.c4(x, z)), 1 - bare) : 1), bare * 0.8);
     if (st > 0) {
       const hz = Math.hypot(sx || 0, sz || 0) || 1, u = (z * (sx || 0) - x * (sz || 0)) / hz, streak = 0.5 + 0.5 * Math.sin(u * 0.31 + P.c5(x, z) * 7 + P.n2(x * 0.6, z * 0.6) * 5);
       let r = 0.68, g = 0.67, b = 0.63; const k = 0.78 + 0.26 * streak * streak; r *= k; g *= k; b *= k;
@@ -173,7 +186,7 @@
     const out = { root, dyn: {}, groundH: tmGround, camFloor: tmGround, props: [], farClip: true, ownTex: [], dust: [0.6, 0.57, 0.5] };
     TMC = null; vrPrep();
     const P = API.VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
-    P.c1 = valueNoise2(811, 150); P.c2 = valueNoise2(812, 64); P.c3 = valueNoise2(813, 40); P.c4 = valueNoise2(814, 120); P.c5 = valueNoise2(815, 26);
+    P.c1 = valueNoise2(811, 150); P.c2 = valueNoise2(812, 64); P.c3 = valueNoise2(813, 40); P.c4 = valueNoise2(814, 120); P.c5 = valueNoise2(815, 26); P.c6 = valueNoise2(816, 9);
     P.fin = [T.px[T.finishIdx], T.pz[T.finishIdx]];
     // the cave (def.cave: its mouth's foot, the axis into the mountain, the arch's width, height and depth) and the steps up to it from the end of the road
     const CV = def.cave, sp = def.steps.p, ux = Math.cos(CV.ang), uz = Math.sin(CV.ang), mx0 = sp[2], mz0 = sp[3], yE = T.hy[iE];
@@ -201,6 +214,9 @@
     exclPush(padF.x, padF.z, padF.r + 4); exclPush(padS.x, padS.z, padS.r + 4);
     for (let a = -10; a < st.L + 6; a += 8) exclPush(st.x0 + st.ux * a, st.z0 + st.uz * a, 6);
     out.marks = { cave: [TMC.x, TMC.z], steps: [st.x0, st.z0] };   // (where the landmarks stand: the tests look for them)
+
+    TMT = null;   // (the game's own colours first: World.rastje measures them on the open land 8-60 m from the road, scrub and fields, lc 1 and 4; then the ground's vertex colours take the measured hue)
+    if (World.rastje) TMT = World.rastje.tla(def, { lc: (x, z) => { const c = vrLC(x, z); return c === 1 || c === 4 ? 0 : 1; }, dist: vrDist, gcol: tmGCol, x0: P.G.x0, z0: P.G.z0, x1: P.G.x0 + P.G.ntx * VRC * VRT, z1: P.G.z0 + P.G.ntz * VRC * VRT });
 
     /* ---- terrain tiles ---- */
     let nFar = 0;
@@ -610,8 +626,10 @@
           else if (c === 1 || c === 4) kind = r1 < 0.55 ? 3 : r1 < 0.75 ? 0 : -1;
           else if (c === 2) kind = r1 < 0.15 ? 3 : r1 < 0.2 ? 4 : -1;
           if (kind < 0) continue;
-          if (sl > 1.7) { if (kind !== 3 || sl > 2.6 || r2 < 0.4) continue; }   // (the trees cling to the steep slopes too; the cliffs bare but for a shrub on a ledge here and there)
-          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind < 2 ? 2.4 : 1.4)) continue;
+          // (the trees cling to the steep slopes too: in the forest (WorldCover lc 0, 85 % of the band 8-60 m from the road) the broadleaves and
+          // pines stand on the karst up to ~68 degrees, as between the stacked legs; elsewhere the cliffs bare but for a shrub on a ledge here and there)
+          if (sl > 1.7) { if (c === 0 && kind < 2 ? sl > 2.5 || r2 < 0.25 : kind !== 3 || sl > 2.6 || r2 < 0.4) continue; }
+          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind < 2 ? 1.3 : 1.0)) continue;   // (the crowns lean over the barrier, as the forest stands right at the road)
           if (excluded(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.2, z, r2 * TAU, 6 + r3 * 5, 8 + r4 * 9, [0.85 + r2 * 0.3, 0.88 + r3 * 0.24, 0.85 + r4 * 0.2]);
           else if (kind === 1) pk[1].add(x, y0 - 0.2, z, r2 * TAU, 7 + r3 * 4, 12 + r4 * 9, [0.88 + r2 * 0.2, 0.9 + r3 * 0.16, 0.9]);
@@ -619,6 +637,30 @@
           else if (kind === 3) pk[3].add(x, y0 - 0.1, z, r2 * TAU, 1.2 + r3 * 1.6, 1.0 + r4 * 1.3, [0.88 + r2 * 0.24, 0.9 + r3 * 0.2, 0.88]);
           else { const k = 0.85 + r3 * 0.3; pk[4].add(x, y0 - 0.15, z, r4 * TAU, 0.6 + r3 * 1.6, 0.5 + r4 * 1.0, [k, k, k]); }
           if (++nPlants >= maxT) break grid;
+        }
+      }
+    }
+    const lt = World.rastje ? World.rastje.listje(def, pk.slice(0, 4)) : null;   // (Realizem G: the measured hue on the leaves, the unit plants' green vertices; the trunks and the boulders keep theirs)
+    if (TMT || lt) out.rastje = { moc: World.rastje.MOC, tla: TMT, drevesa: lt };
+    {   // the undergrowth by the road: in the forest within 30 m of the road (WorldCover lc 0) shrubs and saplings under the crowns, so the
+      // shoulder and the slopes between the legs read as the forest's edge, not a lawn (one in ~30 m2; none on the road, the plots, the cliffs)
+      const G = P.G, Lt = VRC * VRT, RU = rng(3987), SU = 5.6 / Math.sqrt(dens);
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
+        for (let zz = za; zz < za + Lt - 0.01; zz += SU) for (let xx = xa; xx < xa + Lt - 0.01; xx += SU) {
+          const x = xx + (RU() - 0.5) * SU * 0.9, z = zz + (RU() - 0.5) * SU * 0.9, r1 = RU(), r2 = RU(), r3 = RU();
+          if (vrDist(x, z) > 30 || vrLC(x, z) !== 0 || tmSlope(x, z) > 2.2) continue;
+          const nn = vrNear(x, z);
+          // (inside the barrier, on the wide verge the car may run onto, only the low ground cover of the forest's edge, ferns and grass
+          // to the knee, in its outer 4 m and not within 2.5 m of the asphalt: nothing the car could seem to drive through)
+          let low = false;
+          if (nn.i >= 0 && nn.dd < 0.9) { const bar = nn.lat > 0 ? T.br[nn.i] : T.bl[nn.i]; if (nn.dd > 0 || nn.d < Math.max(w + 2.5, bar - 4) || nn.d > bar - 0.3) continue; low = true; }
+          if (excluded(x, z)) continue;
+          const y0 = tmGround(x, z);
+          if (low) pk[3].add(x, y0 - 0.05, z, r2 * TAU, 0.9 + r3 * 0.8, 0.5 + r2 * 0.5, [0.78 + r2 * 0.18, 0.84 + r3 * 0.16, 0.8]);
+          else if (r1 < 0.8) pk[3].add(x, y0 - 0.1, z, r2 * TAU, 1.0 + r3 * 1.4, 0.8 + r2 * 1.2, [0.82 + r2 * 0.22, 0.86 + r3 * 0.2, 0.84]);
+          else pk[0].add(x, y0 - 0.1, z, r2 * TAU, 2.2 + r3 * 1.5, 3.0 + r2 * 2.2, [0.85 + r2 * 0.25, 0.9 + r3 * 0.2, 0.86]);   // (a sapling, under 5.2 m)
         }
       }
     }
