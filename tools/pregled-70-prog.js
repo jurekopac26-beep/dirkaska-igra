@@ -11,10 +11,11 @@ const { execFileSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 
-// odprti PR prog 28. 11. 2026 (naloga O-28-3); vsak doda proge, ki jih na main še ni
+// odprti PR prog 28. 11. 2026 popoldne (O-28-43; #1091 Chamarel in #1097 Tatev sta že na main); vsak doda proge, ki jih na main še ni
 const PRS = [
-  [788, 'zbirna/proge-3'], [1118, 'zbirna/proge-4'], [1090, 'proga/el-castano'], [1091, 'proga/chamarel'], [1092, 'proga/stavrovouni'],
-  [1093, 'proga/kudowa'], [1094, 'proga/meteora'], [1095, 'proga/sipka'], [1096, 'proga/trebevic'], [1097, 'proga/tatev'],
+  [788, 'zbirna/proge-3'], [1118, 'zbirna/proge-4'], [1241, 'zbirna/proge-bt-28-11'], [1135, 'zbirna/proge-partyslo-26-11'], [1212, 'proga/giza'],
+  [791, 'nove-proge/podatki-1-0'], [1090, 'proga/el-castano'], [1092, 'proga/stavrovouni'], [1093, 'proga/kudowa'], [1094, 'proga/meteora'],
+  [1095, 'proga/sipka'], [1096, 'proga/trebevic'], [1149, 'proge/izbira-anglija-maroko'],
 ];
 // izjeme pravila izletne cone (CLAUDE.md, »Proge«); mestne proge so označene v opisu proge
 const IZJEME_CONA = new Set(['kaligandaki', 'musandam', 'limalimo', 'darvaz']);
