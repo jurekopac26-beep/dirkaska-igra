@@ -30,3 +30,24 @@ Imen podjetij, lokalov in oseb ni. Uporabljena so samo zemljepisna imena (Koli, 
 Slike (kamera za avtom, pred / po): `docs/slike/koli/dodelava-{pred,po}-{300,1100,1500,1750}m.webp`.
 
 Mejne vrednosti: fizika vožnje se ne spremeni. Risanje ostane v mejah `tests/golden/perf.json`: telefon 183 klicev in 683 tisoč oglišč (meji 293 in 807 tisoč), `tools/obremenitev.mjs koli` največ 285 klicev in 806 tisoč oglišč. Vse je zlito v kose scenerije in ne dodaja klicev risanja na predmet.
+
+## Drugi krog (O-28-49): kraji ob cesti po OpenStreetMap
+
+Vir: OpenStreetMap (© sodelavci OpenStreetMap, ODbL 1.0; glavni API `api.openstreetmap.org`, stanje 28. 11. 2026). Mreža je pretvorjena v metre igre z izhodiščem uvoza (`tools/proga-uvoz.mjs`). Narisano je samo tisto, kar je na karti do ~60 m od ceste, brez napisov in imen.
+
+- **Jambor:** 60 m visok paličast stolp (`man_made=mast`) 47 m od ceste ob cilju: tri noge, prečke in križi vsakih 5 m, ploščad z nekaj antenami.
+- **Vzpenjača** (`railway=funicular`, `layer=1`): nizek jeklen most s tirnicama na stebrih nad serpentino, od spodnjega parkirišča proti hotelu. Do 7 m od ceste je izpuščena, ker karta ne pove, kako vzpenjača prečka cesto.
+- **Stopnice** (`highway=steps`, z ograjo): ob vzpenjači 117 stopnic, od cilja proti vrhu 70 in 58, pri hotelu 10. Betonske, pod snegom, z jekleno ograjo.
+- **Prehod za pešce** (`crossing:markings=yes`) pri zgornjem parkirišču (d ~1596) in **stojala za kolesa** (12 mest) ob njem.
+- **Oporni zid** pri hotelu (`barrier=retaining_wall`).
+- **Tabla z zemljevidom smučin** na startu (`information=map`): bleda tabla na dveh lesenih stebrih s strešico, na njej samo barvne črte.
+- **Smučine** (`piste:type=nordic`): drsalni pas in klasična sled po tleh, samo 4–60 m od ceste. Drevesa se jim umaknejo.
+- **Goli kvarcit** (`natural=bare_rock`, pet poligonov ob zgornji cesti) in **skalne stene** (`natural=cliff`): dodatne skupine plošč znotraj poligonov 8–60 m od ceste (bliže manjše) in vrsta pokončnih plošč ob stenah.
+- **Zvok kraja** (`js/sfx-okolje.js`): Koli ima svojo zemljepisno širino in višino, vas Ylä-Koli pa je zaselek brez cerkvenih zvonov (d 1820–2120).
+- **Komentator:** dve novi vrstici, o vzpenjači v serpentini in o jamboru pri cilju.
+
+Slike (kamera za avtom, pred / po): `docs/slike/koli/dodelava2-{pred,po}-{1590,1810,1905}m.webp`.
+
+Risanje: `tools/obremenitev.mjs koli` največ 283 klicev in 811 tisoč oglišč; telefon 182 klicev in 687 tisoč oglišč (meji 292 in 799 tisoč).
+
+**Ostane za Fable (senčilniki in svetloba):** lesk ivja in modrikasta senca na tykky; meglica in daljni razgled na Pielinen (zahteva `fogK` v `js/render.js` oziroma temo, ker kamera ne seže dlje od megle); mehkejše sence v gozdu; bilke iz `world-chase-bt19.js` so od zgoraj videti kot »zvezdice«.

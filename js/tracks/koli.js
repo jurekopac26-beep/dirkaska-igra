@@ -24,8 +24,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
       // (docs/proge/koli-dodelava.md: only the places' own names; d from the start line, the hairpins where the import put them)
       { n: 'Ylä-Kolintie', d: 40, say: ['Up the Ylä-Kolintie, into the snowy forest!', 'The Ylä-Kolintie climbs away through the spruces!', 'Into the taiga, snow on every branch!'] },
       { n: 'Ukko-Koli', d: 1440, say: ['Under Ukko-Koli now, the spruces bent white with snow!', 'Up onto the hill of Koli, bare quartzite under the snow!', 'Long left below Ukko-Koli, the trees heavy with rime!'] },
-      { n: 'Serpentina 1', d: 1726, say: ['Into the hairpin!', 'The tight right-hander, hard on the brakes on the packed snow!', 'Round the hairpin, the village just above!'] },
-      { n: 'Ylä-Koli', d: 1880, say: ['Into Ylä-Koli, the finish is in sight!', 'Past the wooden houses of Ylä-Koli, nearly there!', 'Ylä-Koli, the top of the hill, one more push!'] },
+      { n: 'Serpentina 1', d: 1726, say: ['Into the hairpin!', 'The tight right-hander, hard on the brakes on the packed snow!', 'Round the hairpin, the village just above!', 'Under the little funicular, the stairs climbing beside it!'] },
+      { n: 'Ylä-Koli', d: 1880, say: ['Into Ylä-Koli, the finish is in sight!', 'Past the wooden houses of Ylä-Koli, nearly there!', 'Ylä-Koli, the top of the hill, one more push!', 'The tall mast by the finish, nearly there!'] },
       { n: 'Serpentina 2', d: 1986 },
     ],
     comm: {
