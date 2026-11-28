@@ -47,25 +47,32 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
 
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races or the circuit
 # (CLAUDE.md, Pravna varnost); the turns by their numbers in the lines, as the circuit numbers them (17: 11 right, 6 left) ----
-NAMES = [
-    ('Desni na koncu ravnine', 430, ['Hard on the brakes for Turn 1!', 'The right at the end of the main straight!', 'Down the gears into the first right!']),
-    ('Desni pred esom', 690, ['The right of Turn 2!', 'Right, and into the esses!', 'Through Turn 2, the esses next!']),
-    ('Dvojni levi', 795, ['Left and left again, Turns 3 and 4!', 'Through the double left!', 'The esses, left, then left!']),
-    ('Desni pod hribom', 1049, ['The right under the hill, Turn 5!', 'Round Turn 5, the hill above us!', 'Right, at the foot of the hill!']),
-    ('Hitri desni', 1273, ['The fast right of Turn 6!', 'Flat through Turn 6!', 'Right, and keep it on the throttle!']),
-    ('Desni proti zahodu', 1498, ['Round the right of Turn 7!', 'Right, heading west now!', 'Through Turn 7!']),
-    ('Levi ob tribunah', 1640, ['The left by the grandstands, Turn 8!', 'Left, past the stands!', 'Through Turn 8, the crowd on the right!']),
-    ('Ravnina proti morju', 1960, ['Down the straight towards the sea!', 'Flat out, the sea ahead!', 'The long run down to the coast!']),
-    ('Desni ob morju', 2178, ['Hard on the brakes for the right by the sea!', 'The tight right of Turn 10, the beach just beyond!', 'Round Turn 10 by the coast!']),
-    ('Desni pod gričem', 2483, ['The right under the knoll, Turn 11!', 'Right, round the foot of the knoll!', 'Through Turn 11!']),
-    ('Levi na sever', 2692, ['The left of Turn 12, heading north!', 'Left, past the stands!', 'Through Turn 12!']),
-    ('Levi proti zahodu', 3030, ['The left of Turn 13!', 'Left, and out towards the west!', 'Round Turn 13!']),
-    ('Desni na zahodni strani', 3215, ['The fast right of Turn 14!', 'Right, on the far side of the circuit!', 'Through Turn 14!']),
-    ('Dolgi desni', 3560, ['The long right of Turn 15!', 'Round the long right-hander, the load builds!', 'Through the long sweep of Turn 15!']),
-    ('Ostri desni', 3712, ['Hard on the brakes for the tight right!', 'The slowest corner, Turn 16!', 'Round the hairpin right!']),
-    ('Zadnji levi', 3916, ['The last left, onto the main straight!', 'Left, Turn 17, the last corner!', 'Through the final left!']),
-    ('Ciljna ravnina', 4140, ['Down the main straight past the stands!', 'Flat out along the main straight, the pits on the left!', 'The main straight, the lap is nearly done!']),
+NAMES = [   # the commentator's lines at each place (said ~70 m before it): what is really there (OSM, the elevation model, docs/proge/lombok.md)
+    ('Desni na koncu ravnine', 430, ['Hard on the brakes for Turn 1!', 'The right at the end of the main straight, the hills of the south coast ahead!', 'Down the gears into the first right, the coconut palms beyond the fence!']),
+    ('Desni pred esom', 690, ['The right of Turn 2, and into the esses!', 'Right, then the esses over the dry grass!', 'Through Turn 2, the esses next!']),
+    ('Dvojni levi', 795, ['Left and left again, Turns 3 and 4!', 'The double left, the red earth showing through the grass!', 'The esses, left, then left, past the little stream in the grass!']),
+    ('Desni pod hribom', 1049, ['The right of Turn 5, under the hill!', 'Round Turn 5, the green slope above us on the left!', 'Right, at the foot of the hill!']),
+    ('Hitri desni', 1273, ['The fast right of Turn 6, flat out over the plain!', 'Flat through Turn 6, the coconut palms flashing by!', 'Right, and keep it on the throttle!']),
+    ('Desni proti zahodu', 1498, ['Round the right of Turn 7, heading west!', 'Right, the afternoon sun straight ahead!', 'Through Turn 7, a few metres above the sea!']),
+    ('Levi ob tribunah', 1640, ['The left by the grandstands, Turn 8!', 'Left, past the stands, the crowd on its feet!', 'Through Turn 8, all eyes on the field!']),
+    ('Ravnina proti morju', 1960, ['Down the straight towards the sea!', 'Flat out, the Indian Ocean dead ahead!', 'The long run down to the coast, the surf just beyond the fence!']),
+    ('Desni ob morju', 2178, ['Hard on the brakes for the right by the sea!', 'The tight right of Turn 10, the beach three hundred metres away!', 'Round Turn 10, and the run north, the volcano far ahead!']),
+    ('Desni pod gričem', 2483, ['The right under the knoll, Turn 11!', 'Right, round the foot of the knoll, the beaches behind it!', 'Through Turn 11, the dry grass up the slope!']),
+    ('Levi na sever', 2692, ['The left of Turn 12, heading north, Rinjani on the skyline!', 'Left, past the stands, the long climb to the volcano a world away!', 'Through Turn 12, the big mountain of Lombok straight ahead!']),
+    ('Levi proti zahodu', 3030, ['The left of Turn 13, out to the west!', 'Left, just past the stream in its culvert!', 'Round Turn 13, the coastal plain all around!']),
+    ('Desni na zahodni strani', 3215, ['The fast right of Turn 14!', 'Right, on the far side of the circuit!', 'Through Turn 14, nobody lifts!']),
+    ('Dolgi desni', 3560, ['The long right of Turn 15, the volcano coming round in front!', 'Round the long right-hander, the load builds!', 'Through the long sweep of Turn 15, Rinjani to the north!']),
+    ('Ostri desni', 3712, ['Hard on the brakes for the tight right!', 'The slowest corner of the lap, Turn 16!', 'Round the hairpin right, a chance to pass!']),
+    ('Zadnji levi', 3916, ['The last left, onto the main straight!', 'Left, Turn 17, the last corner, the sea breeze across it!', 'Through the final left, get the drive!']),
+    ('Ciljna ravnina', 4140, ['Down the main straight past the stands!', 'Flat out along the main straight, the pits on the left!', 'The main straight, the hills of the south coast behind the stands!']),
 ]
+# the commentator's own lines for the race (Comm, game.js ownLine: intro before the start of a race of several laps, introOne of one, go at
+# the lights): the south coast of Lombok, the sea, the hills and the volcano
+COMM = {
+    'intro': ['Welcome to {track}, on the south coast of the island! {laps} laps, {cars} cars, and you line up {grid}.', 'Good day from the south of Lombok, the Indian Ocean a few hundred metres away. {laps} laps ahead, and you start {grid}.', 'Here we are at {track}: the beaches, the dry hills and, on a clear day, Rinjani on the skyline. {laps} laps, and you start {grid}.'],
+    'introOne': ['Welcome to {track}, on the south coast of the island! One lap, {cars} cars, and you start {grid}.', 'Good day from the south of Lombok. One lap by the sea, and you line up {grid}.'],
+    'go': ['Lights out, and away they go towards Turn 1!', "And they're off, {cars} cars down to the first right!", 'The race is on by the Indian Ocean!'],
+}
 # the apexes of the circuit's 17 turns (their number boards, TV towers, photographers, recovery: World.rbring): 1 the right at the end of the
 # main straight, 2 the right before the esses, 3 and 4 the double left, 5 the right under the hill, 6 the fast right, 7 the right towards the
 # west, 8 the left by the grandstands, 9 the right kink, 10 the right by the sea, 11 the right under the knoll, 12 and 13 the two lefts,
@@ -237,6 +244,7 @@ def build_track():
         x, z = at(s); names.append('      [%s, %s, %s, %s],' % (json.dumps(lab, ensure_ascii=False), f1(x), f1(z), json.dumps(lines)))
     turns = '[' + ','.join('[%s,%s]' % tuple(f1(v) for v in at(s)) for s in TURNS) + ']'
     D, LC, SK = scenery(); FAR = far_rings()
+    FAR2 = dict(x=FAR['x'], z=FAR['z'], base=FAR['base'], **json.load(open(os.path.join(HERE, 'far2.json'))))   # (tools/lombok/far2.py: 14-112 km)
     js = lambda o: json.dumps(o, ensure_ascii=False, separators=(',', ':'))
     src = '''/* Track definition 'lombok'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
@@ -259,7 +267,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // z, length, width, angle (deg), height]: OSM), the service roads and the dirt tracks round the circuit (svc, trk: [points, x, z, ...]:
   // OSM; brg: the bridges of both, bridge=yes), the streams (str: [points, culvert (1 in its pipe under a road, 0 open), x, z, ...]: OSM
   // waterway=stream), the sea (sea: its level and the plane's middle x and north edge z0: Copernicus DEM's sea); the horizon (far: the
-  // highest ground in rings round the circuit, Copernicus DEM, for Riverside's rsFar).
+  // highest ground in rings round the circuit, Copernicus DEM, for Riverside's rsFar; far2 its rings from 14 to 112 km, a step of 15 m:
+  // Rinjani north-north-east, Agung on Bali west-north-west, tools/lombok/far2.py).
   // The names: plain descriptions only (no names of people, firms, races or the circuit).
   // Data: the OSM-derived data in this file under the ODbL 1.0; the heights: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and
   // © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; the land cover:
@@ -277,6 +286,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     start: [0, 0], runoff: 1.1, inner: 4.2, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s, runoffTarmac: true,
     elev: LB_H.map((h, i) => [i / LB_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
+    // the commentator's own lines (Comm: intro, introOne, go)
+    comm: %(comm)s,
     names: [
 %(names)s
     ],
@@ -294,19 +305,20 @@ var TRACK_DEFS = TRACK_DEFS || [];
     lc: %(lc)s,
     sk: %(sk)s,
     far: %(far)s,
+    far2: %(far2)s,
     points: [%(pts)s]
   });
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), lbh=lbh, h0='%.1f' % H0, hmin='%.0f' % H.min(), hmax='%.0f' % H.max(), desc=json.dumps(DESC, ensure_ascii=False),
            desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), drs=json.dumps(DRS),
-           sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
+           sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), far2=js(FAR2), comm='{\n' + ''.join('      %s: %s,\n' % (k, json.dumps(v, ensure_ascii=False)) for k, v in COMM.items()) + '    }', pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'lombok.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights (%.1f .. %.1f m above the finish line, %.1f m a.s.l.);' % (hk.min() - H0, hk.max() - H0, H0),
           'dem', D['nx'], 'x', D['nz'], 'lo %.1f step %.2f' % (D['lo'], D['step']), '; lc', LC['nx'], 'x', LC['nz'], len(LC['rle']), 'chars; buildings', len(SK['bld']) // 6,
           '; service roads', sum(1 for _ in svc_iter(SK['svc'])), '; tracks', sum(1 for _ in svc_iter(SK['trk'])), '; streams', len(J['water']), '; bridges', sum(1 for _ in svc_iter(SK['brg'])))
     g = np.abs(np.roll(H, -2) - np.roll(H, 2)) / (4 * STEP); print('  steepest grade %.1f %% at s %.0f' % (g.max() * 100, CUM[int(g.argmax())]))
-    for k, v in (('dem', D), ('lc', LC), ('sk', SK), ('far', FAR)): print('  %-4s %5d KB' % (k, len(js(v).encode()) // 1024))
+    for k, v in (('dem', D), ('lc', LC), ('sk', SK), ('far', FAR), ('far2', FAR2)): print('  %-4s %5d KB' % (k, len(js(v).encode()) // 1024))
     info()
 
 if __name__ == '__main__':

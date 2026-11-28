@@ -237,6 +237,21 @@
     const c = h < 1.5 ? [0.34, 0.52, 0.6] : h < 40 ? [0.4, 0.44, 0.26] : h < 160 ? [0.29, 0.38, 0.2] : [0.31, 0.36, 0.22], f = (1 - Math.exp(-d / 22000)) * 0.85;
     return c.map((v, k) => lerp(v, [0.78, 0.84, 0.88][k], f));
   };
+  // the far horizon (def.far2, 14-112 km): the forests of the island's middle up to ~2000 m, the bare grey-brown cone of Rinjani above
+  // (its scree and ash; the sea to the south), Agung over the strait; a thinner haze than the near rings' (a clear dry-season day)
+  const lbFar2Col = (h, d) => {
+    const c = h < 1.5 ? [0.36, 0.53, 0.62] : h < 1900 ? [0.25, 0.33, 0.22] : h < 2500 ? [0.36, 0.36, 0.28] : [0.47, 0.43, 0.38], f = (1 - Math.exp(-d / 60000)) * 0.7;
+    return c.map((v, k) => lerp(v, [0.74, 0.8, 0.88][k], f));
+  };
+  // both horizons in one mesh (one draw): far2's curtains 4 % further out than far's furthest (behind them all), its vertices added to far's
+  function lbFar(root) {
+    const D = API.T.def, m = API.rsFar(root, D.far, 'summer', 6, lbFarCol); if (!D.far2) return m;
+    const m2 = API.rsFar(root, D.far2, 'summer', 6, lbFar2Col), g = m.geometry, g2 = m2.geometry, n = g.attributes.position.count;
+    const P = Float32Array.from([...g.attributes.position.array, ...g2.attributes.position.array.map((v) => v * 1.04)]);
+    const C = Float32Array.from([...g.attributes.aCol.array, ...g2.attributes.aCol.array]), I = [...g.index.array, ...Array.from(g2.index.array, (v) => v + n)];
+    const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.BufferAttribute(P, 3)); ng.setAttribute('aCol', new THREE.BufferAttribute(C, 3)); ng.setIndex(I);
+    g.dispose(); m.geometry = ng; root.remove(m2); g2.dispose(); m2.material.dispose(); return m;
+  }
 
   // The plain's own ground (LK.ground: the builder's ground material for the terrain, the verges and the mown bands). Its texture: 256 px,
   // tileable, a fresh one per build (the world owns and frees it): r the dry grass's grain (pale stalks, dark gaps: a speck is a texel or
@@ -419,7 +434,7 @@
     lbStreams(o, st);
     lbVeg(o, st);
     lbSea(o, st);
-    if (API.T.def.far && API.rsFar) { out.dyn.far = API.rsFar(root, API.T.def.far, 'summer', 6, lbFarCol); st.far = 1; }   // (World.update: no car, back where it was built)
+    if (API.T.def.far && API.rsFar) { out.dyn.far = lbFar(root); st.far = 1; }   // (World.update: no car, back where it was built)
     return st;
   }
 
