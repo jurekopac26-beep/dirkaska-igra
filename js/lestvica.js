@@ -27,7 +27,8 @@ const Lestvica = (function () {
   const MAX_FRIENDS = 40, MAX_TIMES = 1000, MAX_HIDDEN = 100, MAX_LINK = 16000, MAX_IN = 120000, MAX_TEXT = 4e6;
   const DAY = 864e5, DAY0 = Date.UTC(2026, 0, 1);
   // the bound: in a bend no car turns harder than G3 (m/s²) nor goes faster than VK times the top speed of the fastest car
-  const G3 = 3 * 9.81, VK = 1.15;
+  // on ice (a track's def.ice: Envalira) the bends' bound times the ice's grip of dry tarmac (js/core.js COLD.ice)
+  const G3 = 3 * 9.81, VK = 1.15, ICE = 0.2;
   const KEY_RE = /^[a-z0-9][a-z0-9-]{0,47}@[a-z]{1,8}$/, CAR_RE = /^[a-z0-9][a-z0-9-]{0,23}$/, PUB_RE = /^[\w-]{87}$/, SIG_RE = /^[\w-]{80,100}$/, ID_RE = /^[\w-]{12}$/;
   const EC = { name: 'ECDSA', namedCurve: 'P-256' }, SIGN = { name: 'ECDSA', hash: 'SHA-256' };
   let store = null, hooks = {}, meK = null;
@@ -269,8 +270,8 @@ const Lestvica = (function () {
     const vc = VK * (topSpeed(models) || 92), N = T.N, ds = T.ds, d = T.def || {};
     let i0 = 0, i1 = N;
     if (T.open) { const end = I.kind === 'police' && d.hideout ? T.startS + d.hideout.s : T.finishS; i0 = Math.round(T.startS / ds); i1 = Math.round(end / ds); }
-    let t = 0;
-    for (let i = i0; i < i1; i++) { const j = ((i % N) + N) % N, k = Math.abs(T.rk[j]), v = k > 1e-6 ? Math.min(vc, Math.sqrt(G3 / k)) : vc; t += T.rds[j] / v; }
+    let t = 0; const g = d.ice ? G3 * ICE : G3;
+    for (let i = i0; i < i1; i++) { const j = ((i % N) + N) % N, k = Math.abs(T.rk[j]), v = k > 1e-6 ? Math.min(vc, Math.sqrt(g / k)) : vc; t += T.rds[j] / v; }
     return t;
   }
 
