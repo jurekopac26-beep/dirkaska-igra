@@ -51,7 +51,7 @@
   World.ext.isuna = (scene, tex, opts) => World.gore.build(scene, tex, opts, {
     seed: 1717, snow: 'none',
     road: { line: 'white' },
-    trees: { kinds: ['fir', 'fir', 'pine'], forest: 0.3, open: 0.02, h: [8, 16] },
+    trees: { kinds: ['fir', 'fir', 'pine'], forest: 0.3, open: 0.04, young: 0.07, h: [8, 16] },   // (young: low shrubs within 50 m of the road, on the open grass and at the woods' edges: approximate, by the land cover)
     skiers: 0, nets: false, snowbanks: false,
     animals: [{ kind: 'cow', n: 12 }],
     excl: [[BR.a[0], BR.a[1], 9], [BR.b[0], BR.b[1], 9], [(BR.a[0] + BR.b[0]) / 2, (BR.a[1] + BR.b[1]) / 2, 6]],
