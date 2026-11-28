@@ -1378,5 +1378,121 @@
    "n": "Lake Magadi",
    "d": 2970
   }
+ ],
+ "tatev": [
+  {
+   "n": "Ruins above the Gorge",
+   "d": 2048
+  },
+  {
+   "n": "Devil's Bridge",
+   "d": 2465,
+   "sub": "1,013 m"
+  },
+  {
+   "n": "Vorotan River",
+   "d": 2543
+  },
+  {
+   "n": "Warm Spring",
+   "d": 2674
+  },
+  {
+   "n": "Fountain",
+   "d": 4404
+  },
+  {
+   "n": "Last Hairpin",
+   "d": 6482,
+   "sub": "1,379 m"
+  }
+ ],
+ "chamarel": [
+  {
+   "n": "Case Noyale",
+   "d": 120
+  },
+  {
+   "n": "Forest",
+   "d": 860
+  },
+  {
+   "n": "Switchbacks",
+   "d": 1775,
+   "sub": "196 m"
+  },
+  {
+   "n": "Viewpoint",
+   "d": 2900,
+   "sub": "300 m"
+  },
+  {
+   "n": "Chamarel",
+   "d": 3450
+  },
+  {
+   "n": "Towards Plaine Champagne",
+   "d": 4755,
+   "sub": "341 m"
+  }
+ ],
+ "trebevic": [
+  {
+   "n": "Dolovi",
+   "d": 80
+  },
+  {
+   "n": "Beech Forest",
+   "d": 620
+  },
+  {
+   "n": "Hairpins",
+   "d": 1043,
+   "sub": "944 m"
+  },
+  {
+   "n": "Old Bobsleigh Track",
+   "d": 1571
+  },
+  {
+   "n": "Vidikovac",
+   "d": 2862,
+   "sub": "1,138 m"
+  },
+  {
+   "n": "Draguljac",
+   "d": 3157,
+   "sub": "1,154 m"
+  }
+ ],
+ "giza": [
+  {
+   "n": "The Sphinx",
+   "d": 100
+  },
+  {
+   "n": "The Pyramids",
+   "d": 600
+  },
+  {
+   "n": "Below the Third Pyramid",
+   "d": 1750
+  },
+  {
+   "n": "Viewpoint",
+   "d": 2650
+  },
+  {
+   "n": "The Desert Road",
+   "d": 4050
+  },
+  {
+   "n": "The Town",
+   "d": 7900
+  },
+  {
+   "n": "To the Main Road",
+   "d": 9450
+  }
  ]
 }
