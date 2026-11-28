@@ -90,15 +90,15 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Llogara, Albanija (`llogara`) | Svet 262 vrstic, 13 zanimivosti (11 z vrsticami). Manjkata borov gozd in obala pod prelazom po meri. | 2 | #1085, #1018, #1156 | |
 | Medeu, Kazahstan (`medeu`) | Obcestje 872 vrstic, 9 zanimivosti z vrsticami. Manjkata drsališče in jez kot glavni točki. | 2 | — | croatiadata |
 | Porto Moniz, Portugalska (`portomoniz`) | Svet in obcestje, 12 zanimivosti. Manjkajo naravni bazeni in pečine po meri. | 2 | #1018, #1013, #982, #840 | |
-| Sa Calobra, Španija (`sacalobra`) | Svet 313 vrstic, 17 zanimivosti z vrsticami. Manjka »vozel« ceste kot glavna točka. | 2 | #1151 | |
+| Sa Calobra, Španija (`sacalobra`) | Svet 313 vrstic, 17 zanimivosti z vrsticami. Manjka »vozel« ceste kot glavna točka. | 2 | #1151 | biketraveler |
 | Los Caracoles, Čile (`caracoles`) | Svet 775 vrstic, 32 zanimivosti (14 z vrsticami). Hotel in koče so škatle (`realizem.md`). | 2 | #1052, #763 | |
-| Chapman's Peak, Južna Afrika (`chapman`) | Svet 727 vrstic. DEM s 30 m zgladi pečine nad morjem (`realizem.md`). | 2 | #1052, #763, #678 | |
-| Ella, Šrilanka (`ella`) | Svet 830 vrstic, 6 zanimivosti z vrsticami. Manjkata čajni nasadi kot glavni pas rastja. | 2 | #1167 | |
-| Rio do Rastro, Brazilija (`rastro`) | Svet 572 vrstic. Pri 3,9 km je trava, v resnici je več kot pol gozda (`realizem.md`). | 2 | #1060, #1052, #763, #678, #1166 | |
+| Chapman's Peak, Južna Afrika (`chapman`) | Svet 727 vrstic. DEM s 30 m zgladi pečine nad morjem (`realizem.md`). | 2 | #1052, #763, #678 | biketraveler |
+| Ella, Šrilanka (`ella`) | Svet 830 vrstic, 6 zanimivosti z vrsticami. Manjkata čajni nasadi kot glavni pas rastja. | 2 | #1167 | biketraveler |
+| Rio do Rastro, Brazilija (`rastro`) | Svet 572 vrstic. Pri 3,9 km je trava, v resnici je več kot pol gozda (`realizem.md`). | 2 | #1060, #1052, #763, #678, #1166 | biketraveler |
 | Tianmen, Kitajska (`tianmen`) | Svet 673 vrstic, 39 zanimivosti. Pobočja so travnata, v resnici je gost gozd (`realizem.md`). | 2 | #763, #678 | |
-| Santo Antão, Zelenortski otoki (`santoantao`) | Svet 637 vrstic, vse glavne točke. Manjkata lasten zvok in svetloba po kraju. | 1 | #1190, #1019 | |
-| Ngorongoro, Tanzanija (`ngorongoro`) | Svet 1049 vrstic. Manjkata pas rastja ob robu kraterja in lasten zvok. | 1 | #1164 | |
-| Killar, Indija (`killar`) | Svet 1224 + obcestje 388 vrstic. Ima vse razen lastnega zvoka in številk ovinkov. | 1 | #1130, #1128, #1124, #1121, #1165 | |
+| Santo Antão, Zelenortski otoki (`santoantao`) | Svet 637 vrstic, vse glavne točke. Manjkata lasten zvok in svetloba po kraju. | 1 | #1190, #1019 | biketraveler |
+| Ngorongoro, Tanzanija (`ngorongoro`) | Svet 1049 vrstic. Manjkata pas rastja ob robu kraterja in lasten zvok. | 1 | #1164 | biketraveler |
+| Killar, Indija (`killar`) | Svet 1224 + obcestje 388 vrstic. Ima vse razen lastnega zvoka in številk ovinkov. | 1 | #1130, #1128, #1124, #1121, #1165 | biketraveler |
 | Pikes Peak, ZDA (`pikes`) | Merilo. Manjkata rastje (paket G) in daljši opis. | 1 | #763, #758 | |
 
 ## Čaka PR (nove proge, še niso na `main`)
