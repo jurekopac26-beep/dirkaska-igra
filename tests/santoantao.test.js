@@ -162,8 +162,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'lang.js'), 'utf8'), ctx);
   ctx.Lang.set('en');
   const en = T.names.map(q => ctx.Lang.place(q.n));
-  check('names: the HUD\'s places in English (Delgadim · 652 m, Top of the Ridge · 710 m, Hairpin 1 · 680 m, Ribeira Grande · 343 m)', en[0] === 'Delgadim · 652 m' && en[1] === 'Top of the Ridge · 710 m' &&
-    en[2] === 'Hairpin 1 · 680 m' && en[en.length - 1] === 'Ribeira Grande · 343 m' && ctx.Lang.place(def.escTo) === 'To Ribeira Grande', en.join(' | '));
+  check('names: the HUD\'s places in English (Delgadim · 652 m, Top of the Ridge · 710 m, Hairpin 1 · 680 m, the rock wall, the bare rock and the crest, Ribeira Grande · 343 m)', en[0] === 'Delgadim · 652 m' && en.includes('Top of the Ridge · 710 m') &&
+    en.includes('Hairpin 1 · 680 m') && ['Rock Wall · 677 m', 'Bare Rock · 524 m', 'Along the Crest · 490 m'].every(n => en.includes(n)) && en[en.length - 1] === 'Ribeira Grande · 343 m' && ctx.Lang.place(def.escTo) === 'To Ribeira Grande', en.join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
