@@ -458,5 +458,14 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     o.cestaMat = rm; o.cestaRobData = V.rob;
   }
 
-  World.cesta = { finish, crte, precne, CRTE, PROGE, BELA, RUMENA };
+  /* ---- Grafika AAA, H2′ (docs/grafika-aaa.md, N1-N9): the road markings a builder adds by sources, gated per track. OZNAKE[id]: the
+     markings switched on for the track (default none: 0); a frozen track (test, pending) never takes any, whatever the table says.
+     Empty: Kildare's yellow edge line on the R409 was taken out on 26. 11. (no public source reachable for RRM 025's sizes, and OSM has
+     no markings on that way) ---- */
+  const OZNAKE = {};
+  function oznake(T, kljuc) {
+    const d = T && T.def; if (!d || d.test || d.pending) return 0;
+    const z = OZNAKE[d.id]; return z && z[kljuc] ? 1 : 0;
+  }
+  World.cesta = { finish, crte, precne, oznake, OZNAKE, CRTE, PROGE, BELA, RUMENA };
 })();
