@@ -2,7 +2,7 @@
 // (8 and 24 cars; LOD only above LOD.min, so every car here at the full rate), on Spa from the grid, the player on the autopilot.
 // Times are the machine's, so only ratios are checked, with room: the field of 24 at most 30× the player alone and at most 4.5× the
 // field of 8 (linear would be 3×; a search over every pair of cars or a loop over the field inside each car's step shows as 6-9×).
-// Measured 28. 11. (node): 1 car 0.034 ms, 8 cars 0.22, 16 cars 0.33, 24 cars 0.30-0.41 (ratios 9-12× and 1.4-1.9×).
+// Measured 28. 11. (node, this test): 1 car 0.026 ms, 8 cars 0.16, 24 cars 0.44 (17× and 2.8×); with the game's own grid (tools/gneca-tekmeci.js) 16 cars 0.26, 24 cars 0.27.
 // Also: no NaN, every car stepped every step (no LOD below LOD.min), every car on the way.
 //   node tests/gneca.test.js
 'use strict';
