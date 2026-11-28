@@ -229,30 +229,36 @@ def gates(G, detail):
         _, a, u, v, Lb, Wb = best; ca, sa = math.cos(a), math.sin(a)
         cx, cz = u * ca - v * sa, u * sa + v * ca
         y0 = gmin(P) - 1.0; yt = y0 + 1.0 + h
-        G.box(cx, y0, cz, Lb, yt - y0, Wb, a, 'mud', 'mud_top')
+        # the block: OSM's footprint itself (not its bounding rectangle, whose corners stand out past the footprint's rounded ones)
+        n = len(P)
+        for k in range(n):
+            k2 = (k + 1) % n
+            if math.hypot(P[k2][0] - P[k][0], P[k2][1] - P[k][1]) < 0.05: continue
+            G.quad([(P[k][0], y0, P[k][1]), (P[k2][0], y0, P[k2][1]), (P[k2][0], yt, P[k2][1]), (P[k][0], yt, P[k][1])], 'mud', d=(outward(P, k)[0], 0.0, outward(P, k)[1]))
+        G.quad([(x, yt, z) for (x, z) in P], 'mud_top', d=(0, 1, 0))
         # the passage runs across the walls: along the rectangle's axis nearer the direction from the town's centre
         rx, rz = cx - CX, cz - CZ; rl = math.hypot(rx, rz) or 1.0; rx, rz = rx / rl, rz / rl
         if abs(ca * rx + sa * rz) >= abs(-sa * rx + ca * rz): px, pz, hp, qx, qz, hq = ca, sa, Lb / 2, -sa, ca, Wb / 2
         else: px, pz, hp, qx, qz, hq = -sa, ca, Wb / 2, ca, sa, Lb / 2
         if px * rx + pz * rz < 0: px, pz = -px, -pz   # (p points out of the town)
         if not detail: out.append((cx, cz)); continue
-        # merlons round the top
-        cs = [(cx + px * hp * i + qx * hq * j, cz + pz * hp * i + qz * hq * j) for i, j in ((1, 1), (1, -1), (-1, -1), (-1, 1))]
-        for k in range(4):
-            (ax, az), (bx, bz) = cs[k], cs[(k + 1) % 4]
-            mx, mz = (ax + bx) / 2 - cx, (az + bz) / 2 - cz; ml = math.hypot(mx, mz) or 1.0
-            merlon_row(G, ax, az, yt, bx, bz, yt, mx / ml, mz / ml, 2.5)
-        # the outer face: a portal (a shallow raised frame) with a dark pointed arch; the inner face: the arch
+        # merlons round the top, along the footprint's edges
+        for k in range(n):
+            (ax, az), (bx, bz) = P[k], P[(k + 1) % n]; nx, nz = outward(P, k)
+            merlon_row(G, ax, az, yt, bx, bz, yt, nx, nz, 2.5)
+        # the outer face: a portal (a shallow raised frame) with a dark pointed arch; the inner face: the arch.
+        # Everything stays inside OSM's footprint (the frame and the towers set in from the outer face): the roads
+        # turn just outside the gates (the east one at the corner of its outer face), so nothing may stand out onto them.
         fw = min(2 * hq * 0.5, 12.0); ah = min(h * 0.62, 7.5); aw = min(fw * 0.55, 5.0)
         ox, oz = cx + px * hp, cz + pz * hp
-        G.box(ox + px * 0.25, y0, oz + pz * 0.25, fw, yt - y0 + 1.2, 0.5, math.atan2(qz, qx), 'mud_top')
-        G.arch(ox + px * 0.52, y0 + 1.0, oz + pz * 0.52, qx, qz, px, pz, aw, ah + 1.0, 'dark')
+        G.box(ox - px * 0.3, y0, oz - pz * 0.3, fw, yt - y0 + 1.2, 0.5, math.atan2(qz, qx), 'mud_top')
+        G.arch(ox + px * 0.03, y0 + 1.0, oz + pz * 0.03, qx, qz, px, pz, aw, ah + 1.0, 'dark')
         ix, iz = cx - px * hp, cz - pz * hp
         G.arch(ix - px * 0.03, y0 + 1.0, iz - pz * 0.03, qx, qz, -px, -pz, aw, ah + 1.0, 'dark')
-        # two towers flanking the portal
-        tr = max(2.6, min(4.0, hq * 0.3))
+        # two towers flanking the portal, wholly inside the footprint
+        tr = max(2.6, min(4.0, hq * 0.3, hp * 0.5 - 0.6))
         for j in (1, -1):
-            tower(G, ox - px * tr * 0.4 + qx * j * (hq - tr * 0.2), oz - pz * tr * 0.4 + qz * j * (hq - tr * 0.2), tr, yt - y0 - 1.0 + 1.6, 14, 6, y=y0 + 1.0)
+            tower(G, ox - px * (tr + 0.6) + qx * j * (hq - tr - 0.6), oz - pz * (tr + 0.6) + qz * j * (hq - tr - 0.6), tr, yt - y0 - 1.0 + 1.6, 14, 6, y=y0 + 1.0)
         out.append((cx, cz))
     return out
 
