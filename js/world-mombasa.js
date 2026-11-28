@@ -280,6 +280,49 @@
       house(g, bx, bz, Lb, Wb, ang, y0, hh, big || crH(bx, bz, 15) < 0.7, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
     }
+    /* ---- the street front of the town centre and the old town (d 280-1110; docs/proge/mombasa.md, »Raziskava«): a row of two- and
+       three-storey houses close behind the pavement, square to the road, gaps where OSM's side streets come in (LD.streets); the old town's
+       houses of coral stone under a lime render (cream, ochre, pale), flat roofs with a parapet, a carved wooden door and on some a wooden
+       balcony over the street, as the public descriptions of the old town show them; a house only where the ground is free (OSM's own
+       buildings, the car parks and lawns of js/world-mombasa-obcestje.js, the view of the fortress) ---- */
+    let nFront = 0;
+    {
+      const SG = []; for (const p of LD.streets || []) for (let k = 0; k + 3 < p.length; k += 2) SG.push([p[k], p[k + 1], p[k + 2], p[k + 3]]);
+      const stD = (x, z) => { let b = 1e9; for (const [ax, az, bx, bz] of SG) { const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1, t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1); b = Math.min(b, Math.hypot(ax + vx * t - x, az + vz * t - z)); } return b; };
+      const OLD = [[0.93, 0.89, 0.8], [0.9, 0.82, 0.66], [0.95, 0.93, 0.87], [0.88, 0.78, 0.62], [0.92, 0.86, 0.76]], WOOD = [[0.42, 0.3, 0.2], [0.5, 0.36, 0.24], [0.36, 0.26, 0.18]];
+      for (const side of [-1, 1]) for (let d = 280; d < 1110;) {
+        const Lb = 7 + crH(d, side, 61) * 5, Wb = 9 + crH(d, side, 62) * 4, dc = d + Lb / 2; d += Lb + 0.5 + crH(d, side, 63) * 1.5;
+        const i = T.idx(sAt(dc)), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 2.6 + Wb / 2), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, ang = T.hd[i];
+        if (excluded(x, z) || inFort(x, z, 10) || inView(x, z, Wb / 2) || seaD(x, z) > -4 || stD(x, z) < Math.hypot(Lb, Wb) / 2 + 3) continue;
+        const ca = Math.cos(ang), sa = Math.sin(ang), cs = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [x + ca * a - sa * b, z + sa * a + ca * b]);
+        let lo = 1e9, hi = -1e9, clash = false; for (const [cx, cz] of cs) { const h = nrGround(cx, cz), n = nrNear(cx, cz); lo = Math.min(lo, h); hi = Math.max(hi, h); if (n.i >= 0 && n.dd < 1.0) clash = true; if (excluded(cx, cz)) clash = true; }
+        if (clash || hi - lo > 3) continue;
+        const g = scen.get(x, z), old = dc > 410, fl = old ? 2 + Math.floor(crH(x, z, 64) * 2) : 3 + Math.floor(crH(x, z, 64) * 3), hh = fl * 3.1;
+        const wc = vary(old ? OLD[Math.floor(crH(x, z, 65) * OLD.length)] : WALL[Math.floor(crH(x, z, 65) * WALL.length)], R, 0.04);
+        house(g, x, z, Lb, Wb, ang, lo, hh, true, wc);
+        const fx = -T.nx[i] * side, fz = -T.nz[i] * side, ex = x + fx * Wb / 2, ez = z + fz * Wb / 2, wd = WOOD[Math.floor(crH(x, z, 66) * WOOD.length)];   // (the face to the road)
+        box(g, ex + fx * 0.06, lo - 0.2, ez + fz * 0.06, 1.3, 2.5, 0.14, ang, wd, null, true);   // (the door)
+        if (old && crH(x, z, 67) < 0.6) {   // (the wooden balcony on the first floor, on its brackets, with a roof over it)
+          const bl = Lb * (0.45 + crH(x, z, 68) * 0.35), bx = ex + fx * 0.6, bz = ez + fz * 0.6;
+          box(g, bx, lo + 3.1, bz, bl, 1.25, 1.2, ang, wd, wd.map(v => v * 0.9), true);
+          box(g, bx, lo + 5.3, bz, bl + 0.3, 0.12, 1.4, ang, wd.map(v => v * 0.8), null, true);
+          for (const q of [-0.45, 0.45]) box(g, bx + ca * bl * q, lo + 4.35, bz + sa * bl * q, 0.12, 0.95, 0.12, ang, wd, null, true);
+        }
+        nFront++; CR.block(x, z, Lb, Wb, ang); exclPush(x, z, Math.max(Lb, Wb) / 2 + 1);
+      }
+    }
+    /* ---- the lower light of Ras Serani (OSM n1297508051, NGA Pub. 112 / Admiralty D 6772: quick white, 26 m above the sea; the lighthouse
+       directories: a round white metal tower of 12 m, 1902), 36 m from the road above the channel: the tower, its gallery and the lantern ---- */
+    {
+      const x = 1408.6, z = 1075.3, y = nrGround(x, z), g = scen.get(x, z), wt = [0.95, 0.95, 0.93];
+      cyl(g, x, y - 0.3, z, 1.25, 10.3, 12, wt, wt, 1.0);
+      cyl(g, x, y + 10.0, z, 1.6, 0.25, 12, [0.88, 0.88, 0.86], wt);
+      for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; box(g, x + Math.cos(a) * 1.5, y + 10.25, z + Math.sin(a) * 1.5, 0.06, 0.9, 0.06, 0, wt); }
+      box(g, x, y + 11.1, z, 3.1, 0.08, 3.1, 0, wt);
+      cyl(g, x, y + 10.25, z, 0.85, 1.4, 10, [0.62, 0.7, 0.72], null);
+      cyl(g, x, y + 11.65, z, 0.95, 0.6, 10, [0.9, 0.9, 0.88], wt, 0.15);
+      exclPush(x, z, 4); CR.block(x, z, 3.2, 3.2, 0); out.marks = Object.assign(out.marks || {}, { Svetilnik: [x, z] });
+    }
     // more of the city where the land cover says it is built up and OpenStreetMap has no footprints (15-55 m from the road, square to it)
     {
       const Lt = NRC * 32;
@@ -468,7 +511,7 @@
     const rob = World.ext.mombasaRob ? World.ext.mombasaRob({ scen, excluded, seaD, inFort, root, out }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, front: nFront, stone: nStone, fans: nFans, rocks: out.rocks, rob };   // (read by the tests)
     return out;
   }
 

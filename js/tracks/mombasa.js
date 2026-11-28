@@ -36,11 +36,20 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
       {"n": "Mestno središče", "d": 40, "say": ["Through the town centre, the avenue wide open!", "Down the avenue, the old town ahead!"]},
       {"n": "Krožišče", "d": 265, "say": ["Into the roundabout, mind the kerbs!", "Round the roundabout and east!"]},
-      {"n": "Stari del mesta", "d": 520, "say": ["Along the edge of the old town!", "The old town on the left, the harbour ahead!"]},
+      {"n": "Stolpnice", "d": 340, "say": ["Between the tower blocks, sixteen floors of glass and concrete!", "The office towers right up against the pavement!"]},
+      {"n": "Stari del mesta", "d": 520, "say": ["Along the edge of the old town, coral stone and carved balconies!", "The old town alongside, the harbour ahead!"]},
+      {"n": "Krožišče", "d": 960, "say": ["Another roundabout, the fortress is close now!", "Round the roundabout, nearly at the walls!"]},
       {"n": "Trdnjava", "d": 1130, "say": ["Under the walls of the old fortress!", "The fortress on the left, four centuries of coral stone!"]},
-      {"n": "Obalna cesta", "d": 1340, "say": ["Onto the shore road, the sea on the left!", "Out to the shore road, flat out now!"]},
-      {"n": "Kanal Likoni", "d": 2300, "say": ["Above the channel, the ferries cross below!", "Along the channel to the finish!"]},
+      {"n": "Krožišče", "d": 1317, "say": ["Round the last roundabout and south!", "Out of the roundabout, away from the old town!"]},
+      {"n": "Kizingo", "d": 1700, "say": ["Through Kizingo, villas and gardens behind the walls!", "Down through the leafy streets of Kizingo!"]},
+      {"n": "Svetilnik", "d": 2140, "say": ["Past the light tower on the point!", "The white light tower on the cape, the channel just beyond!"]},
+      {"n": "Obalna cesta", "d": 2280, "say": ["Onto the shore road, the sea right there!", "Out to the shore road, flat out now!"]},
+      {"n": "Golf igrišče", "d": 2450, "say": ["Along the golf course, palms and fairways!", "The golf course and its ponds, the sea beyond!"]},
+      {"n": "Kanal Likoni", "d": 2900, "say": ["Above the channel, the ferries cross below!", "Along the channel to the finish!"]},
+      {"n": "Park ob obali", "d": 3300, "say": ["The park on the shore, the line in sight!", "Into the last metres by the shore park!"]},
     ],
+    // the flyover of the menu ([metres after the start line, caption]; -1 = the finish)
+    fly: [[0, 'START'], [340, 'Stolpnice'], [1130, 'Trdnjava'], [2140, 'Svetilnik'], [2900, 'Kanal Likoni'], [-1, 'CILJ']],
     // the commentator's own lines on this road
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, the town centre, the old fortress and the shore road, and you start {grid}.", "Here we are in the heart of the island city. A race past the fortress and along the channel, and you line up {grid}."],
