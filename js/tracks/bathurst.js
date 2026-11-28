@@ -48,6 +48,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ["Zavoj 16", 242.0, 594.1, ["Flat out down the long straight, then the chicane!", "Turn sixteen, the hardest braking of the lap!", "Into the chicane at the end of the straight!"]],
       ["Zavoj 18", 244.7, 56.9, ["The last corner, Turn Eighteen!", "Turn eighteen, and onto the main straight!", "Through the last corner, the lap is nearly done!"]],
     ],
+    // the commentator's own lines (Comm, game.js ownLine): the one-lap race and the time trial round the hill; no names but the place's
+    comm: {
+      introOne: ['Welcome to {track}! One lap round the mountain above the town, and you start {grid}.', 'Here we are on the hill above Bathurst. One lap, up the climb, along the walls on the ridge and down the long straight. You start {grid}.', 'Welcome to {track}! Public roads round the hill, closed for the race. One lap, and you line up {grid}.'],
+      introTT: ['Welcome to {track}! One lap round the mountain against the clock, {cps} checkpoints on the way.', 'The hill above Bathurst, all to yourself. Up the climb, across the ridge and down the long straight, against the clock!', 'Welcome to the mountain! A hundred and seventy metres up and back down again, against the clock.'],
+      goTT: ['Green light... and away up the main straight!', 'Green light! Turn one, then the climb to the ridge!', 'Away you go! Six kilometres round the mountain!'],
+    },
     turns: [[-255.5, -21.4], [-448.8, 1056.6], [-800.0, 948.2], [-900.4, 973.4], [-830.9, 1120.4], [-855.3, 1262.6], [-954.4, 1786.9], [-627.3, 1828.3], [-569.5, 1857.4], [-502.2, 1856.1], [-453.6, 1908.8], [-399.8, 1918.9], [-316.8, 1990.5], [-248.5, 2023.6], [-170.1, 2126.5], [242.0, 594.1], [183.6, 501.0], [244.7, 56.9]],   // the apexes of Turns 1-18 (their number boards)
     // the pit lane on the left of the main straight (the inside, as on the real circuit): [centre offset towards it, from, to, the player's
     // box, entry length] (metres from the start line); in past the exit of the last corner, out before Turn 1; 13 crews' boxes
