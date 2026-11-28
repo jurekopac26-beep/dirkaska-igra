@@ -3699,6 +3699,56 @@
   "nan": false,
   "digest": "74456569c1653eaaf779c26d"
  },
+ "trebevic/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 156.33,
+  "spins": 0,
+  "walls": 5,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7a9a0e35bc9797afc4fca354"
+ },
+ "trebevic/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 188.29,
+  "spins": 2,
+  "walls": 12,
+  "rescues": 1,
+  "nan": false,
+  "digest": "2bc11c9b8d62b27d04de629f"
+ },
+ "trebevic/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 146.49,
+  "spins": 2,
+  "walls": 15,
+  "rescues": 1,
+  "nan": false,
+  "digest": "3c6bb72c9afd3dba5872a63f"
+ },
+ "trebevic/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 151.58,
+  "spins": 1,
+  "walls": 19,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2bddfafd8cecf3ab6bb809e4"
+ },
+ "trebevic/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 156.41,
+  "spins": 1,
+  "walls": 11,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4a89ce3e35ac7569c11b7da2"
+ },
  "chamarel/cs": {
   "finished": 13,
   "cars": 13,
@@ -3742,12 +3792,12 @@
  "chamarel/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 171.33,
+  "winner": 171.52,
   "spins": 0,
-  "walls": 3,
-  "rescues": 0,
+  "walls": 8,
+  "rescues": 1,
   "nan": false,
-  "digest": "cff7225e3c30916c94b58e0e"
+  "digest": "e4fd14b1c73608ba97c0ddd1"
  },
  "meteora/cs": {
   "finished": 13,
@@ -3792,12 +3842,12 @@
  "meteora/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 209.83,
+  "winner": 209.89,
   "spins": 0,
-  "walls": 19,
+  "walls": 13,
   "rescues": 0,
   "nan": false,
-  "digest": "97f0e5af25633748c1db705f"
+  "digest": "81501bd831dbea4e68ce3d4b"
  },
  "tatev/cs": {
   "finished": 13,
@@ -3842,11 +3892,61 @@
  "tatev/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 239.14,
-  "spins": 1,
+  "winner": 238.26,
+  "spins": 0,
+  "walls": 6,
+  "rescues": 0,
+  "nan": false,
+  "digest": "26b790fda7626b915436f131"
+ },
+ "envalira/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 116.15,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9c374d0a3c5258a658c83406"
+ },
+ "envalira/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 116.15,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "da768a42f4705618f1aac7fc"
+ },
+ "envalira/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 111.39,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "575e475f6f4800c3303ad7da"
+ },
+ "envalira/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 112.18,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8ec770f7d943dbf42ec6e085"
+ },
+ "envalira/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 117.37,
+  "spins": 0,
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "64db45861ac5eeeb938772bb"
+  "digest": "611306c6a2da92247466632a"
  }
 }
