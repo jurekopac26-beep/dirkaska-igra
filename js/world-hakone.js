@@ -764,6 +764,10 @@
       gpv.addTo(root, pMat, false, true);
     }
 
+    /* ---- what lies by the road past the barriers, from OSM (js/world-hakone-obcestje.js: the side roads, paths, steps, the bus stops and the
+       street things, the power line's towers, the penstock), before the trees ---- */
+    const obcSt = API.hkObc ? API.hkObc({ T, N, scen, exclPush, excluded, inRect, ground: vrGround, near: vrNear, onBr, sag }) : null;
+
     /* ---- the torii at Hatajuku (HK_DATA.gates, the one by the road): two vermilion pillars, the black-topped beam with its ends turned up, the
        tie beam ---- */
     if (D) for (const gt of D.gates) if (!gt[4]) {
@@ -863,7 +867,7 @@
       const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x1c1d1f })); m.matrixAutoUpdate = false; m.name = 'hkWires'; root.add(m); }
     crowdFinish(CR, root, out);
     if (World.ext.hakoneRob) out.rob = World.ext.hakoneRob({ excluded: (x, z) => excluded(x, z) || inRect(x, z), railD: hkRailD, root, matV, summer: HKS, prof: (i, sd) => vp[sd > 0 ? 1 : 0][i], out });   // (the roadside ground from the camera behind the car: js/world-chase-bt10.js)
-    out.stats = { trees: nTrees, fill: nFill, sasa: nSasa, tiles: nTiles, farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), base, buildings: nBld, poles: nPoles, hydrangeas: nHyd, crossings: nCross, railM: Math.round(nRailM), stops: nStop, portals: nPortal, cedars: nCedar, paving: nPave, far: FAR ? FAR.P0.length / 3 : 0, boats: FAR ? FAR.boats.length : 0, fujiOver: !!(FAR && FAR.mesh2) };   // (read by the tests)
+    out.stats = { trees: nTrees, fill: nFill, sasa: nSasa, tiles: nTiles, farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), base, buildings: nBld, poles: nPoles, hydrangeas: nHyd, crossings: nCross, railM: Math.round(nRailM), stops: nStop, portals: nPortal, cedars: nCedar, paving: nPave, far: FAR ? FAR.P0.length / 3 : 0, boats: FAR ? FAR.boats.length : 0, fujiOver: !!(FAR && FAR.mesh2), obcestje: obcSt };   // (read by the tests)
     return out;
   }
 

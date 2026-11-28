@@ -321,7 +321,18 @@
         for (let a = -56; a < 56; a += 4) { const P0 = (q, o) => [b.x + b.nx * q + b.tx * o, y, b.z + b.nz * q + b.tz * o];
           g.quadUp(P0(a, -hw), P0(a, hw), P0(a + 4, hw), P0(a + 4, -hw), [cw, cw, cw, cw], [[a / 14, 0], [a / 14, 0.3], [(a + 4) / 14, 0.3], [(a + 4) / 14, 0]]); }
         const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); out.dyn.water = tex.water; }
-      if (P.lakes.length) out.dyn.water = tex.water;
+      for (const R of P.rivers) {   // the Juncalillo beside the road (def.riverBeds, OSM): a ribbon at its level, shallow and warm grey at the banks (as world-gore.js)
+        const g = new GB(true), hw = R.w / 2, O = [-hw - 4, -hw * 0.5, 0, hw * 0.5, hw + 4], n = R.pts.length, uv = (q) => [q[0] / 14, -q[2] / 14], shal = [0.72, 0.62, 0.46], deep = [0.52, 0.47, 0.37];   // (glacier meltwater: grey, not blue)
+        const col = (o) => [0, 1, 2].map(k => lerp(shal[k], deep[k], sstep(1, 8, hw - Math.abs(o)))), row = (k) => { const p = R.pts[k], q = R.pts[Math.min(n - 1, k + 1)], r = R.pts[Math.max(0, k - 1)], tx = q[0] - r[0], tz = q[1] - r[1], l = Math.hypot(tx, tz) || 1;
+          return O.map(o => [p[0] - tz / l * o, R.h[k], p[1] + tx / l * o]); };
+        let A = row(0);
+        for (let k = 1; k < n; k++) { const B = row(k), p = R.pts[k];
+          if (API.vrDist(p[0], p[1]) < 420) for (let m = 0; m + 1 < O.length; m++) g.quadUp(A[m], A[m + 1], B[m + 1], B[m], [col(O[m]), col(O[m + 1]), col(O[m + 1]), col(O[m])], [uv(A[m]), uv(A[m + 1]), uv(B[m + 1]), uv(B[m])]);
+          A = B; }
+        if (!g.empty) { const geo = g.geometry(), nn = geo.attributes.normal; for (let q = 0; q < nn.count; q++) nn.setXYZ(q, 0, 1, 0);   // (one normal, straight up, as a lake's: the quads' own normals on a falling, winding ribbon caught the sun in facets)
+          const m = new THREE.Mesh(geo, wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
+      }
+      if (P.lakes.length || P.rivers.length) out.dyn.water = tex.water;
     }
 
     /* ---- the road: asphalt with white edge lines and a double yellow centre line (no overtaking up the curves), a gravel shoulder, then the verge

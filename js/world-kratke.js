@@ -32,6 +32,7 @@
     // café by the road
     mapileng: {
       seed: 5311, dust: [0.56, 0.52, 0.45],
+      extras: (c) => (World.mapilengObcestje ? World.mapilengObcestje.extra(c) : 0),   // the map's square, concrete side road and its gate (js/world-mapileng-obcestje.js)
       pal: { grass: [0.45, 0.52, 0.28], dry: [0.6, 0.58, 0.4], soil: [0.5, 0.42, 0.32], shrub: [0.3, 0.4, 0.2], tree: [0.22, 0.33, 0.17],
         field: [0.47, 0.56, 0.25], field2: [0.64, 0.6, 0.38], wall: [0.62, 0.62, 0.6], built: [0.6, 0.58, 0.54], bare: [0.6, 0.6, 0.58],
         rock: [0.64, 0.64, 0.62], rock2: [0.5, 0.51, 0.5], path: [0.56, 0.5, 0.4], verge: [0.5, 0.47, 0.41], karst: 0.75 },

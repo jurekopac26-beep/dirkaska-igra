@@ -454,6 +454,8 @@
       }
     }
 
+    if (API.rrObcestje) API.rrObcestje({ scen, exclPush, blds, out });   // (js/world-rastro-obcestje.js: OpenStreetMap's furniture by the road, before the spectators)
+
     /* ---- spectators: the start and the finish, the checkpoints, the insides and outsides of every third bend, a few groups along the road ---- */
     {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };

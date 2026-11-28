@@ -355,7 +355,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     sakhir: { ban: SK_BAN, at: SK_AT, nums: 15, numC: ['#ce1126', '#fff', '#fff'], shirts: SK_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.7, 1.2, 2.3], gravel: false, noVid: true,
       pitBox: [-210, 180, 1], mow: 0.001, vg: [2.12, 1.42, 2.22],   // (the pit garages on the right of the main straight; the verges inside the barriers sand, no mowing stripes)
-      woods: SK_WOODS, extra: skExtra, pad: skPad, ground: skGround, lane: true, fl: { bh: BH }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: SK_WOODS, extra: skExtra, pad: skPad, ground: skGround, lane: true, fl: { bh: BH }, ck: 1,   // (ck: the chunks at their usual 128 m: what is out of view or far is left out; at 256 m the phone budget was over 900k vertices with the roadside, PR #1047)
       flags: { stand: [{ bh: 0.8, tm: 0.2 }, { bh: 0.7, tm: 0.2, rb: 0.1 }], ga: { bh: 0.8, tm: 0.2 }, camp: { bh: 0.85, tm: 0.15 }, pole: 'bh', podium: 'bh' },
       vid: [], poles: [-150, 160, -1], runoff: ['SAKHIR', 'BAHRAIN', 'MANAMA'], straight: [-120, 120, -1],
       farm: { wall: [0.93, 0.9, 0.84], roof: [0.62, 0.6, 0.56], end: [0.9, 0.87, 0.8], barn: [0.75, 0.68, 0.56], barnRoof: [0.6, 0.6, 0.6], barnEnd: [0.72, 0.65, 0.54] },
