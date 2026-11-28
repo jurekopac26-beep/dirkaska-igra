@@ -87,7 +87,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Zima na severu: Silkeborg, Kågeröd (po N1 #485) | po načrtu 9. 11. | ko je N1 na `main` |
 | Prvi zagon z angleškim menijem (I2), samo preizkus (#673) | jure.kopac26, croatiadata | po tedenskem načrtu |
 | Najboljše vožnje: 10 najboljših `.rrp` na progo, gumb »Deli 10 najboljših« | jure.kopac26 | po #650; ~14. 11. |
-| Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
+| Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | partyslo (prevzem 27. 11.) | popravljeno na veji `najboljse-voznje` (27. 11.; test `browser/replay-cilj.test.mjs`); na `main` s #663 |
 | **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
 | Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
 | 10 novih prog z znamenitostjo ob cesti (model iz Blenderja, skupni nalagalnik `.glb`; odločitev uporabnika 15. 11. 2026 ob ~4.40 prek Mateja: »namesto 5 novih prog naredi 10 novih prog, vse naj imajo uporabo blenderja«): proga 1 Luanda in skupna pot (#711), proge 2–7 jure.kopac26 na veji `proge/luanda`, 8–10 biketraveler | jure.kopac26, biketraveler | v delu (#711) |
@@ -141,6 +141,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.3 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: po #1069 in #1119) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
 | 10.4 | #1068 | Profil igralca: dosežki, statistika, izvoz, kopije, primerjava avtov, »ZA TO PROGO« | jure.kopac26 | osnutek; testi zeleni 27. 11. (`test:related` 26/26, `menu.test` 322/322, `stamp --check`); »Ready for review« ob mestu med prvima dvema, pred združitvijo svež `main`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
+| 10.20 | #663 Najboljše vožnje | 10 najboljših kronometrov na progo in vreme, ogled in deljenje `.rrp`; prevzem partyslo (Matejeva odločitev 27. 11.) | partyslo | svež `main` (27. 11. ob 11.00), povezani testi OK (31/32 v krogu, popravljeni `browser/najboljse` posebej), žig OK; osnutek do vrste, na `main` pred #605 in #949. Združiti s »squash«; vprašanje `najboljse-663-seznam` (postavitev seznama) združitve ne čaka. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
 | 10.21 | #1243 | Dodelava: Tianmen, Kitajska (gozd po WorldCover; `dodelava/tianmen`) | jure.kopac26 | osnutek, testi zeleni; po #1242; pred združitvijo svež `main`, `test:related`. |
 | 10.22 | #1242 | Dodelava: Los Caracoles, Čile (O-28-39/O-28-46: Matej potrdil brez slik; samo `js/tracks/caracoles.js`, `docs/proge/caracoles.md`, README »Zasluge«) | jure.kopac26 | »Ready for review«; pred #1243; pred združitvijo svež `main`, `test:related`. |

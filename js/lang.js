@@ -1117,6 +1117,11 @@
     'Nov rekord!': 'New record!', 'Konec vožnje': 'Run over', '{0} točk · {1} km · {2}.': '{0} points · {1} km · {2}.',
     'Neskončna vožnja': 'Endless traffic', 'Za hitrost': 'For speed', 'Za tesna prehitevanja': 'For close passes', 'Tesno / zelo tesno': 'Close / very close',
     'Najdaljši niz': 'Longest combo', 'Promet na koncu': 'Traffic at the end', 'Vozi znova': 'Drive again', 'Najboljših 10 · {0} · {1}': 'Top 10 · {0} · {1}',
+    // Nastavitve → Najboljše vožnje (js/najboljse.js)
+    'Najboljše vožnje': 'Best runs', 'Deli 10 najboljših': 'Share top 10', 'Mokro': 'Wet',
+    'Igra hrani 10 najboljših veljavnih voženj na čas za vsako progo, vreme in fiziko vožnje (v tem brskalniku). Deli 10 najboljših naredi eno datoteko s posnetki proge, po kateri se tekmeci učijo vožnje igralcev.': 'The game keeps the 10 best valid time trial runs of every track, weather and driving physics (in this browser). Share top 10 makes one file of a track\'s recordings, from which the rivals learn the players\' driving.',
+    'Še ni nobene veljavne vožnje na čas.': 'No valid time trial run yet.', 'Najboljše vožnje v tem brskalniku niso na voljo.': 'Best runs are not available in this browser.',
+    'Datoteka je v Prenosih: {0} ({1})': 'The file is in Downloads: {0} ({1})', 'Datoteke ni bilo mogoče narediti.': 'The file could not be made.',
     'Ta dogodek je še zaklenjen.': 'This event is still locked.', 'V dolino': 'To the valley',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
