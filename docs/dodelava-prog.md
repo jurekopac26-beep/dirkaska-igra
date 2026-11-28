@@ -75,11 +75,11 @@ Večji sveženj PR, ki ga stolpec ne navaja: #608 (Trki). Spreminja datoteke sve
 | Portobelo, Panama (`portobelo`) | Svet 476 vrstic, brez DEM in rastja. Manjkajo trdnjave ob zalivu in deževni gozd. | 3 | #1008 | biketraveler |
 | Seul, Južna Koreja (`seoul`) | Svet 557 vrstic, brez DEM. Manjkata gore za mestom in reka. | 3 | #1148 | biketraveler |
 | Bâlea, Romunija (`balea`) | Svet je skupni prelaz, 6 zanimivosti. Koče in postaja žičnice so preproste (`realizem.md`). | 3 | #1018, #763, #678, #1139 | |
-| Canaries, Sveta Lucija (`canaries`) | Svet je skupni prelaz, 4 zanimivosti. Manjkata tropski gozd in vas ob zalivu. | 3 | #1018, #1141 | |
-| Vaoala, Samoa (`vaoala`) | Svet je skupni prelaz brez obcestja, 4 zanimivosti. Manjkata deževni gozd in obala pod cesto. | 3 | #1138 | |
-| Mã Pí Lèng, Vietnam (`mapileng`) | Svet je skupni (`world-kratke.js`), 4 zanimivosti. Manjkajo kanjon reke in terase. | 3 | #1153 | |
+| Canaries, Sveta Lucija (`canaries`) | Svet je skupni prelaz, 4 zanimivosti. Manjkata tropski gozd in vas ob zalivu. | 3 | #1018, #1141 | croatiadata |
+| Vaoala, Samoa (`vaoala`) | Svet je skupni prelaz brez obcestja, 4 zanimivosti. Manjkata deževni gozd in obala pod cesto. | 3 | #1138 | croatiadata |
+| Mã Pí Lèng, Vietnam (`mapileng`) | Svet je skupni (`world-kratke.js`), 4 zanimivosti. Manjkajo kanjon reke in terase. | 3 | #1153 | croatiadata |
 | Pikes Peak (makadam), ZDA (`pikesg`) | Svet je Pikes Peakov. Manjka rastje (paket G), opis je kratek. | 2 | #1166 | |
-| Kotor, Črna gora (`kotor`) | Svet je skupni prelaz brez obcestja, ima 14 zanimivosti z vrsticami. Zaliv in staro mesto spodaj nista po meri. | 2 | #1150 | |
+| Kotor, Črna gora (`kotor`) | Svet je skupni prelaz brez obcestja, ima 14 zanimivosti z vrsticami. Zaliv in staro mesto spodaj nista po meri. | 2 | #1150 | croatiadata |
 | Furka, Švica (`furka`) | Skupni prelaz z obcestjem, 9 zanimivosti z vrsticami. Manjkajo ledenik in lastni zvok višine. | 2 | #1132, #1154 | |
 | Gudauri, Gruzija (`gudauri`) | Skupni prelaz z obcestjem (702), 7 zanimivosti z vrsticami. Manjkata lasten teren Kavkaza in zvok. | 2 | #1018, #840, #1154 | |
 | Izoard, Francija (`izoard`) | Skupni prelaz z obcestjem, 21 zanimivosti z vrsticami. Manjkata melišča pod vrhom in lasten zvok. | 2 | #1137 | |
