@@ -12,7 +12,7 @@ Cesta H-46 v soteski reke Vorotan (pokrajina Sjunik, jug Armenije), v pravem mer
 - **Kronometer**: sam proti uri, dve kontrolni točki z vmesnimi časi in višino, lestvica, duh in medalje (zlata 3:50, srebrna 4:01, bronasta 4:19, v dežju 4:33 / 4:47 / 5:08; zlato je čas relijskega avta na avtopilotu × 1,01).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti: največ avtomobilov, kombiji, avtobusi in tovornjaki, nekaj motoristov in kolesarjev; v obe smeri.
 - **Policija**: beg pred policijo, v rezultatih pobega piše »Do Tateva v …«.
-- **Imena v HUD** (po vrsti): Ruševine nad sotesko, Hudičev most · 1.013 m, Reka Vorotan, Topli izvir, Serpentina 1 · 1.042 m, Serpentina 5 · 1.135 m, Studenec, Serpentina 10 · 1.296 m, Zadnja serpentina · 1.379 m. Serpentine na pravi cesti niso oštevilčene; igra jih šteje od dna soteske navzgor. V angleščini prek `js/lang.js`.
+- **Imena v HUD** (po vrsti): Ruševine Cakuta, Hudičev most · 1.016 m, Reka Vorotan, Topli izvir, Serpentina 3 · 1.042 m, Serpentina 7 · 1.135 m, Grapa, Studenec, Drevored, Serpentina 13 · 1.296 m, Zadnja serpentina · 1.379 m. Serpentine na pravi cesti niso oštevilčene; igra jih šteje od dna soteske (Hudičev most) navzgor po vrsti ovinkov v `curves` (2616 je prva, 6482 zadnja, 16.). V angleščini prek `js/lang.js`.
 - **Oblika in višine**: sredinska črta je iz OpenStreetMap (vsakih 5 m, zglajena). Višine iz Copernicus DEM GLO-90 (GLO-30 za Armenijo ni javen; tla brez krošenj in stavb), profil zglajen; največji naklon 12,4 %. Prava cesta je ozka dvopasovnica, v igri 7,6 m.
 
 Okolica (skupni graditelj kratkih prog `buildKratke` v `js/world-kratke.js`, slog `KR.tatev`):
@@ -34,8 +34,8 @@ Iz izvleska OSM (bbox 46.240, 39.383 – 46.270, 39.402), preračunano na točke
 | Kraj (HUD) | d | od ceste | Opomba |
 |---|---|---|---|
 | Ruševine Cakuta | ~2060 | 59–60 m, levo | opuščena vas Cakut, ruševine in bogoslužni prostor |
-| Hudičev most · 1.013 m | 2465 (OSM ~2549) | 9 m | naravni skalni most; v igri na najnižji točki profila (DEM GLO-90 jo zamakne ~80 m), test `tatev.test.js` to zahteva |
-| Reka Vorotan | 2548 | ob cesti | prečkanje reke in parkirišče ob 2549 |
+| Hudičev most · 1.016 m | 2549 | 9 m | naravni skalni most; po OSM (reka pod mostom, way 1188891529 `tunnel=cave`, cesta nad njo pri d 2549); najnižja točka profila 1.013 m pri ~2503 (DEM GLO-90) |
+| Reka Vorotan | 2584 | 13 m | reka spet na prostem ob cesti (OSM way 875500141) |
 | (vhod v jamo pod mostom) | ~2235 | 53 m | za kulise |
 | (bazeni toplega izvira) | ~2230 | 67 m | tik izven 60 m; za kulise |
 | Topli izvir | 2674 | 22 m | izvir ob cesti |
