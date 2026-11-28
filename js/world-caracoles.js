@@ -413,7 +413,7 @@
     const truckCols = [[0.85, 0.85, 0.83], [0.72, 0.12, 0.1], [0.12, 0.28, 0.6], [0.9, 0.62, 0.12], [0.16, 0.16, 0.18], [0.24, 0.45, 0.28], [0.95, 0.95, 0.94]];
     const trailerCols = [[0.86, 0.86, 0.84], [0.74, 0.74, 0.72], [0.22, 0.32, 0.5], [0.55, 0.15, 0.12], [0.88, 0.88, 0.86], [0.3, 0.42, 0.3]];
 
-    /* ---- the buildings: the yellow Hotel Portillo by the lake, the Octagon, the lodges, staff houses and ski huts of Portillo (plastered walls with
+    /* ---- the buildings: the yellow hotel by the lake, the Octagon, the lodges, staff houses and ski huts of Portillo (plastered walls with
        windows, metal roofs in red oxide, green or grey), corrugated sheds, the road camp by the river ---- */
     let nBld = 0;
     {
@@ -421,7 +421,7 @@
       const lowHigh = (b) => { const c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9; for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = caGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); } return [lo, hi]; };
       for (const b of blds) {
         const g = scen.get(b.x, b.z), [lo, hi] = lowHigh(b), y = b.pad ? b.pad.h : hi;
-        if (b.name === 'Hotel Portillo') {   // the long yellow block (five storeys on a stone plinth), white bands between the floors, a dark low roof, a wing at the back
+        if (b.name === 'hotel') {   // the long yellow block (five storeys on a stone plinth), white bands between the floors, a dark low roof, a wing at the back
           const c = Math.cos(b.ang), s = Math.sin(b.ang), F = fac.get(b.x, b.z), yel = [1.1, 0.84, 0.27], fl = 5, H = fl * 3.1, yb = y + 0.4, lk = P.lakes.reduce((a, q) => (!a || q.area > a.area ? q : a), null);
           const fs = lk && (lk.cx - b.x) * -s + (lk.cz - b.z) * c < 0 ? -1 : 1, fx = -s * fs, fz = c * fs;   // (fx, fz: out of the long side that looks at the lake)
           box(g, b.x, lo - 0.5, b.z, b.L + 0.4, yb - lo + 0.5, b.W + 0.4, b.ang, [0.52, 0.5, 0.47], null, true);
