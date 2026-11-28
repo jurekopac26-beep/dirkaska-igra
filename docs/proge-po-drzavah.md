@@ -14,7 +14,7 @@ Nove proge niso več ustavljene za te proge; delata jih partyslo in croatiadata 
 - **9 novih prog** (ob ~4.10, »Potrjujem 9 načrtovanih novih prog«): Canaries (Sveta Lucija), Batangas (Filipini), Kanaba (Uganda), Hải Vân (Vietnam), Quezaltepeque (Salvador), Sogeri (Papua Nova Gvineja), Savusavu (Fidži), Koror (Palau) in Vaoala (Samoa). **Odpadejo** Barahona, Chachani, Elmenteita in Viñales.
 - **4 proge s prepadom** (ob ~4.30): Kali Gandaki (Nepal), Musandam (Oman), Limalimo (Etiopija) in Darvaz (Tadžikistan). So izjema od izletne cone; ker je padec čez rob samo na Killarju, imajo ograjo (vidno ali nevidno) na strani prepada.
 - **Ena okrogla proga** (ob ~4.30, »Naredi samo 1 okroglo progo in to je mehika in jo potrjujem«): **Aguascalientes, Mehika** (zamenja Espinazo). Rafaela in Klettwitz odpadeta; Termas de Río Hondo in Nürburg ostaneta.
-- **Proge z ledom** (ob ~4.35, »Potrjujem finska koli in norveska«): **Koli, Finska** (namesto Harju) in **Longyearbyen, Norveška** (od 24. 11. 2026 testna); **Envalira, Andora** je preložena na 1. 12.
+- **Proge z ledom** (ob ~4.35, »Potrjujem finska koli in norveska«): **Koli, Finska** (namesto Harju) in **Longyearbyen, Norveška** (od 24. 11. 2026 testna); **Envalira, Andora** je preložena na 1. 12. (24. 11. 2026: »zgradi takoj; rok 1. 12. ne velja več«, zgrajena v #791).
 - **Švica** (ob ~4.30): ostane **Furka** (prava proga); Zürich je testna od 7. 11.
 - **Zadnji dve mesti** (ob ~5.00, »Naredi Mujib, Jordanija … Irishtown, Jamajka … ok«): **Mujib, Jordanija** in **Irishtown, Jamajka**. Načrt je s tem 70 od 70; **rezervi** sta Chamarel (Mavricij) in El Castaño (Venezuela).
 
@@ -53,6 +53,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Medvode, Slovenija | PR #153 | 10 %, obe 3 % (v igri, povprečno 6,1 m; na `main` zdaj 99 %) | izletna cona je (pločniki) |
 | Bâlea, Romunija | na `main` (PR #226, 7. 11. 2026) | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
 | Džebel Hafit, Združeni arabski emirati | PR #695 | večinoma (ograja ob vsej cesti) | izjema po izbiri uporabnika 14. 11. 2026; padca ni (ograja); na odločanju (`pending: true`) od 16. 11. 2026 |
+| Tatev, Armenija | PR #1097 | 0,2 % (kamniti parapeti, kjer teren pada) | izletna cona je; padca ni; potrjena 26. 11. 2026 |
 | Hải Vân, Vietnam | PR #676 | 0 % (v igri, povprečno 7,8 m) | izletna cona je |
 | Kanaba, Uganda | PR #690 (»Vse proge v enem PR«) | 0 % v OpenStreetMap (zidov in ograj ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
 | Sogeri, Papua Nova Gvineja | PR #691 | 0 % v OpenStreetMap (zidov, ograj in hiš ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
@@ -184,7 +185,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
 | Tajska | nobene na čakanju; Bang Saen je od 5. 11. 2026 testna (`test: true`, za izbris; preveč ravnine; odločitev uporabnika, PR #379), zato Tajska nima prave proge v igri | prva nova proga iz Tajske, ko pride na vrsto: Buriram (dirkališče, Nove proge za 1.0; pogoj »šele ko je #379 na `main`« je izpolnjen z združitvijo #379) |
 | Norveška | – (Longyearbyen je od 24. 11. 2026 testna, `test: true`, za izbris; odločitev uporabnika, tabla #382, komentar 7121179904: »zbrisi progo norveska, proga je prevec ravna prav tako ni na ledu ampak na asfaltu«) | po vrsti (razdelek »Proge z ledom«); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
-| Andora | Envalira (proge z ledom, izbira uporabnika 6. 11. 2026) | preložena na 1. 12. 2026 (13. 11.); potrebuje led kot podlago (razdelek »Proge z ledom«) |
+| Andora | Envalira (proge z ledom, izbira uporabnika 6. 11. 2026) | **zgrajena 24. 11. 2026** (odločitev uporabnika, tabla #382: »zgradi takoj; rok 1. 12. ne velja več«; PR #791): prva proga z ledom (`ice: true`, oprijem ×0,2), `docs/proge/envalira.md` |
 | Turčija | Tuzla (dirkališče, Nove proge za 1.0, A12) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
 | Malezija | Sepang (dirkališče, Nove proge za 1.0, A13) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
 | Indonezija | Lombok (dirkališče, Nove proge za 1.0, A14) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
@@ -210,11 +211,11 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Sveta Lucija | Canaries (nove proge, PR #692, `nove-proge/canaries`) | v delu (naloga seje menija 13. 11. 2026); prva proga države |
 | Venezuela | El Castaño (rezerva uporabnika 13. 11. 2026; točno pot in zanimivosti potrdi kartica na strani Odločitve) | v delu (partyslo, od 25. 11. 2026), veja `proga/el-castano`; prva proga države |
 | Poljska | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | v delu (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
-| Mavricij | Chamarel (rezerva uporabnika 13. 11. 2026; veja `proga/chamarel`) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata); kartica na strani Odločitve potrdi pot in zanimivosti; prva proga države |
-| Bosna in Hercegovina | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Mavricij | Chamarel (rezerva uporabnika 13. 11. 2026; PR #1091, veja `proga/chamarel`) | v delu (partyslo, od 25. 11. 2026); pot Case Noyale – Chamarel 5,0 km (možnost 1 kartice, odgovor 25. 11. 2026); na `main` po #788; prva proga države |
+| Bosna in Hercegovina | Trebević (Dolovi–Vidikovac–Draguljac, 4,3 km; cesta izbrana 26. 11. 2026, uporabnik potrdi ali zamenja na strani Odločitve) | v delu (partyslo), PR #1096, veja `proga/trebevic`; prva proga države |
 | Ciper | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Bolgarija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026; med njimi Šipka, rezerva uporabnika 8. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
-| Armenija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
+| Armenija | Tatev (cesta H-46 čez sotesko Vorotana; odsek izbrala seja proge, uporabnik potrdil 26. 11. 2026; PR #1097, veja `proga/tatev`) | v delu (partyslo, rezerva croatiadata); prva proga države |
 | Grčija | nova proga (rezervacija 25. 11. 2026; stara rezerva Meteora iz 8. 11. 2026 je ena od možnosti), veja `proga/<id>` | v delu (partyslo, rezerva croatiadata, od 25. 11. 2026); 2–3 predlogi na strani Odločitve, seznam zanimivosti potrdi uporabnik |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
@@ -223,7 +224,7 @@ Pri vprašanju `led-proge` (stran Odločitve 1; odgovor 6. 11. 2026 prek table #
 
 - **Longyearbyen, Norveška** (Svalbard): ceste OSM `ref` 600 (od letališča), 500 (mesto) in 100 (do Nybyena), skupaj 7,6 km; pozimi steptan sneg. Do 60 m je 163 stavb (ob 57 % dolžine), 27 cevovodov na stebričkih (34 %), 17 lesenih stolpov stare tovorne žičnice (20 %), fjord (31 %) in skalne stene (22 %), skupaj 41,8 predmeta na km.
 - **Envalira, Andora**: krog na ledu, OSM `highway=raceway`, glavni krog je way 330829785 (0,73 km, ~2.370 m, tik pod prelazom Port d'Envalira, 2.408 m). Ime športnega centra ob krogu je blagovna znamka, zato ga v igri ni. Do 60 m so stavbe (ob 51 % dolžine), glavna cesta (95 %), 2 bencinski črpalki, parkirišče in smučišča (16 %), skupaj 21,8 predmeta na km.
-- **Led kot podlaga** v igri še ne obstaja in ga izbira v `docs/dez-sneg.md` ne dodaja. Doda ga prva od teh prog (Longyearbyen, Envalira, Koli); oprijem ledu je 11–23 % oprijema suhega asfalta (`docs/dez-sneg.md`). **Kategorija Ice v meniju** (hitra izbira »Choose a country«, odločitev uporabnika 9. 11. 2026): proga z ledom ima v datoteki proge `ice: true`, tedaj jo meni uvrsti v Ice (`docs/meni-izbira-proge.md`, sklop 8); dokler takih prog ni, filter pove »No ice tracks here.«.
+- **Led kot podlaga** v igri še ne obstaja in ga izbira v `docs/dez-sneg.md` ne dodaja. Doda ga prva od teh prog (Longyearbyen, Envalira, Koli); oprijem ledu je 11–23 % oprijema suhega asfalta (`docs/dez-sneg.md`). **Kategorija Ice v meniju** (hitra izbira »Choose a country«, odločitev uporabnika 9. 11. 2026): proga z ledom ima v datoteki proge `ice: true`, tedaj jo meni uvrsti v Ice (`docs/meni-izbira-proge.md`, sklop 8); dokler takih prog ni, filter pove »No ice tracks here.«. **Dodala ga je Envalira** (24. 11. 2026, #791): `def.ice` da v vsakem vremenu oprijem in zavore ×0,2 suhega asfalta (`COLD.ice`, `js/core.js`).
 - **Potrditev 13. 11. 2026 ob ~4.35** (»Potrjujem finska koli in norveska«): Koli (namesto Harju) in Longyearbyen se delata; Envalira je preložena na 1. 12.
 - **Koli, Finska** (izbira uporabnika 8. 11. 2026 ob 22.04, razdelek »Finska: Koli«) gre v isti zimski sklop: nova podlaga zbit sneg in led je skupna z Longyearbyenom in Envaliro.
 - **Nista izbrani:** Vormsi, Estonija (ledena cesta Rohuküla–Vormsi, 9,5 km, OSM way 1467883983; 0,6 predmeta na km) in Jökulsárlón, Islandija (cesta 1 z enopasovnim visečim mostom z razponom 108 m; 2,3 predmeta na km, zanimiv le pri mostu).

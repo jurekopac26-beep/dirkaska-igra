@@ -144,7 +144,12 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.6 | #1096 | Nova proga Trebević, Bosna in Hercegovina (`proga/trebevic`) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` in sovoznik zelena; »Ready for review« ob mestu med prvima dvema. |
 | 10.7 | #791 | Nova proga Envalira, Andora (`nove-proge/podatki-1-0`; slike potrjene 26. 11., `envalira-791-slike-ok`) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` zelen; »Ready for review« ob mestu med prvima dvema. |
 | 10.8 | #788 | Zbirna Proge 3, 17 prog (`zbirna/proge-3`) | partyslo | osnutek; svež `main` spojen 27. 11., `stamp --check` zelen; »Ready for review« ob mestu med prvima dvema. |
+| 10.9 | #1068 | Profil igralca: dosežki, statistika, izvoz, kopije, primerjava avtov, »ZA TO PROGO« | jure.kopac26 | osnutek; testi zeleni 27. 11. (`test:related` 26/26, `menu.test` 322/322, `stamp --check`); »Ready for review« ob mestu med prvima dvema, pred združitvijo svež `main`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
+| 10.21 | #1243 | Dodelava: Tianmen, Kitajska (gozd po WorldCover; `dodelava/tianmen`) | jure.kopac26 | osnutek, testi zeleni; po #1242; pred združitvijo svež `main`, `test:related`. |
+| 10.22 | #1242 | Dodelava: Los Caracoles, Čile (O-28-39/O-28-46: Matej potrdil brez slik; samo `js/tracks/caracoles.js`, `docs/proge/caracoles.md`, README »Zasluge«) | jure.kopac26 | »Ready for review«; pred #1243; pred združitvijo svež `main`, `test:related`. |
+| 10.23 | #1085 | Zbirka: realizem ostanki 25. 11. (#798, #811, #818, #809; `zbirna/realizem-ostanki`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
+| 10.24 | #1030 | Grafika: telefon, gumirana linija kroga v enem obsegu risanja (`grafika/telefon-oglisca`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
