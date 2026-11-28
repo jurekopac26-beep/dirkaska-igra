@@ -36,8 +36,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Most čez kanal", "d": 300.0, "say": ["Onto the bridge! The lagoon on both sides, turquoise and deep blue!", "Over the channel between the islands, flat out!"]},
-      {"n": "Nasipi ob laguni", "d": 1000.0, "say": ["Along the causeways now, nothing but sea either side of the walls!", "The causeways across the lagoon, keep it straight and keep it flat!"]},
+      {"n": "Nasipi ob laguni", "d": 850.0, "say": ["Along the causeways now, nothing but sea either side of the walls!", "The causeways across the lagoon, keep it straight and keep it flat!"]},
+      {"n": "Otoček z gozdom", "d": 1000.0, "say": ["Past the little wooded islet, the causeway runs right by its shore!", "A tiny island of jungle beside the road, mud and mangroves round its rim!"]},
+      {"n": "Mangrove v plitvini", "d": 1380.0, "say": ["Mangroves out in the shallows on the left, standing on their roots in the sea!", "Look left, the mangroves wading in the lagoon!"]},
+      {"n": "Levi ob laguni", "d": 1655.0, "say": ["A quick left by the water, don't run wide into the verge!", "Left-hander along the lagoon, tighter than it looks!"]},
       {"n": "Gozdnati grič", "d": 2300.0, "say": ["Up into the jungle on the hill! The road starts to twist!", "Climbing the wooded hill, the lagoon falls away behind you!"]},
+      {"n": "Desni na klancu", "d": 2600.0, "say": ["The sharpest corner of the run, a right on the climb!", "Hard right, uphill, the tightest bend on the island!"]},
+      {"n": "Zgornji desni", "d": 2920.0, "say": ["Another right near the top, carry the speed!", "The upper right-hander, the town is close now!"]},
       {"n": "Koror", "d": 3200.0, "say": ["Into Koror! The finish is right there!", "The town at last! Bring it home!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)

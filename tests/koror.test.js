@@ -34,8 +34,10 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   check('lagoon: the sea\'s level set (def.sea), one bridge of 300-500 m early on, the causeways within 4 m of the sea; no hairpins; nowhere steeper than ~14 %',
     !!def.sea && def.sea.y === 0 && br.length === 1 && br[0][1] - br[0][0] > 300 && br[0][1] - br[0][0] < 500 && br[0][0] < 400 && low < 4 && low > 0.5 && !(def.curves || []).length && gmax < 0.14 && T.hFinish - T.hStart > 45,
     `bridge ${br.map(b => b.join('-')).join(',')} m, causeways lowest ${low.toFixed(1)} m, steepest ${(gmax * 100).toFixed(1)} %`);
-  check('names: the HUD and the commentator know the bridge, the causeways, the hill and the town at the finish',
-    T.names.length === 4 && T.names[0].n === 'Most čez kanal' && T.names.some(q => q.n === 'Nasipi ob laguni' && q.say) && T.names[3].n === 'Koror' && T.names[3].d > T.raceLen - 150,
+  const NL = T.names[T.names.length - 1];
+  check('names: the HUD and the commentator know the bridge, the causeways, the islet, the mangroves, the hill and the town at the finish, in order',
+    T.names.length === 9 && T.names[0].n === 'Most čez kanal' && T.names.some(q => q.n === 'Nasipi ob laguni' && q.say) && T.names.some(q => q.n === 'Otoček z gozdom' && q.say) &&
+    T.names.some(q => q.n === 'Mangrove v plitvini' && q.say) && T.names.every((q, i) => !i || q.d > T.names[i - 1].d) && NL.n === 'Koror' && NL.d > T.raceLen - 150,
     T.names.map(q => q.n).join(' | '));
 }
 
