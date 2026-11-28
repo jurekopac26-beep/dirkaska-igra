@@ -2021,6 +2021,18 @@ const Core = (function () {
   const wxBrk = (ty, w, g) => (ty ? TYRE_BRK[ty](w) / TYRE_BRK[ty](0) : 1 - (1 - WET_BRK) * w) * g;
   // (rk: the share of the water that counts for the grip, Race.cold.rk: 0 on a road packed with snow)
   const wxSet = (c, ty, w, g, rk) => { const X = c.wx || (c.wx = { k: 1, b: 1, w: 0, r: 1, rb: 1 }); X.r = wxGrip(ty, w * rk, 1); X.rb = wxBrk(ty, w * rk, 1); X.k = X.r * g; X.b = X.rb * g; X.w = w; };
+  // a changing weather's plan (Race opts.weather: one { at, dur, to } or a list of them, in time order): each point { at, dur, r0, r1 }, r0 the
+  // rain it starts from (the last one's r1, the race's own rain for the first); a point starting before the last one ends waits for it.
+  // null: no change. WXW: the water's rise, dt (0.3 + r)² / WXW a step (0.6: two minutes, a downpour of 1 about 95 s, a drizzle of 0.3 some 130 s)
+  const WXW = 160;
+  // PROF_DT: the AI's speed profile (Race._prof, a walk over the whole track) follows the grip on the line at most every 2 s of a race
+  const PROF_DT = 2;
+  // WX_STAY: an AI car on slicks does not go in for rain tyres when the plan's shower stops within this many seconds (Race._wxDryIn)
+  const WX_STAY = 60;
+  function wxPlan(X, r) {
+    if (!X) return null; const L = (Array.isArray(X) ? X : [X]).filter(p => p && typeof p === 'object'); if (!L.length) return null;
+    let t = 0; return L.map(p => { const at = Math.max(t, +p.at || 0), dur = Math.max(1, +p.dur || 60), r1 = clamp(+p.to || 0, 0, 1), q = { at, dur, r0: r, r1 }; r = r1; t = at + dur; return q; });
+  }
   const tlWxB = (c, trk, sf) => (c.wx ? c.wx.b : 1) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK / (c.wx ? c.wx.rb : 1) : 1);   // a trailer's brakes: what its car's weather leaves them (and the snow on a stage's gravel under it)
   const tyreFor = (w) => w > 0.3 ? 'wet' : 'dry';   // the tyres to fit for a road with this much water
   // compounds of the slicks (Race opts compounds): g x their grip, wr x their wear, loss: the grip lost when worn out (the medium is the
@@ -4916,6 +4928,7 @@ const Core = (function () {
     if (race.flyOn && c === race.player && c.flyA !== undefined) vT *= FLY_PL;   // (the flying start: the player's autopilot a little under its pace, a margin; not its following of the car ahead)
     if (c.upgGrip) vT *= Math.pow(c.upgGrip * (1 + c.aeroK * vT * vT), 0.25);   // upgraded tyres / aero: carry more speed through the corners (half the grip gain: safe for every car)
     if (race.wst && race.wst.tyres && c.ty) vT *= Math.sqrt(clamp(c.wet / race.wst.profW, 0.5, 1.4));   // its own tyres (and their wear) against the grip the profile assumes
+    else if (race.wst && race.wst.wx && race.wst.pw) vT *= Math.sqrt(clamp(race.wst.pw / race.wst.profW, 0.5, 1.4));   // (no tyres: the grip on the line now against the profile's, up to PROF_DT old)
     if (c.aeroK0 != null && c.aeroK < c.aeroK0) vT *= Math.sqrt((1 + c.aeroK * vT * vT) / (1 + c.aeroK0 * vT * vT));   // the formula with a wing knocked off: less grip at speed
     if (c.wreck && c.wreck.nL) vT *= Math.sqrt(1 - 0.175 * c.wreck.nL);   // a kit vehicle on a hub or two (LOSTW): each wheel gone costs ~17.5 % of its grip
     // if displaced from line, be a little more careful
@@ -7304,13 +7317,15 @@ const Core = (function () {
       this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? COLD.snow : COLD.road) : 1, mk: opts.winter && track.sf ? COLD.snow / COLD.road : 0, rk: opts.winter && track.def.roadSurface === 'makadam' ? 0 : 1 };   // (in an object: the golden references digest only the plain fields; mk: a stage of tarmac and gravel, its gravel's grip on top of the tarmac's)
       if (opts.winter) for (const c of this.cars) if (c.dTy) c.dTy.winter = 1;   // (the garage's tyres on a winter's road: their snow grip)
       this.rain = 0; this._wet(opts.rain);
-      // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to }: the rain goes from opts.rain to `to` over dur s from race time
-      // at). The water on the road follows the rain (wet in about a minute, dry in about four, the racing line twice as fast); a car's grip
+      // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to } or a list of them, wxPlan: the rain goes from what it is to `to`
+      // over dur s from race time at, point after point; wst.plan, k the point under way). The water on the road follows the rain (WXW: about
+      // two minutes to a shower's 0.6, quicker in a downpour; dry in about four, the racing line twice as fast); a car's grip
       // follows its tyres (c.ty = { k: 'dry' | 'wet', wear }), the water where it drives (on the line or off it) and the wear (see _weather).
-      // wst.ev / evK: 'rain' when it starts to rain, 'dry' when it stops; wk: x the tyres' wear (a strategy race's, _stratOn)
+      // wst.ev / evK: 'rain' when it starts to rain, 'dry' when it stops, 'heavy' / 'ease' when a wet point strengthens or eases it (evP: that point); wk: x the tyres' wear (a strategy race's, _stratOn)
       const WX = opts.weather && !opts.remote ? opts.weather : null;
       this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain * this.cold.rk : 1) * this.cold.gk, profB: wxBrk(null, this.rain * this.cold.rk, this.cold.gk), ev: 0, evK: '', wk: 1,
-        wx: WX ? { at: Math.max(0, +WX.at || 0), dur: Math.max(1, +WX.dur || 60), r0: this.rain, r1: clamp(+WX.to || 0, 0, 1) } : null };
+        plan: wxPlan(WX, this.rain), k: 0, wx: null, evP: -1 };
+      this.wst.wx = this.wst.plan ? this.wst.plan[0] : null;   // (the point under way, or the next one: its at, dur, r0, r1)
       if (opts.tyres) for (const c of this.cars) { c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 }; tyreSet(c, 0); }   // (ty.n, bp, bw: the set's burst point, see TYRE_CLIFF)
       // compounds (opts.compounds): every car's slicks one of TYRE_CMP (the rain tyres have none): the player's choice (opts.playerCmp, else by
       // the race's length), the AI's by the race's length and the grid slot (no random draw); new ones at a stop as the car asks (c.pitCmp) or
@@ -7393,12 +7408,14 @@ const Core = (function () {
     _weather(dt) {
       const W = this.wst, X = W.wx, T = this.track, rk = this.cold.rk;   // (rk: 0 on a road packed with snow, the rain's water does not count for the grip there)
       if (X && this.state === 'racing') {
-        const r = X.r0 + (X.r1 - X.r0) * clamp((this.time - X.at) / X.dur, 0, 1);
+        while (W.k < W.plan.length - 1 && this.time >= W.plan[W.k + 1].at) W.wx = W.plan[++W.k];
+        const Y = W.wx, r = Y.r0 + (Y.r1 - Y.r0) * clamp((this.time - Y.at) / Y.dur, 0, 1);
         if (this.rain === 0 && r > 0) { W.ev++; W.evK = 'rain'; } else if (this.rain > 0 && r === 0) { W.ev++; W.evK = 'dry'; }
+        else if (W.evP !== W.k && this.time >= Y.at && Y.r0 > 0 && Y.r1 > 0 && Math.abs(Y.r1 - Y.r0) >= 0.2) { W.evP = W.k; W.ev++; W.evK = Y.r1 > Y.r0 ? 'heavy' : 'ease'; }   // (a wet point that strengthens or eases the rain: once, at its start)
         this.rain = r;
       }
       const r = this.rain;
-      if (W.water < r) { W.water = Math.min(r, W.water + dt / 45 * (0.3 + r)); W.line = W.water; }
+      if (W.water < r) { W.water = Math.min(r, W.water + dt * (0.3 + r) * (0.3 + r) / WXW); W.line = W.water; }
       else { W.water = Math.max(r, W.water - dt / 240); W.line = Math.min(W.water, Math.max(r, W.line - dt / 120)); }
       for (const c of this.cars) { if (c.net) continue;   // (the water where it drives: the racing line dries first)
         const ty = c.ty; let cg = 1;   // (cold tyres after a stop: TCOLD)
@@ -7409,8 +7426,15 @@ const Core = (function () {
         c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w * rk) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * (c.kt ? 1 : tyreCliff4(c.ty)) : 1 - (1 - WET) * w * rk) * this.cold.gk * cg;
         wxSet(c, W.tyres && c.ty ? c.ty.k : null, w, this.cold.gk, rk); }   // (each tyre's own cliff: tyreCliff4; the KOLIBRI has a wear model of its own, ktWear: no cliff on top of it)
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line * rk) : 1 - (1 - WET) * W.water * rk) * this.cold.gk;
-      if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; W.profB = W.tyres ? TYRE_BRK[tyreFor(W.line)](W.line * rk) * this.cold.gk : wxBrk(null, W.water * rk, this.cold.gk); this._prof(); }
+      W.pw = pw; W.pd = (W.pd || 0) + dt;   // (the grip on the line now; the profile itself at most every 2 s, PROF_DT: the cars' own pace covers the gap, aiDrive)
+      if (Math.abs(pw - W.profW) > 0.012 && W.pd >= PROF_DT) { W.pd = 0; W.profW = pw; W.profB = W.tyres ? TYRE_BRK[tyreFor(W.line)](W.line * rk) * this.cold.gk : wxBrk(null, W.water * rk, this.cold.gk); this._prof(); }
       if (this.mb) this._marbles(dt);
+    }
+    // a changing day's plan (wst.plan): the seconds until the rain stops (0 now dry; Infinity: it rains on to the finish, or no plan)
+    _wxDryIn() {
+      const W = this.wst, P = W && W.plan; if (!P) return Infinity; if (this.rain === 0) return 0;
+      for (let k = W.k; k < P.length; k++) if (P[k].r1 === 0) return Math.max(0, P[k].at + P[k].dur - this.time);
+      return Infinity;
     }
     // an AI driver's own threshold (0..1) for a tyre stop: spread evenly over the grid's slots, so that not all of them want the same lap (13 slots at
     // least: a field of 13 or fewer as ever; a bigger one over its own, a multiple of 7 one more: 7 g then still hits every slot once)
@@ -8069,7 +8093,7 @@ const Core = (function () {
           // their way in or in the lane at a time, a quarter of a bigger field's AI cars, one per crew's box: _pitRoom; the others wait a lap)
           else if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.k !== tyreFor(W.line) && !T.pitAt(q.s)) {
             const j = this._pitJ(c);
-            if ((c.ty.k === 'dry' ? W.line > 0.35 + 0.35 * j : W.line < 0.04 + 0.16 * j && this.rain < 0.05) && this.laps * T.len - c.dist > T.len * 0.4) {
+            if ((c.ty.k === 'dry' ? W.line > 0.35 + 0.35 * j && !(this._wxDryIn() < WX_STAY) : W.line < 0.04 + 0.16 * j && this.rain < 0.05) && this.laps * T.len - c.dist > T.len * 0.4) {   // (a shower about to end, wst.plan: on slicks it stays out, WX_STAY)
               if (this._pitRoom(c)) c.pitWant = true;
             }
           }
@@ -8502,12 +8526,19 @@ const Core = (function () {
     // to the finish (the change behind, or after the finish). Read only (its lap time kept in an object): a race steps the same whether it
     // is asked or not. null: no change in this race (a steady weather, an online friend's), an open road, a car out of it
     forecast(c) {
-      const W = this.wst, X = W && W.wx, T = this.track;
-      if (!X || T.open || !c || c.finished || c.net || Math.abs(X.r1 - X.r0) < 0.2) return null;
-      const lt = this._lapT(c), left = Math.max(0, this.laps * T.len - Math.max(0, c.dist)) / T.len * lt, wet = X.r1 > X.r0, dt = (wet ? X.at : X.at + X.dur) - this.time;
-      if (dt <= 0 || dt > left) return { k: (dt <= 0 ? X.r1 : this.rain) > 0 ? 'wet' : 'dry', n: null, lo: null, hi: null, p: null };
+      const W = this.wst, P = W && W.plan, T = this.track;
+      if (!P || T.open || !c || c.finished || c.net || !P.some(p => Math.abs(p.r1 - p.r0) >= 0.2)) return null;
+      const N = this.wxNext(), lt = this._lapT(c), left = Math.max(0, this.laps * T.len - Math.max(0, c.dist)) / T.len * lt, wet = N ? N.wet : false, dt = N ? N.t - this.time : 0;
+      if (!N || dt <= 0 || dt > left) return { k: (N ? N.wet : this.rain > 0) ? 'wet' : 'dry', n: null, lo: null, hi: null, p: null };
       const n = dt / lt, R = rng(((this.opts.seed || 7) * 7919 + Math.max(0, c.lap) * 104729 + 61) >>> 0), u = R(), j = R(), w = 0.3 + 0.15 * n;
       return { k: wet ? 'rain' : 'stop', n, lo: n < 1 ? 0 : Math.max(1, Math.floor(n - w * u)), hi: n < 1 ? 1 : Math.ceil(n + w * (1 - u)), p: clamp(Math.round((92 - 9 * n + (j - 0.5) * 12) / 5) * 5, 50, 95) };
+    }
+    // the plan's next turn of the weather (forecast, the radio): dry now, the next point that brings rain (wet: true, t its start); wet now, the
+    // next that ends it (wet: false, t its end). null: none to come
+    wxNext() {
+      const W = this.wst, P = W && W.plan; if (!P) return null; const dry = this.rain === 0;
+      for (let j = W.k; j < P.length; j++) { const p = P[j]; if (dry ? p.r1 > 0 && p.r0 === 0 : p.r1 === 0) return dry ? { wet: true, t: p.at } : { wet: false, t: p.at + p.dur }; }
+      return null;
     }
     // a lap's time for c (s, forecast): its best lap so far; before the first, the AI's speed profile round the lap a tenth slower (kept, in
     // an object, while the profile stays: it changes with the grip)

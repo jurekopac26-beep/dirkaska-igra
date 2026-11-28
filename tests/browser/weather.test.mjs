@@ -3,7 +3,8 @@
 // message, the hint to come in for rain tyres, the tyres on the HUD (each its own since 1. 11. 2026, Car.kt: the four dots, class kt; the
 // compound's word, no %; on a red chip: the wrong ones), a pit stop for rain tyres (the message, the new set on the HUD cold: the word and
 // the dots light blue); the sector times on the HUD (S1-S3); a race
-// where the rain stops: the message, the drying road and the dry racing line.
+// where the rain stops: the message, the drying road and the dry racing line. The weather's look as it changes: the sky grey before the rain,
+// the road wet in patches, the dry line and the puddles made at the start.
 //   node tests/browser/weather.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -53,8 +54,16 @@ try {
   await sim(0.05);   // (two frames drawn: the HUD)
   const h0 = await hud();
   T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD (the compound\'s word, no %; not cold at the start)', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on kt dry c[SMH]:(MEHKE|SREDNJE|TRDE)$/.test(h0.tyre) && h0.tyC !== COLD && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
+  // (a changing day's start: the sky greys a minute before the rain (here due at 20 s), the road still dry; the dry line and the puddles made
+  // with the world's start, hidden: their shaders compiled then (Render.attachRace), not in the race as the rain comes)
+  const fx = () => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))).then(() => page.evaluate(() => {
+    const S = Render.scene, m = S.getObjectByName('dryline'), p = S.getObjectByName('rainpuddles'), f = Render.wetFx();
+    return { rain: window.__game.race.rain, water: f.water, sky: f.sky, patches: f.patches, dark: f.patchDark, dl: m ? m.visible : null, pud: p ? p.visible : null }; }));
+  const f0 = await fx();
+  T.check('a changing day before the rain: the sky greys, the road dry (no wet patches), the dry line and the puddles made but hidden', f0.rain === 0 && f0.sky > 0.5 && f0.patches <= 0 && f0.dark === 0 && f0.dl === false && f0.pud === false, JSON.stringify(f0));
   await msgs(); await simTo(22);
-  const h1 = await hud(), m1 = await msgs();
+  const h1 = await hud(), m1 = await msgs(), f1 = await fx();
+  T.check('the first drops: the road darkens in patches (not yet wet all over)', f1.rain > 0 && f1.dark > 0 && f1.patches < 1, JSON.stringify(f1));
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && m1.includes('DEŽ') && /dežne gume/.test(h1.toast), JSON.stringify({ h1, m1 }));
   // (the player asks for the pits and keeps asking until the stop: the autopilot takes the pit lane next time by; if it misses the way in,
   // the next lap's. Asked once only, a miss was for good: over the lane's line at the way in and back out again (the Red Bull Ring's way

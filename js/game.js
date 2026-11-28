@@ -659,8 +659,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const RAIN_P = {};   // the chance of rain per track (else 0.35; the real tracks' own: rainP in js/tracks/<id>.js)
   for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.rainP != null && d.id != null && RAIN_P[d.id] == null) RAIN_P[d.id] = d.rainP;   // (the real tracks' own: def.rainP in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && grand() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
-  // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
-  // the rain stops and the road dries (the racing line first). Somewhere between a fifth and a half of the race (by its usual length); a time trial: as 'random'
+  // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather, wxPlanOf): a shower comes and goes, it rains to the
+  // finish, or it starts wet and the road dries (the racing line first); 'random' does so at half the track's chance of rain; a time trial: as 'random'
   let wxNext = null, wxWet = null;   // (tests: the weather of the next race; a changing one's start, wet or not, rolled when the menu shows it: rollWet)
   // the test mode (repeatable races, sklop 16): opened with the quick entry, every race of the visit the same race when started the same way.
   // The race's seed is the address's (?seme=<n>, else 1) and Race opts.repro draws its random events from it (Core: rand); here the weather
@@ -670,10 +670,26 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function weatherOf(d) {
     if (wxNext) { const W = wxNext; wxNext = null; return W; }
     if (S.weather === 'storm') return { rain: 1, wx: null, storm: true };   // (a thunderstorm: rain all the race, lightning and thunder)
-    if (S.weather !== 'change' || isTT(d)) return { rain: rainOf(), wx: null };
-    const wet = wxWet != null ? wxWet : grand() < 0.5, est = (d.open ? track.raceLen : track.len * lapsOf(d)) / 38;   // (an open road: its one run)
-    wxWet = null;
-    return { rain: wet ? 1 : 0, wx: { at: +(est * (0.2 + grand() * 0.3)).toFixed(1), dur: wet ? 25 : Math.round(30 + grand() * 30), to: wet ? 0 : 1 } };
+    if (isTT(d) || (S.weather !== 'change' && !(S.weather === 'random' && grand() < (RAIN_P[d.id] || 0.35) / 2))) return { rain: rainOf(), wx: null };   // (random: a change in the race at half the track's chance of rain)
+    return { rain: 0, ...wxPlanOf(d) };
+  }
+  // a changing day's plan (Race opts.weather, a list of points, docs/vreme-med-dirko.md): wet at the start, the rain stops (15 %); dry, it rains
+  // to the finish (25 %); dry, a shower comes and goes (60 %: a race of at least 8 min by its usual length, est; long 2, endurance 3, each in its
+  // share of the race: a drizzle, the shower of 0.6 or a downpour of 1, its easing and its end). A shorter race: one change as before. All from grand()
+  function wxPlanOf(d) {
+    const est = (d.open ? track.raceLen : track.len * lapsOf(d)) / 38, u = grand();   // (an open road: its one run)
+    const menu = wxWet != null, wet = menu ? wxWet : u < 0.15; wxWet = null;   // (the start rolled in the menu, rollWet: wet 15 %; dry, rain to the finish 25 of 85)
+    const R = (a, b) => a + grand() * (b - a), T = (x) => +x.toFixed(1);
+    if (wet) return { rain: 1, wx: { at: T(est * R(0.2, 0.5)), dur: 25, to: 0 } };
+    if (est < 480 || (menu ? u < 0.25 / 0.85 : u < 0.4)) return { rain: 0, wx: { at: T(est * R(0.2, 0.5)), dur: Math.round(R(30, 60)), to: 1 } };
+    const n = Math.max(1, Math.min(S.length === 'endurance' ? 3 : S.length === 'long' ? 2 : 1, Math.floor(est / 600))), seg = est / n, wx = [];   // (a shower in at least 10 min of its own)
+    let end = 0;   // (the last shower's end: the next one starts at least 30 s after it)
+    for (let i = 0; i < n; i++) {
+      const t0 = Math.max(seg * i + seg * R(0.3, 0.55), end + 30), d1 = R(40, 60), d2 = R(60, 120), top = grand() < 0.35 ? 1 : 0.6, hold = seg * R(0.15, 0.3), d3 = R(40, 90);
+      wx.push({ at: T(t0), dur: Math.round(d1), to: 0.3 }, { at: T(t0 + d1), dur: Math.round(d2), to: top }, { at: T(t0 + d1 + d2 + hold), dur: Math.round(d3 / 2), to: 0.25 }, { at: 0, dur: Math.round(d3 / 2), to: 0 });   // (the last: when the easing ends, wxPlan)
+      end = t0 + d1 + d2 + hold + d3;
+    }
+    return { rain: 0, wx };
   }
   const demoRain = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : 0;
   // the title demo shows off one category: a vehicle of it picked at random once a visit (a category first, every one as likely; then the
@@ -998,7 +1014,14 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     f[o + 3] = s * x; f[o + 4] = s * y; f[o + 5] = s * z;
     f[o + 6] = (f[o + 6] % 8 | 2) + REC_FB * (1 + (B.nc ? 2 : 0) + 4 * (B.hn & 7) + (B.hr ? 32 : 0) + 64 * Core.clamp(Math.floor((B.hv - 3) / REC_FV), 0, 3));
   }
+  // a changing day's weather in the recording (Race wst.plan): every second [t, rain, water, line] (two decimals) in R.wxr, the header's wxr
+  // (rrpOf); a steady weather: none. The replay shows the weather at its own time (rpWx)
+  function recWx() {
+    const R = recd, W = race.wst; if (!R || !W || !W.plan || R.file || race.state !== 'racing' && race.state !== 'done' || race.time < (R.wxT || 0) || R.out != null && race.time > R.out + 3) return;
+    const q = (x) => Math.round(x * 100) / 100; R.wxT = Math.floor(race.time) + 1; (R.wxr || (R.wxr = [])).push(Math.round(race.time * 10) / 10, q(race.rain), q(W.water), q(W.line));
+  }
   function recStep() {
+    recWx();
     const R = recd; if (!R || race.state !== 'racing' && race.state !== 'done' || race.time < R.next || R.frames.length >= REC_MAX || R.bytes >= REC_BYTES) return;
     if (R.out == null && R.cars.every(c => race.isOut(c))) R.out = race.time; if (R.out != null && race.time > R.out + 3) return;   // (every car finished or retired 3 s ago: the recording is over)
     R.next = race.time + (R.n > REC_BIG ? 2 * REC_DT : REC_DT);
@@ -1101,7 +1124,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (replay.here) { rpRace(); return; }   // (the race so far: back into the race, never the results)
     if (recd && recd.file) { Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); Napake.konec(); toTitle(); return; }   // (an opened file: the moments kept to share, then the title)
     const kept = replay.rpK;
-    Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
+    Napake.close(); hlOff(); rpWxBack(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     if (recd) for (const c of recd.cars) { if (c.rl) delete c.rl; if (c.rpPit) delete c.rpPit; if (c.fall && c.fall.rp) { c.fall = null; c.air = 0; } }   // (a roll the replay posed, its pit stop, a fall of its own (rpFall: no body the race could step): over with it)
     if (kept) for (const [c, K] of kept) rpBack1(c, K);   // (a car that was falling behind the results when the replay began, rpOwn: as the race left it, its body with it; the race steps its fall on)
     Render.crewSnap();   // (the player's crew as the race has it again)
@@ -1137,9 +1160,19 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     recd.cars.forEach((c, j) => rpBack1(c, K.cars[j]));
     if (race.fl) { race.fl.sc = K.sc; race.fl.red = K.red; }
   }
+  // the weather at the replay's time t (recd.wxr, recWx: between two samples in line): the race's rain, water and line for the picture, the
+  // race's own kept in recd.wxK; rpWxBack gives them back (the replay's end, the race so far)
+  function rpWx(t) {
+    const R = recd, A = R && R.wxr; if (!A || A.length < 4 || !race.wst) return;
+    if (!R.wxK) R.wxK = { rain: race.rain, water: race.wst.water, line: race.wst.line };
+    let lo = 0, hi = A.length / 4 - 1; if (t <= A[0]) hi = 0; else if (t >= A[hi * 4]) lo = hi; else while (hi - lo > 1) { const m = (lo + hi) >> 1; if (A[m * 4] <= t) lo = m; else hi = m; }
+    const a = lo * 4, b = hi * 4, u = hi > lo ? Core.clamp((t - A[a]) / (A[b] - A[a]), 0, 1) : 0, at = (j) => A[a + j] + (A[b + j] - A[a + j]) * u;
+    race.rain = at(1); race.wst.water = at(2); race.wst.line = at(3);
+  }
+  function rpWxBack() { const R = recd, K = R && R.wxK; if (!K || !race.wst) return; race.rain = K.rain; race.wst.water = K.water; race.wst.line = K.line; R.wxK = null; }
   function rpRace() {   // Nazaj v dirko: the cars back, the HUD and the controls back, then the count
     const P = replay; if (!P || !P.here) return;
-    Napake.close(); hlOff(); rpBack(P.here.keep); replay = null;
+    Napake.close(); hlOff(); rpBack(P.here.keep); rpWxBack(); replay = null;
     $('replay-ui').classList.add('off'); showScreen('none'); Render.resetCam(); Comm.stop();
     rpCd = { t: 3 }; cdShow();
   }
@@ -1158,7 +1191,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function rpSeek(t) {   // the replay to time t (the timeline, 5 s back or on, a frame): the camera there at once after a jump
     const P = replay, F = recd.frames; t = Core.clamp(t, F[0][0], P.t1);
     if (Math.abs(t - P.t) > 1.5) Render.resetCam();
-    P.t = t; P.i = rpIdx(F, t);
+    P.t = t; P.i = rpIdx(F, t); rpWx(t);   // (the weather at t at once: a picture right after the jump, tools/posnetek.mjs --t)
   }
   const rpClock = (t) => { const d = Math.max(0, Math.round(t * 10)), m = Math.floor(d / 600); return String(m).padStart(2, '0') + ':' + ((d % 600) / 10).toFixed(1).padStart(4, '0'); };   // (00:41.3)
   function replayUI() {
@@ -1201,7 +1234,12 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (recd && recd.file) { const H = recd.file; return { ver: H.ver, track: H.track, name: H.name, mode: H.mode, wx: H.wx, laps: H.laps, dev: H.dev, file: H.ime || '' }; }   // (an opened file: the race as it was driven, its device)
     const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), d = track.def;
     const how = [modeOf(d)].concat(race.quali ? ['kvalifikacije'] : [], race.champ ? ['prvenstvo'] : [], inCareer() ? ['kariera'] : [], race.chal ? ['izziv'] : [], school ? ['sola'] : []);
-    return { ver: m ? m[1] : 'lokalno', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
+    const P = race.wst && race.wst.plan, r0 = rpRain0();   // (a changing day: the weather at the start, ',ploha' after it; the end's is in wxr)
+    return { ver: m ? m[1] : 'lokalno', track: d.id, name: d.name, mode: how.join('+'), wx: (r0 ? 'dez' : 'suho') + (P && P.length ? ',ploha' : '') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
+  }
+  // the rain at the race's start: a changing day's (Race wst.plan) first point's r0, else the race's own
+  function rpRain0() {
+    const P = race.wst && race.wst.plan; return P && P.length ? P[0].r0 || 0 : race.rain || 0;
   }
   function rpMap() {   // the track's line for the picture's map (at most about 600 points), its start
     const T = track, st = Math.max(1, Math.floor(T.N / 600)), pts = [];
@@ -1261,16 +1299,18 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
      own is set up on the track with those cars (never stepped: the replay poses them) and the replay plays it; Končaj: the title */
   // (for tools/voznja.mjs, AI po tvoji liniji: the player's car as the race built it, pf: its upgrades, set-up, garage parts, the field's car and the
   // assist (as: Core.ASSISTS index at the end of the race);
-  // ty: the race with tyres; wxs: a changing weather, the rain from r0 to r1 over dur s from race time at; a file opened: as the file had them)
+  // ty: the race with tyres; wxs: a changing weather of one point, the rain from r0 to r1 over dur s from race time at; wxp: a plan of more points,
+  // each as wxs; wxr: the weather every second, recWx; a file opened: as the file had them)
   const lkOf = (c) => { const w = Core.lookWire({ deli: c.deli, stripe: c.stripe !== false, sc: c.stripeCol }); return w ? { lk: w } : {}; };   // (a car's look in the file: lk, Core.lookWire; an older file's: none)
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
-    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx;
+    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx, P = (race.wst && race.wst.plan) || [];
     const pf = (k) => F ? (F.cars[k] && F.cars[k].pf ? { pf: F.cars[k].pf } : {}) : { pf: { upg: O.playerUpg || null, setup: O.playerSetup || null, deli: O.playerDeli || null, fm: O.fieldModel ? O.fieldModel.id : null, as: race.player ? Core.ASSISTS.indexOf(race.player.assist) : O.assist } };
     const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
       cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, lkOf(c), c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {}, c.isPlayer ? pf(k) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
       fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t }))  },
-      F ? { ty: F.ty, wxs: F.wxs } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined });
+      F ? { ty: F.ty, wxs: F.wxs, wxp: F.wxp, wxr: F.wxr } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X && P.length === 1 ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined,
+        wxp: P.length > 1 ? P.map(p => ({ at: p.at, dur: p.dur, r0: p.r0, r1: p.r1 })) : undefined, wxr: R.wxr && R.wxr.length ? R.wxr.slice() : undefined });
     delete H.file; delete H.dev; return { H, frames: R.frames };
   }
   // a file's recording opened (H its header, frames the samples, js/napake.js has checked them): '' or why not
@@ -1291,7 +1331,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       race.fl = !track.open && cars.length > 1 ? { yel: [], ev: 0, evK: '', sc: null, scUsed: false, pev: 0, pevK: '' } : null;   // (the safety car, where it was out)
       Render.setStorm(false); Render.setLine(false); Render.setMarks(null); Render.attachRace(race); Render.resetCam();
       bg = 'race'; phase = 'done'; phaseT = 0; paused = false; school = null; qual = null; champRun = false;
-      recd = { cars, n: cars.length, w: W, frames, next: Infinity, prev: -1, ev: H.ev || [], pos: null, last: new Map(), bytes: 0, out: race.time, flags: H.flags || [], file: H };
+      recd = { cars, n: cars.length, w: W, frames, next: Infinity, prev: -1, ev: H.ev || [], pos: null, last: new Map(), bytes: 0, out: race.time, flags: H.flags || [], file: H, wxr: Array.isArray(H.wxr) && H.wxr.length >= 4 ? H.wxr : null };
+      if (recd.wxr) race.wst.wx = { at: 0, dur: 1, r0: 0, r1: 0 };   // (a changing day's file: the dry line shows, Render dryLine)
       replayStart();
     });
     return '';
@@ -1464,6 +1505,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     $('rp-prog').style.width = pc; $('rp-knob').style.left = pc; $('rp-now').textContent = rpClock(P.t); $('rp-len').textContent = rpClock(P.t1);
     const W = P.rpw || (P.rpw = { t: 0, k: 0, t0: F[0][0], at: (t, o) => rpAt(P.rpw.k, t, o) });   // (the spectators on the timeline: js/world-ljudje.js resim)
     W.t = P.t; W.k = P.k;
+    rpWx(P.t);
     P.tl = P.t; Render.frame(dt, 1, c, P.cam, { noFx: true, rdt: Math.max(0, P.t - t0), rp: W });   // (rdt: the recording's own step, dt × the speed, 0 while it stands: the pit crew and the film camera on its clock)
     if (hlRec) { hlvDraw(dt); if (C && P.t >= C.t1 && ++hlRec.tail >= HLV_TAIL) hlvStop(); }   // (the video ends with the moment's last picture, held a few frames: the encoder's last ones are lost at its stop)
   }
@@ -4083,6 +4125,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (phase !== 'racing' || P.finished) return;
     const W = race.wst, box = W.tyres && P.ty && track.def.pit;
     if (k === 'rain') { showMsg(tr('DEŽ'), 'gold', 2.2); Comm.say('rainStart', null, 2); if (box && P.ty.k === 'dry') toast(tr('Začelo je deževati: proga bo kmalu mokra. Zapelji v bokse po dežne gume (desno takoj za zadnjim ovinkom pred ciljno ravnino).'), 4800); }
+    else if (k === 'heavy') { Comm.say('rainHeavy', null, 2); teamRadioSay(tr('Dež se krepi: proga bo zelo mokra.'), 2, 'radioRainHeavy'); }   // (a wet point of the plan: the shower gets heavier, or eases)
+    else if (k === 'ease') { Comm.say('rainEase', null, 2); teamRadioSay(tr('Dež pojenja: kmalu bo samo še rosilo.'), 2, 'radioRainEase'); }
     else if (k === 'dry') { showMsg(tr('DEŽ JE PONEHAL'), 'gold', 2.2); Comm.say('rainStop', null, 2); Render.rainbow(true); if (box && P.ty.k === 'wet') toast(tr('Dež je ponehal: proga se suši, najprej na idealni liniji.'), 3800); }   // (the rain stopped: a rainbow over the land, by day)
   }
   const tyreName = (ty) => ty.k === 'wet' ? 'DEŽNE' : ({ S: 'MEHKE', M: 'SREDNJE', H: 'TRDE' })[ty.c] || 'SUHE';   // (the slicks by their compound, if the race has them)
@@ -4273,10 +4317,10 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (!trd || !race.mk || !S.radio) return;
     teamRadioShow(dt);
     if (phase !== 'racing' || P.finished) return;
-    const pl = race.plan(P), W = race.wst, wx = W && W.wx;
-    // the weather on the radar: the rain a minute before it comes, or its end
-    if (wx && !trd.rain && Math.abs(wx.r1 - wx.r0) > 0.2 && race.time > wx.at - 60 && race.time < wx.at) {
-      trd.rain = true; const wet = wx.r1 > wx.r0;
+    const pl = race.plan(P), N = race.wxNext();
+    // the weather on the radar: the rain a minute before it comes, or its end (each turn of the plan once: trd.rain its time)
+    if (N && trd.rain !== N.t && race.time > N.t - 60 && race.time < N.t) {
+      trd.rain = N.t; const wet = N.wet;
       teamRadioSay(tr(wet ? 'Na radarju je dež: začel bo čez približno minuto.' : 'Na radarju se dež umika: kmalu bo ponehal.'), 2, wet ? 'radioRain' : 'radioRainStop');
     }
     // the safety car out with a stop due anyway: a cheap one now
@@ -6976,7 +7020,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     // changing weather is a random one
     rollWet() {
       const w = S.weather; wxWet = null; if (w === 'rain' || w === 'storm') return true;
-      if (w === 'change' && !isTT(Core.TRACKS.find(x => x.id === S.track))) { wxWet = Math.random() < 0.5; return wxWet; }
+      if (w === 'change' && !isTT(Core.TRACKS.find(x => x.id === S.track))) { wxWet = Math.random() < 0.15; return wxWet; }   // (wet at the start: 15 %, wxPlanOf)
       if (w !== 'random' && w !== 'change') return false;
       const wet = Math.random() < (RAIN_P[S.track] || 0.35); wxNext = { rain: wet ? 1 : 0, wx: null }; return wet;
     },
@@ -7219,7 +7263,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)),
         lp: { get on() { return !!LPX; }, get store() { return LPX ? lpS() : null; }, key: (id) => recKey(id), open: (z) => lpOpen(z), send: () => lpSend(), mine: () => LPX ? lpMine() : null, bound: (k) => LPX ? lpBound(k, true) : 0, friends: (id) => lpFriends(Core.TRACKS.find(d => d.id === id)) },   // (tests: Lestvica prijateljev)
-        get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, kariera: () => MenuBridge.kariera(), karieraStart: (id) => MenuBridge.karieraStart(id), karieraIzid: (c) => MenuBridge.karieraIzid(c), get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
+        get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, wxPlanOf: (L) => { const o = S.length; if (L) S.length = L; try { return wxPlanOf(track.def); } finally { S.length = o; } }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, kariera: () => MenuBridge.kariera(), karieraStart: (id) => MenuBridge.karieraStart(id), karieraIzid: (c) => MenuBridge.karieraIzid(c), get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
         get rpPit() { return recd && { log: (recd.pit || []).map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
         rpFalls,   // (tools/posnetek.mjs, tests: the falls over an edge the recording holds)

@@ -62,14 +62,15 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
     `grip ${f3(P.wet)} vs ${f3(P2.wet)}, lap ${f3(P.lapTimes[0])} vs ${f3(P2.lapTimes[0])}, wear ${f3(P.ty.wear)}`);
 }
 
-// 4. a changing weather: the rain starts at 30 s (from none to full in 20 s); later it stops and the road dries, the racing line first
+// 4. a changing weather: the rain starts at 30 s (from none to full in 20 s), the road wet in about two minutes (docs/vreme-med-dirko.md);
+// later it stops and the road dries, the racing line first
 {
   Math.random = seeded(12);
   const T = track('grom'), r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, tyres: true, weather: { at: 30, dur: 20, to: 1 } });
   r.start(); const P = r.player, W = r.wst, log = {}; let t = 0, evs = [];
   const at = (s) => { while (t < s) { C.aiControl(P, r, DT); r.step(DT); t += DT; if (W.ev !== evs.length) evs.push(W.evK); } return { rain: r.rain, water: r.water, line: r.lineWater }; };
-  log.a = at(29); log.b = at(45); log.c = at(120);
-  check('changing weather: dry until the rain starts, then wet in about a minute ("rain" event)', log.a.rain === 0 && log.a.water === 0 && log.b.rain > 0.5 && log.b.water > 0.1 && log.b.water < 0.9 && log.c.water === 1 && evs.join() === 'rain',
+  log.a = at(29); log.b = at(70); log.c = at(240);
+  check('changing weather: dry until the rain starts, then wet in about two minutes ("rain" event)', log.a.rain === 0 && log.a.water === 0 && log.b.rain > 0.5 && log.b.water > 0.1 && log.b.water < 0.9 && log.c.water === 1 && evs.join() === 'rain',
     JSON.stringify(log) + ' ' + evs.join());
   Math.random = seeded(13);
   const r2 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, rain: 1, weather: { at: 10, dur: 10, to: 0 } });
@@ -82,6 +83,31 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
   check('changing weather: the rain stops ("dry" event), the racing line dries first, then the whole road', s2.a.rain === 0 && ev2 === 'dry' && s2.b.line < s2.b.water && s2.b.water < 1 && s2.c.water === 0 && s2.c.line === 0,
     JSON.stringify(s2));
   check('changing weather: on the drier racing line the grip is better than off it', gOn > gOff + 0.03, `on the line ${f3(gOn)}, off it ${f3(gOff)}`);
+}
+
+// 4b. a plan of points (a shower in the race): dry, the rain, its end; the forecast's next turn; a single point as before
+{
+  Math.random = seeded(21);
+  const T = track('grom'), r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, tyres: true, weather: [{ at: 20, dur: 40, to: 0.6 }, { at: 120, dur: 60, to: 0 }] });
+  r.start(); const P = r.player, W = r.wst, evs = []; let t = 0;
+  const at = (s) => { while (t < s) { C.aiControl(P, r, DT); r.step(DT); t += DT; if (W.ev !== evs.length) evs.push(W.evK); } return { rain: +r.rain.toFixed(3), water: +r.water.toFixed(3), k: W.k }; };
+  const n0 = r.wxNext(), a = at(80), n1 = r.wxNext(), b = at(400);
+  check('a plan of points: the shower comes and goes (rain 0.6, then dry; the road wet, then dry), the forecast names each turn',
+    W.plan.length === 2 && n0 && n0.wet && n0.t === 20 && a.rain === 0.6 && a.water > 0.15 && a.k === 0 && n1 && !n1.wet && n1.t === 180 && b.rain === 0 && b.k === 1 && b.water === 0 && evs.join() === 'rain,dry',
+    JSON.stringify({ n0, a, n1, b, evs }));
+  const r1 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, weather: { at: 30, dur: 20, to: 1 } });
+  check('a single point: a plan of one, as before', r1.wst.plan.length === 1 && r1.wst.wx === r1.wst.plan[0] && r1.wst.wx.r0 === 0 && r1.wst.wx.r1 === 1, JSON.stringify(r1.wst.plan));
+  // a shower: drizzle, the rain strengthens, it eases, dry (each turn once: rain, heavy, ease, dry)
+  const r2 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, tyres: true, weather: [{ at: 10, dur: 20, to: 0.3 }, { at: 60, dur: 20, to: 1 }, { at: 150, dur: 20, to: 0.25 }, { at: 0, dur: 20, to: 0 }] });
+  r2.start(); const W2 = r2.wst, e2 = []; let t2 = 0;
+  while (t2 < 260) { C.aiControl(r2.player, r2, DT); r2.step(DT); t2 += DT; if (W2.ev !== e2.length) e2.push(W2.evK); }
+  check('a shower: the rain strengthens and eases once each (rain, heavy, ease, dry)', e2.join() === 'rain,heavy,ease,dry' && r2.rain === 0, e2.join());
+  // the AI's profile (Race._prof) at most every 2 s while the water rises (PROF_DT); the plan's end of the rain (Race._wxDryIn: the AI on
+  // slicks stays out when it is under a minute away)
+  const r3 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, weather: [{ at: 5, dur: 10, to: 1 }, { at: 60, dur: 20, to: 0 }] });
+  r3.start(); let np = 0, t3 = 0, dIn = []; const op = r3._prof.bind(r3); r3._prof = () => { np++; return op(); };
+  while (t3 < 90) { C.aiControl(r3.player, r3, DT); r3.step(DT); t3 += DT; if (Math.abs(r3.time - 30) < DT / 2 || Math.abs(r3.time - 70) < DT / 2) dIn.push(Math.round(r3._wxDryIn())); }
+  check('changing weather: the AI\'s profile at most every 2 s, the plan\'s end of the rain known (Race._wxDryIn)', np > 3 && np <= 90 / 2 + 1 && dIn.join() === '50,10' && r3._wxDryIn() === 0, `${np} profiles in 90 s, rain ends in ${dIn.join(' / ')} s`);
 }
 
 // 5. the AI's pit stops for tyres: the rain starts on the second lap of the Red Bull Ring (pits beside the start straight)

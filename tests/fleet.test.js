@@ -584,14 +584,14 @@ const fmtStand = (T, c) => { const p = standOf(T, c); return `inner edge ${p.inn
     `pitWant ${want}, repairs ${A.repairN}, stop ${dur.toFixed(2)} s, after ${((A.dist - wlAt) / 1000).toFixed(2)} km`);
 }
 { // ... in the rain too: on slicks with the line wet past the wet tyres' mark but below this driver's own (no tyre stop yet), it still
-  // comes in at once for the wheel
+  // comes in at once for the wheel (the road wet in about two minutes, docs/vreme-med-dirko.md: the wheel off past 130 s)
   const T = track('gozd'); Math.random = seeded(31);
   const r = new C.Race(T, { numAI: 5, playerGrid: 6, laps: 6, playerModel: model('modras'), assist: 2, seed: 31, difficulty: 1, damage: 2, tyres: true, rain: 0, weather: { at: 0, dur: 30, to: 0.45 } });
   r.start(); const P = r.player, A = r.cars.filter(c => !c.isPlayer).sort((a, b) => ((b.grid * 7) % 13) - ((a.grid * 7) % 13))[0];
   let wl = false, want = false, t = 0, line = 0;
-  for (let k = 0; k < 120 / DT && !want; k++) {
+  for (let k = 0; k < 240 / DT && !want; k++) {
     Math.random = seeded(32000 + k); C.aiControl(P, r, DT); r.step(DT); t += DT;
-    if (!wl && t > 40 && A.lap >= 1 && !A.inPit && !A.pitWant) { C.detachPart(A, 'wheelRR'); wl = t; line = r.wst.line; }
+    if (!wl && t > 130 && A.lap >= 1 && !A.inPit && !A.pitWant) { C.detachPart(A, 'wheelRR'); wl = t; line = r.wst.line; }
     if (wl && A.pitWant) want = t - wl;
   }
   const j = ((A.grid * 7) % 13) / 12;

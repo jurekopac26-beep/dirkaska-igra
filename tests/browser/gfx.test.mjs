@@ -88,8 +88,9 @@ try {
   await page.evaluate(() => Render.setAtmos({ season: 'summer', tod: 'day' })); await frames(3);
   T.check('the sky in the water: the day\'s blue, a dark night', day > 0.4 && night < 0.1, JSON.stringify({ day, night }));
 
-  // 4. the wear darkens with the road in the rain
-  const wearCol = () => page.evaluate(() => { let c = null; Render.world.root.traverse(o => { if (o.name === 'roadwear' && !c) c = o.material.color.r; }); return c; });
+  // 4. the wear darkens with the road in the rain (with the asphalt's look: in its shader, in the wet patches, Render.wetFx patches and
+  // patchDark, the whole road covered from 0.3 of water; else by its colour)
+  const wearCol = () => page.evaluate(() => { let c = null; const f = Render.wetFx(); Render.world.root.traverse(o => { if (o.name === 'roadwear' && !c) { const u = o.material.userData; c = o.material.color.r * (u.asLook && !u.asDry && f.patches >= 1 ? 1 - f.patchDark : 1); } }); return c; });
   const dry = await wearCol();
   await page.evaluate(() => window.__game.race.setRain(1)); await frames(4);
   const wetC = await wearCol();

@@ -367,7 +367,7 @@
     'Dobiš {0} gume.': 'You get {0} tyres.', 'mehke': 'soft', 'srednje': 'medium', 'trde': 'hard',
     'Vodiš, {0} je {1} s za tabo.': 'You are leading, {0} is {1} s behind you.', 'Vodiš.': 'You are leading.',
     '{0} je {1} s pred tabo, {2} {3} s za tabo.': '{0} is {1} s ahead of you, {2} {3} s behind you.', '{0} je {1} s pred tabo.': '{0} is {1} s ahead of you.',
-    'Na radarju je dež: začel bo čez približno minuto.': 'Rain on the radar: it will start in about a minute.', 'Na radarju se dež umika: kmalu bo ponehal.': 'The rain is moving away on the radar: it will stop soon.',
+    'Na radarju je dež: začel bo čez približno minuto.': 'Rain on the radar: it will start in about a minute.', 'Na radarju se dež umika: kmalu bo ponehal.': 'The rain is moving away on the radar: it will stop soon.', 'Dež se krepi: proga bo zelo mokra.': 'The rain is getting heavier: the track will be very wet.', 'Dež pojenja: kmalu bo samo še rosilo.': 'The rain is easing: soon only a drizzle.',
     'Napoved: {0}': 'Forecast: {0}', 'Napoved vremena': 'Weather forecast', 'Suho do konca dirke.': 'Dry to the finish.', 'Dež do konca dirke.': 'Rain to the finish.',
     'Dež v manj kot krogu, verjetnost {0} %.': 'Rain within a lap, {0} % chance.', 'Dež bo ponehal v manj kot krogu, verjetnost {0} %.': 'Rain stopping within a lap, {0} % chance.',
     'Dež čez {0}–{1} kroga, verjetnost {2} %.': 'Rain in {0}–{1} laps, {2} % chance.', 'Dež čez {0}–{1} kroge, verjetnost {2} %.': 'Rain in {0}–{1} laps, {2} % chance.', 'Dež čez {0}–{1} krogov, verjetnost {2} %.': 'Rain in {0}–{1} laps, {2} % chance.',
