@@ -158,6 +158,10 @@
     capybara: B({ L: 1.0, H: 0.32, W: 0.45, bh: 0.48, col: 0x8a5a3a, neck: 0.08, nk: 0.2, hs: 0.3, snout: 0.9, ears: 0.2, tail: 'none' }),
     coati: B({ L: 0.55, H: 0.25, W: 0.2, bh: 0.2, col: 0x8a5a32, belly: 0xd8b48a, neck: 0.1, nk: 0.4, hs: 0.15, snout: 1.4, ears: 0.3, tail: 'ringed', tip: 0x2a1a10 }),
     guanaco: B({ L: 1.2, H: 0.9, W: 0.38, col: 0xb07a4a, belly: 0xe9e2cf, head: 0x8a8a8a, neck: 0.75, nk: 1.25, hs: 0.2, snout: 0.8, ears: 0.6, tail: 'short' }),
+    // the tame camelids of the Andes (Cusco: they graze the meadows at Sacsayhuamán): the llama taller, its long ears curved, white with a brown
+    // head; the alpaca smaller and woollier, its neck shorter, fawn
+    llama: B({ L: 1.3, H: 1.0, W: 0.44, col: 0xe8e2d4, head: 0x8a6a4a, neck: 0.85, nk: 1.3, hs: 0.22, snout: 0.75, ears: 0.8, tail: 'short', graze: true }),
+    alpaca: B({ L: 1.0, H: 0.72, W: 0.46, bh: 0.5, col: 0xc8a478, neck: 0.6, nk: 1.1, hs: 0.2, snout: 0.55, ears: 0.45, tail: 'short', graze: true }),
     camel: B({ L: 2.0, H: 1.3, W: 0.6, bh: 0.6, col: 0xc89a64, neck: 0.85, nk: 0.55, hs: 0.3, snout: 0.9, ears: 0.25, tail: 'tuft', hump: true }),
     donkey: B({ L: 1.3, H: 0.8, W: 0.42, col: 0x8a8278, belly: 0xd8d2c8, neck: 0.4, nk: 0.8, hs: 0.3, snout: 0.8, snoutCol: 0xd8d2c8, ears: 1.0, tail: 'tuft', mane: 0x3a342e }),
     horse: B({ L: 1.9, H: 1.15, W: 0.55, col: 0x6a3e22, legs: 0x3a2214, neck: 0.75, nk: 0.85, hs: 0.3, snout: 1.0, ears: 0.4, tail: 'long', tailCol: 0x2a1a10, mane: 0x2a1a10 }),
@@ -291,6 +295,7 @@
     bison: { one: 0.15, herd: [4, 10], ys: 0.55, yp: 0.25 }, yak: { herd: [3, 8], ys: 0.55, yp: 0.25 }, buffalo: { one: 0.2, herd: [3, 6], ys: 0.55, yp: 0.25 },
     horse: { one: 0.15, pair: 0.25, herd: [3, 8], rest: ['horse', 'horseG'], ys: 0.6, yp: 0.25 }, horseG: { one: 0.15, pair: 0.25, herd: [3, 8], rest: ['horseG', 'horse'], ys: 0.6, yp: 0.25 },
     donkey: { one: 0.35, pair: 0.4, herd: [3, 4], ys: 0.6, yp: 0.3 }, camel: { one: 0.2, herd: [3, 6], ys: 0.6, yp: 0.25 }, guanaco: { one: 0.15, herd: [4, 10], ys: 0.6, yp: 0.25 },
+    llama: { one: 0.2, pair: 0.2, herd: [3, 8], rest: ['llama', 'alpaca'], ys: 0.6, yp: 0.25 }, alpaca: { herd: [4, 10], rest: ['alpaca', 'llama'], ys: 0.6, yp: 0.3 },
     eland: { one: 0.1, herd: [3, 10], ys: 0.6, yp: 0.25 }, capybara: { one: 0.1, herd: [3, 8], ys: 0.55, yp: 0.35 }, coati: { herd: [3, 8], ys: 0.65, yp: 0.3 }, dassie: { herd: [3, 8], ys: 0.65, yp: 0.3 },
     kangaroo: { one: 0.15, pair: 0.15, herd: [3, 10], F: 'kangarooF', y: 'joey', yp: 0.3 },   // (a mob: a big male, the females, their joeys)
     emu: { one: 0.2, pair: 0.5, herd: [3, 6], ys: 0.45, yp: 0.5 },   // (a father with his chicks)

@@ -51,3 +51,5 @@ Dlje od 60 m (samo v opisu, ne kot zanimivost): stolp Muyuqmarka (113 m), razgle
 **Živali**: na travnikih Sacsayhuamána se pasejo lame in alpake (za preverbo, splošni opis kraja; OSM jih ne beleži).
 
 **Ne spreminjamo** (odprti PR drugih): stranske ceste, `sideClosed`, `sideRoads` (#1016); šopi trave, kamenje in zaplate zemlje 6–42 m za ograjo (moj #1152).
+
+**Narejeno v dodelavi**: 13 zanimivosti z `say` po tabeli zgoraj (prej 3), prelet `fly` (start, zidovi, serpentini, vhod v park, cilj), `cloudTh` 0,16 (redki oblaki suhe dobe), živali in stvari jas (`zivali`: lame in alpake; štori in kupi hlodov evkaliptov, smerokaz; v `js/world-zivali.js` dodani vrsti `llama` in `alpaca`), daljši opis. Senčila, luč, fizika in stranske ceste nespremenjeni.
