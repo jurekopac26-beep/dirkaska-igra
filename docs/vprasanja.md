@@ -116,6 +116,120 @@ Kamera za avtom, skupina 82 (drugi prehod, `js/world-chase-bt82.js`): Seul (zgna
 3. Seul samo cesta (žleb, krpe, rešetke), brez plošč in zaplat za bloki.
 4. Ne, odstrani skupino 82.
 
+### `chase-skupina-89`
+
+Kamera za avtom, skupina 89 (`js/world-chase-bt89.js`): Bathurst (ob robu asfalta obrabljene, zaprašene krpe, več jih je na cesti čez vrh hriba; na travi do zidu slamnate in olivne zaplate, pege rdeče-rjave prsti in nizki suhi šopi) in Biķernieki (v peščenih izletnih pasovih svetlejše in temnejše zaplate peska; v gozdu 18–60 m za ograjo zaplate iglic in mahu, mlade smreke in bori). Brez novih klicev risanja: Bathurst 175 od 300 in 518 tisoč oglišč, Biķernieki 195 in 497 tisoč. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Bathurst manj (pol gostote krp ob robu asfalta), Biķernieki tako.
+3. Biķernieki brez zaplat v pesku (samo gozd), Bathurst tako.
+4. Ne, odstrani skupino 89.
+
+### `chase-skupina-90`
+
+Kamera za avtom, skupina 90 (tretji prehod, `js/world-chase-bt90.js`): Buriram (na trati za ograjo 8–85 m redki nizki šopi v zelenih trate in bolj suhe lise; kjer so riževa polja dovolj blizu, stoječi riž po parcelah, zlat, zelen, mlad, strnišče, in trava na mejah; riževa polja so večinoma dlje od ~85 m, zato je sprememba tu majhna; +5 klicev, +2 tisoč oglišč, na najgostejšem mestu 262 klicev in 881 tisoč) in Canaries (3–60 m za ograjo: pod gozdom temno listje in nizka praprot, na grmišču grmički in šopi, na travi mokre in suhe zaplate in mehki šopi, na skali in strminah andezitni kamni in rdeče-rjava prst; +6 klicev, +6 tisoč oglišč, največ 229 klicev in 809 tisoč). Brez gledalcev, fizika nespremenjena.
+
+1. **Ok, tako (priporočeno).**
+2. Samo Canaries, Buriram brez tega prehoda.
+3. Ne, odstrani skupino 90.
+
+### `chase-skupina-91`
+
+Kamera za avtom, skupina 91 (nadaljnji prehod, `js/world-chase-bt91.js`): Furka (za ograjo od ~3 do ~60 m zaplate bolj zelenega in slamnatega pašnika, šopi trave v skupinah, svetli granitni kamni, na skalah in meliščih grušč, na grmičevju nizko ruševje; +9 klicev, 182 od 300, 433 tisoč oglišč od 900) in Gudauri (od ~4 do ~60 m nizki rumeneči šopi v skupinah, sivorjav skrilavec in grušč na strminah, blazine rododendrona in brina; +7 klicev, 186 od 300, 554 tisoč oglišč; sprememba je majhna, ker so prejšnje skupine pas že pokrile). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Furka manj (pol zaplat pašnika), Gudauri tako.
+3. Ne, odstrani skupino 91.
+
+### `chase-skupina-92`
+
+Kamera za avtom, skupina 92 (nadaljnji prehod, `js/world-chase-bt92.js`): Izoard (na široki bankini med asfaltom in ograjo zaplate apnenčastega peska, okre in suhe trave, proti ograji nizki šopi, pod macesni iglice; od ~22 do ~60 m za ograjo stoječi suhi šopi, brin in apnenčasti kamni; +7 klicev, 197 od 300, 577 tisoč oglišč) in Kanaba (na široki bankini rdeč prah in prst, kratka trava in suhe zaplate, nizki šopi proti ograji; redkeje zaradi meje oglišč; +6 klicev, 214 od 300, 651 tisoč oglišč, največ 839 od 900). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Bankina pol redkeje na obeh, pas za ograjo na Izoardu tako.
+3. Samo bankina, brez pasu 22–60 m na Izoardu.
+4. Ne, odstrani skupino 92.
+
+### `chase-skupina-94`
+
+Kamera za avtom, skupina 94 (`js/world-chase-bt94.js`): Kotor (četrti prehod: zaplate golega svetlega krasa in slamnate trave, temno nizko grmovje, v borovju listje, do ~45 m; namenoma redko, ker je proga tik pod mejo oglišč, zato je razlika na slikah majhna; +7 klicev, 226 klicev, vrh 896 tisoč oglišč) in Krásna Hôrka (prvi prehod: v redkem listnatem gozdu ob cesti temnejše zaplate lanskega listja in vlažnih tal, nizka podrast in šopi trave, na travnikih zaplate in nepokošena trava, do ~55 m; +8 klicev, 121 klicev, vrh 283 tisoč oglišč). Slike zdaj in potem na strani Odločitve.
+
+1. **Ok, tako (priporočeno).**
+2. Krásna Hôrka manj (pol gostote zaplat in podrasti), Kotor tako.
+3. Samo Krásna Hôrka, Kotor brez tega prehoda.
+4. Ne, odstrani skupino 94.
+
+### `chase-skupina-95`
+
+Kamera za avtom, skupina 95 (`js/world-chase-bt95.js`): Llogara (na bankini do ograje gruče šopov trave in kamnov, za ograjo do ~60 m na severni strani gozdna tla s šopi, blazinami, iglicami in kamni, na južni zlati in bledi šopi, makija, apnenčasti kamni in grušč na strminah; brez novih klicev risanja, 168 od 300) in Lombok (na suhi ravnini za zalito travo do ~60 m suhi šopi, nizko grmovje in zaplate gole prsti, ob progi redkeje; +8 klicev, 227 od 300). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Llogara samo bankina (brez pasu za ograjo), Lombok tako.
+3. Lombok pol gostote, Llogara tako.
+4. Ne, odstrani skupino 95.
+
+### `chase-skupina-99`
+
+Kamera za avtom, skupina 99 (nadaljnji prehod, `js/world-chase-bt99.js`): Štajerska (samo pod gozdom od ~2 m za ograjo do ~60 m: rjave zaplate stelje iglic in bukovega listja, nizka temno zelena podrast, šopi senčne trave; pokošene trate ostanejo) in Sa Calobra (na obeh straneh, tudi kjer svet pada, do ~48 m: stoječi šopi trave càrritx, temne blazine makije, svetli apnenčasti kamni, malo rdeče zemlje na brežinah). Brez novih klicev risanja; Sa Calobra je redka, ker je na najgostejšem mestu pri 891 od 900 tisoč oglišč. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Sa Calobra tako, Štajerska brez (gozdni rob ostane, kot je).
+3. Štajerska tako, Sa Calobra brez.
+4. Ne, odstrani skupino 99.
+
+### `chase-skupina-100`
+
+Kamera za avtom, skupina 100 (`js/world-chase-bt100.js`): Savusavu (šopi trave v gručah, pod gozdom praprot in odpadle veje, ob hišah suhi palmovi listi in kokosove lupine do ~60 m; +6 klicev, 197 od 300, do 709 tisoč oglišč) in Seul (iglice in listje v pasu ob robniku pod gozdom, za bloki podrast, odpadle veje in granitni kamni na gozdnih tleh do ~60 m; +1 klic, 138 od 300, do 818 tisoč oglišč). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Samo Savusavu, Seul brez dodatkov.
+3. Samo Seul, Savusavu brez dodatkov.
+4. Ne, odstrani skupino 100.
+
+### `chase-skupina-102`
+
+Kamera za avtom, skupina 102 (`js/world-chase-bt102.js`): Vaoala (prvi prehod: na travi do ~60 m zaplate bujne in blede trave, šopi in nizki temni grmi, ob gozdu listje in praprot, na strminah rdečerjava prst in bazaltni kamni; +7 klicev, 154 od 300, 371 tisoč oglišč) in Zandvoort (četrti prehod, 4,5–30 m za ograjo: na travi temnejše in suhe zaplate ter nepokošeni šopi, na sipinah siva sipina z mahom in peščeni žepi; brez novih klicev, 212 od 300, 714 tisoč oglišč). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Vaoala manj (pol gostote), Zandvoort tako.
+3. Samo Vaoala, Zandvoort brez četrtega prehoda.
+4. Ne, odstrani skupino 102.
+
+### `chase-skupina-108`
+
+Kamera za avtom, skupina 108 (tretji prehod, `js/world-chase-bt108.js`): Pikes Peak na makadamu (na cestišču dve zbiti svetlejši kolesnici in greben sipkega gramoza ob njiju, ob robu izmetano drobno kamenje in na zunanji strani ovinkov pahljače prahu; +7 klicev, 153 od 300, 521 tisoč oglišč) in Rio do Rastro (med bankino in ograjo šopi trave, na planoti slamnati, pod gozdom proge listja, na strani brega odpadlo kamenje in zaplate mahu; +7 klicev, 223 od 300, 677 od 900 tisoč oglišč, zato redkeje na 5 m). Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Pikes Peak tako, Rio do Rastro brez (odstrani ga iz skupine).
+3. Rio do Rastro tako, Pikes Peak brez kolesnic (samo kamenje in prah ob robu).
+4. Ne, odstrani skupino 108.
+
+### `chase-skupina-111`
+
+Kamera za avtom, skupina 111 (četrti prehod, `js/world-chase-bt111.js`): Isuna (na pašniku kratki popaseni šopi trave, suhe bilke in posamezni višji šopi do ~60 m, pod gozdom mladi modri bori in praprot, na bregu reke Paro Chhu prodniki in svetle zaplate proda; +7 klicev, 162 od 300, 261 tisoč oglišč od 900). Hiva ni v skupini, ker ji obcestje spreminja odprti #1079. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Samo breg reke (prodniki in prod), brez šopov in mladih borov.
+3. Pol gostote šopov in borov, breg tako.
+4. Ne, odstrani skupino 111.
+
+### `chase-skupina-114`
+
+Kamera za avtom, skupina 114 (nadaljnji prehod, `js/world-chase-bt114.js`): Ngorongoro (na strminah stene kraterja do ~60 m sivo-rjave skale posamič in v skupinah, zaplate grušča in suhi šopi; v kotanjah zelenejše zaplate in šopi; na bankini drobni kamni; +7 klicev, 168 od 300, 433 tisoč oglišč od 900). Nürburg ni v skupini: njegovo obcestje spreminja #1078. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Skal pol manj, kotanje tako.
+3. Samo skale, brez zelenih kotanj.
+4. Ne, odstrani skupino 114.
+
+### `chase-skupina-116`
+
+Kamera za avtom, skupina 116 (tretji prehod, `js/world-chase-bt116.js`): Ella (ob vznožju ograje nepokošen pas višje trave, na pobočjih do ~60 m nizko temno grmičevje v skupinah, pod gozdom nizka podrast, ob robu gozda listje in praprot na travi, na strminah mokre lise in mah; +5 klicev, 192 od 300, 534 tisoč oglišč). Tuzla ni v skupini, ker njena tla spreminja #1099. Kaj naj bo?
+
+1. **Ok, tako (priporočeno).**
+2. Manj grmičevja (pol gostote), drugo tako.
+3. Ne, odstrani skupino 116.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.

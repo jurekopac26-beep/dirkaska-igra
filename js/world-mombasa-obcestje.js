@@ -145,6 +145,7 @@
     const fFar = (x, z) => { const n = nrNear(x, z); return FAR - (n.i < 0 ? 64 : n.d); };   // (nrNear sees the road only up to 64 m: flat beyond)
     const segD = (Q, x, z) => { let b = 1e9; const n = Q.length / 2; for (let k = 0; k < n; k++) { const j = (k + 1) % n, ax = Q[2 * k], az = Q[2 * k + 1], vx = Q[2 * j] - ax, vz = Q[2 * j + 1] - az, t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1))); b = Math.min(b, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return b; };
     const inQ = (Q, x, z) => { let c = false; const n = Q.length / 2; for (let k = 0, j = n - 1; k < n; j = k++) { const xi = Q[2 * k], zi = Q[2 * k + 1], xj = Q[2 * j], zj = Q[2 * j + 1]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; };
+    { const LQ = LAWN.map(Q => Q.slice(1)); World.ext.mombasaTrata = (x, z) => { for (const Q of LQ) if (inQ(Q, x, z)) return true; return false; }; }   // (on a park's or the golf course's lawn: js/world-chase-bt97.js keeps the wild grass off it)
     const pondD = (x, z) => { let b = 1e9; for (const Q of POND) b = Math.min(b, segD(Q, x, z) * (inQ(Q, x, z) ? -1 : 1)); return b; };
     const fGolf = (x, z) => Math.max(fFar(x, z), 6 - pondD(x, z));
     // the car parks and the ponds keep everything off for good; the lawns only the houses (their circles shrink to nothing in open())
