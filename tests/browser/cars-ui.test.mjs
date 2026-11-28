@@ -392,10 +392,7 @@ try {
     // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the KAZE RS: no parts that come
     // off, so no wheel rule (a vehicle with them, the KOZOROG too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its
     // wheels and the game is over, KONEC IGRE, wheels.test.mjs)
-    // (the km driven: against the km before this race, not a fixed sum of this page's races: of each race's 9 s the grid takes 5.8 to 6.7 s
-    // (the intro 1.3 s, the lights 4 s, their hold 0.5 to 1.4 s by chance, less the frames drawn before the pause), so the sum of the three
-    // was 0.26 km on a slow runner and 0.3 km and more on others, 27. 11. 2026; at least 2.3 s of this race are driven either way)
-    const km0 = await page.evaluate((v) => { const g = window.__game; g.S.car = 0; g.S.rivals = v; return g.stats.km; }, riv0); await startTrack(page, 'jezero');
+    await page.evaluate((v) => { window.__game.S.car = 0; window.__game.S.rivals = v; }, riv0); await startTrack(page, 'jezero');
     const st0 = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(9, true); return g.stats; });
     const w = await page.evaluate(async () => {
       const g = window.__game, r = g.race, P = r.player; window.__said.length = 0;
@@ -435,8 +432,8 @@ try {
     const S1 = tap2.st;
     T.check('retired in the statistics: one race more (saved), never a finish: no win, podium or fastest lap, the track not raced to the line, no achievement of the finish (Prvi cilj, Brez praske, Napadalec); the km and the time as driven',
       S1.races === st0.races + 1 && tap2.stored && tap2.stored.races === S1.races && S1.wins === st0.wins && S1.podiums === st0.podiums && S1.fl === st0.fl && !S1.tracks.jezero &&
-      !S1.ach.first && !S1.ach.cleanRace && !S1.ach.overtake && !S1.ach.win && st0.km > km0 && S1.km >= st0.km && S1.time >= st0.time,
-      JSON.stringify({ km0: +km0.toFixed(3), st0: { races: st0.races, wins: st0.wins, km: +st0.km.toFixed(2), tracks: st0.tracks, ach: Object.keys(st0.ach) }, st1: { races: S1.races, wins: S1.wins, podiums: S1.podiums, km: +S1.km.toFixed(2), tracks: S1.tracks, ach: Object.keys(S1.ach) } }));
+      !S1.ach.first && !S1.ach.cleanRace && !S1.ach.overtake && !S1.ach.win && st0.km > 0.3 && S1.km >= st0.km && S1.time >= st0.time,
+      JSON.stringify({ st0: { races: st0.races, wins: st0.wins, km: +st0.km.toFixed(2), tracks: st0.tracks, ach: Object.keys(st0.ach) }, st1: { races: S1.races, wins: S1.wins, podiums: S1.podiums, km: +S1.km.toFixed(2), tracks: S1.tracks, ach: Object.keys(S1.ach) } }));
     // Ogled vozila: the photo mode on the player's car, up close, from over the road (the retired car stands on the run-off: not from the
     // far side of it); held upright the same, close (the 24 mm lens); back to the results
     const view = () => page.evaluate(async () => { const g = window.__game, r = g.race, P = r.player, T = r.track, W = P.wreck;

@@ -187,9 +187,9 @@ try {
   T.check('no ROČNA (handbrake) button on the screen in any steering mode, on its side and upright: ZAVORA and PLIN side by side, as tall as each other (tilting: apart, the brake on the left); a touch where ROČNA was brakes',
     pedals.length === 6 && pedals.every(o => !o.drift && o.ids === PED[o.m] && !/ROČNA|HANDBRAKE/.test(o.words) && o.apart && o.tall) && pedals.filter(o => o.above).every(o => o.above.brk === 1 && o.above.hand === false), JSON.stringify(pedals));
   const entry = await page.evaluate(() => { const g = window.__game, P = g.race.player, Tt = document.getElementById('toast'); let e = null; g.pause(); P.dmg = 0.5;
-    for (let k = 0; k < 6000 && !(g.pitStop.on && P.inPit); k++) { if (P.dmg > 0.9) P.dmg = 0.9; if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
+    for (let k = 0; k < 6000 && !(g.pitStop.on && P.inPit); k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
       if (!e && P.inPit) e = { toast: Tt.classList.contains('show') ? Tt.textContent : '', tag: g.toastTag }; }   // (the way in: the toast, what it is about)
-    P.dmg = Math.min(P.dmg, 0.9); const r = g.race; r.__step = r.step; r.step = function () { }; g.resume(); return e; });   // (the custom stop's panel open: the race held while it is measured)
+    const r = g.race; r.__step = r.step; r.step = function () { }; g.resume(); return e; });   // (the custom stop's panel open: the race held while it is measured)
   T.check('the way in: the toast "Sedaj lahko spustiš plin, vse bo naredil sam.", about the pit stop (gone with the autopilot)', !!entry && entry.toast === TOAST && entry.tag === 'pit', JSON.stringify(entry));
   // the custom stop's panel (POSTANEK PO MERI) at the way in, in every way of steering, in Slovenian and in English, either way the phone is
   // held: upright the sheet at the bottom (over the steering and the pedals), on its side at the right under the column; over nothing else of
@@ -213,8 +213,8 @@ try {
   T.check('the custom stop\'s panel at the way in (upright a sheet at the bottom, on its side at the right under the column), with buttons, the wheel and tilting, in Slovenian and in English: over nothing else of the HUD, the message and the toast above it in the column (on its side what has no room waits, the toast first), every button 44 px tall and reached by a tap, no text cut',
     panel.length === 12 && panel.every(p => p.ok), JSON.stringify(panel.filter(p => !p.ok).concat(panel.slice(0, 2))));
   await page.evaluate(() => { const g = window.__game, P = g.race.player, r = g.race; r.step = r.__step; delete r.__step; g.pause();
-    for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.dmg > 0.9) P.dmg = 0.9; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true); }
-    P.pitDur = Math.max(P.pitDur, P.pitT + 600); P.dmg = Math.min(P.dmg, 0.9); g.resume(); });   // (on to the box, the defaults there: the crew's work long enough for all the pictures)
+    for (let k = 0; k < 6000 && !(P.pitState === 'repair' && P.pitT > 0.5); k++) { if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true); }
+    P.pitDur = Math.max(P.pitDur, P.pitT + 600); g.resume(); });   // (on to the box, the defaults there: the crew's work long enough for all the pictures)
   const pit = await both(page, 'race-pits', 'BOKSI · AVTOPILOT', ['h-pit', 'h-msg']);
   T.check('the pit stop: the progress bar right under the map (upright under the tower), the big message under it', ['land', 'port'].every(k => { const c = rest(pit[k].col.map(c => c.id)); return c[0] === 'h-pit' && c[1] === 'h-msg' && (k === 'land' || ['h-tower', 'h-pit'].includes(pit[k].col[0].id)); }), JSON.stringify(['land', 'port'].map(k => pit[k].col.map(c => c.id))));
   // the pit stop in every way of steering, in Slovenian and in English, the stop's longest message with the toast and the radio: the bar and

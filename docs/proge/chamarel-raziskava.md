@@ -56,3 +56,11 @@ Imena so samo zemljepisna ali opisna:
 - Videz cerkve (bela, rdeča streha, zvonik) je splošen za vaške cerkve na otoku. Ni po fotografiji te cerkve, napisov nima.
 - Smer pešpoti (»proti najvišjemu vrhu otoka«) je samo iz imena poti v OSM.
 - V vasi je v OSM samo nekaj obrisov stavb; drugih hiš igra ne doda (ni vira).
+
+## Zvoki okolja (`js/sfx-okolje.js`)
+
+Samo obstoječi zvočni sistem (sinteza v igri, brez novih datotek); preveri `node tools/zvoki-pasovi.mjs chamarel`.
+- **Podnebje** (`PLACE`): zemljepisna širina štarta −20,42° (`tools/chamarel/config.json`), višina ceste pri y = 0 ~23 m (373 m manj vzpon v `CHAMAREL_H`). Tropi pod 800 m: črički in škržati.
+- **Vasi** (`VAS`): Case Noyale nad obalo (zaselek, −80–320 m), vas Chamarel ob križišču za Plaine Champagne (3.450–3.790 m).
+- **Zvonovi** (`BELLS`, `node tools/zvoki-pasovi.mjs --osm chamarel`, OSM): vaška cerkev pri 3.670 m, levo, 26 m; cerkev v Case Noyale pri −150 m, desno, 591 m.
+- Gozd in ptice sta že iz sveta proge (gozd ob cesti skoraj ves čas). Slap in ribniki so dlje od ceste (od 176 m), zato brez vode; morje ni v svetu proge, zato brez galebov.

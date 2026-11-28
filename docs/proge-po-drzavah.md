@@ -101,7 +101,6 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Lusail, Katar | Nove proge za 1.0, linija A (A18) | OSM 3 % (ograja); z zidom boksov ~30 % | izletna cona je |
 | Termas de Río Hondo, Argentina | Nove proge za 1.0, linija A (A19) | OSM 0 %; z zidom boksov ~14 % | izletna cona je |
 | Koli, Finska | proge z ledom (zimska) | OSM 2 % (stavbe), ograj, zidov in sten ni | izletna cona je |
-| Meteora, Grčija | PR #1094 | ograja v serpentinah, drugod gozd, grmičevje in trava ob cesti | izletna cona je; padca ni |
 
 ## Države s progo v igri: izbira uporabnika
 
@@ -210,14 +209,14 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Panama | Portobelo (proge z znamenitostjo, 9) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Butan | Isuna (proge z znamenitostjo, 10; namesto Trongse) | v delu (veja `proge/butan`, PR #728): verižni most čez Paro Chhu ob cesti Chuzom–Paro; Trongsa odpade (delujoč samostan); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Sveta Lucija | Canaries (nove proge, PR #692, `nove-proge/canaries`) | v delu (naloga seje menija 13. 11. 2026); prva proga države |
-| Venezuela | El Castaño (rezerva uporabnika 13. 11. 2026; pot in zanimivosti potrjene 25. 11. 2026: možnost A, ~8 km, dva mostova, reka, La Regresiva del Diablo) | narejena (partyslo, #1090, veja `proga/el-castano`, id `elcastano`); čaka #788 na `main`; prva proga države |
-| Poljska | Kudowa-Zdrój (Cesta stotih ovinkov, DW387), PR #1093 | v delu (partyslo), veja `proga/kudowa`, `pending: true`; prva proga države |
+| Venezuela | El Castaño (rezerva uporabnika 13. 11. 2026; točno pot in zanimivosti potrdi kartica na strani Odločitve) | v delu (partyslo, od 25. 11. 2026), veja `proga/el-castano`; prva proga države |
+| Poljska | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | v delu (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Mavricij | Chamarel (rezerva uporabnika 13. 11. 2026; PR #1091, veja `proga/chamarel`) | v delu (partyslo, od 25. 11. 2026); pot Case Noyale – Chamarel 5,0 km (možnost 1 kartice, odgovor 25. 11. 2026); na `main` po #788; prva proga države |
-| Bosna in Hercegovina | Trebević (Dolovi–Vidikovac–Draguljac, 4,3 km; cesta izbrana 26. 11. 2026, uporabnik potrdi ali zamenja na strani Odločitve) | v delu (partyslo), PR #1096, veja `proga/trebevic`; prva proga države |
+| Bosna in Hercegovina | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Ciper | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Bolgarija | izbira ceste (2–3 predlogi na strani Odločitve, 25. 11. 2026; med njimi Šipka, rezerva uporabnika 8. 11. 2026) | rezervirano 25. 11. 2026 (partyslo, rezerva croatiadata), veja `proga/<id>`; prva proga države |
 | Armenija | Tatev (cesta H-46 čez sotesko Vorotana; odsek izbrala seja proge, uporabnik potrdil 26. 11. 2026; PR #1097, veja `proga/tatev`) | v delu (partyslo, rezerva croatiadata); prva proga države |
-| Grčija | Meteora (izbira seje proge 26. 11. 2026, kartica `proga-meteora-pot`; PR #1094, veja `proga/meteora`) | v delu (partyslo, rezerva croatiadata); prva proga države |
+| Grčija | nova proga (rezervacija 25. 11. 2026; stara rezerva Meteora iz 8. 11. 2026 je ena od možnosti), veja `proga/<id>` | v delu (partyslo, rezerva croatiadata, od 25. 11. 2026); 2–3 predlogi na strani Odločitve, seznam zanimivosti potrdi uporabnik |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 

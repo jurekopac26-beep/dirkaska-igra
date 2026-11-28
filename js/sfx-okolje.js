@@ -26,7 +26,7 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608], chamarel: [-20.42, 23] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0; Chamarel: tools/chamarel/config.json's start, y = 0 at 373 m less the climb in CHAMAREL_H)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
@@ -40,6 +40,7 @@
     livorno: [[-400, 400, 1], [3250, 3750, 1], [4300, 4580, 0.5], [7330, 7590, 0.5], [16500, 17300, 1]],   // (Livorno, Montenero, Savolano, Castellaccio, Antignano)
     nring: [[7850, 8050, 0.5], [20100, 20500, 0.5]],   // (Breidscheid, Nürburg)
     ghoufi: [[115, 385, 0.5]],   // (the old village on the canyon's wall below the road, 20–67 % of the track: mostly ruins, a hamlet, no bells)
+    chamarel: [[-80, 320, 0.5], [3450, 3790, 1]],   // (Case Noyale above the coast, the village of Chamarel round the junction for Plaine Champagne; docs/proge/chamarel-raziskava.md)
   };
   // the churches within ~600 m of the road (OpenStreetMap, amenity=place_of_worship or building=church, tools/zvoki-pasovi.mjs --osm):
   // [metres from the start, the side (-1 left, 1 right), how far from the road (m)]; only those with bells (not a temple, a hall, a
@@ -50,6 +51,7 @@
     nring: [[20380, 1, 236]],   // (Nürburg)
     harju: [[50, 1, 239], [1430, 1, 452]],   // (Jyväskylä)
     chapman: [[-466, 1, 385]],   // (Hout Bay; the start moved 326 m up the road)
+    chamarel: [[-150, 1, 591], [3670, -1, 26]],   // (Case Noyale by the coast, the village church of Chamarel by the junction)
   };
 
   /* ---------------- the zones ---------------- */
