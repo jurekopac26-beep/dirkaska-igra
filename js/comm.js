@@ -219,14 +219,14 @@ const Comm = (() => {
     heliFin: ['And the helicopter is back, escorting you to the summit!', 'The TV chopper picks you up for the final run to the line!', 'Here comes the helicopter again, the cameras follow you home!'],
     summit: ['At the summit in {time}, {delta} seconds off your best.', 'Across the line at the top. {time}, just {delta} short of the record.', "That's the summit. {time}. {delta} seconds to find next time."],
     // time trial on a rally special stage (Ouninpohja): gravel, crests and jumps, a flying finish
-    introStage: ['Welcome to {track}, the most famous stage of the Rally of Finland! Just you, the gravel and the clock.', 'Here we are at the start of {track}. {cps} splits, crest after crest, and nobody to race but the clock.', 'Welcome to {track}! Fast gravel, blind crests and big jumps. Keep it flat!'],
+    introStage: ['Welcome to {track}, the most famous rally stage in Finland! Just you, the gravel and the clock.', 'Here we are at the start of {track}. {cps} splits, crest after crest, and nobody to race but the clock.', 'Welcome to {track}! Fast gravel, blind crests and big jumps. Keep it flat!'],
     // the famous jump (def.jumpRec: Ouninpohja's Yellow House, the record of 57 m; by: an invented driver, never a real one)
     jumpRec: ['{m} metres at {place}! The record there is {rec}, by {by}.', 'Over {place}, {m} metres! {by} flew {rec} here.', '{m} metres through the air at {place}!'],
     jumpPB: ['{m} metres at {place}, your longest jump there!', 'A new personal best at {place}, {m} metres!'],
     jumpBeat: ['{m} metres at {place}! Longer than {by}!', "Unbelievable! {m} metres, beyond {by}'s {rec}!"],
     medal: ['That is a {medal} medal time!', 'And that is worth a {medal} medal!', 'A {medal} medal on this stage!'],
     // the city stage (def.cityStage: Harju): tarmac, gravel and cobbles through the town, the whole of Jyvaskyla watching
-    introCity: ['Welcome to {track}, the city stage of the Rally of Finland, right in the heart of Jyvaskyla!', 'Here we are at {track}. Tarmac, gravel and cobbles, and the whole town is watching!', 'Welcome to {track}! Up the ridge, round the water tower and back into town. {cps} splits, just you and the clock.'],
+    introCity: ['Welcome to {track}, the city rally stage, right in the heart of Jyvaskyla!', 'Here we are at {track}. Tarmac, gravel and cobbles, and the whole town is watching!', 'Welcome to {track}! Up the ridge, round the water tower and back into town. {cps} splits, just you and the clock.'],
     goCity: ['Go! Down the boulevard!', "And you're away! Flat out down the university street!", 'Green light! Listen to that crowd!'],
     goStage: ['Go! Flat out into the forest!', "And you're away! Keep it flat over the crests!", 'Green light! The clock is running!'],
     cpFirstStage: ['Split {cp}, {time}.', 'Through split {cp}. Keep it flat!', 'Split {cp}, {time}. Hold on tight!'],
