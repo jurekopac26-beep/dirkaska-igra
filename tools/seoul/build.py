@@ -116,6 +116,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc9d3dc, sun: 0xfff1de, sunI: 1.08, sky: 0xa9c3dc, gnd: 0x4d5f3e, hemiI: 0.64, tint: [1.0, 1.0, 1.01], sat: 1.04, sunOff: [-52, 86, 72], split: [[0.96, 0.99, 1.05], [1.03, 1.0, 0.96]] },   // Seoul: a clear spring afternoon, the city's haze in the distance, the sun from the south-west
     say: 'Seoul',
+    zivali: { a: ['magpie'], t: ['picnic'], city: true },   // (srake: the commonest bird of the city's parks; docs/proge/seoul.md, »Raziskava«)
     id: 'seoul', name: 'Seul, Južna Koreja', theme: 'seoul', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.6,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the grid on the road before the line
     desc: %(desc)s,
@@ -247,6 +248,62 @@ def far_city():
     FAR = dict(x0=gf['x0'] + i0 * C2, z0=gf['z0'] + j0 * C2, n=n, cell=C2, lo=0, step=4, b64=b64bytes(np.clip(np.round(g3 / 4), 0, 255)))
     return FAR, towers
 
+# ---- the view beyond the corridor (the camera's far plane is 700 m; js/world-seoul.js draws this on a shell just inside it, as Montréal's
+# and Hakone's far views): the ring of granite mountains round the city's basin (Bukhansan and Dobongsan north, Suraksan north-east, Achasan
+# east, Namhansan south-east, Gwanaksan and Cheonggyesan south, Inwangsan and Bugaksan north-west) and the Han 2-3 km south. Heights:
+# Copernicus DEM GLO-30 (the surface as it is: the woods and the town seen from afar), the land's kind and the water: ESA WorldCover 2021.
+#   python3 -I tools/seoul/build.py view   -> tools/seoul/view.png (uint16 (h + 100) * 10) and view-lc.png (0 water, 1 woods, 2 town, 3 rock /
+#   grass), 150 m cells, +-24 km round the track's middle (read over the network with rasterio; the files are kept, so 'world' needs no network)
+VIEW_R, VIEW_C = 24000.0, 150.0
+def xz_ll(x, z):
+    s = math.sin(math.radians(J['lat0'])); w = 1 - E2 * s * s; M = A_WGS * (1 - E2) / w ** 1.5; Nr = A_WGS / math.sqrt(w)
+    return J['lat0'] - np.degrees(z / M), J['lon0'] + np.degrees(x / (Nr * math.cos(math.radians(J['lat0']))))
+def view_mid(): return (LINE[:, 0].min() + LINE[:, 0].max()) / 2, (LINE[:, 1].min() + LINE[:, 1].max()) / 2
+def build_view():
+    import rasterio, rasterio.windows
+    os.environ.setdefault('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
+    cx, cz = view_mid(); n = int(2 * VIEW_R / VIEW_C)
+    X, Z = np.meshgrid(cx - VIEW_R + (np.arange(n) + 0.5) * VIEW_C, cz - VIEW_R + (np.arange(n) + 0.5) * VIEW_C)
+    LA, LO = xz_ll(X, Z); la0, la1, lo0, lo1 = LA.min() - 0.01, LA.max() + 0.01, LO.min() - 0.01, LO.max() + 0.01
+    def read(url, la0, lo0, la1, lo1, k):   # (k: the overview's decimation)
+        with rasterio.open('/vsicurl/' + url) as d:
+            win = rasterio.windows.from_bounds(lo0, la0, lo1, la1, d.transform).round_offsets().round_lengths()
+            win = win.intersection(rasterio.windows.Window(0, 0, d.width, d.height))
+            a = d.read(1, window=win, out_shape=(max(1, int(win.height // k)), max(1, int(win.width // k))))
+            T = d.window_transform(win); return a, (T.c, T.f, T.a * win.width / a.shape[1], T.e * win.height / a.shape[0])
+    def at(a, T, la, lo, order):
+        from scipy import ndimage as nd
+        return nd.map_coordinates(a.astype(np.float32), [(la - T[1]) / T[3] - 0.5, (lo - T[0]) / T[2] - 0.5], order=order, mode='nearest')
+    H = np.zeros_like(X); HN = np.zeros_like(X)
+    for la in range(math.floor(la0), math.floor(la1) + 1):
+        for lo in range(math.floor(lo0), math.floor(lo1) + 1):
+            nm = 'Copernicus_DSM_COG_10_N%02d_00_E%03d_00_DEM' % (la, lo)
+            m = (LA >= la) & (LA < la + 1) & (LO >= lo) & (LO < lo + 1)
+            if not m.any(): continue
+            a, T = read('https://copernicus-dem-30m.s3.amazonaws.com/%s/%s.tif' % (nm, nm), max(la, la0), max(lo, lo0), min(la + 1, la1), min(lo + 1, lo1), 2)
+            H[m] = at(a, T, LA[m], LO[m], 1); HN[m] = 1
+    a, T = read('https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N36E126_Map.tif', la0, lo0, la1, lo1, 3)
+    frac = {}
+    for k, cl in ((0, (80, 90)), (1, (10, 20)), (2, (50,)), (3, (30, 40, 60, 100))):
+        f = np.isin(a, cl).astype(np.float32); frac[k] = ndimage.uniform_filter(f, int(round(VIEW_C / 30)))
+    v = np.stack([at(frac[k], T, LA, LO, 1) for k in range(4)]); lc = v.argmax(0).astype(np.uint8)
+    lc[(v[0] > 0.45)] = 0
+    Image.fromarray(np.clip(np.round((H + 100) * 10), 0, 65535).astype(np.uint16)).save(os.path.join(HERE, 'view.png'))
+    Image.fromarray(lc).save(os.path.join(HERE, 'view-lc.png'))
+    print('wrote view.png / view-lc.png', n, 'x', n, 'h %.0f-%.0f m' % (H.min(), H.max()), 'kinds', np.bincount(lc.ravel(), minlength=4).tolist())
+
+def far_view():
+    """the view's shell data: a grid whose cells grow from ~110 m by the track to ~440 m at 24 km (131 x 131 points); heights in 4 m steps
+    (1-255; 0 = the river's water), the land's kind per point"""
+    cx, cz = view_mid(); n0 = int(2 * VIEW_R / VIEW_C)
+    H = np.asarray(Image.open(os.path.join(HERE, 'view.png'))).astype(np.float32) / 10 - 100; LCv = np.asarray(Image.open(os.path.join(HERE, 'view-lc.png')))
+    N = 131; u = np.linspace(-1, 1, N); a = 0.3; ax = np.sign(u) * VIEW_R * 0.98 * (a * np.abs(u) + (1 - a) * np.abs(u) ** 3)
+    xs = cx + ax; zs = cz + ax
+    Xg, Zg = np.meshgrid(xs, zs); gi = (Xg - (cx - VIEW_R)) / VIEW_C - 0.5; gj = (Zg - (cz - VIEW_R)) / VIEW_C - 0.5
+    h = ndimage.map_coordinates(H, [gj, gi], order=1, mode='nearest'); k = ndimage.map_coordinates(LCv, [gj, gi], order=0, mode='nearest')
+    hb = np.where(k == 0, 0, np.clip(np.round(h / 4), 1, 255))
+    return dict(xs=[round(float(v)) for v in xs], zs=[round(float(v)) for v in zs], step=4, h=b64bytes(hb), k=b64bytes(k))
+
 def build_world():
     P = LINE; M = 700
     x0 = math.floor((P[:, 0].min() - M) / 16) * 16; z0 = math.floor((P[:, 1].min() - M) / 16) * 16
@@ -282,7 +339,7 @@ def build_world():
     oidx = {}
     for k, o in enumerate(J.get('bldOutline', [])): oidx[o[0]] = pl(o[1])
     data = {
-        'dem': D, 'lc': LC, 'far': FAR, 'towers': towers,
+        'dem': D, 'lc': LC, 'far': FAR, 'towers': towers, 'view': far_view(),
         'bld': [[b[0], b[1], b[2], b[3], round(b[4], 2), b[5], b[6], b[7], round(b[8], 1)] for b in J['bld']],
         'out': [[k, v] for k, v in oidx.items()],
         'walls': [[KIND_W.get(w[0], 3), pl(w[3])] for w in J['walls']],
@@ -300,5 +357,6 @@ def build_world():
 
 if __name__ == '__main__':
     what = sys.argv[1:] or ['track']
+    if 'view' in what: build_view()
     if 'track' in what: build_track()
     if 'world' in what: build_world()

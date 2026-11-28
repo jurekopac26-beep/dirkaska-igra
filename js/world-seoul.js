@@ -523,6 +523,52 @@
       wm.position.set(F.x0 + F.n * F.cell / 2, RIVER, F.z0 + F.n * F.cell / 2); wm.matrixAutoUpdate = false; wm.updateMatrix(); root.add(wm);
     }
 
+    /* ---- the view past the far plane (700 m): the ring of granite mountains round the basin (the highest north, ~12 km out), the town on the
+       floor between, the Han 2-3 km south (tools/seoul/build.py 'view': Copernicus GLO-30, ESA WorldCover 2021); one mesh on a shell just
+       inside the camera's far plane round the camera, each point along its own direction (as Montréal's and Hakone's views), unlit, its
+       colours hazed towards the fog's colour by the distance (World.update: out.dyn.ext) ---- */
+    let nView = 0;
+    if (SD.view) {
+      const V = SD.view, hb = atob(V.h), kb = atob(V.k), nx = V.xs.length, nz = V.zs.length, P0 = new Float32Array(nx * nz * 3), C0 = new Float32Array(nx * nz * 3), I = [];
+      const HV = (i, j) => { const c = hb.charCodeAt(clamp(j, 0, nz - 1) * nx + clamp(i, 0, nx - 1)); return c ? c * V.step : 1; };
+      const KC = [[0.34, 0.45, 0.52], [0.2, 0.3, 0.17], [0.62, 0.62, 0.6], [0.6, 0.58, 0.5]], ROCK = [0.66, 0.65, 0.62];   // (water, woods, town, grass / bare; the granite domes)
+      const LX = -0.45, LY = 0.75, LZ = 0.48;   // (the shading's light: high, from the south-west)
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+        const v = j * nx + i, x = V.xs[i], z = V.zs[j], h = HV(i, j), k = kb.charCodeAt(v);
+        const dx = V.xs[Math.min(nx - 1, i + 1)] - V.xs[Math.max(0, i - 1)], dz = V.zs[Math.min(nz - 1, j + 1)] - V.zs[Math.max(0, j - 1)];
+        const gx = (HV(i + 1, j) - HV(i - 1, j)) / dx, gz = (HV(i, j + 1) - HV(i, j - 1)) / dz, nl = Math.hypot(gx, 1, gz), sl = Math.hypot(gx, gz);
+        const sh = k === 0 ? 1 : clamp(0.62 + 0.55 * ((-gx * LX + LY - gz * LZ) / nl - 0.55), 0.55, 1.12), q = 0.94 + crH(i, j, 61) * 0.1;
+        let c = KC[k]; if (k === 1 && h > 380 && sl > 0.32) c = c.map((cv, m) => lerp(cv, ROCK[m], clamp((sl - 0.32) * 2.5, 0, 0.7)));   // (the bare granite of the steep high ridges)
+        P0[v * 3] = x; P0[v * 3 + 1] = k === 0 ? RIVER - 1 : h; P0[v * 3 + 2] = z; C0[v * 3] = c[0] * sh * q; C0[v * 3 + 1] = c[1] * sh * q; C0[v * 3 + 2] = c[2] * sh * q;
+      }
+      const near = (x, z) => x > G.x0 + 8 && z > G.z0 + 8 && x < G.x0 + (G.nx - 2) * NRC && z < G.z0 + (G.nz - 2) * NRC && nrDist(x, z) < 450;
+      for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) {
+        if (near(V.xs[i], V.zs[j]) && near(V.xs[i + 1], V.zs[j + 1]) && near(V.xs[i + 1], V.zs[j]) && near(V.xs[i], V.zs[j + 1])) continue;
+        const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; I.push(a, c, b, b, c, d);
+      }
+      const g = new THREE.BufferGeometry(); nView = nx * nz;
+      g.setAttribute('position', new THREE.BufferAttribute(P0.slice(), 3)); g.setAttribute('color', new THREE.BufferAttribute(C0.slice(), 3)); g.setIndex(I);
+      const vm = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide }));
+      vm.frustumCulled = false; vm.renderOrder = -50; vm.matrixAutoUpdate = false; vm.castShadow = vm.receiveShadow = false; vm.name = 'seoulView'; root.add(vm);
+      const FOG = new THREE.Color(0xc8d0d4), S = { x: 1e9, y: 0, z: 0, f: 0, fr: -1, fg: -1, fb: -1 }, fd = new THREE.Vector3();
+      vm.onBeforeRender = (r, sc) => { if (sc && sc.fog) FOG.copy(sc.fog.color); };
+      out.dyn.ext = (t, car, cam) => {
+        if (!cam) return; const c = cam.position;
+        cam.getWorldDirection(fd); vm.visible = cam.far > 250 && Math.asin(clamp(fd.y, -1, 1)) + (cam.fov || 50) * Math.PI / 360 * 1.15 > -0.7; if (!vm.visible) return;   // (a thick fog, or the camera looking down so steeply that not even the land below the hill reaches the picture: the chase camera's top edge is some 13° below the horizon, the valley under Namsan lower still)
+        if (Math.abs(c.x - S.x) + Math.abs(c.y - S.y) + Math.abs(c.z - S.z) < 2 && cam.far === S.f && FOG.r === S.fr && FOG.g === S.fg && FOG.b === S.fb) return;
+        S.x = c.x; S.y = c.y; S.z = c.z; S.f = cam.far; S.fr = FOG.r; S.fg = FOG.g; S.fb = FOG.b;
+        const p = g.attributes.position.array, cl = g.attributes.color.array, R0 = cam.far - 60, R1 = cam.far - 5;
+        const L = clamp((FOG.r * 0.3 + FOG.g * 0.59 + FOG.b * 0.11) / 0.78, 0.2, 1.1);   // (dusk and night: the land as dark as the air)
+        for (let k = 0; k < P0.length; k += 3) {
+          const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, D = Math.max(1, Math.sqrt(dx * dx + dy * dy + dz * dz));
+          const f = (R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, D - 300) / 3000))) / D, hz = 0.3 + 0.62 * (1 - Math.exp(-Math.max(0, D - 400) / 9000));
+          p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f;
+          cl[k] = lerp(C0[k] * L, FOG.r, hz); cl[k + 1] = lerp(C0[k + 1] * L, FOG.g, hz); cl[k + 2] = lerp(C0[k + 2] * L, FOG.b, hz);
+        }
+        g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
+      };
+    }
+
     /* ---- the terrain tiles and the verges ---- */
     let nTiles = 0;
     {
@@ -548,7 +594,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, landmarks: nMark, wall: Math.round(nWall), lamps: nLamp, stops: nStop, towers: nTower, fans: nFans };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, landmarks: nMark, wall: Math.round(nWall), lamps: nLamp, stops: nStop, towers: nTower, view: nView, fans: nFans };   // (read by the tests)
     return out;
   }
 

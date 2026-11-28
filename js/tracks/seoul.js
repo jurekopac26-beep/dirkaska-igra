@@ -19,6 +19,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc9d3dc, sun: 0xfff1de, sunI: 1.08, sky: 0xa9c3dc, gnd: 0x4d5f3e, hemiI: 0.64, tint: [1.0, 1.0, 1.01], sat: 1.04, sunOff: [-52, 86, 72], split: [[0.96, 0.99, 1.05], [1.03, 1.0, 0.96]] },   // Seoul: a clear spring afternoon, the city's haze in the distance, the sun from the south-west
     say: 'Seoul',
+    zivali: { a: ['magpie'], t: ['picnic'], city: true },   // (srake: the commonest bird of the city's parks; docs/proge/seoul.md, »Raziskava«)
     id: 'seoul', name: 'Seul, Južna Koreja', theme: 'seoul', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.6,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the grid on the road before the line
     desc: "Mestna proga čez hrib Namsan sredi Seula: 2,5 km enosmernih parkovnih cest od južnega pobočja skozi borov gozd, mimo razgledišča nad mestom in skozi vrzel v starem mestnem obzidju, ob obzidju na vrh pod stolpom, nato po zahodnem pobočju navzdol in po mestni ulici do cilja v Huam-dongu. Ograje ulične dirke, mesto in reka Han v daljavi.",
@@ -27,7 +28,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: SE_H.map((h, i) => [i / (SE_H.length - 1), h / 10]),
     widths: [[-245.1, 4.6], [900.9, 4.6], [930.9, 4.4], [2167.9, 4.4], [2197.9, 6.2], [2390.9, 6.2], [2420.9, 5.0], [2715.9, 5.0]],
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [75, 79, 85], wet: { cs: [90, 95, 102] } },
+    medals: { cs: [75, 79, 85], wet: { cs: [82, 86, 92] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the park's
     // roads are the buses' (the city's green buses up to the tower), the taxis and the tourists' cars, the delivery vans and scooters below in the town
     traffic: { mix: [0.56, 0.14, 0.2, 0.08, 0.02], bike: 5200 },
