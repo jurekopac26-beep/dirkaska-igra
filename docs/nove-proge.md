@@ -126,6 +126,7 @@ Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvest
 - **Vprašanja uporabniku** (uporabnik 31. 10.: »vedno tako, da samo kliknem izbiro«): vsa, tudi potrditve, na stran Odločitve (`ArtifactData` `set`, zbirka `vprasanja`, oštevilčene možnosti; oblika v `CLAUDE.md`, Seje, »Vprašanja za uporabnika«, in `docs/vprasanja.md`, PR #227). V pogovoru samo, če stran ni dosegljiva.
 - **Kamera (1B)**: kamera za avtom gleda strmo navzdol; s posnetkov (`tools/shot.mjs <id> --m …`) se vidi predvsem cesta, robovi, teren ob njej in pobočja, obzorje komaj. Grafiko dodelaj tam.
 - **Kraki serpentin (1B)**: cesta v igri (11 m) je širša od prave, zato se ograji dveh krakov skoraj dotikata in teren med njima je bil temna stena nad »zobmi« 5-metrske mreže. Rešitev v `buildPrelaz`: zid iz zidanega kamna (`bk`, `plWallTex`) od roba zgornjega kraka do police ob spodnjem, teren pod njim spuščen prek `API.caBank` (kljuka v `caH`, velja samo za progo, ki jo je nastavila). Za diagnozo: `World.api` v brskalniku (`caGround`, `vrNear`, `T`) in začasna kričeča barva mreže. Nova proga dobi zidove sama, če ima tesne serpentine.
+- **Ozke konice serpentin (Limalimo)**: OpenStreetMap ima konice serpentin pogosto s polmerom ~4 m (pregloboko za avte in kamero). `polmer` v `proge.json` (npr. 10) jih odpre na ta polmer in kraka znova razmakne (`tools/proga/README.md`). Test proge naj zasuk serpentine meri v oknu do polovice razdalje do sosednje (dve serpentini tik druga za drugo, `tests/limalimo.test.js`).
 
 ## Stanje
 

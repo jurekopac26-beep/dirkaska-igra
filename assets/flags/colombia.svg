@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Colombia</title>
+  <!-- Ratio 2:3: three horizontal bands, yellow half the height, blue and red a quarter each (Decree 1967 of 1991).
+       Colours: yellow #FCD116, blue #003893, red #CE1126. -->
+  <rect width="900" height="600" fill="#CE1126"/>
+  <rect width="900" height="450" fill="#003893"/>
+  <rect width="900" height="300" fill="#FCD116"/>
+</svg>

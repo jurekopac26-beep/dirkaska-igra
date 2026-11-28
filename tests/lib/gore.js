@@ -1,7 +1,7 @@
 // The checks every short road of docs/gorske-proge.md has (tests/<id>.test.js: const G = goreTrack(id); its own checks with G.check; G.done()):
 // 1. the name: "Kraj, Država" as in the plan's table, the English one too, the side of the road they drive on; an open road with four ways to drive
 //    it (the race, the time trial, the duel in the traffic, the run from the police), four checkpoints, no round of the big championship
-// 2. the stage: 2.5-3 km between the lines (the plan; a short road to a landmark its own, goreTrack(id, { km })), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
+// 2. the stage: 2.5-3 km between the lines (the plan; a short road to a landmark its own, goreTrack(id, { km }); { gentle: true } for a road without bends), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
 //    the finish
 // 3. the data of the import (tools/proga-uvoz.mjs): the terrain and the land cover decode to their grids, the bends in order and turning the way
 //    they say, the legs of the hairpins apart and the barriers off the asphalt, the grades, the side roads in order within the road drawn, the lifts
@@ -10,6 +10,7 @@
 // 5. a duel in the traffic on autopilot: both reach the finish, nobody on foot hit, no vehicle stuck for long
 // 6. the medal times of the time trial: gold < silver < bronze, the rain slower, gold the stock rally car on the autopilot x 1.01
 // The options (goreTrack(id, o)): o.km, the stage's length when the plan gives the road another ([lo, hi] km; Isuna, the landmark's road: 3-3.6);
+// o.gentle, a road with gentle bends only (none listed, none over ~45 degrees within 90 m);
 // o.valley, a road up a valley without a bend over 70 degrees within 80 m (the import's bends none): the check is then that it has none
 'use strict';
 const fs = require('fs');
@@ -26,7 +27,7 @@ function goreTrack(id, o = {}) {   // (o: { km: [min, max] } or, as the older te
   if (!def) { console.log('FAIL no track ' + id); process.exit(1); }
   const T = new C.Track(def), wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
   const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
-  const row = fs.readFileSync(path.join(ROOT, 'docs', 'gorske-proge.md'), 'utf8').split('\n').map(l => l.split('|').map(c => c.trim())).find(c => c[2] === '`' + id + '`') || [];
+  const row = fs.readFileSync(path.join(ROOT, 'docs', 'gorske-proge.md'), 'utf8').split('\n').map(l => l.split('|').map(c => c.trim())).find(c => c[2] === '`' + id + '`') || (() => { const E = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'predogled', 'proge.json'), 'utf8'))[id] || {}; return E.ime ? ['', '', '', E.ime, E.en, E.vozi || 'desna'] : []; })();
   const left = /^leva/.test(row[5] || '');
 
   // 1. the name, the ways to drive it
@@ -52,6 +53,9 @@ function goreTrack(id, o = {}) {   // (o: { km: [min, max] } or, as the older te
     if (o.valley) {   // (a valley road: no bend in the import, and none on the road over 70 degrees within 80 m)
       let tmax = 0; for (let d = 0; d < T.raceLen; d += 5) { const a = T.idx(T.startS + d - 40), b = T.idx(T.startS + d + 40); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); tmax = Math.max(tmax, Math.abs(s)); }
       check('bends: a road up a valley, none over 70 degrees within 80 m (none in the import)', !B.length && tmax < 70 / 57.3, `the sharpest ${Math.round(tmax * 57.3)} degrees`);
+    } else if (o.gentle) {   // (a valley road with gentle bends only: no bend listed and none over ~45 degrees within 90 m)
+      let tmax = 0; for (let s = T.startS; s < T.finishS; s += 5) { const a = T.idx(s - 45), b = T.idx(s + 45); let t = 0; for (let i = a; i < b; i++) t += wrap(T.hd[i + 1] - T.hd[i]); tmax = Math.max(tmax, Math.abs(t)); }
+      check('bends: a gentle road, no bend listed and none over ~45 degrees within 90 m', B.length === 0 && tmax < 0.8, `sharpest ${Math.round(tmax * 57.3)} degrees within 90 m`);
     } else check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
     let dmin = 1e9; for (let i = 0; i < T.N; i += 2) for (let j = i + 40; j < T.N; j += 2) dmin = Math.min(dmin, Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]));
     let bmin = 1e9; for (let i = 0; i < T.N; i++) { const nw = T.wa ? Math.max(0, T.w - T.wa[i]) : 0; bmin = Math.min(bmin, T.bl[i] + nw, T.br[i] + nw); }   // (nw: where the road is narrower than its base width, e.g. a gravel stretch, past its own edge)

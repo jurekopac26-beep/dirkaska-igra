@@ -64,6 +64,7 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 | 21 | `cusco` | Cusco, Peru | Cusco, Peru | desna | -71.9895,-13.5175,-71.9755,-13.4985 |
 | 17 | `isuna` | Isuna, Butan | Isuna, Bhutan | leva | 89.47,27.31,89.53,27.345 |
 | 17 | `koli` | Koli, Finska | Koli, Finland | desna | 29.7555,63.0813,29.836,63.1147 |
+| 17 | `vinales` | Viñales, Kuba | Viñales, Cuba | desna | -83.765,22.598,-83.715,22.632 |
 | 17 | `longyearbyen` | Longyearbyen, Norveška | Longyearbyen, Norway | desna | 15.55,78.192,15.69,78.236 |
 
 ### Smučišča (1–4)
@@ -94,6 +95,7 @@ Krog z boksi po vzoru obstoječih cestnih dirkališč (npr. `newcastle`, `detroi
 14. **Punta del Este**: ~2,8 km po ulicah polotoka ob pristanišču (postavitev cestnih dirk električnih avtov 2014–2018). Ob obalni cesti (poimenovana po osebi) je v pasu 60 m morje na 3,3 km, plaža na 1,7 km in pristanišče z jahtami na 1,1 km. Brez kipa roke na plaži, brez imen hotelov in igralnice.
 15. **Green Point**: ~2,9 km, ulični krog ob stadionu in obali (postavitev cestne dirke električnih avtov 2023). Ob obalni cesti (Beach Road) je v pasu 60 m morje na 0,9 km in plaža na 1,2 km; cesta pride do vode na 12 m (-33.90655,18.39793). Stadion generičen. Vožnja po levi.
 16. **Puerto Madero**: ~2,5 km, ulični krog ob dokih (postavitev cestnih dirk električnih avtov 2015–2017). Voda dokov je ob ulicah na 0,6–1,4 km (ulice so poimenovane po osebah: brez imen). Oblikovanega mostu čez dok ne modeliraj po resničnem.
+17. **Viñales**: 1,34 km asfaltne ceste (OSM: 110 m glavne ceste, pot 598588868, desni zavoj ~103° in vsa asfaltna pot 129513790 po dolini Viñales, od 22.60949,-83.734136 proti severu; naprej je makadam), zmerno zavite, rahlo navzdol, med mogoti (strmi apnenčasti stolpi): vzhodni masiv od ~47 % do ~88 % dirke 28–45 m od sredine ceste (trije stolpi ~14 m), nižji zahodni od ~58 % do ~80 %. Zamenjava za Santiago de Cuba (El Morro je na slepi cesti, odločitev Mateja 15. 11. 2026). Brez stenske poslikave, napisov in imen lokalov. Opis: `docs/proge/vinales.md`, PR #707.
 
 ## Podatki
 
@@ -172,3 +174,4 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 | C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | Yungas: ne začni (brez izletne cone, 5. 11. 2026); Ella preneseno: A10 v `docs/nove-proge-1-0.md` (del 2, N5) |
 | C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | preneseno v `docs/nove-proge-1-0.md` (del 2): Dadès A7 (PR #508), Santo Antão A8 (PR #521), Espinazo del Diablo A11 |
 | D | 14 Punta del Este, 16 Puerto Madero (Green Point odpade) | `gorske-proge/skupina-D` | odpade (Punta del Este in Puerto Madero: ne začni, brez izletne cone, 5. 11. 2026) |
+| 17 | Viñales namesto Santiaga de Cube (Matej, 15. 11. 2026) | `proga/morro` | PR #707 (osnutek) |
