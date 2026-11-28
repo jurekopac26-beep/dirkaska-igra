@@ -1795,6 +1795,27 @@
    "life:MeshBasicMaterial": "29dc330"
   }
  },
+ "envalira": {
+  "meshes": 72,
+  "verts": 166304,
+  "instances": 0,
+  "props": 18,
+  "crowd": 0,
+  "world": "4abbeacc",
+  "propsHash": "d0ba69ab",
+  "floor": "7a088c17/1456",
+  "groups": {
+   "-:MeshLambertMaterial": "722102bb",
+   "-:MeshBasicMaterial": "fdf5dd25",
+   "flags:MeshLambertMaterial": "503ba7f7",
+   "ao:MeshBasicMaterial": "78c6cb6a",
+   "roadwear:MeshLambertMaterial": "784e0923",
+   "worn:MeshLambertMaterial": "2c7a3522",
+   "life:MeshLambertMaterial": "5bfb6f28",
+   "lifeShadow:MeshBasicMaterial": "d5594590",
+   "life:MeshBasicMaterial": "5522b51b"
+  }
+ },
  "cpalace": {
   "meshes": 312,
   "verts": 485500,

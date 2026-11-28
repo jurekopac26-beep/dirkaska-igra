@@ -544,5 +544,12 @@
   "kverts": 364,
   "maxKverts": 433,
   "jsMs": 1.47
+ },
+ "envalira": {
+  "calls": 140,
+  "maxCalls": 155,
+  "kverts": 338,
+  "maxKverts": 352,
+  "jsMs": 1.34
  }
 }

@@ -14,6 +14,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Proga | `id` | Vrsta | Dolžina | °/km | Ravnine | Lasnice | Višina |
 |---|---|---|---|---|---|---|---|
 | Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
+| Envalira, Andora | `envalira` | krog | 0,7 km | 1240 | 16 % | 3 | ravno |
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
 | Mã Pí Lèng, Vietnam | `mapileng` | odprta cesta | 1,0 km | 963 | 24 % | 3 | +61 m |
@@ -86,6 +87,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Portobelo, Panama | `portobelo` | odprta cesta | 2,6 km | 195 | 71 % | 0 | +5 m |
 | Isuna, Butan | `isuna` | odprta cesta | 3,4 km | 185 | 65 % | 0 | +31 m |
 | Luanda, Angola | `luanda` | odprta cesta | 3,5 km | 119 | 85 % | 0 | +0 m |
+| Longyearbyen, Norveška | `longyearbyen` | odprta cesta | 4,3 km | 60 | 92 % | 0 | +112 m |
 | Isalo, Madagaskar | `isalo` | odprta cesta | 2,5 km | 44 | 96 % | 0 | −33 m |
 <!-- meritve:konec -->
 
