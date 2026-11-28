@@ -18,7 +18,7 @@ Dirkališče v sipinah ob Severnem morju severno od Zandvoorta (Severna Holandij
 Odločitve O-28-6, O-28-6 (dodatek), O-28-7 in O-28-17; merilo v `docs/dodelava-prog.md` (vrzel: brez komentatorja, 13 zanimivosti brez vrstic, sipine in morje niso dodelani). Samo dejstva iz navedenih virov.
 
 - **Lega:** obmorski pas sipin v Kennemerlandu (Severna Holandija), na severnem robu kraja Zandvoort; vzhodno in severno od proge so sipine narodnega parka Zuid-Kennemerland (Wikipedia, »Zuid-Kennemerland National Park«). Severno morje je ~450 m zahodno za prvo vrsto sipin (OSM `natural=coastline`); s ceste se ga ne vidi.
-- **Višina:** start 4,7 m nad morjem, krog med ~4 in ~12 m, 8 m razpona (Copernicus DEM GLO-30, `ZV_H`); v igri `alt: [4, 12]`.
+- **Višina:** start 4,7 m nad morjem, krog med ~3 in ~11 m, 8 m razpona (Copernicus DEM GLO-30, `ZV_H`); `def.alt` ostane prazen (na krožni progi sta start in cilj ista točka).
 - **Tla in relief:** mlade obmorske sipine iz apnenčastega peska (Wikipedia, »Zuid-Kennemerland National Park«: sipine, bogate z apnom); razpihani peščeni žepi med njimi (OSM `natural=sand`), suhe kotanje in ribniki v dolinah med sipinami (OSM `natural=water`).
 - **Rastje:** na prvi vrsti sipin peščeni bilnjak (helm), ki so ga sadili za obrambo obale; grmi rakitovca (habitat 2160, »sipine z rakitovcem«); sive sipine s travo in mahom; sestoji borov in brez na notranji strani (LIFE11 NAT/NL/000776, LIFE09 NAT/NL/000418; ESA WorldCover 2021; Meta in WRI). V igri že tako (bt6, bt34, bt63; pas 4,5–30 m v #1138).
 - **Podnebje:** zmerno oceansko (Köppen Cfb): mile zime, hladna poletja, dež čez vse leto, pogost veter z morja (Wikipedia, »Climate of the Netherlands«). V igri sivkasta megla in nebo (`look`), dež kot doslej.

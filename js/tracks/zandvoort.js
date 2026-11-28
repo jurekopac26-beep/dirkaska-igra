@@ -31,23 +31,29 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: "Dirkališče v sipinah ob Severnem morju pri Zandvoortu: 4,3 km v smeri urinega kazalca, ozko in zavito, s klanci čez sipine. Ciljna ravnina ob obali, lasnica na njenem koncu, nagnjeni levi, čez greben sipine v hitro eso in v dolino, zanka okoli sipin in ribnikov, po zadnji ravnini v šikano in skozi nagnjeni zadnji ovinek nazaj na ravnino. Ob progi sipine s šopi trave in rakitovcem, peščeni žepi, velike tribune in boksi ob ciljni ravnini (zapelji vanje in mehaniki ti popravijo avto).",
     en: { name: 'Zandvoort, Netherlands', desc: "A circuit in the dunes by the North Sea at Zandvoort: 4.3 km, clockwise, narrow and twisty, up and down over the dunes. The main straight along the coast, the hairpin at its end, the banked left, over the crest of a dune into the fast esses and down into the valley, a loop round the dunes and the ponds, along the back straight into the chicane and round the banked last corner onto the straight. Dunes of marram grass and sea buckthorn, sand, big grandstands and the pits along the main straight (drive in and the mechanics fix your car)." },
     start: [0, 0], runoff: 1.0, inner: 4, side: 6, gradeForce: true, elevSmooth: 10, realKm: 4.259,
+    // the commentator's own lines for the race round it (Comm; game.js ownLine 'intro' and 'go' of a circuit): the dunes of Kennemerland by
+    // the North Sea, the 4.3 km and two banked corners, the wind off the sea (docs/proge/zandvoort.md, Raziskava kraja)
+    comm: {
+      intro: ["Welcome to {track}, in the dunes by the North Sea! {laps} laps, {cars} cars, and you line up {grid} on the grid.", "Here we are at {track}: four point three kilometres up and down the sand hills, with two banked corners. {laps} laps, and you start {grid}.", "Good day from the coast at {track}! Grey sky, a fresh wind off the sea and sand on the kerbs. {cars} cars, {laps} laps, and you start from {grid}."],
+      go: ["Lights out, and away they go into the dunes!", "And they're off, down the straight to the hairpin!", "Green light! {cars} cars charging for the hairpin at the end of the straight!"],
+    },
     elev: ZV_H.map((h, i) => [i / ZV_H.length, h / 10]),
     bank: [[795, 900, 0.32], [3655, 3860, 0.32]],   // the banked left after the hairpin and the banked last corner: 32 % (18 degrees), as the real ones
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
-      ["Lasnica na koncu ravnine", 160.4, -315.3, ["Hard on the brakes for the hairpin at the end of the straight!", "Right round the hairpin, the dunes towering over it!", "Into the hairpin, the whole field squeezing in!"]],
+      ["Lasnica na koncu ravnine", 160.4, -315.3, ["Hard on the brakes for the hairpin at the end of the straight!", "Right round the hairpin, the dunes towering over it!", "Into the hairpin, the whole field squeezing in!", "The grandstand in the hairpin, packed on the dune above the gravel!"]],
       ["Desni za boksi", 133.8, -21.1, ["The quick right behind the pits!", "Through the right behind the paddock!", "Right-hander, behind the pits!"]],
-      ["Nagnjeni levi", 24.6, 56.3, ["The banked left, lean on the bowl!", "Round the banked left, flat on the slope!", "Use the banking through the left!"]],
-      ["Greben sipine", 283, 60.5, ["Over the crest of the dune!", "Up and over the dune ridge, light on the wheels!", "Blind over the top of the dune!"]],
+      ["Nagnjeni levi", 24.6, 56.3, ["The banked left, lean on the bowl!", "Round the banked left, flat on the slope!", "Use the banking through the left!", "Round the banked left, the crowd on the dune bank right above!"]],
+      ["Greben sipine", 283, 60.5, ["Over the crest of the dune!", "Up and over the dune ridge, light on the wheels!", "Blind over the top of the dune!", "Over the dune, marram grass and sea buckthorn on both sides!"]],
       ["Hitra esa", 493.8, 46.9, ["Left and right through the fast esses!", "Flat through the esses in the dunes!", "Through the fast S on the ridge!"]],
       ["Desni v dolino", 828.2, 97.4, ["The long fast right, down into the dune valley!", "Downhill into the fast right!", "Holding it through the right into the valley!"]],
       ["Ostri desni", 697.6, 356.4, ["The sharp right at the far end!", "Brake for the sharp right-hander!", "Round the sharp right!"]],
-      ["Desni ob ribniku", 499.6, 276.5, ["The tight right by the ponds!", "Right, past the pond in the dunes!", "Round the right by the water!"]],
-      ["Levi okoli sipine", 698.2, 157.5, ["The long left round the dune!", "Round the dune, a long left-hander!", "Through the left round the sand hill!"]],
+      ["Desni ob ribniku", 499.6, 276.5, ["The tight right by the ponds!", "Right, past the pond in the dunes!", "Round the right by the water!", "The reeds of the dune pond flash by on the right!"]],
+      ["Levi okoli sipine", 698.2, 157.5, ["The long left round the dune!", "Round the dune, a long left-hander!", "Through the left round the sand hill!", "Round the dune, bare sand blown out of the grass!"]],
       ["Šikana", 128, 175.7, ["Right and left through the chicane!", "Hard on the brakes for the chicane!", "Through the chicane at the end of the back straight!"]],
       ["Desni pred zadnjim", 99.3, 496.1, ["The right before the last corner!", "Through the right, the banking ahead!", "Right-hander, set it up for the bowl!"]],
-      ["Nagnjeni zadnji ovinek", -122.6, 458, ["The banked last corner, flat out on the slope!", "Round the banked bowl onto the straight!", "All the way round the banking!"]],
-      ["Ciljna ravnina", -38.5, 93.5, ["Down the straight by the sea!", "Flat out along the main straight, the pits on the right!", "The main straight, the lap is nearly done!"]],
+      ["Nagnjeni zadnji ovinek", -122.6, 458, ["The banked last corner, flat out on the slope!", "Round the banked bowl onto the straight!", "All the way round the banking!", "Round the steep bowl, the orange flags waving on the bank!"]],
+      ["Ciljna ravnina", -38.5, 93.5, ["Down the straight by the sea!", "Flat out along the main straight, the pits on the right!", "The main straight, the lap is nearly done!", "Down the straight, the North Sea just beyond the first row of dunes!"]],
     ],
     turns: [[164.4,-314.8],[134.2,-22],[28.5,45],[402.9,80.6],[566.2,9.1],[827.2,129.2],[700.6,353.8],[499.9,285.5],[698.2,157.5],[163.2,209.2],[81,182.4],[97.9,497.6],[-120.2,461.2]],   // the corners' apexes: the hairpin, the right behind the pits, the banked left, the esses (2), the right into the valley, the sharp right, the right by the ponds, the left round the dune, the chicane (2), the right before the last corner, the banked last corner
     pit: [14, -240, 255, 95],   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the finish line)
