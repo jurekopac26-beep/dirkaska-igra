@@ -31,10 +31,10 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
 // four lefts each turning left by at least 55 ° within 80 m of its place; the tightest radius on the centre line (Turn 4) a left, no bend
 // under 50 m; the legs of the oval far apart; the 4 apexes (the number boards) in their order
 {
-  const order = ['Prvi levi', 'Drugi levi', 'Zadnja ravnina', 'Tretji levi', 'Četrti levi', 'Lomljena ravnina'], lefts = ['Prvi levi', 'Drugi levi', 'Tretji levi', 'Četrti levi'];
+  const order = ['Glavna tribuna', 'Prvi levi', 'Drugi levi', 'Notranja proga', 'Zadnja ravnina', 'Predor', 'Tretji levi', 'Četrti levi', 'Vhod v bokse', 'Lomljena ravnina', 'Most nad progo'], lefts = ['Prvi levi', 'Drugi levi', 'Tretji levi', 'Četrti levi'];
   const turn = (s) => { let a = 0; for (let d = -80; d <= 80; d += T.ds) a += T.k[T.idx(s + d)] * T.ds; return -a * 180 / Math.PI; };
   const at = def.names.map(([nm, x, z]) => { const q = near(x, z); return { nm, d: q.d, off: q.off, deg: turn(q.i * T.ds) }; });
-  check('places: the 6 named places in their order round the lap (Turn 1 ... the dogleg front stretch), each on the road, the commentator\'s lines for each',
+  check('places: the 11 named places in their order round the lap (the main grandstand ... the gantry bridge), each on the road, the commentator\'s lines for each',
     at.map(c => c.nm).join('|') === order.join('|') && at.every((c, k) => c.off < 6 && (k === 0 || c.d > at[k - 1].d)) && def.names.every(c => Array.isArray(c[3]) && c[3].length >= 2),
     at.map(c => `${c.nm} ${Math.round(c.d)} m`).join(', '));
   const cs = at.filter(c => lefts.includes(c.nm)), bs = at.find(c => c.nm === 'Zadnja ravnina');
@@ -74,6 +74,17 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
 }
 // 5. the scenery data (tools/aguascalientes/build.py): terrain and land cover round the track, the hills on the horizon (heights above the
 // circuit's plain, not saturated), the stands and towers (the track's own models, not the shared grandstands), the service roads (OSM);
+// the facts and the commentator: the altitude of the plateau (def.alt: a lap, the same at both ends; Core's altAt the road's own rise and
+// fall round it, 1855-1860 m), the oval's own welcome and start (def.comm: intro, introOne, go; game.js ownLine), with the shared
+// placeholders only
+{
+  const alts = []; for (let s = 0; s < T.len; s += 10) alts.push(T.altAt(T.hy[T.idx(s)]));
+  const C = def.comm || {}, keys = ['intro', 'introOne', 'go'], ph = (L) => L.every(l => (l.match(/\{\w+\}/g) || []).every(p => ['{track}', '{laps}', '{cars}', '{grid}'].includes(p)));
+  check('facts: def.alt 1850-1870 m at both ends, the altitude round the lap 1855-1860 m; the commentator\'s own intro, introOne and go lines (2 or more each, shared placeholders)',
+    def.alt && def.alt[0] === def.alt[1] && def.alt[0] > 1850 && def.alt[0] < 1870 && Math.min(...alts) > 1855 && Math.max(...alts) < 1860.5 && keys.every(k => Array.isArray(C[k]) && C[k].length >= 2 && ph(C[k])),
+    `alt ${def.alt}, ${Math.min(...alts).toFixed(1)}-${Math.max(...alts).toFixed(1)} m`);
+}
+
 // only place names
 {
   const sk = def.sk, inGrid = (g) => { const x1 = g.x0 + g.nx * g.cell, z1 = g.z0 + g.nz * g.cell; for (let i = 0; i < T.N; i++) if (T.px[i] < g.x0 + 300 || T.px[i] > x1 - 300 || T.pz[i] < g.z0 + 300 || T.pz[i] > z1 - 300) return false; return true; };

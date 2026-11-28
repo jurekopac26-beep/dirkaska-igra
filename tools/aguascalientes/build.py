@@ -47,12 +47,17 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races or the circuit
 # (CLAUDE.md, Pravna varnost); four lefts in two half circles, the back straight, the dogleg of the front straight ----
 NAMES = [
+    ('Glavna tribuna', 60, ['Past the main grandstand and its suites!', 'The big curved grandstand on the right!', 'Right under the suites of the main grandstand!']),
     ('Prvi levi', 330, ['Into Turn 1, the first of the lefts!', 'Down into Turn 1!', 'Turn 1, keep it low on the line!']),
     ('Drugi levi', 450, ['Through Turn 2 onto the back straight!', 'Out of Turn 2, foot down!', 'Turn 2, the exit matters here!']),
-    ('Zadnja ravnina', 640, ['Flat out down the back straight!', 'The back straight, look for the draft!', 'Side by side down the back straight!']),
-    ('Tretji levi', 900, ['Into Turn 3!', 'Brake and turn in for Turn 3!', 'Turn 3, the far end of the oval!']),
+    ('Notranja proga', 540, ['The twisty road of the infield peels off on the left!', 'Past the infield road, where the road course turns in!', 'The infield road on the left, not for us today!']),
+    ('Zadnja ravnina', 610, ['Flat out down the back straight!', 'The back straight, look for the draft!', 'Side by side down the back straight!']),
+    ('Predor', 690, ['Over the little tunnel under the back straight!', 'Right over the service tunnel!', 'Down the back straight, over the tunnel!']),
+    ('Tretji levi', 900, ['Into Turn 3, past the tower in the infield!', 'Brake and turn in for Turn 3!', 'Turn 3, the far end of the oval!']),
     ('Četrti levi', 1000, ['Turn 4, the last of the lefts!', 'Through Turn 4 towards the line!', 'Out of Turn 4 onto the front straight!']),
-    ('Lomljena ravnina', 1240, ['Through the dogleg of the front straight!', 'The kink in front of the grandstand!', 'Flat through the dogleg!']),
+    ('Vhod v bokse', 1120, ['The pit lane opens on the left!', 'Past the way into the pits!', 'The pit lane on the inside, the crews are waiting!']),
+    ('Lomljena ravnina', 1240, ['Through the dogleg of the front straight!', 'The kink in front of the little stand!', 'Flat through the dogleg!']),
+    ('Most nad progo', 1265, ['Under the gantry of the tower!', 'Under the bridge, towards the line!', 'Through under the tower\'s gantry!']),
 ]
 # the apexes of Turns 1-4 (their number boards): the two half circles at the ends of the oval
 TURNS = [330, 450, 900, 1000]
@@ -226,6 +231,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: %(desc)s,
     en: { name: 'Aguascalientes, Mexico', desc: %(desc_en)s },
     start: [0, 0], runoff: 1.1, inner: 4.2, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s, runoffTarmac: true,
+    alt: [%(alt)s, %(alt)s],   // the finish line's height above the sea (m; Copernicus DEM): a lap, so the start's and the finish's the same (Core's altAt: the road's own rise and fall round it)
+    // the commentator's own lines here (game.js ownLine): the welcome and the start of a race round the oval, the high plateau's thin air
+    comm: {
+      intro: ["Welcome to {track}! {laps} laps of the oval, {cars} cars, and you line up {grid} on the grid.", "Good day from the high plateau of central Mexico, almost nineteen hundred metres up. {laps} laps, four lefts each, and you start {grid}.", "Here we are at {track}! Thin air, a short oval and {cars} cars. {laps} laps, and you start {grid}."],
+      introOne: ["Welcome to {track}! One lap of the oval, four lefts, and you start {grid}.", "Here we are on the high plateau. One lap, a full field, and you line up {grid}."],
+      go: ["Lights out, and away they go towards Turn 1!", "And they're off! Four lefts and the dogleg, lap after lap!", "Green light! The pack charges past the grandstand!", "Go, go, go! The race is on, high on the plateau!"],
+    },
     elev: AG_H.map((h, i) => [i / AG_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
@@ -253,7 +265,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   });
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), lbh=lbh, h0='%.1f' % H0, hmin='%.0f' % H.min(), hmax='%.0f' % H.max(), desc=json.dumps(DESC, ensure_ascii=False),
-           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
+           desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, alt='%.0f' % H0, names='\n'.join(names), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), stands=js(STANDS).replace(',', ', '), sectors=json.dumps(SECTORS), pads=json.dumps([[o, mv(q)] for o, q in json.load(open(os.path.join(HERE, 'pads.json')))['pads']], separators=(', ', ': ')).replace(', ', ',').replace('],[', '], ['), tunnel=json.dumps(mv(json.load(open(os.path.join(HERE, 'pads.json')))['tunnel'])).replace(' ', ''), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'aguascalientes.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights (%.1f .. %.1f m above the finish line, %.1f m a.s.l.);' % (hk.min() - H0, hk.max() - H0, H0),
