@@ -70,6 +70,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Realizem E · Cesta in predmeti (`docs/realizem.md`), 15 prog v skupinah, ~23 sej | po tedenskem načrtu | **na `main` prvi** med realizmi, E → S → G (`js/world.js`) |
 | Realizem S · Stavbe, ~21 sej | po tedenskem načrtu | za E; Medvode po #494 |
 | Realizem S0–S3 · Stavbe na obrisih iz OSM (#668, #696, #699, #714: Spa, Nürburg, Livorno, Montréal, Bâlea, Los Caracoles) | jure.kopac26, croatiadata, partyslo | #696, #699, #714 odobreni na slikah (Matej, #382 7165701177, 25. 11.); na `main` po vrsti za #668 |
+| Realizem S4 · Štajerska (#713): tribune in stavba boksov na obrisih iz OSM, brez hiš, priklop v `js/world-rbring.js` | partyslo | nad #714 (S3); na `main` za #714 |
 | Realizem G · Rastje in teren, ~16 sej | po tedenskem načrtu | za S |
 | Realizem P · Poškodbe skupaj s Trki (#608), ~16 sej | biketraveler | takoj po #480, 30 avtih in #569 + #494; na `main` ~7. 12. |
 | Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo, croatiadata | potrjene 13. 11. (glej zgoraj); brez izletne cone se ne začnejo, razen 4 prog s prepadom (ograja na strani prepada) |
@@ -137,16 +138,15 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 10.14 | #755 Meni: gumba načina in težavnosti brez okna; Police chase: izbira strani | partyslo | 24. 11.: svež main spojen, menu.test lokalno zelen (tudi 640 × 360); pripravljen, združi seja Združevanje (odločitev Mateja 24. 11.). |
-| 10.14 | #821 Zbirna grafika (chase) biketraveler | Kamera za avtom, tla ob cesti: #815 (9 prog), #820 (7 prog), #826 (5 prog), vse POTEM (odločitev uporabnika 20. 11.); #824 čaka končni »ok« | biketraveler | povezani testi zeleni (20. 11.); osnutek do vrste, združi seja Združevanje |
-| 10.14 | #965 Predogled do 12 | `MAX` 8 → 12, da izbira prog ne da 404 (majhen, brez konfliktov) | jure.kopac26 | osnutek, testi zeleni |
-| 10.15 | #945 Pravila 22. 11. | dnevni PR pravil (`CLAUDE.md`, `docs/odlocitve.md`) | jure.kopac26 | osnutek |
-| 10.16 | #943 Krásna Hôrka, Slovaška | nova proga 3,4 km (veja `proga/spis`), testi zeleni; v sporu z `main`, ob združitvi spoji; proge zadnje (Matej, #382 7079559816) | partyslo | osnutek |
-| 10.13 | #704 | Krásna Hôrka, Slovaška (`krasnahorka`, ~0,64 km): kratka proga z znamenitostjo, dovozna cesta v klanec do gradu, grad po obrisu OSM cel kot pred požarom 2012 (odločitev uporabnika prek Mateja 15. 11. 2026); proga, zato na koncu, z naslednjim PR prog | jure.kopac26 | pripravljen, povezani testi lokalno zeleni (15. 11.); osnutek do vrste; predaja v opisu PR |
-| 10.17 | #695 | Džebel Hafit, Združeni arabski emirati (`hafit`, nova proga, izjema izletne cone po odločitvi uporabnika 14. 11. 2026 ob ~1.55); na odločanju (`pending: true`, odločitev uporabnika 16. 11. 2026, vprašanje `ena-proga-zae`: Džebel Hafit ali Abu Dabi #547), na `main` z oznako, kot Medvode in Marrakesh | partyslo (prevzem od jure.kopac26) | svež `main` spojen 24. 11., povezani testi lokalno zeleni; osnutek do vrste (proge zadnje), združi seja Združevanje; predaja v opisu PR |
-| 10.17 | #1057 Longyearbyen med testne | `test: true` za Longyearbyen, Norveška, kotni video iz menija (prošnja uporabnika, #382 7121179904); proga, zato zadnje | partyslo | pripravljen, svež `main`, povezani testi 18/18 (24. 11.); osnutek do vrste; predaja v opisu PR |
-| 10.18 | #1026 Zbirka obcestje 23. 11. b | grafika ob progi za 8 prog (Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro), odločitve uporabnika izvedene; predaja v opisu PR | partyslo | svež `main` (25. 11.), zlate vrednosti 8 prog; osnutek do vrste |
-| 10.18 | #1066 Orodje za predajo | `tools/predaja.mjs`: osnutek predaje (opis PR do ~20 vrstic) iz commitov veje, test, kazalo, varčevanje (Matej, #382 7148056618, točka 10); orodje, ne proga | partyslo | osnutek, povezani testi zeleni; predaja za Združevanje partyslo |
+| 10.1 | #1069 | Grafika: zmogljivost v gneči 100 avtov (dim 15 m, test gneče) | jure.kopac26 | **prva prednost (Matej 27. 11., #1161)**: gneča; osnutek, »Ready for review« ob mestu med prvima dvema; pred združitvijo svež `main`, `test:related`. |
+| 10.2 | #1119 | Zatikanje na startu: testi in meritve | partyslo | **druga prednost (Matej 27. 11., #1161)**; osnutek, »Ready for review« ob mestu med prvima dvema; pred združitvijo svež `main`, `test:related`. |
+| 10.3 | #1093 | Nova proga Kudowa-Zdrój, Poljska (`proga/kudowa`; odločitev uporabnika 26. 11. ob 11.03: po #1069 in #1119) | partyslo | osnutek; »Ready for review« ob mestu med prvima dvema; pred združitvijo spoji svež `main`, `test:related`, `stamp --check`. |
+| 10.4 | #1068 | Profil igralca: dosežki, statistika, izvoz, kopije, primerjava avtov, »ZA TO PROGO« | jure.kopac26 | osnutek; testi zeleni 27. 11. (`test:related` 26/26, `menu.test` 322/322, `stamp --check`); »Ready for review« ob mestu med prvima dvema, pred združitvijo svež `main`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
+| 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
+| 10.21 | #1243 | Dodelava: Tianmen, Kitajska (gozd po WorldCover; `dodelava/tianmen`) | jure.kopac26 | osnutek, testi zeleni; po #1242; pred združitvijo svež `main`, `test:related`. |
+| 10.22 | #1242 | Dodelava: Los Caracoles, Čile (O-28-39/O-28-46: Matej potrdil brez slik; samo `js/tracks/caracoles.js`, `docs/proge/caracoles.md`, README »Zasluge«) | jure.kopac26 | »Ready for review«; pred #1243; pred združitvijo svež `main`, `test:related`. |
+| 10.23 | #1085 | Zbirka: realizem ostanki 25. 11. (#798, #811, #818, #809; `zbirna/realizem-ostanki`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
+| 10.24 | #1030 | Grafika: telefon, gumirana linija kroga v enem obsegu risanja (`grafika/telefon-oglisca`) | partyslo | osnutek; partyslo javlja zeleno na svežem `main`; Matej potrdil 28. 11. (O-28-48). |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.

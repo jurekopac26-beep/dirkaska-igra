@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<title>Mauritius</title>
+<!-- Ratio 2:3. Four horizontal bands of equal height, from the top: red, blue, yellow, green.
+     Colours: red #EA2839, blue #1A206D, yellow #FFD500, green #00A551. -->
+<rect width="900" height="150" fill="#EA2839"/>
+<rect y="150" width="900" height="150" fill="#1A206D"/>
+<rect y="300" width="900" height="150" fill="#FFD500"/>
+<rect y="450" width="900" height="150" fill="#00A551"/>
+</svg>
