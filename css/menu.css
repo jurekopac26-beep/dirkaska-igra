@@ -495,6 +495,11 @@ svg { display: block; }
 /* the track's place among the real tracks of the list (17 / 26; a test track: TEST), at the picture's bottom left */
 .tcount { position: absolute; left: 10px; bottom: calc(var(--ov, 0px) + 10px); z-index: 4; height: 38px; padding: 0 11px; display: flex; align-items: center; border-radius: 8px; background: rgba(10, 14, 20, .45); pointer-events: none;
   color: #fff; font: 800 italic 16px/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: .2px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+/* the flag, the country and the track's length at the picture's foot (one line), between the counter and the cameras (js/menu.js tlenOn puts it in the middle of that room) */
+.tlen { position: absolute; left: 50%; bottom: calc(var(--ov, 0px) + 10px); z-index: 4; transform: translateX(-50%); height: 38px; padding: 0 11px; display: flex; align-items: center; border-radius: 8px; background: rgba(10, 14, 20, .45); pointer-events: none;
+  color: #fff; font: 800 italic 15px/1 var(--f-ui); font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+.tlen[hidden] { display: none; }
+.tlen { gap: .4em; } .tlen img { height: .87em; width: auto; flex: none; border-radius: 2px; }
 /* the weather: down the right side under the globe, no frames; the chosen one 52 px in its colours with its name, the others 40 px grey;
    the more options (···) under them */
 .wxv { position: absolute; right: 14px; top: calc(84px + var(--st, 0px)); width: 52px; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -592,7 +597,7 @@ svg { display: block; }
   .hgraph { top: calc(62px + var(--st, 0px)); width: 64px; height: 40px; padding-top: 4px; }   /* (under the back button, at its left) */
   .wxv { top: calc(62px + var(--st, 0px)); width: 44px; gap: 4px; }   /* (under the globe) */
   .wxv svg { width: 30px; height: 30px; } .wxv [aria-pressed="true"] svg { width: 40px; height: 40px; } .wxv b { font-size: 11px; } .wxmore { height: 20px; line-height: 20px; }
-  .tcount, .cams { bottom: calc(var(--ov) + 8px); } .tcount { height: 34px; padding: 0 9px; font-size: 14px; } .cams { padding: 3px; gap: 3px; } .cams button { width: 28px; height: 28px; } .cams button[aria-pressed="true"] { width: 36px; } .cams button svg { width: 18px; height: 18px; }
+  .tcount, .tlen, .cams { bottom: calc(var(--ov) + 8px); } .tcount, .tlen { height: 34px; padding: 0 9px; font-size: 14px; } .cams { padding: 3px; gap: 3px; } .cams button { width: 28px; height: 28px; } .cams button[aria-pressed="true"] { width: 36px; } .cams button svg { width: 18px; height: 18px; }
   .dio.friends { --fpad: calc(64px + var(--st, 0px)) 62px calc(var(--ov) + 50px) 10px; }
   .trow { min-height: 50px; margin-top: 8px; padding-top: 4px; padding-bottom: 4px; } .trow .opp b { font-size: 32px; } .trow .flag img { height: 30px; max-width: 60px; }
   .nbrs { padding-top: 6px; } .nb { height: 44px; }
@@ -1048,7 +1053,11 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .room { display: contents; }   /* (its parts placed on the screen) */
   #s-track :is(.stage, .rcard) { position: absolute; flex: none; min-height: 0; overflow: hidden; touch-action: pan-y;
     left: calc(var(--ox) + var(--x) * var(--u)); top: calc(var(--oy) + var(--y) * var(--u)); width: calc(var(--w) * var(--u)); height: calc(var(--h) * var(--u)); border-radius: calc(var(--r) * var(--u));
-    box-shadow: 0 0 0 calc(3 * var(--g) * var(--u)) rgba(255, 198, 41, var(--g)), 0 calc((12 - 4 * var(--t)) * var(--u)) calc((30 - 10 * var(--t)) * var(--u)) rgba(0, 0, 0, calc(.6 - .1 * var(--t))), inset 0 0 0 1px rgba(255, 255, 255, calc(.2 * var(--t))); }
+    box-shadow: 0 0 0 calc(3 * var(--g) * var(--u)) rgba(var(--vc), var(--g)), 0 0 0 calc(3 * var(--g) * var(--u) + 1.5px) rgba(255, 255, 255, calc(var(--vo) * var(--g))), 0 calc((12 - 4 * var(--t)) * var(--u)) calc((30 - 10 * var(--t)) * var(--u)) rgba(0, 0, 0, calc(.6 - .1 * var(--t))), inset 0 0 0 1px rgba(255, 255, 255, calc(.2 * var(--t))); }
+  /* the frame's colour: the track's kind (js/menu.js vrCls; the user's of 26. 11. 2026); the dangerous black with a thin light rim */
+  #s-track :is(.stage, .rcard) { --vc: 255, 198, 41; --vo: 0; }
+  #s-track :is(.stage, .rcard).v-dirkalisce { --vc: 30, 150, 255; } #s-track :is(.stage, .rcard).v-sneg { --vc: 255, 255, 255; } #s-track :is(.stage, .rcard).v-trava { --vc: 40, 200, 80; }
+  #s-track :is(.stage, .rcard).v-mivka { --vc: 255, 205, 40; } #s-track :is(.stage, .rcard).v-nevarne { --vc: 8, 8, 8; --vo: .8; }
   #s-track .stage { --x: 254; --y: 70; --w: 384; --h: 236; --r: 16; --g: 1; --t: 0; z-index: 4; }
   #s-track .rcard { display: block; z-index: 3; cursor: pointer; filter: brightness(var(--b)) var(--wxk, ); background: var(--pic) center / cover no-repeat, #16263c; }
   #s-track .rcard.mdl { background: var(--pic) center 42% / 92% auto no-repeat, linear-gradient(180deg, #2c4b72, #172a44 70%, #101d31); }   /* (the model on the sky) */
@@ -1074,9 +1083,10 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .where { position: absolute; left: calc(252 * var(--u)); top: calc(14 * var(--u)); width: calc(388 * var(--u)); height: calc(52 * var(--u)); font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); }
   #s-track .globe { position: absolute; left: auto; right: calc(var(--sl, 0px) + var(--cm) - var(--ox)); top: calc(var(--st, 0px) + var(--cm) - var(--oy) + 2 * var(--u)); width: max(44px, calc(52 * var(--u))); height: max(44px, calc(52 * var(--u))); }
   /* in the chosen card: its things fade as it turns away (--ui) */
-  #s-track .stage > :is(.hgraph, .wxv, .tcount, .cams), #s-track .stage :is(.mlab, .flab) { opacity: var(--ui, 1); }
+  #s-track .stage > :is(.hgraph, .wxv, .tcount, .tlen, .cams), #s-track .stage :is(.mlab, .flab) { opacity: var(--ui, 1); }
   #s-track .hgraph { left: max(6px, calc(8 * var(--u))); top: max(6px, calc(8 * var(--u))); width: max(60px, calc(78 * var(--u))); height: max(36px, calc(47 * var(--u))); padding-top: calc(6 * var(--u)); }
   #s-track .tcount { left: max(6px, calc(8 * var(--u))); bottom: max(6px, calc(8 * var(--u))); height: max(28px, calc(38 * var(--u))); padding: 0 calc(11 * var(--u)); border-radius: calc(8 * var(--u)); font-size: max(12px, calc(16 * var(--u))); }
+  #s-track .tlen { bottom: max(6px, calc(8 * var(--u))); height: max(28px, calc(38 * var(--u))); padding: 0 calc(11 * var(--u)); border-radius: calc(8 * var(--u)); font-size: max(11px, calc(15 * var(--u))); }
   #s-track .cams { right: max(6px, calc(8 * var(--u))); bottom: max(6px, calc(8 * var(--u))); padding: calc(4 * var(--u)); gap: calc(4 * var(--u)); border-radius: calc(8 * var(--u)); }
   #s-track .cams button { width: max(26px, calc(30 * var(--u))); height: max(26px, calc(30 * var(--u))); } #s-track .cams button[aria-pressed="true"] { width: max(34px, calc(40 * var(--u))); }
   #s-track .cams button svg { width: max(17px, calc(20 * var(--u))); height: max(17px, calc(20 * var(--u))); }
@@ -1516,6 +1526,24 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .trow > :is(.best, .rate, .dif, .md) { padding: 0 1px; }
   #s-track .trow .flag img, #s-track .trow .flag .nf { width: max(36px, calc(60 * var(--u))); height: max(24px, calc(40 * var(--u))); }
 }
+
+/* 23. 11. 2026: ležeče besedilo proge brez odrezanih koncev. Na nizkih zaslonih (telefon, tablica) manjša zastava v vrstici in širša celica
+   »Best race/lap«; na kartah sosedov je ime čez vso širino, zastava in »država · km« pod njim (prej »Termas de Río Hondo« in dolge
+   države odrezane, tudi na namiznem). Pokončni do 380 px: celica »Best« malo širša (»Best race« je bil 1 px predolg). */
+@media (orientation: landscape) and (max-height: 640px), (orientation: landscape) and (max-width: 800px) {
+  #s-track .trow .flag img, #s-track .trow .flag .nf { width: max(36px, calc(51 * var(--u))); height: max(24px, calc(34 * var(--u))); }
+  #s-track .trow .flag { padding-right: 4px; }
+  #s-track .trow > .best { flex-grow: 1.25; }
+}
+@media (orientation: landscape) {
+  #s-track .rlab { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: max(4px, calc(6 * var(--u))); row-gap: calc(3 * var(--u)); align-items: center; }
+  #s-track .rlab > span:last-child { display: contents; }
+  #s-track .rlab b { grid-column: 1 / -1; grid-row: 1; }
+  #s-track .rlab img, #s-track .rlab .nf { grid-column: 1; grid-row: 2; height: max(12px, calc(15 * var(--u))); max-width: max(20px, calc(26 * var(--u))); }
+  #s-track .rlab .nf { width: max(18px, calc(24 * var(--u))); font-size: 7px; }
+  #s-track .rlab small { grid-column: 2; grid-row: 2; }
+}
+@media (orientation: portrait) and (max-width: 380px) { #s-track .trow > .best { flex-grow: 1.12; } }
 
 /* Career 1.0, the valley (js/kariera-dolina.js): a 3D map of the career over a sky; it opens from the career's strip like the Earth (.zem);
    the events' badges and the stages' names follow their pins; a tap: the event's card (from below upright, from the right on its side) */

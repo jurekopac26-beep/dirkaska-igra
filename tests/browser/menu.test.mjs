@@ -680,6 +680,8 @@ try {
     // a pin tapped (Bâlea): its track's card at once; the card's cross: the Earth alone. (Marrakesh until 9. 11. 2026: awaiting the user's
     // choice (pending), behind NEUPORABNO, not on this Earth)
     await page.click('.thead .globe'); await zem(page, 1);
+    // (the pins only close in or in the tapped country, the user's of 26. 11. 2026: closer first)
+    for (let i = 0; i < 8 && await page.evaluate(() => MenuZemlja._R().d >= 2.6); i++) { await page.click('.zem-in'); await page.waitForTimeout(700); }
     // (a pin on top at its own place, Bâlea's if it is: from afar a country's name can lie over a pin and take the tap, as Albania's over Bâlea's since the new tracks, 11. 11. 2026;
     // its country's one track: two steps, else three)
     const pin = await ev(page, 'const on = (e) => { const r = e.getBoundingClientRect(), t = root.elementsFromPoint(r.left, r.top)[0]; return !!t && e.contains(t); }, ps = [...root.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.5 && on(e)), p = ps.find(e => e.dataset.t === "balea") || ps[0], r = p.getBoundingClientRect(), cty = (d) => { const f = (d.en || {}).name || d.name; return f.slice(f.lastIndexOf(", ") + 2); }, k = cty(Core.TRACKS.find(d => d.id === p.dataset.t)), one = Core.TRACKS.filter(d => !d.test && !d.variantOf && cty(d) === k).length === 1; return [r.left, r.top, p.dataset.t, one ? 2 : 3];');
