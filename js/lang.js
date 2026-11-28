@@ -465,7 +465,7 @@
     'Desni na makadamu': 'Gravel Right', 'Južna ravnina': 'South Straight', 'Ostri desni': 'Sharp Right', 'Levi na makadam': 'Left onto the Gravel', 'Makadamska ravnina': 'Gravel Straight',   // (Kildare: its corners by plain descriptions, the gravel among them)
     'Na prelaz': 'To the pass',   // (Izoard: the results of an escape; its places are French names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Desni pregib': 'Right Kink', 'Levi za lasnico': 'Left after the Hairpin', 'Vzpon skozi gozd': 'Climb through the Woods', 'Desni v gozdu': 'Right in the Woods',
-    'Spust k jezeru': 'Down to the Lake', 'Levi ob jezeru': 'Lakeside Left', 'Klanec od jezera': 'Climb from the Lake', 'Zahodni ovinek': 'West Corner', 'Gozdna ravnina': 'Forest Straight',
+    'Spust k jezeru': 'Down to the Lake', 'Levi ob jezeru': 'Lakeside Left', 'Jezero Linezers': 'Lake Linezers', 'Klanec od jezera': 'Climb from the Lake', 'Peščene sipine': 'Sand Dunes', 'Spust s sipin': 'Down off the Dunes', 'Zahodni ovinek': 'West Corner', 'Gozdna ravnina': 'Forest Straight',
     'Severni ovinek': 'North Corner', 'Desni na klancu': 'Right on the Climb', 'Levi na vrhu': 'Left over the Top', 'Spust': 'The Drop', 'Desni pred ravnino': 'Right before the Straight',
     'Levi na ravnino': 'Left onto the Straight',   // (Biķernieki: its corners by plain descriptions, the lake Linezers and the woods by them)
     'Lasnica na koncu ravnine': 'Hairpin at the End of the Straight', 'Desni za boksi': 'Right behind the Pits', 'Nagnjeni levi': 'Banked Left', 'Greben sipine': 'Dune Crest',
