@@ -16,8 +16,10 @@
      end, not both on the one point OSM joins them at (assumed: the lanes' own tapers are not in OSM).
    Kept open (docs/realizem.md: only from sources): the I/9's bridge west of the circuit (OSM bridge=yes, layer=1: no height; the terrain
      model there holds only a few metres of it), so the main road is drawn only where it lies on the ground (its embankment too).
-   Not drawn again: the raceway's own links across the infield (deliberately left out, js/tracks/sosnova.js), the noise barrier and the
-     fence (#844), the streams, the power lines and the buildings (js/world-sosnova.js); a road inside the barriers.
+   Also drawn: the noise barrier by the I/9 and the two fences nearest the circuit at the west (OSM wall=noise_barrier, barrier=fence; no
+     height in OSM: 3 m and 2 m, assumed; docs/proge/sosnova-raziskava.md).
+   Not drawn again: the raceway's own links across the infield (deliberately left out, js/tracks/sosnova.js), the streams, the power lines
+     and the buildings (js/world-sosnova.js); a road inside the barriers.
    Data: OpenStreetMap (© OpenStreetMap contributors, ODbL), the main API, 2026-11-22; metres, origin = the junction where the route
    starts, x east, z south (tools/sosnova/sosnova.json's lat0/lon0); the lines simplified to 0.25 m.
    ===================================================================================================================================== */
@@ -30,6 +32,11 @@
   // the bus stops: x, z, ...; the car park: its outline; the roads: [class, lanes, x0, z0, ...]: class 0 the I/9 (OSM primary), 1 the local
   // road 00913 (tertiary), 2 the asphalt roads without a class (unclassified), 3 the service roads, 4 the car park's aisle; lanes as OSM's
   // lanes tag (0: none)
+  // the noise barrier by the I/9 (OSM wall=noise_barrier, w909569871: no height, no material tag: 3 m of grey panels, assumed) and the two
+  // fences nearest the circuit (OSM barrier=fence, ~15 m and ~35 m from the road at the west: no height, no material: a 2 m wire fence on
+  // steel posts, assumed); the third fence of the data, round the north and the east, is ~96 m off and left out (beyond the 60 m)
+  const WALL = [-297.7,-11,-292.8,-53.1,-287.5,-89.3,-283.2,-112.7,-278.5,-134.1,-273.3,-154.1];
+  const FENCE = [[-284.3,-56.7,-277.6,-115,-254,-189], [-128,34.5,-244.7,25.6,-271.4,3.9,-284.3,-56.7]];
   const STOP = [-82.1, -286.5, 175.4, -41.2, 204.2, -4.7];
   const PARK = [[-71.9,-295.5,-37.9,-284.5,-34.7,-273.2,-77.8,-286.6,-75.6,-293.1]];
   const WAYS = [
@@ -227,6 +234,18 @@
       box(g, x, y + 2.1, z, 0.5, 0.6, 0.04, ang + Math.PI / 2, PLATE, PLATE);
       exclPush(x, z, 1.2); CR.avoid(x, z, 1); st.stops++;
     }
+
+    // the noise barrier and the fences (WALL, FENCE): along their OSM lines on the ground, a panel or a bay per step; none inside the
+    // barriers or on a road here (a piece within 8 m of the circuit's centre line is left out)
+    const WALLC = [0.6, 0.6, 0.57], WALLT = [0.7, 0.7, 0.68], RAIL = [0.56, 0.58, 0.6];
+    st.wall = 0; st.fence = 0;
+    const along = (P, step, fn) => { for (let q = 0; q + 3 < P.length; q += 2) { const ax = P[q], az = P[q + 1], dx = P[q + 2] - ax, dz = P[q + 3] - az, L = Math.hypot(dx, dz), n = Math.max(1, Math.round(L / step)), ang = Math.atan2(dz, dx);
+      for (let k = 0; k < n; k++) { const x = ax + dx * (k + 0.5) / n, z = az + dz * (k + 0.5) / n; if (past(x, z, 8)) fn(x, z, L / n, ang); } } };
+    along(WALL, 4, (x, z, l, ang) => { const g = scen.get(x, z), y = nrGround(x, z) - 0.3; box(g, x, y, z, l + 0.02, 3.3, 0.16, ang, WALLC, WALLT, true); exclPush(x, z, 2.5); CR.avoid(x, z, 2); st.wall++; });
+    for (const F of FENCE) along(F, 3, (x, z, l, ang) => { const g = scen.get(x, z), y = nrGround(x, z) - 0.2, c = Math.cos(ang), sn = Math.sin(ang);
+      box(g, x - c * l / 2, y, z - sn * l / 2, 0.06, 2.2, 0.06, ang, POLE, POLE, true);   // (the post at the bay's start)
+      for (const h of [0.25, 1.15, 2.1]) box(g, x, y + h, z, l, 0.03, 0.02, ang, RAIL, RAIL, true);   // (the wires: bottom, middle, top)
+      exclPush(x, z, 1.5); CR.avoid(x, z, 1); st.fence++; });
 
     const opt = { map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 };
     const mat = new THREE.MeshLambertMaterial(opt), matF = new THREE.MeshLambertMaterial(Object.assign({ transparent: true, depthWrite: false }, opt));
