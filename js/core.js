@@ -7354,9 +7354,10 @@ const Core = (function () {
       if (track.sectors) this.secBest = [Infinity, Infinity, Infinity];   // (the best time in each sector of the race so far)
       this._prof();
       // the open road (Vršič): its traffic and its people (opts.traffic: the duel with one rival; opts.police: the run from the police;
-      // opts.netTf: online, beg s prijatelji, the same traffic on every phone from the host's opts.seed, no duel and no time penalties)
+      // opts.netTf: online, beg s prijatelji, the same traffic on every phone from the host's opts.seed, no duel and no time penalties;
+      // opts.tfDens: the traffic's density of its own, e.g. Ti loviš (js/zabava/lov.js) as thin as in the run from the police)
       const netTf = !!(opts.netTf && RMS.length);
-      if (track.open && (opts.traffic || opts.police || netTf) && !opts.noPlayer && !this.timeTrial) { this.tf = new Traffic(this, opts.police || netTf ? 0.85 : 1); this.tf.net = netTf; }   // (net: the friends' cars count for the traffic, see Traffic.step)
+      if (track.open && (opts.traffic || opts.police || netTf) && !opts.noPlayer && !this.timeTrial) { this.tf = new Traffic(this, opts.tfDens || (opts.police || netTf ? 0.85 : 1)); this.tf.net = netTf; }   // (net: the friends' cars count for the traffic, see Traffic.step)
       if (!track.open && opts.endless && this.player && !opts.noPlayer && !this.timeTrial) { this.tf = new Traffic(this, 1); this.en = new Endless(this); }   // (the endless drive on a circuit: race.en, its window of traffic in race.tf)
       if (track.open && opts.police && !opts.noPlayer && !this.timeTrial) this.pol = new Police(this);   // (the run from the police: race.pol)
     }
