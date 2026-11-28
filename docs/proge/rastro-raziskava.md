@@ -36,6 +36,17 @@ Meritev v igri 28. 11. 2026 (sonda v brskalniku, `def.lc` dekodiran kot v `js/wo
 - Po pravilu »vse kot v resnici, samo po virih« gozda na planoti nisem dodajal. Najprej je treba z OSM (ali z izvirnim WorldCover v 10 m) potrditi ali ovreči, kaj raste ob cesti od 3,0 do 4,2 km.
 - Mogoč vzrok razhajanja: igra uporablja WorldCover, prevzorčen na 16 m. Ozki pasovi dreves tik ob cesti (ena do dve krošnji) se pri tem lahko izgubijo. To je treba preveriti na izvirnih 10 m (`esa-worldcover.s3.eu-central-1.amazonaws.com`, ploščica S30W051, je dosegljiva; v okolju manjka knjižnica za branje GeoTIFF).
 
+## Dodelava 28. 11. 2026 (prevzem: biketraveler, O-28-45)
+
+Po vzoru Pikes Peak, samo podatki proge (`js/tracks/rastro.js`, `js/lang.js`); gozd, tla, stavbe, luč in zvok nespremenjeni.
+
+- **Zanimivosti do 60 m** (OpenStreetMap prek Overture Maps 2026-10-21, ODbL): potok Rio do Rastro prečka cesto pri 912 m (novo ime pod uro), most čez potok 1.543–1.551 m (pred 9. ovinkom), razgledišče brez imena 11 m od ceste pri 1.191 m (8. ovinek), Monumento aos tropeiros 5 m od ceste pri 2.155 m (ob slapu), Mirante do Poste 55 13 m od ceste pri 2.567 m (16. ovinek). Lokali, agencije in parki iz istega vira niso uporabljeni (pravna varnost).
+- **Komentator**: stavki za vseh 15 ovinkov (3–17) in za nova mesta; smeri (levo/desno) in serpentine po `curves`.
+- **Števec ovinkov** (kronometer): `turns: 17`, `turnNos` vrne prave številke iz `curves` (1 in 2 sta pod startom).
+- **Prelet proge** (`fly`): START, Rio do Rastro, Lestev serpentin (8. ovinek), Cascata Rio do Rastro, Alto da Serra, CILJ.
+- **Višine** ostanejo po Copernicus DEM GLO-30 (`curves`, `RASTRO_H`).
+- **Gozd na planoti** (odprto vprašanje zgoraj): OSM rabe tal v pasu 30 m ob cesti od 3,0 do 4,2 km: 81 % travišče (`grassland`), 6 % grmovje, 2 % gozd; na pobočju (0–2,95 km) 73–79 % gozd. To potrjuje WorldCover in sedanjo igro: na planoti gozda ni treba dodajati (za Fable, grafika ostane nespremenjena).
+
 ## Prekrivanja z odprtimi PR (teh delov ne spreminjam)
 
 - **#763** (croatiadata, Realizem G): barva tal `rrCol` (RRT) in `World.rastje.tla/listje` okoli zanke gozda, vrstica o deževnem gozdu v `rastro.md`. Če se gostota gozda spremeni, mora biti to majhen poseg samo v verjetnost `p`.
@@ -48,7 +59,7 @@ Meritev v igri 28. 11. 2026 (sonda v brskalniku, `def.lc` dekodiran kot v `js/wo
 
 - ESA WorldCover 2021 v200 — © ESA WorldCover project / Copernicus Sentinel data, CC BY 4.0 (že v `README.md`, »Zasluge«).
 - Copernicus DEM GLO-30 — © DLR/Airbus, Copernicus programme, licenca Copernicus DEM (že v »Zasluge«).
-- OpenStreetMap — © sodelavci OpenStreetMap, ODbL (središčnica, stavbe, slapovi; že v »Zasluge«).
+- OpenStreetMap — © sodelavci OpenStreetMap, ODbL, prek Overture Maps (središčnica, stavbe, slapovi, zanimivosti ob cesti, raba tal; že v »Zasluge«).
 - Javni opisi kraja (rastje na planoti, slana, višina razgledišča):
   - angleška Wikipedija, »Serra do Rio do Rastro«, CC BY-SA 4.0;
   - turistični opisi Bom Jardim da Serra, samo za dejstva, brez besedila: viagensecaminhos.com, catracalivre.com.br.

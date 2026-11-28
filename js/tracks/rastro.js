@@ -39,6 +39,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     bridges: [[1543.3,1551.3]],
     // the 17 numbered bends, from the bottom: [metres after the start line, altitude, 1 right / -1 left] (the hairpins: 1, 2, 4, 6, 8, 10, 12-16)
     curves: [[-645.1,1023,-1],[-378,1053,1],[177.9,1117,1],[258.4,1122,-1],[386.6,1132,-1],[607.7,1153,1],[697,1159,-1],[1214.1,1209,-1],[1575.5,1251,-1],[1747.7,1266,1],[1946.5,1285,1],[2018.1,1288,-1],[2139.2,1294,1],[2305.8,1309,-1],[2448.7,1320,1],[2571.6,1329,-1],[2738.1,1344,-1]],
+    // the course flyover before a fresh start (Render.pkFly, as on Pikes Peak and Katu-Jaryk): its captions, [metres after the start line (-1: the finish), name]
+    fly: [[0, 'START'], [911.6, 'Rio do Rastro'], [1214.1, 'Lestev serpentin'], [2168.6, 'Cascata Rio do Rastro'], [3096, 'Alto da Serra'], [-1, 'CILJ']],
+    // the time trial's turn counter (OVINEK n/17, game.js hxStart): the real road's 17 numbered bends (def.curves), 3 to 17 between the start
+    // and the finish (1 and 2 lie below the start line), each with its own number at its own place
+    turns: 17,
+    turnNos(T) { if (T.turnList) return T.turnList; return (T.turnList = this.curves.map((c, i) => ({ s: T.startS + c[0], n: i + 1, dir: c[2] })).filter(t => t.s > T.startS && t.s < T.finishS)); },
     // the traffic of the open road: the share of each kind of vehicle [car, van, bus, motorbike, truck] (no lorries; many
     // motorcyclists) and a cyclist every so many metres each way
     traffic: { mix: [0.58, 0.12, 0.08, 0.22, 0], bike: 1400 },
@@ -46,21 +52,22 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLÍCIA', band: '#1b3f8f', text: '#f4f6f0' }, escTo: 'Do razgledišča',   // (and the results of an escape: 'Do razgledišča v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
-      {"n":"Serpentina 3 · 1.117 m","d":177.9},
-      {"n":"Serpentina 4 · 1.122 m","d":258.4,"say":["Hairpin four, the road is stacked up the cliff now!"]},
-      {"n":"Serpentina 5 · 1.132 m","d":386.6},
-      {"n":"Serpentina 6 · 1.153 m","d":607.7},
-      {"n":"Serpentina 7 · 1.159 m","d":697},
-      {"n":"Serpentina 8 · 1.209 m","d":1214.1,"say":["Hairpin eight, the tightest loop of the Serra!","Number eight, a full loop! Hard on the brakes!"]},
-      {"n":"Serpentina 9 · 1.251 m","d":1575.5},
+      {"n":"Serpentina 3 · 1.117 m","d":177.9,"say":["Bend three, the first of the ladder!","Number three, and the cliff starts right here!"]},
+      {"n":"Serpentina 4 · 1.122 m","d":258.4,"say":["Hairpin four, the road is stacked up the cliff now!","Four! Tight left, the wall of the Serra above you!"]},
+      {"n":"Serpentina 5 · 1.132 m","d":386.6,"say":["Bend five, keep it tidy, the cliff is close!","Number five, still deep in the rainforest!"]},
+      {"n":"Serpentina 6 · 1.153 m","d":607.7,"say":["Hairpin six, swing it round!","Six! The hairpins are coming thick and fast now!"]},
+      {"n":"Serpentina 7 · 1.159 m","d":697,"say":["Bend seven, a long drag to the loop!","Number seven, the loop of eight is next!"]},
+      {"n":"Rio do Rastro","d":911.6,"say":["Across the Rio do Rastro, the stream the whole Serra is named after!","Over the Rio do Rastro, the loop of eight just ahead!"]},
+      {"n":"Serpentina 8 · 1.209 m","d":1214.1,"say":["Hairpin eight, the tightest loop of the Serra!","Number eight, a full loop! Hard on the brakes!","Eight, right under the little viewpoint by the road!"]},
+      {"n":"Serpentina 9 · 1.251 m","d":1575.5,"say":["Bend nine, just over the bridge across the Rio do Rastro!","Nine! Over the stream and round to the left!"]},
       {"n":"Serpentina 10 · 1.266 m","d":1747.7,"say":["Hairpin ten, look down: the road zig-zags all the way into the forest!","Ten! The postcard view of the Rio do Rastro!"]},
-      {"n":"Serpentina 11 · 1.285 m","d":1946.5},
-      {"n":"Serpentina 12 · 1.288 m","d":2018.1},
+      {"n":"Serpentina 11 · 1.285 m","d":1946.5,"say":["Bend eleven, the hairpins stacked right above you!","Eleven, the next one is only a few seconds away!"]},
+      {"n":"Serpentina 12 · 1.288 m","d":2018.1,"say":["Hairpin twelve, round you go!","Twelve! Left and straight into the next!"]},
       {"n":"Serpentina 13 · 1.294 m","d":2139.2,"say":["Thirteen, the bends are stacked like a staircase!"]},
-      {"n":"Cascata Rio do Rastro","d":2168.6,"say":["The waterfall of the Rio do Rastro, right beside the road!","Past the waterfall, nearly at the top!"]},
-      {"n":"Serpentina 14 · 1.309 m","d":2305.8},
-      {"n":"Serpentina 15 · 1.320 m","d":2448.7},
-      {"n":"Serpentina 16 · 1.329 m","d":2571.6,"say":["Hairpin sixteen, the last of the ladder!","Sixteen! Nearly at the top of the escarpment!"]},
+      {"n":"Cascata Rio do Rastro","d":2168.6,"say":["The waterfall of the Rio do Rastro, right beside the road!","Past the waterfall, nearly at the top!","The waterfall, and the drovers' monument right by it!"]},
+      {"n":"Serpentina 14 · 1.309 m","d":2305.8,"say":["Hairpin fourteen, past the waterfall and up!","Fourteen! The cliff hangs right over the road here!"]},
+      {"n":"Serpentina 15 · 1.320 m","d":2448.7,"say":["Hairpin fifteen, three more to the top!","Fifteen, the mist is never far away up here!"]},
+      {"n":"Serpentina 16 · 1.329 m","d":2571.6,"say":["Hairpin sixteen, the last of the ladder!","Sixteen! Nearly at the top of the escarpment!","Sixteen, right below the little viewpoint by pole fifty-five!"]},
       {"n":"Serpentina 17 · 1.344 m","d":2738.1,"say":["The last bend, number seventeen, and up onto the plateau!","Seventeen! Out of the hairpins and onto the top!"]},
       {"n":"Alto da Serra · 1.389 m","d":3096,"say":["Up on the plateau! The araucarias of the Serra Geral!","On top of the escarpment, one kilometre to the viewpoint!"]},
       {"n":"Mirante · 1.421 m","d":4205.8,"say":["At the viewpoint! The whole Serra do Rio do Rastro below you!","Up at the Mirante, one thousand four hundred and twenty metres!","At the top of the Serra, the hairpins far below!"]},
