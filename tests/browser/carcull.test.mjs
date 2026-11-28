@@ -15,7 +15,11 @@ const T = checker('the rivals\' draw cost: panels as one mesh, cars out of the v
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2, weather: 'dry', tod: 'day' }, { width: 844, height: 390 }, { seed: 4242 });
+  // (the page in the game's test mode, ?proga=spa&seme=4242: every race of the visit started from the menu repeatable, its rivals' order,
+  // models and colours the same, so the formula rival's still below is the same every run; 28. 11. on GitHub 21 pixels off with 20 the limit,
+  // 0 and 8 on other runs: docs/nestabilni-testi.md, cause 4)
+  const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=spa&seme=4242', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2, weather: 'dry', tod: 'day' }, { width: 844, height: 390 }, { seed: 4242 });
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
   await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'rally'); });
   await startTrack(page, 'spa');
   const r = await page.evaluate(() => {
