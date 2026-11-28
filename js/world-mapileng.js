@@ -37,6 +37,12 @@
       far: (A, sl, q) => { const rk = Math.min(1, sstep(0.42, 0.85, sl) * 0.75), wood = sstep(1250, 1600, A) * 0.4;
         let c = [0.41 + q * 0.05, 0.48 + q * 0.04, 0.3 + q * 0.03]; c = [lerp(c[0], 0.25, wood), lerp(c[1], 0.34, wood), lerp(c[2], 0.21, wood)];
         return [lerp(c[0], 0.6 + q * 0.06, rk), lerp(c[1], 0.6 + q * 0.05, rk), lerp(c[2], 0.57 + q * 0.04, rk)]; },
+      wet: [0.2, 0.4, 0.35],   // (the Nho Quế down in its canyon: jade green, as it is seen from the pass)
+      // the terraces of maize on the slopes between the limestone (no paddies on the dry karst: level strips of earth held by dry-stone walls of
+      // the grey limestone, ~1.6 m high; on the fields and on the grassy slopes by the road, not on the steep, the maize planted on their floors)
+      terr: { dh: 1.6, d0: 7, reach: 95, slope: 0.95, flat: 0.08, patch: 12, lip: 0.25, dikeW: 0.35, flood: false, lcs: [[6, 1], [0, 0.75]], crop: 'maize', cropDens: 0.6,
+        paddy: [[0.3, [0.5, 0.41, 0.31]], [0.25, [0.47, 0.55, 0.26]], [0.3, [0.4, 0.5, 0.22]], [0.15, [0.62, 0.57, 0.36]]],
+        wall: [0.6, 0.6, 0.57], dike: [0.52, 0.5, 0.42] },
       lines: { centre: [0.93, 0.93, 0.89], dash: [3, 5] },
       para: { stone: [0.7, 0.7, 0.68], top: [0.86, 0.86, 0.84], hp: [0.8, 0.16, 0.13], back: [0.56, 0.56, 0.54], wall: [0.56, 0.56, 0.54], cope: [0.72, 0.72, 0.7] },
       rocks: { main: [[0.62, 0.62, 0.6], [0.68, 0.68, 0.65], [0.56, 0.57, 0.56], [0.72, 0.71, 0.68]], alt: [[0.47, 0.47, 0.46], [0.54, 0.52, 0.49]], karst: 1 },
@@ -829,7 +835,7 @@
         if (!G.on[tj * G.ntx + ti]) continue;
         for (let j = tj * VRT; j <= Math.min(G.nz - 1, (tj + 1) * VRT); j++) for (let i = ti * VRT; i <= Math.min(NX - 1, (ti + 1) * VRT); i++) {
           const k = j * NX + i, x = G.x0 + i * VRC, z = G.z0 + j * VRC; caGH(i, j); const d = vrDist(x, z); if (d > rB) continue;
-          const lc = vrLCf(x, z, 6), dd = G.dd[k]; if (lc <= 0.3 || dd <= TR.d0 || excluded(x, z)) continue;
+          const lc = TR.lcs ? Math.min(1, TR.lcs.reduce((s, [c, w]) => s + w * vrLCf(x, z, c), 0)) : vrLCf(x, z, 6), dd = G.dd[k];   // (TR.lcs: the land covers the terraces are cut on, each with its weight) if (lc <= 0.3 || dd <= TR.d0 || excluded(x, z)) continue;
           const sl = Math.hypot(caGH(i + 1, j) - caGH(i - 1, j), caGH(i, j + 1) - caGH(i, j - 1)) / (2 * VRC);
           TG[k] = sstep(0.3, 0.7, sstep(0.3, 0.7, lc) * sstep(TR.d0, TR.d0 + 6, dd) * sstep(rB, rA, d) * sstep(TR.slope + 0.35, TR.slope, sl) * (TR.flat ? sstep(TR.flat, TR.flat * 2.5, sl) : 1)); }
       }
@@ -847,7 +853,7 @@
       const PD = TR.paddy, pdSum = PD.reduce((s, p) => s + p[0], 0);
       const PS = TR.patch || 22, pCol = (k, x, z) => { const pu = Math.floor((x * 0.62 + z * 0.78) / PS), pv = Math.floor((x * 0.78 - z * 0.62) / PS); let h = rpHash(k * 131 + pu * 7 + pv * 977, 113) * pdSum, q = 0;
         while (q < PD.length - 1 && (h -= PD[q][0]) > 0) q++;
-        const c = PD[q][1], e = 0.93 + 0.12 * rpHash(k * 31 + pu * 3 + pv * 5, 117); return [c[0] * e, c[1] * e, c[2] * e, q === 0 ? 60 : 10]; };
+        const c = PD[q][1], e = 0.93 + 0.12 * rpHash(k * 31 + pu * 3 + pv * 5, 117); return [c[0] * e, c[1] * e, c[2] * e, q === 0 && TR.flood !== false ? 60 : 10]; };   // (TR.flood false: no flooded paddies, all earth)
       const mixC = (v, c, f) => { const t = sstep(0.12, 0.4, f); return [lerp(v[4], c[0], t), lerp(v[5], c[1], t), lerp(v[6], c[2], t)]; };
       const uvT = (a, s) => [a[0] / s, -a[2] / s];   // (the ground's top-down UVs: the grit every 10 m; the flooded paddies' smoother, every 60 m)
       const triU = (g, a, b, c, ca, cb, cc, s = 10) => {   // a triangle facing up
@@ -898,7 +904,7 @@
        share of the 4 m grid's points planted, the weight of each kind); the small ones only near the road (KS.near) ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const KN = LK.kinds, tk = KN.map(k => new IChunks(krTreeGeo(k), tMatT, 96));
-    let nTrees = 0, nShrubs = 0;
+    let nTrees = 0, nShrubs = 0; const cropK = LK.terr && LK.terr.crop ? KN.indexOf(LK.terr.crop) : -1;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(LK.seed + 30), SP = 4 / Math.sqrt(dens);
       const pick = (wt, r) => { let t = 0; for (let k = 0; k < wt.length; k++) t += wt[k]; let a = r * t; for (let k = 0; k < wt.length; k++) { a -= wt[k]; if (a <= 0 && wt[k] > 0) return k; } return wt.length - 1; };
@@ -908,15 +914,18 @@
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = vrDist(x, z); if (hd > LOD.radius(260)) continue;
-          const M = LK.mix[vrLC(x, z)] || LK.mix[0]; if (r1 > M[0]) continue;
+          const tf = TG ? tfG(x, z) : 0, onT = tf > 0.25;   // (on the terraces: only their crop, LK.terr.crop, on their floors; else none)
+          if (onT && (cropK < 0 || r1 > LK.terr.cropDens)) continue;
+          const M = LK.mix[vrLC(x, z)] || LK.mix[0]; if (!onT && r1 > M[0]) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.4) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.3) continue;
-          if (excluded(x, z) || pathD(x, z) < 1.2 || (TG && tfG(x, z) > 0.25)) continue;   // (none on the terraces' paddies)
-          const sl = caSlope(x, z); if (sl > 1.25 || (sl > 0.7 && r2 < (sl - 0.7) / 0.55)) continue;
-          const sp = pick(M[1], r3), S = KS[KN[sp]];
+          if (excluded(x, z) || pathD(x, z) < 1.2) continue;
+          const sl = caSlope(x, z); if (!onT && (sl > 1.25 || (sl > 0.7 && r2 < (sl - 0.7) / 0.55))) continue;
+          const sp = onT ? cropK : pick(M[1], r3), S = KS[KN[sp]];
           if (S.near && hd > LOD.radius(S.near)) continue;
           const hgt = S.h[0] + r4 * S.h[1], wid = hgt * S.w[0] + S.w[1] + r2 * S.w[2], col = [S.c[0] + r2 * S.c[1], S.c[2] + r4 * S.c[3], S.c[4]];
           const tn = LK.tint && LK.tint[KN[sp]]; if (tn) { col[0] *= tn[0]; col[1] *= tn[1]; col[2] *= tn[2]; }
-          tk[sp].add(x, caGround(x, z) - 0.1, z, r1 * 70, wid, hgt, col);
+          let y = caGround(x, z); if (onT) { const dh = LK.terr.dh, yk = (Math.floor(y / dh) + 1) * dh; y += (yk - y) * tf; }   // (the floor: its band's top, as the terraces' mesh)
+          tk[sp].add(x, y - 0.1, z, r1 * 70, wid, hgt, col);
           if (S.tree) nTrees++; else nShrubs++;
           if (nTrees + nShrubs >= maxT) break grid;
         }
@@ -1028,6 +1037,7 @@
 
     /* ---- the view beyond the corridor (def.farDem: the hills and the valleys round; irFar, World.update moves it with the camera); finish
        the meshes ---- */
+    if (LK.wet) LK.far.wet = LK.wet;   // (the water's own colour in the far view: the Nho Quế's jade green)
     const FAR = API.irFar ? API.irFar(LK.far, LK.farWet) : null; if (FAR) { FAR.th = 4; FAR.mesh.visible = false; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; th: moved on again once the camera is 4 m on, as Mount Baldy's, not every frame: the lines of sight to the hills hardly change)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true); ledg.addTo(sceneryGroup, matV, false, true);
