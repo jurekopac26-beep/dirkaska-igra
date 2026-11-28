@@ -672,7 +672,8 @@
     def: { plan: [1, 'Kupljeno · roki se zbudita'], cart_in: [1, 'Voziček pripelje nov del'], bonnet_up: [1, 'Hauba je gor, podpira jo drog'], old_out: [1, 'Roka {0} sname stari del', null],
       grab: (d) => [2, d.rgl != null ? 'Roka {0} vzame nov del z regala' : 'Roka {0} vzame nov del z vozička', null],
       hop: [3, 'Roka {0} namesti nov del', null], swap: [3, 'Roka {0} namesti nov del', null], snap: [3, 'Del zaskoči'], screws: [3, 'Vijaki so priviti'], hoses: [3, 'Cevi so priklopljene'],
-      put: (d) => d.where === 'regal' ? [3, 'Roka {0} postavi stari del na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari del na voziček', null] : null,
+      off: [1, 'Roka {0} sname stari del', 1], pass: [2, 'Most se zavrti za pol kroga: stari del k regalu, nov k avtu'],   // (the regal's small parts by both arms, #1084)
+      put: (d, B) => d.where === 'regal' ? [3, 'Roka {0} postavi stari del na prazno mesto v regalu', B.P && B.P.two ? 1 : null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari del na voziček', null] : null,
       down: [3, 'Avto dol · roki gresta počivat'], revs: [3, 'Motor zaturira'], lights: [3, 'Preizkus luči'], cart_out: [3, 'Voziček odpelje'] },
     // (the tyres by the plate: both arms on one wheel (the bridge turns between them), its number and the place of the next ones; the
     // wheels one by one (the rims, a tyre without the regal): the arm, the old one off, onto the regal or the trolley, the new one on)
@@ -695,15 +696,19 @@
       revs: [3, 'Motor dvakrat zarjovi'] },
     krilo: { plan: [2, 'Kupljeno · roki se zbudita'], cart_in: [2, 'Voziček pripelje novo krilo'], old_out: [3, 'Roka {0} sname staro krilo s pokrova', null],
       grab: (d) => [3, d.rgl != null ? 'Roka {0} prime krilo na regalu in ga nese k avtu' : 'Roka {0} vzame krilo z vozička in ga nese k avtu', null],
-      snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], swap: (d, B) => B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null],
+      snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], swap: (d, B) => d.rm ? [3, 'Roka {0} sname staro krilo s pokrova', null] : B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null],
       put: (d) => d.where === 'regal' ? [4, 'Roka {0} postavi staro krilo na prazno mesto v regalu', null] : d.where === 'cart' ? [4, 'Roka {0} odloži staro krilo na voziček', null] : null,
       cart_out: [4, 'Voziček odpelje'] },
     // (the aero kit: the self-driving trolley with its pieces (the lip, the skirt, the diffuser), the wing last (its own plan, el krilo))
     aero: { plan: (d) => d.el === 'krilo' ? [4, null] : d.sill ? [3, null] : [2, 'Kupljeno · roki se zbudita'], cart_in: [2, 'Samovozeči voziček pripelje aero paket'],
       grab: (d, B) => { const P = B.P || {}; return P.el === 'krilo' ? [4, 'Roka {0} vzame krilo z vozička', null] : P.kind === 'skirt' ? [3, 'Roka {0} vzame prag z vozička', null] : P.kind === 'rear' ? [3, 'Roka {0} vzame difuzor z vozička', null] : [3, 'Roka {0} vzame sprednjo ustnico z vozička', null]; },
-      swap: (d, B) => { const P = B.P || {}; return P.el === 'krilo' ? (B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null]) : P.kind === 'skirt' ? [3, 'Roka {0} položi prag vzdolž boka', null]
+      swap: (d, B) => { const P = B.P || {}; if (d.rm) return P.el === 'krilo' ? [4, 'Roka {0} sname staro krilo s pokrova', null] : P.kind === 'skirt' ? [3, 'Roka {0} sname prag z boka', null] : P.kind === 'rear' ? [3, 'Roka {0} sname difuzor izpod zadnjega odbijača', null] : [3, 'Roka {0} sname sprednjo ustnico izpod odbijača', null];
+        return P.el === 'krilo' ? (B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null]) : P.kind === 'skirt' ? [3, 'Roka {0} položi prag vzdolž boka', null]
         : P.kind === 'rear' ? [3, 'Roka {0} namesti difuzor pod zadnji odbijač', null] : [3, 'Roka {0} potisne ustnico pod sprednji odbijač: zaskoči', null]; },
       snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], put: (d, B) => d.where === 'none' ? null : [B.P && B.P.el === 'krilo' ? 4 : 3, 'Roka {0} odloži stari kos na voziček', null], cart_out: [4, 'Voziček odpelje'] },
+    // (the fuel cap, #1084 I4 (js/garaza-anim/zamasek.js): its own steps; the def swap »namesti nov del« came after the screw)
+    zamasek: { grip: [1, 'Roka 1 prime stari zamašek za obroč'], unscrew: [1, 'Roka 1 odvije stari zamašek'], seat: [3, 'Roka 2 nastavi nov zamašek na grlo'],
+      screw: [3, 'Roka 2 privije nov zamašek · klik'], swap: [3, 'Nov zamašek je privit · roki gresta počivat'] },
     // (by the plate an_turbo (the regal's): roka 1 lifts and shuts the bonnet, roka 2 brings the turbo and bolts it down; else the bonnet by itself)
     turbo: { plan: [1, 'Kupljeno · roki se zbudita'], bonnet_grip: [1, 'Roka 1 dvigne haubo in jo podpre z drogom'],
       bonnet_up: (d, B) => B.seen.bonnet_grip ? null : [1, 'Hauba je gor, podpira jo drog'], cart_in: [1, 'Voziček pripelje nov turbo'],
