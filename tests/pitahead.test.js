@@ -36,7 +36,8 @@ const T = new C.Track(C.TRACKS.find(d => d.id === 'bathurst'));
   const miss = stops.filter(x => !told.some(y => y.c === x.c && y.n === x.n && y.now)), wrong = told.filter(y => y.now && !stops.some(x => x.c === y.c && x.n === y.n));
   check('a strategy race: every rival\'s stop foretold 200 m before its way in (pitNext now), none foretold that did not come', stops.length >= 5 && !miss.length && !wrong.length,
     `${stops.length} stops, ${told.filter(y => y.now).length} foretold` + (miss.length ? '; missed ' + miss.map(x => x.c.name + ' lap ' + x.n).join(', ') : '') + (wrong.length ? '; wrong ' + wrong.map(x => x.c.name + ' lap ' + x.n).join(', ') : ''));
-  check('none for the player, nor once at the line', r.pitNext(P) === null && r.cars.filter(c => c.finished).every(c => r.pitNext(c) === null), '');
+  const fin = r.cars.filter(c => c.finished);   // (cars over the line: none would make the check below prove nothing)
+  check('none for the player, nor once at the line (the race run to the flag: the player and 10 or more cars over the line)', r.pitNext(P) === null && P.finished && fin.length >= 10 && fin.every(c => r.pitNext(c) === null), `${fin.length} of ${r.cars.length} over the line, the player ${P.finished ? 'too' : 'not'}`);
 }
 
 // 2. the duel by the stops on made-up tyres (a race on Bathurst a lap in, so a lap's time is known): the player 1.5 s behind the car ahead

@@ -103,7 +103,7 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
     if (k === 60 * 120) snaps.danger = [...elim.st.danger];
   }
   Math.random = orig;
-  check('the first cut at 45 s: 2 cars out, the second at 75 s: 4 out; the AI cars out pull off (retired)', snaps.length === 2 && Math.abs(snaps[0].t - 45) < 0.05 && snaps[0].out === 2 && Math.abs(snaps[1].t - 75) < 0.05 && snaps[1].out === 4 && snaps.every(x => x.retired) || snaps.some(x => x.out && P.zbOut), JSON.stringify(snaps));
+  check('the first cut at 45 s: 2 cars out, the second at 75 s: 4 out; the AI cars out pull off (retired)', snaps.length === 2 && Math.abs(snaps[0].t - 45) < 0.05 && snaps[0].out === 2 && Math.abs(snaps[1].t - 75) < 0.05 && snaps[1].out === 4 && snaps.every(x => x.retired) && !P.zbOut, JSON.stringify(snaps));
   const A = elim.alive(r), dz = snaps.danger || [];
   check('between the cuts: the last 2 cars still in are the ones in danger (their rows red)', dz.length === 2 && dz.every(c => elim.cls(c) === ' zb-out' || c.zbOut), dz.map(c => c.name).join(', '));
   // the rest of the cuts, one after another (no driving): to the player out or the last one left
@@ -112,7 +112,8 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   check('the end: the player out (IZPADEL SI with the place) or the last one left (ZMAGA)', !!end && (P.zbOut ? /IZPADEL SI! \d+\. MESTO/.test(end.msg) : /ZMAGA/.test(end.msg)), end && end.msg);
   check('the results: every car once, those still in first, then those out with the last to go first; the player at the place said', res.length === 22 && new Set(res.map(x => x.car)).size === 22 &&
     res.every((x, i) => i === 0 || !(res[i - 1].car.zbOut && !x.car.zbOut)) && res.filter(x => x.car.zbOut).every((x, i, L) => i === 0 || L[i - 1].car.zbT >= x.car.zbT) && (!P.zbOut || new RegExp('! ' + (pi + 1) + '\\. MESTO').test(end.msg)), 'player ' + (pi + 1) + ' ' + (end && end.msg));
-  check('the timing tower: a car out says IZPADEL', res.filter(x => x.car.zbOut).every(x => elim.outWord(x.car) === 'IZPADEL'));
+  const outs = res.filter(x => x.car.zbOut);   // (no car out would make the check prove nothing)
+  check('the timing tower: a car out says IZPADEL (4 or more out by the end)', outs.length >= 4 && outs.every(x => elim.outWord(x.car) === 'IZPADEL'), `${outs.length} out`);
   check('over() only once', elim.over(r) === null);
   elim.stop();
 }

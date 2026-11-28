@@ -142,5 +142,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.4 | #1068 | Profil igralca: dosežki, statistika, izvoz, kopije, primerjava avtov, »ZA TO PROGO« | jure.kopac26 | osnutek; testi zeleni 27. 11. (`test:related` 26/26, `menu.test` 322/322, `stamp --check`); »Ready for review« ob mestu med prvima dvema, pred združitvijo svež `main`. |
 | 10.19 | — Grčija, nova proga (rezervacija) | ena nova proga iz Grčije, 2–3 predlogi na strani Odločitve; veja `proga/<id>`; proga, zato zadnje | partyslo (rezerva croatiadata) | raziskava od 25. 11. |
 | 10.20 | — Meni: uvod 8 prog (rezervacija) | `window.INTRO` (država, glasba, vrh, oznake) za Kildare, Furka, Tuzla, Mombasa, Sa Calobra, Silkeborg, Aguascalientes, Ngorongoro; veja `nove-proge/meni-uvod` (odločitev uporabnika 26. 11. ob 12.33, #382 7190873788) | partyslo | v delu od 26. 11. |
+| 10.21 | #1083 Šibki testi (pregled 23. 11., 4–7) | pitahead, zabava, pitcam in boxwarn ne preidejo več na praznem naboru; točke 1–3 v Trkih #608; samo testi | biketraveler | osnutek, svež `main` (27. 11.); združi seja Združevanje |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
