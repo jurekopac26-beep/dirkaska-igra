@@ -551,5 +551,26 @@
   "kverts": 338,
   "maxKverts": 352,
   "jsMs": 1.34
+ },
+ "elcastano": {
+  "calls": 116,
+  "maxCalls": 130,
+  "kverts": 447,
+  "maxKverts": 492,
+  "jsMs": 1.53
+ },
+ "kudowa": {
+  "calls": 165,
+  "maxCalls": 192,
+  "kverts": 416,
+  "maxKverts": 456,
+  "jsMs": 1.24
+ },
+ "meteora": {
+  "calls": 171,
+  "maxCalls": 205,
+  "kverts": 386,
+  "maxKverts": 543,
+  "jsMs": 1.36
  }
 }

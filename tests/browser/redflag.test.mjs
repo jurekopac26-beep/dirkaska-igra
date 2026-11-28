@@ -57,7 +57,8 @@ try {
     const k2 = await said(); noise.push(...k2.filter(x => BAD.includes(x) || /^place:/.test(x)));
     toldIn.push(...await told());
     // standing in the queue: Posnetek do sem there (the replay of the race so far), then back into the race
-    if (!rp && kind === 'V vrsti' && s.red === 'in') {
+    // (taken once the car stands: the label can come up a quarter before, the car still crawling in at 0.6 m/s, CI 27. 11.)
+    if (!rp && kind === 'V vrsti' && s.red === 'in' && s.v < 0.6) {
       queued = s;
       rp = await page.evaluate(async (t0) => {
         const g = window.__game, r = g.race, fr = () => new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));

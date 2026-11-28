@@ -498,6 +498,7 @@
     'Greben': 'Ridge', // (Canaries: the HUD; the heights by the rules of Lang.place)
     'Planota pri letališču': 'Airfield Plateau', 'Sleme': 'Ridge', 'Nad zalivom Savusavu': 'Above Savusavu Bay', 'Do Savusavuja': 'To Savusavu',   // (Savusavu: the HUD, the results of an escape; the heights by the rules of Lang.place)
     'Gozd nad Vaoalo': 'Forest above Vaoala', 'Do Tiapapate': 'To Tiapapata',   // (Vaoala: the HUD, the results of an escape; Letava, Vaoala and Tiapapata stay as they are, the heights by the rules of Lang.place)
+    'Most': 'Bridge', 'Do prelaza': 'To the pass',   // (El Castaño: the HUD, the results of an escape; Río Madre Vieja and La Regresiva del Diablo stay as they are, the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
@@ -519,6 +520,7 @@
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', // (Quezaltepeque)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Pod Lustrzano goro': 'Below Lustrzana Góra', 'Ob potoku': 'By the Stream',   // (Kudowa-Zdrój: the HUD; Lisia Przełęcz, Kudowa Górna stay as they are, Serpentina and the heights by the rules of Lang.place)
     'Apnenčasta stena': 'Limestone Wall', 'Nad puščavo': 'Above the Desert',   // (Jebel Hafeet: the HUD; Prva lasnica, Serpentine, Razgledišče, Vrh vzpona above)
     'Do prelaza Mã Pí Lèng': 'To the Mã Pí Lèng pass',   // (Mã Pí Lèng: the results of an escape; Spomenik, Serpentina N and the heights by the rules of Lang.place)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
@@ -529,6 +531,7 @@
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
     'Zapornica': 'The Gate', 'Stena kraterja': 'Crater Wall', 'Polica': 'The Ledge', 'Dno kraterja': 'Crater Floor',   // (Ngorongoro: the HUD; Windy Gap, Seneto and Magadi stay as they are, the heights by the rules of Lang.place)
     'Do Elle': 'To Ella',   // (Ella: the results of an escape; Ella Rock and Pattiyakumbura stay as they are, Serpentina N and the heights by the rules of Lang.place)
+    'Pod stebri': 'Below the Pillars', 'Samostan ob cesti': 'Monastery by the Road', 'Sedlo': 'The Saddle', 'Konec ceste': 'End of the Road', 'Do konca ceste': 'To the end of the road',   // (Meteora: the HUD, the results of an escape; Kastraki stays as it is, Serpentina N and the heights by the rules of Lang.place)
     'Ruševine nad sotesko': 'Ruins above the Gorge', 'Hudičev most': 'Devil\'s Bridge', 'Reka Vorotan': 'Vorotan River', 'Topli izvir': 'Warm Spring', 'Studenec': 'Fountain', 'Zadnja serpentina': 'Last Hairpin', 'Do Tateva': 'To Tatev',   // (Tatev: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
  'Desni za ostrim levim': 'Right after the Tight Left', 'Trije levi': 'Three Lefts', 'Ravnina proti zahodu': 'West Straight', 'Zahodni ostri desni': 'West Hairpin', 'Desni za šikano': 'Right after the Chicane',   // (Batangas)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */

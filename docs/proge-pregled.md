@@ -27,12 +27,15 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Trebević, Bosna in Hercegovina | `trebevic` | odprta cesta | 4,3 km | 823 | 36 % | 6 | +301 m |
 | Llogara, Albanija | `llogara` | odprta cesta | 4,0 km | 818 | 34 % | 7 | +11 m |
 | Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
+| Meteora, Grčija | `meteora` | odprta cesta | 5,9 km | 770 | 32 % | 4 | +250 m |
+| El Castaño, Venezuela | `elcastano` | odprta cesta | 7,9 km | 737 | 33 % | 6 | +620 m |
 | Canaries, Sveta Lucija | `canaries` | odprta cesta | 5,0 km | 716 | 35 % | 3 | +134 m |
 | Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Džebel Hafit, Združeni arabski emirati | `hafit` | odprta cesta | 4,8 km | 692 | 30 % | 11 | +394 m |
 | Chamarel, Mavricij | `chamarel` | odprta cesta | 5,0 km | 675 | 39 % | 3 | +339 m |
 | Bâlea, Romunija | `balea` | odprta cesta | 3,5 km | 673 | 38 % | 4 | +232 m |
+| Tatev, Armenija | `tatev` | odprta cesta | 7,2 km | 673 | 51 % | 19 | +225 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Kanaba, Uganda | `kanaba` | odprta cesta | 5,0 km | 618 | 30 % | 1 | −118 m |
@@ -43,7 +46,6 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
-| Tatev, Armenija | `tatev` | odprta cesta | 7,2 km | 673 | 51 % | 19 | +225 m |
 | Furka, Švica | `furka` | odprta cesta | 5,0 km | 519 | 45 % | 7 | +371 m |
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
@@ -64,6 +66,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Zandvoort, Nizozemska | `zandvoort` | krog | 4,3 km | 366 | 55 % | 4 | ravno |
 | Vaoala, Samoa | `vaoala` | odprta cesta | 1,9 km | 366 | 48 % | 0 | +174 m |
 | Hiva, Uzbekistan | `hiva` | krog | 3,0 km | 359 | 68 % | 0 | ravno |
+| Kudowa-Zdrój, Poljska | `kudowa` | odprta cesta | 7,5 km | 358 | 52 % | 1 | −347 m |
 | Mombasa, Kenija | `mombasa` | odprta cesta | 3,4 km | 335 | 69 % | 0 | −16 m |
 | El Jem, Tunizija | `eljem` | odprta cesta | 1,5 km | 335 | 66 % | 0 | −3 m |
 | Sepang, Malezija | `sepang` | krog | 5,5 km | 304 | 63 % | 4 | 21 m razpona |
@@ -87,7 +90,6 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Portobelo, Panama | `portobelo` | odprta cesta | 2,6 km | 195 | 71 % | 0 | +5 m |
 | Isuna, Butan | `isuna` | odprta cesta | 3,4 km | 185 | 65 % | 0 | +31 m |
 | Luanda, Angola | `luanda` | odprta cesta | 3,5 km | 119 | 85 % | 0 | +0 m |
-| Longyearbyen, Norveška | `longyearbyen` | odprta cesta | 4,3 km | 60 | 92 % | 0 | +112 m |
 | Isalo, Madagaskar | `isalo` | odprta cesta | 2,5 km | 44 | 96 % | 0 | −33 m |
 <!-- meritve:konec -->
 
@@ -106,6 +108,7 @@ Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, 
 - **Crystal Palace, Anglija** (`cpalace`, asfalt): Ob obeh robovih ozek pas prahu in gramoza z neravnim robom trave; brez robnikov; Bale slame na zunanji strani ovinkov in pred gledalci, drugod lesene ograje iz desk; 13 lesenih boksov ob ravnini ob stadionu; lesena pokrita tribuna nasproti boksov; Kamniti terasi nekdanje palače z balustrado, stopniščem in šestimi sfingami; Jezero z otoki ob ovinkih; 28 kipov dinozavrov iz 1854 na otokih in bregu; Stara drevesa (platane, hrasti, kostanji), trata; redke skupine gledalcev v oblačilih iz 1930-ih, reklamne table. Dlje: Viktorijanske hiše okoli parka; rešetkast oddajni stolp na vrhu hriba kot silhueta.
 - **Džebel Hafit, Združeni arabski emirati** (`hafit`, asfalt): Jeklena varnostna ograja ob vsej cesti; vozni pas navzgor z dvema pasovoma, rumena robna črta ob ločilnem pasu, visoke cestne svetilke vsakih ~42 m; gol apnenec, melišča in prod, nekaj akacij nizko ob vznožju; hiše z ravnimi strehami po obrisih iz OSM; razgledišče z nizkim zidcem in senčnico (~3.750 m); divje koze na policah.
 - **Chamarel, Mavricij** (`chamarel`, asfalt): Jeklene ograje ob cesti (padca ni), levi promet, bela sredinska črta; Gost tropski gozd na pobočju, rdeče-rjava vulkanska prst v brežinah; Razgledišče na vrhu vzpona (~2,9 km) s tlakovanim postajališčem in nizkim zidcem iz bazalta; Sladkorni trs ob vasi; Hiše Chamarela iz obrisov OSM pod valovito pločevino
+- **Meteora, Grčija** (`meteora`, asfalt): Jeklena ograja v serpentinah, drugod hrastov gozd, grmičevje in trava ob cesti; po en pas v vsako smer, promet po desni; vas Kastraki ob vznožju (hiše z opečnatimi strehami po obrisih iz OSM), nad njo sivi konglomeratni stebri; samostani na stebrih in ob cesti (generične kamnite stavbe z opečnatimi strehami, ena kupola na skupino, brez imen).
 - **Hải Vân, Vietnam** (`haivan`, asfalt): Jeklene varnostne ograje, kjer teren pada, in na zunanji strani ovinkov; rumena prekinjena sredinska črta, v serpentini neprekinjena; rdečerjav prah iz usekov ob robu asfalta in zakrpan asfalt; Usek v rdečerjavi laterilni prsti, siv granit v pečinah in balvanih; Gost zimzelen tropski gozd do morja (vitka svetla debla, široke krošnje), v zaplatah grmovje in trava; Hiše in stojnice ob cesti (43 stavb iz OSM, brez napisov), na sedlu parkirišče z avtomobili; potok pod cesto; Pogled na greben nad prelazom, pobočja in zaliv Lăng Cô; Ob cesti skuterji, kombiji, avtobusi in kolesarji (promet).
 - **Mã Pí Lèng, Vietnam** (`mapileng`, asfalt): Nizki betonski parapeti, kjer teren pada, okoli serpentin rdeči in beli bloki; podporni zidovi pod zgornjim krakom serpentin; beli smerni stebrički, table s puščicami; Travnata kraška pobočja z zaplatami sivega apnenca, skupine skalnih stolpičev in balvani, koruza med skalami s suhozidi, grmičevje, bori in listavci; Spomenik graditeljem ceste (bel obelisk na stopničastem podstavku) s svetiščem, majhen muzej in kavarna s teraso na grebenu, informacijska tabla; razgledišče s teraso ~205 m za ciljem; table krajev (Đồng Văn, Lũng Cú, Mèo Vạc, Mã Pí Lèng, QL4C), nevarna prelaška cesta, vozi počasi; krave, konji, koze in prašiči ob cesti; malo gledalcev pri spomeniku.
 - **Tatev, Armenija** (`tatev`, asfalt): Cesta H-46 čez sotesko reke Vorotan: tri serpentine navzdol, Hudičev most (naravni skalni most, 1013 m), topli izvir ob reki, serpentine vzhodne stene proti Tatevu; nizki kamniti parapeti, okoli serpentin rdeči in beli, podporni zidovi; suha slamnata trava, grmičevje in listavci na policah, sipari in skalne stene; ruševine nad sotesko, kavarna, informacijska tabla; table v armenščini in angleščini; nekaj gledalcev pri mostu.
@@ -125,6 +128,8 @@ Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, 
 - **Isuna, Butan** (`isuna`, asfalt): Dolinska cesta ~9 m asfalta (`halfWidth` 4,6 m), levi promet, bele črte; Na eni strani reka Paro Chhu pod cesto, na drugi pobočje z gozdom modrega bora; Stari železni verižni most čez reko z dvema belima kamnitima stražnima hišama (~41 m od ceste pri ~46 %); Posamezne hiše in kmetije, krave na pašnikih, nevidna ograja prepreči izlet
 - **Katu-Jaryk, Rusija** (`katu`, makadam): Makadam iz zdrobljenega rjavega skrilavca z dvema kolesnicama; za avtom se dviga prah; Nizek betonski parapet (bel s črnimi progami) ob padajočem terenu in lasnicah; drugje smerniki; Sedem lasnic in strmo prečenje nad kanjonom; brežine, useki in nasipi ob cesti; Macesni, cedre in breze; sončna pobočja stepa z grmovjem, strma pobočja skalnata (skrilavec); Vrh: kioski, parkirišči s kombiji, razgledišča na robu kanjona; pred lasnicami znaki za ovinek; Dolina: reka z brzicami, kamp z jurtami in brunaricami, viseča brv, šotori turistov. Dlje: Kanjon in dolina reke Čulišman 559 m niže.
 - **Krásna Hôrka, Slovaška** (`krasnahorka`, asfalt in makadam): Cesta II/549 s severa navzdol v dolino in dovozna cesta na grajski hrib (3,4 km), zadnjih ~90 m pred ciljem makadam (OSM), ovinki navzdol in vzpon do gradu, nevidna ograja; Travnata pobočja z listnatim drevjem in grmovjem; Grad tik ob cilju: obzidje na kamnitem podstavku, bela krila s temnimi strehami, glavni stolp, kapela z apsido, trije okrogli bastioni in vhodni stolp (cel, kot pred požarom 2012, brez napisov); malo gledalcev
+- **El Castaño, Venezuela** (`elcastano`, asfalt): Ozka cesta (~6 m) brez črt, sivo-rjava bankina, varnostne ograje v ostrih ovinkih, trije kratki mostovi z betonskimi parapeti; Gost, visok in moker oblačni gozd (listavci) tik ob cesti na obeh straneh; Potoki in reka Río Madre Vieja v strugah pod cesto; papige v krošnjah; Daljni grebeni obalnega gorovja (višinski model).
+- **Kudowa-Zdrój, Poljska** (`kudowa`, asfalt): Gost smrekov in bukov gozd tik ob obeh straneh ceste, jase s travniki, svetel peščenjak; v ovinkih lesene in jeklene ograje; dve izogibališči, daljnovod; na koncu hiše Kudowe Górne s strmimi opečnimi strehami.
 - **Trebević, Bosna in Hercegovina** (`trebevic`, asfalt): Ozka cesta od Dolovov skozi bukov gozd na goro (4,3 km), šest lasnic med ~940 in ~1060 m; jeklene ograje, bela prekinjena sredinska črta; ostanki stare betonske bob steze ob cesti (~1,6 in ~2,1 km), brv čez cesto, razgledišče Vidikovac z zidcem nad mestom (~2,9 km), stari kamnolom in ruševine utrdbe Draguljac (~3,2 km); vrv žičnice nad gozdom; hiše po obrisih iz OSM; srne in lisice.
 - **Koli, Finska** (`koli`, asfalt pod zbitim snegom): Zgrnjen sneg ob obeh robovih, jeklene ograje 3,4 m od asfalta, oranžni snežni količki; gost gozd smrek in borov do ceste; v zgornjem delu vas Ylä-Koli (21 stavb, dve parkirišči, stranska cesta), tri žičnice in smučarske proge z varovalnimi mrežami, kjer se proga približa cesti, smučarji; dve lasnici in ostra levica s pogledom čez gozd.
 - **Koror, Palau** (`koror`, asfalt): Jeklene varnostne ograje, kjer teren pada; rumena prekinjena sredinska črta (pred nepreglednimi ovinki neprekinjena), od sonca in soli zbledel asfalt s krpami; Na mostu in nasipih ob laguni nizek zid in jeklena ograja, takoj za njima morje; Vlažen tropski gozd na griču, palme, grmovje in trava ob cesti; ~60 hiš s strehami iz valovite pločevine (obrisi iz OSM, brez imen in napisov), gostejše na robu mesta; Pogled na laguno, otoke in Babeldaob; promet.
