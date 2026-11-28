@@ -153,8 +153,8 @@ check('track: the run-up for the grid behind the start (~200 m) and the room for
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'lang.js'), 'utf8'), ctx);
   ctx.Lang.set('en');
   const en = T.names.map(q => ctx.Lang.place(q.n)), still = en.filter(e => /[čšž]|Serpentina|Reka |Zadnja/.test(e));
-  check('names: the HUD\'s places in English (Devil\'s Bridge · 1,013 m, Hairpin 1 · 1,042 m, Last Hairpin · 1,379 m), none left in Slovenian, the escape\'s goal',
-    en.includes('Devil\'s Bridge · 1,013 m') && en.includes('Hairpin 1 · 1,042 m') && en.includes('Last Hairpin · 1,379 m') && !still.length && ctx.Lang.place(def.escTo) === 'To Tatev', en.join(' | '));
+  check('names: the HUD\'s places in English (Devil\'s Bridge · 1,016 m, Hairpin 3 · 1,042 m, Last Hairpin · 1,379 m), none left in Slovenian, the escape\'s goal',
+    en.includes('Devil\'s Bridge · 1,016 m') && en.includes('Hairpin 3 · 1,042 m') && en.includes('Last Hairpin · 1,379 m') && !still.length && ctx.Lang.place(def.escTo) === 'To Tatev', en.join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
