@@ -1555,7 +1555,7 @@ try {
     // its close as the garage's Nazaj (the same car) or Izberi progo (another, &naprej=proga); the frame kept: the second tap no load)
     let loads = 0;
     await page.route('**/garaza.html*', (r) => { loads++; r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>window.__garageEmbed = { open(p) { parent.__garStub = p; setTimeout(() => parent.__garageClose(parent.__garWay === "back" ? { car: p.car } : { car: parent.__garOther, naprej: "proga" }), 50); }, back() { parent.__garageClose({}); } }; parent.__garageReady();</script>' }); });
-    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x5c6168, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
+    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x8fa9c4, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
     other = await page.evaluate((id) => Core.MODELS.find(m => !m.retired && m.id !== id).id, car0.id);   // (the garage's other car: Izberi progo on it)
     await page.evaluate((o) => { window.__garOther = o; }, other);
     const url0 = await page.evaluate(() => location.search);

@@ -14,8 +14,8 @@
   const L2 = (p) => p[Lang.cur === 'en' ? 1 : 0];   // (a [Slovenian, English] pair in the page's language)
   const MODELS = Core.MODELS, PRICE = Core.CAREER.car, EL = GarageShop.EL;
   // the game's colours (game.js PLAYER_COLORS), their names
-  const COLORS = [[0xd81f2a, 'Rdeča'], [0xf5f5f0, 'Bela'], [0x1c5fd6, 'Modra'], [0xf2c230, 'Rumena'], [0x5c6168, 'Grafitna'], [0x2fa84f, 'Zelena'], [0xff7a1a, 'Oranžna'], [0x8e3bd6, 'Vijolična'],
-    [0xb8bcc2, 'Srebrna'], [0x7d8288, 'Siva'], [0x4a78b5, 'Srednje modra'], [0xa83248, 'Bordo'], [0x1fb5b0, 'Turkizna'], [0xf06aa8, 'Roza'], [0xa6d62b, 'Limeta'], [0xb07a3c, 'Bronasta']];   // (the last eight: docs/novosti-e.md Novost 1, V3)
+  const COLORS = [[0xd81f2a, 'Rdeča'], [0xf5f5f0, 'Bela'], [0x1c5fd6, 'Modra'], [0xf2c230, 'Rumena'], [0x8fa9c4, 'Jeklena'], [0x2fa84f, 'Zelena'], [0xff7a1a, 'Oranžna'], [0x8e3bd6, 'Vijolična'],
+    [0xc9cdd2, 'Srebrna'], [0xa0a5ab, 'Siva'], [0x4a78b5, 'Srednje modra'], [0xa83248, 'Bordo'], [0x1fb5b0, 'Turkizna'], [0xf06aa8, 'Roza'], [0xa6d62b, 'Limeta'], [0xb07a3c, 'Bronasta']];   // (the last eight: docs/novosti-e.md Novost 1, V3)
   const CSS = (h) => '#' + h.toString(16).padStart(6, '0');
   // the cars in the game's display order (game.js's car screen: by category in Core.CATS' order, in each the cheapest first (the career
   // price), then by id); a retired model never listed (a stored one is its heir's, Core.heirOf)
