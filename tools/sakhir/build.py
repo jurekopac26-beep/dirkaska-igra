@@ -66,22 +66,22 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races or the circuit
 # (CLAUDE.md, Pravna varnost); the turns by their numbers in the lines, as the circuit numbers them (15: 9 right, 6 left) ----
 NAMES = [
-    ('Desna lasnica', 540, ['Hard on the brakes for Turn 1!', 'The tight right hairpin at the end of the main straight!', 'Down the gears into the first hairpin!']),
+    ('Desna lasnica', 540, ['Hard on the brakes for Turn 1!', 'The tight right hairpin at the end of the main straight!', 'Down the gears into the first hairpin!', 'The grandstand at Turn 1 is on its feet as they brake!']),
     ('Levi za lasnico', 655, ['The left of Turn 2, out of the hairpin!', 'Left, and back on the throttle!', 'Through Turn 2!']),
     ('Hitri desni pregib', 750, ['Flat through the right kink of Turn 3!', 'The fast kink, foot down!', 'Turn 3, and the straight up the hill!']),
-    ('Desni na vrhu', 1340, ['Hard on the brakes for Turn 4!', 'The right at the top of the hill!', 'Round Turn 4, the highest point of the lap!']),
+    ('Desni na vrhu', 1340, ['Hard on the brakes for Turn 4!', 'The right at the top of the hill!', 'Round Turn 4, the highest point of the lap!', 'Turn 4, the open desert stretching away past the barriers!']),
     ('Hitri levi', 1615, ['The fast left of Turn 5!', 'Into the esses, left first!', 'Through Turn 5, flat out!']),
     ('Desni v esih', 1710, ['The right of Turn 6!', 'Right, through the middle of the esses!', 'Turn 6, change direction!']),
     ('Levi v dolino', 1830, ['The left of Turn 7, down into the valley!', 'Left, and the road falls away!', 'Through Turn 7, the hairpin ahead!']),
     ('Lasnica v dolini', 2085, ['Hard on the brakes for the hairpin of Turn 8!', 'The tight right at the bottom of the valley!', 'Round the hairpin!']),
     ('Dolgi levi', 2445, ['The long left of Turn 9!', 'Left, and the brakes for Turn 10 at the end of it!', 'Through the long left, downhill!']),
-    ('Ostri levi', 2545, ['Hard on the brakes for the tight left of Turn 10!', 'The tight left, braking in the turn!', 'Round Turn 10, the back straight ahead!']),
-    ('Dolgi levi pod klancem', 3275, ['The long left of Turn 11!', 'Left, and up the hill!', 'Round the long left, the load builds!']),
-    ('Hitri desni', 3570, ['Flat through the fast right of Turn 12!', 'The fast sweep up the hill!', 'Turn 12, foot down!']),
+    ('Ostri levi', 2545, ['Hard on the brakes for the tight left of Turn 10!', 'The tight left, braking in the turn!', 'Round Turn 10, the back straight ahead!', 'Out of Turn 10 onto the back straight, the drag strip right alongside!']),
+    ('Dolgi levi pod klancem', 3275, ['The long left of Turn 11!', 'Left, and up the hill!', 'Round the long left, the load builds!', 'The long left of Turn 11, past the green lawns and the pond in the infield!']),
+    ('Hitri desni', 3570, ['Flat through the fast right of Turn 12!', 'The fast sweep up the hill!', 'Turn 12, foot down!', 'Turn 12, the water of the infield pond flashing by!']),
     ('Desni na vrhu klanca', 3945, ['The right of Turn 13, onto the long straight!', 'Right at the top of the climb!', 'Through Turn 13!']),
-    ('Desni na koncu ravnine', 4730, ['Hard on the brakes for Turn 14!', 'The right at the end of the long straight!', 'Down the gears for Turn 14!']),
+    ('Desni na koncu ravnine', 4730, ['Hard on the brakes for Turn 14!', 'The right at the end of the long straight!', 'Down the gears for Turn 14!', 'The floodlight masts flash by down the long straight, brakes for Turn 14!']),
     ('Zadnji desni', 4825, ['The last right, onto the main straight!', 'Turn 15, and the run to the line!', 'Through the final corner!']),
-    ('Ciljna ravnina', 5150, ['Down the main straight past the big grandstand!', 'Flat out along the main straight, the pits on the right!', 'The main straight, the lap is nearly done!']),
+    ('Ciljna ravnina', 5150, ['Down the main straight past the big grandstand!', 'Flat out along the main straight, the pits on the right!', 'The main straight, the lap is nearly done!', 'Under the white tent roofs of the main grandstand, flat out!']),
 ]
 # the apexes of the circuit's 15 turns (their number boards, TV towers, photographers, recovery: World.rbring): 1 the right hairpin at the
 # end of the main straight, 2 the left out of it, 3 the right kink, 4 the right at the top of the hill, 5-7 the esses (left, right, left),
@@ -373,6 +373,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Sakhir, Bahrain', desc: %(desc_en)s },
     start: [0, 0], runoff: 1.2, inner: 4.6, side: 6.5, gradeForce: true, elevSmooth: 10, realKm: %(real)s, runoffTarmac: true, offSurface: 'gravel',
     elev: SK_H.map((h, i) => [i / SK_H.length, h / 10]),
+    // the commentator's own lines for the race round it (Comm; game.js ownLine 'intro' and 'go' of a circuit): the desert of the south of the
+    // island, the circuit's 5.4 km and 15 turns, the low limestone ridges round it (docs/proge/sakhir.md, Raziskava kraja)
+    comm: {
+      intro: ["Welcome to {track}, in the desert of the south of Bahrain! {laps} laps, {cars} cars, and you line up {grid} on the grid.", "Here we are at {track}: five point four kilometres and fifteen turns in the sand. {laps} laps, and you start {grid}.", "Good day from the desert at {track}! Sand, low limestone ridges and a hot dry wind. {cars} cars, {laps} laps, and you start from {grid}."],
+      go: ["Lights out, and away they go into the desert!", "And they're off, down the long main straight to the first hairpin!", "Green light! {cars} cars charging for Turn 1!"],
+    },
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
 %(names)s
