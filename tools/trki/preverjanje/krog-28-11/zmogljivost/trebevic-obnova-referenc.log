@@ -1,0 +1,4 @@
+== phone budget (844x390, normal quality, NIZKA detail, shadows)
+trebevic   calls/frame 166 (max 219), vertices/frame 402k (max 523k), JS 1.66 ms/frame
+OK   no page errors
+written /home/user/dirkaska-igra/tests/golden/perf.json

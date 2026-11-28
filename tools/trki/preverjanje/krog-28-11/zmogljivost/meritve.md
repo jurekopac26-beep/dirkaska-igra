@@ -132,3 +132,46 @@ TRKI_SNAP=$PWD         NACIN=izris IZVOR=veja OZNAKA=veja STANJE=<mapa> PROGE=li
 Datoteke stanja (0,7–3,2 MB na progo in drevo) ne gredo v git. Dokazi v tej mapi: `krizni-izris.mjs`, `zajem-veja.log`, `zajem-main.log`,
 `izris-veja-veja.log`, `izris-main-main.log`, `izris-veja-main.log`, `izris-main-veja.log`, `izris-veja-veja-brez.log`,
 `obnova-referenc.log`, `test-po-obnovi.log`.
+
+## Dodatek 28. 11. zvečer: Trebević po spoju `main` (`0f2b03c`)
+
+Spoj `main` `0f2b03c` (glava `c9995ff`) je prinesel progo Trebević in njeno referenco z `main`. V povezanem krogu na `c9995ff` je `browser/perf`
+pri tej progi padel: največ 219 klicev (meja 190 × 1,1 + 5 = 214) in 523 tisoč oglišč (meja 433 × 1,1 + 20 = 496). Ista meritev kot zgoraj,
+samo ta proga, vsak tek enkrat; drevo `main` je `git archive 0f2b03c` (spojeni `main`).
+
+| vzorec | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| veja, naravni tek (tisoč oglišč / klici) | 327,7 / 136 | 330,3 / 134 | 428,2 / 203 | 463,9 / 159 | **523,2 / 219** | 335,8 / 147 |
+| `main`, naravni tek | 332,4 / 138 | 315,5 / 144 | 412,8 / 190 | 433,2 / 159 | 357,0 / 175 | 332,2 / 159 |
+| stanje veje, izris veje (kontrola) | 327,7 / 136 | 330,3 / 134 | 428,2 / 203 | 463,9 / 159 | 523,1 / 219 | 335,8 / 147 |
+| stanje veje, izris `main` | 327,7 / 136 | 330,3 / 134 | 428,2 / 203 | 463,9 / 159 | 523,1 / 219 | 335,8 / 147 |
+| stanje `main`, izris `main` (kontrola) | 332,4 / 138 | 315,5 / 144 | 412,8 / 190 | 433,2 / 159 | 356,4 / 174 | 332,2 / 159 |
+| stanje `main`, izris veje | 332,4 / 138 | 315,5 / 144 | 412,8 / 190 | 433,3 / 159 | 356,5 / 174 | 332,4 / 159 |
+| veja: mesto na progi (m), tekmeci do 150 m, avti s škodo | 591, 12, 2 | 958, 11, 4 | 1360, 20, 4 | 1774, 12, 6 | 2313, 13, 8 | 3032, 9, 10 |
+| `main`: mesto na progi (m), tekmeci do 150 m, avti s škodo | 597, 14, 2 | 967, 11, 4 | 1364, 20, 7 | 1706, 8, 13 | 2253, 14, 16 | 2851, 11, 16 |
+
+Krog 4635 m, 22 avtov; start 359,2 tisoč oglišč in 184 klicev v vseh tekih; avtov drugega modela ali barve ob izrisu tujega stanja 0.
+
+**Isto stanje stane z obema izrisoma enako.** Stanje veje da z izrisom `main` v vseh šestih vzorcih iste številke kot z izrisom veje (razlika
+0 oglišč, 0 klicev); stanje `main` da z izrisom veje največ 144 oglišč več (0,04 %), klici so enaki. **Višji največji vzorec veje (peti: 523
+tisoč oglišč in 219 klicev pri 2313 m proti 357 tisoč in 175 pri 2253 m na `main`) pride iz stanja dirke, ne iz izrisa**, enako kot pri Livornu
+in Mombasi. Kateri del stanja ga prinese (lega avta in razpored polja), ni razčlenjeno; avtov s škodo je na veji manj (8 proti 16).
+
+Omejitve kot zgoraj: nastavitve testa, eno seme; kontrola se od naravnega teka razlikuje do 600 oglišč in 1 klic (peti vzorec); zakaj dirka
+na veji pri nastavitvah testa teče drugače kot na `main`, je odprto od 27. 11.; `jsMs` ni preverjen.
+
+Obnova reference: `PERF_ONLY=trebevic node tests/browser/perf.test.mjs --update` na glavi veje, enkrat (`trebevic-obnova-referenc.log`). V
+`tests/golden/perf.json` je spremenjen samo vnos `trebevic` (79 ključev prej in potem, vrstni red enak).
+
+| proga | prej (referenca `main`) | zdaj | nova meja testa |
+|---|---|---|---|
+| Trebević | 161 klicev (največ 190), 364 tisoč oglišč (največ 433) | 166 (največ 219), 402 (največ 523) | 245 klicev, 595 tisoč oglišč |
+
+Test po obnovi, enkrat: `PERF_ONLY=trebevic node tests/browser/perf.test.mjs`, 2 od 2 (`trebevic-test-po-obnovi.log`). Celoten test
+zmogljivosti po obnovi ni ponovljen (koda igre je nespremenjena; v krogu na `c9995ff` so ostale proge uspele, razen Lusaila, ki čaka
+zmogljivost-1). Ob naslednjem spoju `main` obdrži tudi pri Trebeviću vrednost veje ali jo posnemi znova.
+
+Ukazi kot zgoraj s `P=trebevic`, drevo `main`: `mkdir <drevo-main> && git archive 0f2b03c | tar -x -C <drevo-main>` (v drevo še
+`node_modules/playwright`). Dokazi v tej mapi: `trebevic-zajem-veja.log`, `trebevic-zajem-main.log`, `trebevic-izris-veja-veja.log`,
+`trebevic-izris-veja-main.log`, `trebevic-izris-main-main.log`, `trebevic-izris-main-veja.log`, `trebevic-obnova-referenc.log`,
+`trebevic-test-po-obnovi.log`.
