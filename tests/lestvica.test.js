@@ -11,7 +11,8 @@
 //    nothing (the nickname of the newest); the player's own link; a hidden friend (and the player's yes); times faster than the bound
 //    dropped; at most 40 friends (the one heard from longest ago goes) and 1000 times
 // 5. the size: every record of every track (both physics, the rain, every way to drive) in one link: at most 14 000 characters (8 000 until
-//    18. 11. 2026: 68 tracks and 592 times take ~9 100; 10 000 until 23. 11. 2026: every circuit's time trial, 828 times, ~12 200; MAX_LINK is 16 000)
+//    18. 11. 2026: 68 tracks and 592 times take ~9 100; 10 000 until 23. 11. 2026; 28. 11.: 70 tracks with every circuit's time trial,
+//    870 times, ~12 700; MAX_LINK is 16 000)
 // 6. the nickname: printable, at most 16 characters; two players with one nickname: (2); the player's own times from the records
 //    (the time, its day and car as first seen) and the record keys as the game makes them
 //   node tests/lestvica.test.js
